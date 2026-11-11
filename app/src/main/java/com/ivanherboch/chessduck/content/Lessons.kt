@@ -21,7 +21,7 @@ class Lesson(
     val sans: List<String>,
     val texts: List<String>,
 ) {
-    val line: Line by lazy { Line.fromSan(fen, sans) }
+    val line: Line by lazy { Line.fromMoves(fen, sans) }
 }
 
 /**

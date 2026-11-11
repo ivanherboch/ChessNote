@@ -412,6 +412,19 @@ class Line(val startFen: String, moves: List<Move> = emptyList()) {
             return l
         }
 
+        /** Construit une ligne depuis des coups notés en UCI ou en SAN. */
+        fun fromMoves(startFen: String, tokens: List<String>): Line {
+            val l = Line(startFen)
+            for (t in tokens) {
+                val p = l.last
+                val uci = if (UCI.matches(t)) Move.fromUci(t).takeIf { p.isLegal(it) } else null
+                l.push(uci ?: p.parseSan(t) ?: error("Coup illégal « $t » après ${l.sans.joinToString(" ")} ($startFen)"))
+            }
+            return l
+        }
+
+        private val UCI = Regex("[a-h][1-8][a-h][1-8][qrbn]?")
+
         /** Construit une ligne depuis des coups SAN ; lève une exception si un coup est illégal. */
         fun fromSan(startFen: String, sans: List<String>): Line {
             val l = Line(startFen)

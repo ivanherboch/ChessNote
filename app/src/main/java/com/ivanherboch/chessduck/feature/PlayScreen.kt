@@ -138,8 +138,8 @@ fun PlayScreen(vm: PlayViewModel) {
             FeedbackCard(msg, tone, Modifier.padding(top = 5.dp).weight(1f), maxSize = 15.sp)
             EqualRow(Modifier.padding(vertical = 5.dp), gap = 5.dp) {
                 DuckButton("◀ Arrière", vm::back, Modifier.weight(1f), enabled = s.cursor > 0 && !s.thinking, height = 44.dp)
-                if (s.result == null) DuckButton("🏳️ Abandonner", vm::resign, Modifier.weight(1.1f), enabled = s.line.size > 0, accent = c.red, height = 44.dp)
-                DuckButton("🆕 Nouvelle partie", vm::newGame, Modifier.weight(1.3f), accent = c.gold, filled = s.result != null, height = 44.dp)
+                if (s.result == null) DuckButton("🏳️ Abandon", vm::resign, Modifier.weight(1.1f), enabled = s.line.size > 0, accent = c.red, height = 44.dp)
+                DuckButton("🆕 Nouvelle", vm::newGame, Modifier.weight(1.3f), accent = c.gold, filled = s.result != null, height = 44.dp)
                 DuckButton("Avant ▶", vm::forward, Modifier.weight(1f), enabled = s.cursor < s.line.size && !s.thinking, height = 44.dp)
             }
         },

@@ -1,0 +1,231 @@
+# La fourchette de cavalier | Un seul cavalier, deux cibles : quand le roi est l'une d'elles, l'autre tombe. | PUZZLE 1WMKY
+- Les Blancs proposent l'échange des dames… en oubliant le cavalier noir posté en d4.
+- Fourchette ! Le cavalier donne échec au roi et attaque en même temps la dame g5.
+- Le roi doit parer l'échec : impossible de sauver aussi la dame.
+- Le cavalier capture la dame. Roi et dame visés ensemble : c'est la fourchette royale.
+
+# La fourchette de pion | Le plus petit soldat peut attaquer deux pièces à la fois. | PUZZLE xlOaY
+- Le cavalier blanc avance en e5, juste à côté du fou g5 : deux pièces voisines sur la même rangée…
+- Fourchette de pion ! Le pion f attaque à la fois le cavalier e5 et le fou g5.
+- Le cavalier se vend le plus cher possible en prenant un pion et en attaquant la dame.
+- On reprend tranquillement : les Noirs ont gagné une pièce pour un pion, et le fou g5 reste attaqué.
+
+# La double attaque de la dame | La dame rayonne dans huit directions : idéale pour viser deux cibles. | PUZZLE PcSpL
+- Les Blancs capturent en c6, mais leur fou b5 n'est défendu par personne.
+- Double attaque : échec au roi en diagonale et attaque du fou b5 le long de la rangée.
+- Les Blancs parent l'échec en interposant un pion qui attaque la dame.
+- La dame prend le fou. Cherchez toujours l'échec qui attaque une pièce non défendue.
+
+# Le clouage | Une pièce clouée ne peut pas bouger sans exposer une pièce plus précieuse derrière elle. | PUZZLE y0cSL
+- Les Blancs proposent l'échange des dames. Mais leur dame et leur roi sont sur la même diagonale…
+- Clouage ! Le fou attaque la dame, qui ne peut pas quitter la diagonale sans laisser son roi en échec.
+- La dame n'a rien de mieux que de capturer le fou.
+- La dame noire reprend avec échec : une dame gagnée contre un fou. Une pièce clouée est une cible idéale.
+
+# L'enfilade | Un clouage à l'envers : la pièce de valeur est devant et doit s'écarter. | PUZZLE PEWkx
+- La dame noire prend le pion e5 et se place sur la même diagonale que sa tour b8.
+- Enfilade ! Le fou attaque la dame ; derrière elle, sur la même diagonale, se trouve la tour.
+- La dame, trop précieuse, doit s'écarter…
+- …et le fou capture la tour restée derrière. Méfiez-vous de vos pièces alignées.
+
+# L'attaque à la découverte | Une pièce s'écarte et démasque l'attaque d'une autre : deux menaces en un coup. | PUZZLE Ce8yf
+- Les Noirs capturent le fou e6. Mais le cavalier f6 masque le fou g5, braqué sur le roi d8.
+- Le cavalier s'écarte en prenant h7 : le fou g5 donne échec, et le pion qui défendait la dame g6 a disparu.
+- Pour parer l'échec, la dame noire capture le fou…
+- …mais la dame blanche la reprend avec échec. La découverte a coûté la dame aux Noirs.
+
+# L'échec à la découverte | Quand la pièce démasquée donne échec, la pièce qui bouge a les mains libres. | PUZZLE iUvHT
+- Le fou noir attaque la tour f1. Mais la dame b3 vise le roi g8 : seul le pion d5 fait écran.
+- Échec à la découverte ! En capturant c6, le pion dégage la diagonale de la dame.
+- Le roi doit se mettre à l'abri : les Noirs n'ont pas le temps de s'occuper du pion.
+- Le pion poursuit sa route, gagne un second pion et attaque la tour a8 : il menace de se promouvoir.
+
+# L'échec double | Deux pièces donnent échec en même temps : seul le roi peut répondre. | PUZZLE Qxqiy
+- Les Blancs capturent la tour b8. Mais la dame b6 vise le roi g1 à travers son propre cavalier f2.
+- Échec double ! Le cavalier donne échec depuis h3 et démasque la dame. Ni capture ni interposition possibles : le roi doit bouger.
+- Le roi fuit en f1.
+- Échec et mat : la dame est protégée par le cavalier d3. L'échec double est l'arme la plus forcée du jeu.
+
+# La déviation | Détourner un défenseur de sa tâche pour faire tomber ce qu'il protégeait. | PUZZLE yqrBF
+- Les Noirs chassent la dame avec leur pion a… et affaiblissent l'abri de leur roi.
+- Sacrifice de dame ! Le but : dévier le pion b7, seul gardien de la diagonale a6-c8.
+- La prise est forcée.
+- Échec et mat : le fou a6 donne échec et le fou d6 contrôle les cases de fuite. Le pion b7 a été dévié de son poste.
+
+# L'attraction | Attirer une pièce adverse, souvent le roi, sur une case où elle sera vulnérable. | PUZZLE vmRU8
+- Les Noirs se jettent sur le cavalier c3 sans voir le danger qui plane sur leur roi.
+- Sacrifice d'attraction : la tour s'offre en h7 pour attirer le roi sur cette case.
+- Le roi n'a pas le choix : il doit capturer.
+- La dame mate en g7, soutenue par le pion h6. Le roi a été attiré sur une case fatale.
+
+# Le sacrifice | Donner du matériel n'est qu'un investissement, si l'on récupère davantage ensuite. | PUZZLE Uheec
+- La dame blanche vient en f2, sur la même rangée que son roi.
+- Sacrifice ! La tour prend h2 et cloue la dame sur son roi : elle est obligée de capturer.
+- La dame accepte l'offrande et se retrouve sur une case empoisonnée.
+- Le but du sacrifice : une fourchette de cavalier sur le roi et la dame.
+- Le roi s'écarte.
+- Le cavalier ramasse la dame. Bilan : une dame et deux pions pour une tour.
+
+# La pièce en prise | La tactique la plus simple : repérer la pièce que plus personne ne défend. | PUZZLE G0eP2
+- Les Noirs échangent en d5… mais c'était leur cavalier e7 qui protégeait le cavalier c6.
+- La dame capture le cavalier laissé sans défense, avec échec en prime.
+- Les Noirs parent l'échec en attaquant la dame.
+- La dame prend le second cavalier. Après chaque coup adverse, demandez-vous : qu'est-ce qui n'est plus défendu ?
+
+# La pièce enfermée | Une pièce sans case de fuite est une pièce perdue, même une dame. | PUZZLE oOg6n
+- Les Blancs font le grand roque. Mais leur dame, aventurée en h5, n'a presque plus de cases.
+- Le fou attaque la dame : toutes ses cases de fuite sont contrôlées. Elle est enfermée.
+- Les Blancs prennent un cavalier pour limiter les dégâts.
+- Le fou capture la dame. Une pièce envoyée loin de son camp doit toujours garder un chemin de retour.
+
+# L'élimination du défenseur | Supprimez la pièce qui protège, et la pièce protégée tombe. | PUZZLE bzdB2
+- Les Blancs proposent l'échange des dames en d4. Or leur fou f4 n'est défendu que par le pion e3.
+- On échange les dames pour obliger ce pion à reprendre…
+- Le pion capture et abandonne la défense du fou.
+- Le défenseur éliminé, le fou tombe. Repérez toujours QUI défend la pièce que vous visez.
+
+# Le dégagement | Libérer une case ou une ligne occupée par l'une de ses propres pièces. | PUZZLE 1M0ex
+- Le roi noir fuit l'échec du cavalier en g7.
+- Dégagement ! Le cavalier quitte f4 avec échec pour ouvrir la diagonale de la dame vers g5.
+- Les Noirs capturent le cavalier.
+- La dame emprunte la diagonale dégagée : échec et mat. Parfois, la meilleure place d'une pièce… c'est ailleurs.
+
+# L'interception | Couper la ligne de communication entre deux pièces adverses. | PUZZLE mev4t
+- Les Blancs centralisent leur tour. Leur fou c5 n'est protégé que par la dame g5, le long de la 5e rangée.
+- Interception ! La tour, soutenue par ses cavaliers, se place entre la dame et le fou et attaque les deux.
+- La dame doit se sauver.
+- La tour capture le fou, désormais sans défense.
+
+# Le coup intermédiaire | Avant la reprise attendue, intercaler un coup plus fort, souvent un échec. | PUZZLE ytbwG
+- Les Blancs prennent le cavalier e4 et attaquent la dame.
+- Coup intermédiaire ! Avant de reprendre en e4, la dame capture un pion avec échec.
+- Le roi doit répondre à l'échec.
+- Maintenant seulement, le fou reprend le cavalier, en clouant au passage le fou d3. Un pion de gagné.
+
+# Les rayons X | Une pièce agit à travers une autre, placée sur la même ligne. | PUZZLE mVkhu
+- La dame blanche capture le fou b5 et abandonne la surveillance de sa première rangée.
+- Rayons X ! La dame se sacrifie en d1 : la tour noire g1 « voit » à travers la tour e1.
+- La tour blanche doit capturer la dame.
+- La tour g1 reprend en d1 : échec et mat sur la première rangée.
+
+# Le coup tranquille | Ni échec ni prise : un coup calme qui crée une menace imparable. | PUZZLE 9UmlI
+- Les Blancs amènent une tour sur la colonne du roi. Leur dame, infiltrée en c8, est très exposée.
+- Coup tranquille : un simple développement. Mais la tour a8 attaque maintenant la dame, qui n'a aucune case de fuite.
+- La dame prend la tour : c'est le moins mauvais.
+- La dame noire reprend. Dame contre tour : un coup calme a suffi.
+
+# La parade précise | Garder son sang-froid : face à une dernière menace, un seul coup conserve le gain. | PUZZLE yKFDJ
+- Les Blancs gagnent un pion et attaquent la tour a8. Mais leur dame g3 est sur la diagonale de leur roi.
+- Le fou cloue la dame sur le roi : elle est perdue.
+- Les Blancs tentent un échec de la dernière chance.
+- La parade précise : le roi s'écarte simplement. La dame blanche reste clouée et sera capturée au coup suivant.
+
+# Le mat du couloir | Un roi emmuré derrière ses propres pions succombe sur la dernière rangée. | PUZZLE CA1J9
+- Les Noirs prennent le fou c3. Mais leur roi, derrière ses pions, manque d'air.
+- La dame donne échec et prend le contrôle de la diagonale : le roi n'a qu'une case.
+- Le roi se réfugie en g8.
+- Mat du couloir : la tour mate sur la dernière rangée. Pensez à offrir une case de fuite à votre roi !
+
+# Le mat à l'étouffée | Le cavalier mate un roi étouffé par ses propres pièces. | PUZZLE Npudg
+- Les Noirs capturent la tour et font une deuxième dame. Peu importe : leur roi est en danger.
+- Sacrifice de dame ! Le roi ne peut pas la prendre, car le fou b3 la protège.
+- La tour est obligée de capturer… et enferme son propre roi.
+- Mat à l'étouffée : cerné par ses propres pièces, le roi succombe au seul cavalier.
+
+# Le mat d'Anastasie | Cavalier et pièce lourde coordonnés contre un roi au bord de l'échiquier. | PUZZLE tNkqf
+- Les Noirs prennent le cavalier d5. Il reste le cavalier e7, qui contrôle g8 et g6.
+- La tour se sacrifie en h7 pour ouvrir la colonne h.
+- Le roi capture la tour.
+- Mat d'Anastasie : la dame mate sur la colonne h, le cavalier interdit g8 et g6, le pion g7 bloque son propre roi.
+
+# Le mat des Arabes | Tour et cavalier unis contre un roi dans le coin : l'un des plus vieux mats connus. | PUZZLE SE8c6
+- Les Blancs capturent la dame. Mais cavaliers et tour noirs encerclent le roi g1.
+- Le cavalier donne échec en f3, protégé par le pion g4.
+- Le roi va dans le coin.
+- Mat des Arabes : la tour mate en h2, protégée par le cavalier qui contrôle aussi g1.
+
+# Le mat de Boden | Deux fous sur des diagonales croisées, après un sacrifice qui ouvre la position. | PUZZLE m2iIv
+- Le fou blanc recule en b3. Le roi c1 est déjà sous le regard du fou d3.
+- Sacrifice de dame pour ouvrir la diagonale a3-c1 !
+- Le pion doit capturer.
+- Mat de Boden : les deux fous se croisent et le roi est gêné par ses propres pièces en d1 et d2.
+
+# Le mat des deux fous | Deux fous sur des diagonales voisines balaient le coin du roi. | PUZZLE 7GQjt
+- Les Noirs attaquent la dame e3. Mais leur roi h8 est enfermé par son propre fou g8.
+- Sacrifice de dame : il faut faire sauter le pion g7 pour ouvrir la grande diagonale.
+- La prise est forcée.
+- Mat des deux fous : le fou mate sur la grande diagonale pendant que l'autre surveille h7.
+
+# Le mat en queue d'aronde | La dame mate en diagonale un roi dont les cases arrière sont bouchées par ses pions. | PUZZLE rasvP
+- Le roi noir capture la tour h7 et sort de son abri.
+- La seconde tour donne échec sur la colonne h : le roi n'a qu'une case.
+- Le roi avance en g6.
+- Mat en queue d'aronde : la dame mate au contact, protégée par la tour ; les pions f6 et g7 bloquent la retraite.
+
+# Le mat du crochet | Tour, cavalier et pion forment une chaîne où chacun protège l'autre. | PUZZLE L4R69
+- Les Noirs capturent la tour d7. Mais le cavalier f6 et la tour h4 visent déjà h7.
+- Le fou élimine le défenseur de h7 et force le roi à sortir.
+- Le roi reprend.
+- Mat du crochet : la tour mate en h7, protégée par le cavalier, lui-même soutenu par le pion e5.
+
+# Le mat de l'Opéra | La tour mate sur la dernière rangée, protégée par un fou. | PUZZLE XO0jw
+- Le cavalier attaque la tour c8. Mais le roi blanc, près du bord, est en danger.
+- Le fou donne échec et s'empare de la diagonale c1-h6.
+- Le roi recule sur la première rangée.
+- Mat de l'Opéra : la tour mate sur la dernière rangée, soutenue par le fou.
+
+# Le mat de Légal (attaque sur f7) | Un piège d'ouverture célèbre : la dame est offerte pour mater avec les pièces mineures. | PUZZLE gHHWW
+- Les Noirs se jettent sur la dame… C'est exactement le piège !
+- Le fou frappe en f7, le point faible du camp noir : seul le roi le défend.
+- Le roi n'a qu'une case.
+- Échec et mat ! Fous et cavalier se coordonnent parfaitement. Trois pièces mineures bien placées valent mieux qu'une dame gourmande.
+
+# L'attaque à l'aile roi | Contre un roque dégarni, chaque pièce qui s'approche crée une menace. | PUZZLE bDBvr
+- La tour blanche attaque la dame g3. Mais le roque blanc est en ruine et le fou c5 vise g1.
+- La tour se sacrifie sur le dernier pion protecteur, avec échec.
+- Le fou capture… et libère la colonne g.
+- La dame descend en g1, soutenue par le fou c5 : échec et mat.
+
+# L'attaque à l'aile dame | Un roi roqué du grand côté est souvent moins bien protégé. | PUZZLE 1C0l6
+- Le cavalier bondit en d4 et attaque la dame a4… en démasquant sa propre dame d7.
+- Le fou se sacrifie en b7 avec échec pour éloigner le roi de sa dame.
+- Le roi capture.
+- La dame d7 n'est plus défendue : les Blancs la capturent.
+
+# Le roi exposé | Un roi sans pions devant lui attire les pièces lourdes sur les colonnes ouvertes. | PUZZLE cannS
+- La dame noire croque le pion g5. Mais la colonne h est ouverte face à son roi.
+- La dame rejoint la tour sur la colonne h : la menace de mat en h8 est imparable.
+- Pour éviter le mat, les Noirs doivent donner leur dame.
+- Les Blancs ont gagné la dame. Doublez vos pièces lourdes sur la colonne ouverte qui mène au roi.
+
+# Le pion avancé | À un pas de la promotion, un pion devient une arme tactique redoutable. | PUZZLE ZrgCo
+- Les Noirs font dame les premiers. Mais le pion e7 est lui aussi à un pas de la promotion…
+- Promotion en cavalier, avec échec ! Une dame n'aurait pas donné échec et laissait l'initiative aux Noirs.
+- Le roi n'a que cette case.
+- La tour mate, protégée par le cavalier tout neuf. Au moment de promouvoir, examinez chaque possibilité.
+
+# La prise en passant | La règle spéciale des pions peut rouvrir une ligne d'attaque. | PUZZLE fKhdQ
+- Les Noirs jouent h6 pour bloquer le pion h5.
+- La tour double sur la colonne g et menace mat en g7.
+- Les Noirs ferment la colonne en avançant leur pion de deux cases, juste à côté du pion h5.
+- Prise en passant ! Le pion capture comme si le pion noir n'avait avancé que d'une case. La colonne g se rouvre : l'attaque continue. (Ce droit ne dure qu'un coup.)
+
+# Le roque au bon moment | Roquer peut être un coup tactique : mise à l'abri et défense en un seul temps. | PUZZLE k94Wa
+- Les Blancs prennent e5 avec la tour : la dame e7 et le cavalier c6 sont tous deux cloués.
+- La dame capture la tour (le cavalier, cloué, ne le pouvait pas).
+- La dame blanche attaque à la fois la tour a8 et le cavalier c6.
+- Le roque sauve tout : le roi est à l'abri, la tour f8 protège la tour a8 et la dame attaque toujours le fou g5.
+
+# Calculer un mat en trois coups | Échecs, prises, menaces : examiner d'abord les coups forcés. | PUZZLE mrDdX
+- Le cavalier noir prend e4 et abandonne la défense de son roi.
+- Premier coup forcé : la tour se sacrifie en g7 avec échec.
+- La tour reprend.
+- Deuxième coup forcé : la dame prend h6 avec échec.
+- Le roi recule.
+- La dame prend la tour, soutenue par le cavalier f5 : mat. Les suites forcées sont les plus faciles à calculer.
+
+# Le piège d'ouverture | Un coup de développement naturel peut être une faute : vérifiez vos défenseurs. | PUZZLE xLul2
+- Les Noirs développent leur fou en attaquant la dame. Naturel… mais fautif.
+- Le cavalier capture en f6 avec échec : le fou g4 perd son unique défenseur.
+- Les Noirs reprennent.
+- La dame prend le fou. En ouverture aussi, chaque pièce développée doit rester défendue.

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -103,16 +104,17 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
     Column(Modifier.fillMaxSize().background(c.bg).statusBarsPadding().navigationBarsPadding()) {
         // En-tête global compact
         Row(Modifier.fillMaxWidth().height(46.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Image(painterResource(R.drawable.mascot), "Mascotte Cavalier-Canard", Modifier.size(40.dp))
-            Column(Modifier.padding(start = 6.dp)) {
-                AutoText("ChessDuck", maxSize = 19.sp, weight = FontWeight.Black)
-                AutoText("© Ivan Herboch, 2026", color = c.muted.copy(alpha = 0.7f), maxSize = 8.sp)
+            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                Image(painterResource(R.drawable.mascot), "Mascotte Cavalier-Canard", Modifier.size(40.dp))
+                Column(Modifier.padding(start = 6.dp).weight(1f, fill = false)) {
+                    AutoText("ChessDuck", maxSize = 19.sp, weight = FontWeight.Black)
+                    if (tab != 0) AutoText("© Ivan Herboch, 2026", color = c.muted.copy(alpha = 0.7f), maxSize = 8.sp)
+                }
+                Box(Modifier.padding(start = 6.dp, end = 6.dp).clip(RoundedCornerShape(8.dp)).background(c.gold).padding(horizontal = 6.dp, vertical = 3.dp)) {
+                    AutoText("ELO ${st.elo}", color = c.onAccent, maxSize = 13.sp, weight = FontWeight.Bold)
+                }
             }
-            Box(Modifier.padding(start = 8.dp).clip(RoundedCornerShape(8.dp)).background(c.gold).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                AutoText("ELO ${st.elo}", color = c.onAccent, maxSize = 13.sp, weight = FontWeight.Bold)
-            }
-            Spacer(Modifier.weight(1f))
-            if (tab == 0) DuckButton("📖 Mémo Anglais", { showMemo = true }, Modifier.padding(end = 6.dp), accent = c.blue, height = 36.dp)
+            if (tab == 0) DuckButton("📖 Mémo Anglais", { showMemo = true }, Modifier.padding(end = 6.dp).width(106.dp), accent = c.blue, height = 36.dp)
             DuckButton("⚙️", { showSettings = true }, Modifier.size(width = 44.dp, height = 36.dp), maxSize = 18.sp)
         }
         Box(Modifier.fillMaxWidth().weight(1f)) {
