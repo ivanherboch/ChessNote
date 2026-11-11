@@ -65,6 +65,11 @@ class AppRobolectricTest {
         db.user().saveAnalysis(id, "10,5,e2e4")
         assertEquals(1, db.user().games().first().size)
         assertEquals(1, db.user().tally().first().first { it.outcome == 1 }.n)
+        // Carte de partage : type de problème et conseil visibles.
+        val line = com.ivanherboch.chessduck.chess.Line.fromUci(p.fen, p.moves)
+        val bmp = com.ivanherboch.chessduck.feature.ShareCard.render(ApplicationProvider.getApplicationContext(), p, line.positions[1], line.positions[1].whiteToMove, line.moves[0])
+        val dir = File(System.getenv("SHOT_DIR") ?: "build/screenshots").apply { mkdirs() }
+        File(dir, "6_partage.png").outputStream().use { bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
         db.close()
     }
 

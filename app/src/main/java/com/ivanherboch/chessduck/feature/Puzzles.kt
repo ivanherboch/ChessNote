@@ -131,7 +131,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         state.update {
             it.copy(
                 puzzle = p, line = line, progress = 0, cursor = 0, solved = false, anim = null, hintStage = 0, refute = null, empty = false,
-                message = "${turnLabel(white)} : observez le dernier coup adverse, puis trouvez la meilleure suite.", tone = Tone.INFO,
+                message = "${turnLabel(white)}. 💡 Conseil : ${PuzzleThemes.primary(p.themes, it.theme).tip}", tone = Tone.INFO,
             )
         }
         job = viewModelScope.launch {
@@ -341,7 +341,8 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         if (state.value.refute == null) return
         job?.cancel()
         state.update {
-            it.copy(refute = null, anim = null, tone = Tone.INFO, message = "↩️ Position rétablie. À vous : cherchez un coup plus fort, ou demandez un 💡 indice.")
+            val tip = it.puzzle?.let { p -> PuzzleThemes.primary(p.themes, it.theme).tip } ?: ""
+            it.copy(refute = null, anim = null, tone = Tone.INFO, message = "↩️ Position rétablie, à vous de rejouer. 💡 Conseil : $tip")
         }
     }
 }
@@ -368,7 +369,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                 DuckButton("🎲 Aléatoire", vm::random, Modifier.weight(1f), accent = c.gold, filled = s.solved || s.empty, height = 38.dp)
                 DuckButton(
                     "📤 Partager",
-                    { if (p != null && line != null) ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0]) },
+                    { if (p != null && line != null) ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0], s.theme) },
                     Modifier.weight(1f), enabled = p != null, height = 38.dp,
                 )
             }
@@ -411,7 +412,10 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
             }
         },
         bottom = {
-            FeedbackCard(s.message, s.tone, Modifier.padding(top = 5.dp).weight(1f), maxSize = 15.sp)
+            FeedbackCard(
+                s.message, s.tone, Modifier.padding(top = 5.dp).weight(1f), maxSize = 15.sp,
+                title = p?.let { "🧩 Type de problème : ${PuzzleThemes.primary(it.themes, s.theme).name}" },
+            )
             EqualRow(Modifier.padding(vertical = 5.dp), gap = 5.dp) {
                 DuckButton("◀ Arrière", vm::back, Modifier.weight(1f), enabled = s.refute == null && s.cursor > 0, height = 44.dp)
                 if (s.refute != null) DuckButton("↩️ Réessayer", vm::retry, Modifier.weight(1.3f), accent = c.red, filled = true, height = 44.dp, maxSize = 14.sp)

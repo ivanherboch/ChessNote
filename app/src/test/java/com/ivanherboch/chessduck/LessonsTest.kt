@@ -31,5 +31,9 @@ class LessonsTest {
     fun fiftyOfficialThemes() {
         assertEquals(50, PuzzleThemes.all.size)
         assertEquals(50, PuzzleThemes.all.map { it.key }.toSet().size)
+        assertTrue(PuzzleThemes.all.all { it.tip.length > 30 })
+        assertEquals("fork", PuzzleThemes.primary(" crushing fork middlegame short ").key)
+        assertEquals("smotheredMate", PuzzleThemes.primary(" mate mateIn2 smotheredMate middlegame ").key)
+        assertEquals("middlegame", PuzzleThemes.primary(" fork middlegame ", "middlegame").key)
     }
 }

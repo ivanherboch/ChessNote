@@ -26,9 +26,9 @@ import java.io.File
 /** Carte de partage PNG d'un problème, avec exactement les mêmes pièces que l'échiquier en direct. */
 object ShareCard {
     private const val W = 1080
-    private const val H = 1440
+    private const val H = 1600
 
-    fun render(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?): Bitmap {
+    fun render(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, preferredTheme: String = ""): Bitmap {
         val bmp = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888)
         val cv = Canvas(bmp)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -85,37 +85,57 @@ object ShareCard {
             cv.drawBitmap(b, null, RectF(x(q), y(q), x(q) + s, y(q) + s), paint)
         }
 
-        // Légende : trait, difficulté, thème
-        val themes = puzzle.themes.trim().split(' ').mapNotNull { PuzzleThemes.byKey[it] }
-        val theme = themes.firstOrNull { it.group != PuzzleThemes.G_PHASE } ?: themes.firstOrNull()
-        paint.color = Color.parseColor("#F8FAFC")
-        paint.textSize = 54f
-        cv.drawText(if (playerWhite) "Trait aux Blancs" else "Trait aux Noirs", 110f, top + side + 86f, paint)
-        paint.style = Paint.Style.FILL
+        // Légende : trait, difficulté, type de problème et conseil (sans la solution)
+        val theme = PuzzleThemes.primary(puzzle.themes, preferredTheme)
+        val base = top + side
         paint.color = if (playerWhite) Color.WHITE else Color.parseColor("#111827")
-        cv.drawRoundRect(RectF(48f, top + side + 44f, 94f, top + side + 90f), 8f, 8f, paint)
+        cv.drawRoundRect(RectF(48f, base + 44f, 94f, base + 90f), 8f, 8f, paint)
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 3f
         paint.color = Color.parseColor("#94A3B8")
-        cv.drawRoundRect(RectF(48f, top + side + 44f, 94f, top + side + 90f), 8f, 8f, paint)
+        cv.drawRoundRect(RectF(48f, base + 44f, 94f, base + 90f), 8f, 8f, paint)
         paint.style = Paint.Style.FILL
+        paint.color = Color.parseColor("#F8FAFC")
+        paint.textSize = 54f
+        cv.drawText(if (playerWhite) "Trait aux Blancs" else "Trait aux Noirs", 110f, base + 86f, paint)
         paint.typeface = Typeface.DEFAULT
         paint.textSize = 40f
         paint.color = Color.parseColor("#F59E0B")
         val band = PuzzleThemes.BANDS[PuzzleThemes.bandOf(puzzle.rating)]
-        cv.drawText("Difficulté : $band (${puzzle.rating})", 48f, top + side + 150f, paint)
+        cv.drawText("Difficulté : $band (${puzzle.rating})", 48f, base + 150f, paint)
         paint.color = Color.parseColor("#38BDF8")
-        cv.drawText("Thème : ${theme?.name ?: "Tactique"}", 48f, top + side + 204f, paint)
+        cv.drawText("Type de problème : ${theme.name}", 48f, base + 206f, paint)
+        paint.color = Color.parseColor("#10B981")
+        paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        paint.textSize = 36f
+        cv.drawText("Conseil", 48f, base + 264f, paint)
+        paint.typeface = Typeface.DEFAULT
+        paint.color = Color.parseColor("#E2E8F0")
+        var y = base + 264f
+        var lineText = ""
+        val indent = 48f + paint.measureText("Conseil  ") + 16f
+        var first = true
+        fun flush() {
+            if (lineText.isEmpty()) return
+            cv.drawText(lineText, if (first) indent else 48f, y, paint)
+            first = false; y += 46f; lineText = ""
+        }
+        for (word in theme.tip.split(' ')) {
+            val candidate = if (lineText.isEmpty()) word else "$lineText $word"
+            val width = W - 48f - (if (first) indent else 48f)
+            if (paint.measureText(candidate) > width) { flush(); lineText = word } else lineText = candidate
+        }
+        flush()
         paint.color = Color.parseColor("#64748B")
         paint.textSize = 28f
         paint.textAlign = Paint.Align.RIGHT
-        cv.drawText("© Ivan Herboch, 2026", W - 48f, top + side + 204f, paint)
+        cv.drawText("© Ivan Herboch, 2026", W - 48f, H - 28f, paint)
         return bmp
     }
 
-    fun share(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?) {
+    fun share(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, preferredTheme: String = "") {
         runCatching {
-            val bmp = render(context, puzzle, position, playerWhite, lastMove)
+            val bmp = render(context, puzzle, position, playerWhite, lastMove, preferredTheme)
             val dir = File(context.cacheDir, "share").apply { mkdirs() }
             val file = File(dir, "chessduck-${puzzle.id}.png")
             file.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
