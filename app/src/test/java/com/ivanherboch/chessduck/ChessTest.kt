@@ -83,6 +83,17 @@ class ChessTest {
         assertEquals(Analysis(12, null, "e2e4"), round[0]); assertNull(round[1]); assertNotNull(round[2])
     }
 
+    @Test
+    fun capturedMaterial() {
+        val start = com.ivanherboch.chessduck.ui.materialOf(Position.fromFen(START_FEN))
+        assertEquals(0, start.diff); assertTrue(start.blackLost.isEmpty() && start.whiteLost.isEmpty())
+        // Les Noirs ont perdu deux pions, un cavalier et la dame ; les Blancs une tour.
+        val m = com.ivanherboch.chessduck.ui.materialOf(Position.fromFen("r1b1kb1r/pppppp2/8/8/8/8/PPPPPPPP/RNBQKBN1 w Qkq - 0 1"))
+        assertEquals(listOf(9, 9, 10, 10, 13), m.blackLost)
+        assertEquals(listOf(4), m.whiteLost)
+        assertEquals(1 + 1 + 3 + 3 + 9 - 5, m.diff)
+    }
+
     /** Validation croisée du générateur de coups sur les 50 000 problèmes embarqués (si l'export est disponible). */
     @Test
     fun allEmbeddedPuzzlesAreLegal() {

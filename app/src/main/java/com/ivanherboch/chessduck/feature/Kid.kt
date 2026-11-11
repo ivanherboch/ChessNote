@@ -64,6 +64,7 @@ import com.ivanherboch.chessduck.chess.ROOK
 import com.ivanherboch.chessduck.chess.START_FEN
 import com.ivanherboch.chessduck.ui.AutoText
 import com.ivanherboch.chessduck.ui.BoardAnim
+import com.ivanherboch.chessduck.ui.CapturedBar
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.KID_PIECE_RES
 import com.ivanherboch.chessduck.ui.KidColors
@@ -265,6 +266,7 @@ fun KidScreen(vm: KidViewModel, onQuit: () -> Unit) {
                 )
             }
         },
+        underBoard = { CapturedBar(pos, Modifier.padding(top = 6.dp, start = 4.dp, end = 4.dp), kid = true) },
         bottom = {
             Column(Modifier.fillMaxSize().padding(vertical = 6.dp), verticalArrangement = Arrangement.SpaceEvenly) {
                 // Zone compacte : nom des pièces

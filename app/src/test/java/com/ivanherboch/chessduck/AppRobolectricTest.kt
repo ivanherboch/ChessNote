@@ -1,6 +1,10 @@
 package com.ivanherboch.chessduck
 
 import android.os.Looper
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -82,6 +86,27 @@ class AppRobolectricTest {
         }
         assertNotNull(db.puzzles().byIdIgnoreCase("0000d"))
         db.close()
+    }
+
+    @Test
+    fun capturedBars() {
+        val pos = com.ivanherboch.chessduck.chess.Position.fromFen("r1b1kb1r/pppppp2/8/8/8/8/1PPP1PPP/RNBQKB2 w Qkq - 0 1")
+        rule.activity.setContent {
+            androidx.compose.foundation.layout.Column {
+                for (dark in listOf(true, false)) com.ivanherboch.chessduck.ui.ChessDuckTheme(dark) {
+                    androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.background(com.ivanherboch.chessduck.ui.LocalDuck.current.bg).padding(12.dp)) {
+                        com.ivanherboch.chessduck.ui.CapturedBar(pos)
+                    }
+                }
+                com.ivanherboch.chessduck.feature.KidTheme {
+                    androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.background(com.ivanherboch.chessduck.ui.LocalDuck.current.bg).padding(12.dp)) {
+                        com.ivanherboch.chessduck.ui.CapturedBar(pos, kid = true)
+                    }
+                }
+            }
+        }
+        settle(800)
+        shot("10_prises")
     }
 
     @Test

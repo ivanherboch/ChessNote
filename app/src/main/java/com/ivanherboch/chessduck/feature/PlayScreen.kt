@@ -40,6 +40,7 @@ import com.ivanherboch.chessduck.ui.Arrow
 import com.ivanherboch.chessduck.ui.AutoText
 import com.ivanherboch.chessduck.ui.Badge
 import com.ivanherboch.chessduck.ui.BoardRow
+import com.ivanherboch.chessduck.ui.CapturedBar
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.DuckButton
 import com.ivanherboch.chessduck.ui.DuckChip
@@ -131,6 +132,10 @@ fun PlayScreen(vm: PlayViewModel) {
                     onMove = vm::playerMove,
                 )
             }
+        },
+        underBoard = {
+            // Pièces capturées et avantage matériel, alignés sur le plateau (décalé par la jauge si elle est affichée).
+            CapturedBar(s.position, Modifier.padding(top = 3.dp, start = if (s.evalOn) 15.dp else 0.dp))
         },
         bottom = {
             MoveStrip(s.line, s.cursor, Modifier.padding(top = 5.dp))

@@ -187,6 +187,7 @@ fun ModuleLayout(
     bottomMin: Dp,
     top: @Composable ColumnScope.() -> Unit,
     board: @Composable () -> Unit,
+    underBoard: @Composable () -> Unit = {},
     bottom: @Composable ColumnScope.() -> Unit,
 ) {
     Layout(
@@ -194,19 +195,24 @@ fun ModuleLayout(
             Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp), content = top)
             Box(contentAlignment = Alignment.Center) { board() }
             Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp), content = bottom)
+            // Zone collée sous l'échiquier, exactement à la largeur du plateau (vide par défaut).
+            Box { underBoard() }
         }
     ) { measurables, constraints ->
         val w = constraints.maxWidth
         val h = constraints.maxHeight
         val topP = measurables[0].measure(Constraints(minWidth = w, maxWidth = w, minHeight = 0, maxHeight = h))
-        val side = minOf(w, h - topP.height - bottomMin.roundToPx()).coerceAtLeast(0)
+        val underH = measurables[3].minIntrinsicHeight(w)
+        val side = minOf(w, h - topP.height - underH - bottomMin.roundToPx()).coerceAtLeast(0)
         val boardP = measurables[1].measure(Constraints.fixed(side, side))
-        val rest = (h - topP.height - side).coerceAtLeast(0)
+        val underP = measurables[3].measure(Constraints(minWidth = side, maxWidth = side, minHeight = 0, maxHeight = underH))
+        val rest = (h - topP.height - side - underP.height).coerceAtLeast(0)
         val bottomP = measurables[2].measure(Constraints.fixed(w, rest))
         layout(w, h) {
             topP.place(0, 0)
             boardP.place((w - side) / 2, topP.height)
-            bottomP.place(0, topP.height + side)
+            underP.place((w - side) / 2, topP.height + side)
+            bottomP.place(0, topP.height + side + underP.height)
         }
     }
 }
