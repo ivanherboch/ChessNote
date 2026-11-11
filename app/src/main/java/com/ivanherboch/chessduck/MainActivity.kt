@@ -18,10 +18,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.BoxWithConstraints
+import android.content.pm.ActivityInfo
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedTextField
@@ -75,6 +79,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         val app = application as ChessDuckApp
+        // Téléphone : portrait. Tablette (plus petite largeur >= 600 dp) : paysage.
+        val tablet = resources.getBoolean(R.bool.is_tablet)
+        requestedOrientation = if (tablet) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setContent {
             val settings by app.prefs.settings.collectAsStateWithLifecycle(initialValue = null)
             val st = settings ?: return@setContent
@@ -87,8 +94,13 @@ class MainActivity : ComponentActivity() {
             app.feedback.soundEnabled = st.sound
             // Le mode enfant impose un écran clair et épuré.
             val dark = st.dark && !st.kidMode
+            // Sur tablette, toute l'interface est agrandie pour garder des textes et des boutons confortables.
+            val base = LocalDensity.current
+            val factor = if (!tablet) 1f else if (LocalConfiguration.current.smallestScreenWidthDp >= 720) 1.3f else 1.15f
             ChessDuckTheme(dark) {
-                CompositionLocalProvider(LocalFeedback provides app.feedback) { MainScreen(st, app) }
+                CompositionLocalProvider(LocalFeedback provides app.feedback, LocalDensity provides Density(base.density * factor, base.fontScale)) {
+                    MainScreen(st, app)
+                }
             }
         }
     }
@@ -118,14 +130,14 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
     }
     if (st.kidMode) {
         KidTheme {
-            Box(Modifier.fillMaxSize().background(LocalDuck.current.bg).statusBarsPadding().navigationBarsPadding()) {
+            Box(Modifier.fillMaxSize().background(LocalDuck.current.bg).safeDrawingPadding()) {
                 KidScreen(kid) { app.scope.launch { app.prefs.setKidMode(false) } }
             }
         }
         return
     }
 
-    Column(Modifier.fillMaxSize().background(c.bg).statusBarsPadding().navigationBarsPadding()) {
+    val header: @Composable () -> Unit = {
         // En-tête global compact
         Row(Modifier.fillMaxWidth().height(46.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
@@ -141,26 +153,34 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
             if (tab == 0) DuckButton("📖 Mémo Anglais", { showMemo = true }, Modifier.padding(end = 6.dp).width(106.dp), accent = c.blue, height = 36.dp)
             DuckButton("⚙️", { showSettings = true }, Modifier.size(width = 44.dp, height = 36.dp), maxSize = 18.sp)
         }
-        Box(Modifier.fillMaxWidth().weight(1f)) {
-            when (tab) {
-                0 -> NotationScreen(notation)
-                1 -> AcademyScreen(academy)
-                2 -> PuzzlesScreen(puzzles)
-                else -> PlayScreen(play)
-            }
+    }
+    val content: @Composable () -> Unit = {
+        when (tab) {
+            0 -> NotationScreen(notation)
+            1 -> AcademyScreen(academy)
+            2 -> PuzzlesScreen(puzzles)
+            else -> PlayScreen(play)
         }
-        // Barre de navigation inférieure fixe à 4 modules
-        Row(Modifier.fillMaxWidth().height(56.dp).background(c.surface)) {
-            TABS.forEachIndexed { i, (emoji, label) ->
-                val selected = tab == i
-                Column(
-                    Modifier.weight(1f).fillMaxHeight().clickable { fb?.key(); tab = i },
-                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-                ) {
-                    Box(Modifier.clip(RoundedCornerShape(12.dp)).background(if (selected) c.gold.copy(alpha = 0.22f) else c.surface).padding(horizontal = 16.dp, vertical = 1.dp)) {
-                        AutoText(emoji, maxSize = 19.sp, align = TextAlign.Center)
-                    }
-                    AutoText(label, color = if (selected) c.gold else c.muted, maxSize = 12.sp, weight = if (selected) FontWeight.Bold else FontWeight.Medium, align = TextAlign.Center)
+    }
+    BoxWithConstraints(Modifier.fillMaxSize().background(c.bg).safeDrawingPadding()) {
+        if (maxWidth > maxHeight) {
+            // Paysage (tablette) : rail de navigation à gauche pour laisser toute la hauteur à l'échiquier.
+            Row(Modifier.fillMaxSize()) {
+                Column(Modifier.width(84.dp).fillMaxHeight().background(c.surface)) {
+                    TABS.forEachIndexed { i, (emoji, label) -> TabItem(emoji, label, tab == i, Modifier.weight(1f).fillMaxWidth()) { fb?.key(); tab = i } }
+                }
+                Column(Modifier.weight(1f).fillMaxHeight().padding(start = 6.dp)) {
+                    header()
+                    Box(Modifier.fillMaxWidth().weight(1f)) { content() }
+                }
+            }
+        } else {
+            Column(Modifier.fillMaxSize()) {
+                header()
+                Box(Modifier.fillMaxWidth().weight(1f)) { content() }
+                // Barre de navigation inférieure fixe à 4 modules
+                Row(Modifier.fillMaxWidth().height(56.dp).background(c.surface)) {
+                    TABS.forEachIndexed { i, (emoji, label) -> TabItem(emoji, label, tab == i, Modifier.weight(1f).fillMaxHeight()) { fb?.key(); tab = i } }
                 }
             }
         }
@@ -168,6 +188,17 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
 
     if (showMemo) MemoSheet { showMemo = false }
     if (showSettings) SettingsSheet(st, app) { showSettings = false }
+}
+
+@Composable
+private fun TabItem(emoji: String, label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    val c = LocalDuck.current
+    Column(modifier.clickable { onClick() }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Box(Modifier.clip(RoundedCornerShape(12.dp)).background(if (selected) c.gold.copy(alpha = 0.22f) else c.surface).padding(horizontal = 16.dp, vertical = 1.dp)) {
+            AutoText(emoji, maxSize = 19.sp, align = TextAlign.Center)
+        }
+        AutoText(label, color = if (selected) c.gold else c.muted, maxSize = 12.sp, weight = if (selected) FontWeight.Bold else FontWeight.Medium, align = TextAlign.Center)
+    }
 }
 
 /** Paramètres globaux : thème Jour/Nuit et pseudo (persistés via DataStore). */
@@ -197,7 +228,7 @@ private fun SettingsSheet(st: Settings, app: ChessDuckApp, onClose: () -> Unit) 
         SectionTitle("MODE ENFANT")
         DuckButton("🧒 Activer le mode enfant", { onClose(); scope.launch { app.prefs.setKidMode(true) } }, Modifier.fillMaxWidth(), accent = c.green, filled = true, height = 44.dp, maxSize = 15.sp)
         AutoText(
-            "Un écran clair et épuré pour jouer à deux avec un enfant : grand échiquier, rappel des pièces, Girafe et Fou rigolos, sans ordinateur ni historique.",
+            "Un écran joyeux et coloré pour jouer à deux avec un enfant : grand échiquier, cavalier en forme de girafe, animations qui montrent comment chaque pièce bouge, sans ordinateur ni historique.",
             color = c.muted, maxSize = 12.sp, maxLines = 4, modifier = Modifier.padding(top = 6.dp),
         )
         SectionTitle("PSEUDO DU JOUEUR")
@@ -230,7 +261,7 @@ private fun SettingsSheet(st: Settings, app: ChessDuckApp, onClose: () -> Unit) 
         SectionTitle("À PROPOS")
         AutoText(
             "ChessDuck fonctionne 100 % hors-ligne. Moteur : Stockfish 11 (GPLv3). Problèmes : base ouverte Lichess (CC0). " +
-                "Pièces : série classique de Cburnett et pièces féeriques Girafe et Fou, Wikimedia Commons (CC BY-SA 3.0). Police du mode enfant : Fredoka (OFL).",
+                "Pièces : série classique de Cburnett et pièce féerique Girafe, Wikimedia Commons (CC BY-SA 3.0). Police du mode enfant : Fredoka (OFL).",
             color = c.muted, maxSize = 12.sp, maxLines = 6,
         )
         val context = LocalContext.current

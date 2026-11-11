@@ -122,6 +122,9 @@ interface UserDao {
     @Query("UPDATE games SET analysis = :analysis WHERE id = :id")
     suspend fun saveAnalysis(id: Long, analysis: String)
 
+    @Query("DELETE FROM games WHERE id = :id")
+    suspend fun deleteGame(id: Long)
+
     @Query("SELECT * FROM games ORDER BY date DESC")
     fun games(): Flow<List<GameRecord>>
 

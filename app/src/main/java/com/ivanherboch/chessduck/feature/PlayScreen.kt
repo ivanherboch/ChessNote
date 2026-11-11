@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -150,7 +152,7 @@ fun PlayScreen(vm: PlayViewModel) {
         },
     )
 
-    if (history) HistorySheet(games, onClose = { history = false }) { g ->
+    if (history) HistorySheet(games, onClose = { history = false }, onDelete = vm::deleteGame) { g ->
         // Fermeture instantanée du tiroir, puis lecture automatique sur l'échiquier.
         history = false
         vm.openReview(g)
@@ -249,17 +251,30 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
                 )
             }
         },
+        underBoard = { CapturedBar(line.positions[cur], Modifier.padding(top = 3.dp, start = if (r.evalOn) 15.dp else 0.dp)) },
         bottom = {
             MoveStrip(line, cur, Modifier.padding(top = 5.dp))
             val a = r.analysis.getOrNull(cur)
+            val missed = if (cur > 0) GameLogic.missedMate(line.positions[cur - 1].whiteToMove, r.analysis.getOrNull(cur - 1), a) else null
             val text = buildString {
-                if (cur == 0) append("Position initiale. La partie se déroule automatiquement : ⏸ pour l'arrêter, ◀ ▶ pour naviguer.")
+                if (cur == 0) {
+                    append("Position initiale. La partie se déroule automatiquement : ⏸ pour l'arrêter, ◀ ▶ pour naviguer.")
+                    // Récapitulatif des mats en 1 ou 2 coups qui ont été manqués pendant la partie.
+                    val all = (1..line.size).mapNotNull { i ->
+                        GameLogic.missedMate(line.positions[i - 1].whiteToMove, r.analysis.getOrNull(i - 1), r.analysis.getOrNull(i))?.let { k -> "coup $i (mat en $k)" }
+                    }
+                    if (all.isNotEmpty()) append(" ⚠️ Mats manqués : ${all.joinToString(", ")}.")
+                }
                 else {
                     val before = line.positions[cur - 1]
                     append(moveLabel(before.fullmove, before.whiteToMove, line.sans[cur - 1]))
                     if (note != null) append(" $note — ${annotationText(note)}")
                     append(".")
-                    if (note != null && note.startsWith("?")) {
+                    if (missed != null) {
+                        val who = sideName(g, before.whiteToMove)
+                        val best = r.analysis.getOrNull(cur - 1)?.best?.takeIf { it.isNotEmpty() }?.let { before.san(com.ivanherboch.chessduck.chess.Move.fromUci(it)) }
+                        append(" ⚠️ Mat en $missed manqué par $who" + (if (best != null) " : $best ${if (missed == 1) "matait immédiatement" else "forçait le mat en 2 coups"}." else "."))
+                    } else if (note != null && note.startsWith("?")) {
                         val best = r.analysis.getOrNull(cur - 1)?.best?.takeIf { it.isNotEmpty() }
                         if (best != null) append(" L'ordinateur préférait ${before.san(com.ivanherboch.chessduck.chess.Move.fromUci(best))}.")
                     }
@@ -268,6 +283,7 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
                 if (cur == line.size) append(" Fin de la partie : ${g.result} (${g.reason}).")
             }
             val tone = when {
+                missed != null -> Tone.BAD
                 note == null -> Tone.INFO
                 note.startsWith("!") -> Tone.GOOD
                 note == "?!" -> Tone.GOLD
@@ -285,11 +301,19 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
     )
 }
 
+/** Nom du joueur qui avait le trait, pour les commentaires de revue. */
+private fun sideName(g: GameRecord, white: Boolean): String {
+    val name = if (white) g.whiteName else g.blackName
+    return if (name.isEmpty()) (if (white) "les Blancs" else "les Noirs") else "$name (${if (white) "Blancs" else "Noirs"})"
+}
+
 private fun formatDate(t: Long): String = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRANCE).format(Date(t))
 
 @Composable
-private fun HistorySheet(games: List<GameRecord>, onClose: () -> Unit, onReplay: (GameRecord) -> Unit) {
+private fun HistorySheet(games: List<GameRecord>, onClose: () -> Unit, onDelete: (Long) -> Unit, onReplay: (GameRecord) -> Unit) {
     val c = LocalDuck.current
+    // Partie en attente de confirmation de suppression (une seule à la fois).
+    var pendingDelete by remember { mutableStateOf(-1L) }
     DuckSheet("📜 Historique des parties", onClose) {
         if (games.isEmpty()) {
             AutoText("Aucune partie pour l'instant. Terminez une partie en Jeu Libre : elle apparaîtra ici avec sa revue commentée.", color = c.muted, maxSize = 14.sp, maxLines = 4, modifier = Modifier.padding(vertical = 16.dp))
@@ -308,6 +332,11 @@ private fun HistorySheet(games: List<GameRecord>, onClose: () -> Unit, onReplay:
                         val d = g.eloAfter - g.eloBefore
                         AutoText("ELO ${g.eloAfter} (${if (d >= 0) "+$d" else "−${-d}"})", color = if (d >= 0) c.green else c.red, maxSize = 14.sp, weight = FontWeight.Bold)
                     }
+                    Box(
+                        Modifier.padding(start = 10.dp).size(34.dp).clip(RoundedCornerShape(17.dp)).background(c.surfaceHi)
+                            .clickable { pendingDelete = if (pendingDelete == g.id) -1L else g.id },
+                        contentAlignment = Alignment.Center,
+                    ) { AutoText("🗑", maxSize = 16.sp, align = TextAlign.Center) }
                 }
                 val nbMoves = (g.moves.count { it == ' ' } + 2) / 2
                 val players = when {
@@ -324,7 +353,15 @@ private fun HistorySheet(games: List<GameRecord>, onClose: () -> Unit, onReplay:
                     "${formatDate(g.date)} · ${g.result} par ${g.reason} · $nbMoves coups",
                     color = c.muted, maxSize = 12.sp, maxLines = 2, modifier = Modifier.padding(vertical = 4.dp),
                 )
-                DuckButton("Rejouer sur l’échiquier", { onReplay(g) }, Modifier.fillMaxWidth(), accent = c.blue, filled = true, height = 38.dp, maxSize = 14.sp)
+                if (pendingDelete == g.id) {
+                    AutoText("Supprimer définitivement cette partie de l'historique ?", color = c.red, maxSize = 13.sp, weight = FontWeight.SemiBold, maxLines = 2, modifier = Modifier.padding(bottom = 6.dp))
+                    EqualRow {
+                        DuckButton("Annuler", { pendingDelete = -1L }, Modifier.weight(1f), height = 38.dp, maxSize = 14.sp)
+                        DuckButton("🗑 Supprimer", { pendingDelete = -1L; onDelete(g.id) }, Modifier.weight(1f), accent = c.red, filled = true, height = 38.dp, maxSize = 14.sp)
+                    }
+                } else {
+                    DuckButton("Rejouer sur l’échiquier", { onReplay(g) }, Modifier.fillMaxWidth(), accent = c.blue, filled = true, height = 38.dp, maxSize = 14.sp)
+                }
             }
         }
     }

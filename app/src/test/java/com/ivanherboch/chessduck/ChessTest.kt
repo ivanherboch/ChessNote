@@ -94,6 +94,17 @@ class ChessTest {
         assertEquals(1 + 1 + 3 + 3 + 9 - 5, m.diff)
     }
 
+    @Test
+    fun missedMates() {
+        val mate1 = Analysis(100000 - 1, null, "d1d8")        // les Blancs ont un mat en 1
+        assertEquals(1, GameLogic.missedMate(true, mate1, Analysis(300, null, "a7a6")))
+        assertNull(GameLogic.missedMate(true, mate1, Analysis(100000, null, "")))           // mat joué
+        val mate2 = Analysis(-(100000 - 3), null, "h4h2")     // les Noirs ont un mat en 2
+        assertEquals(2, GameLogic.missedMate(false, mate2, Analysis(-250, null, "g1h1")))
+        assertNull(GameLogic.missedMate(false, mate2, Analysis(-(100000 - 2), null, "g1h1"))) // mat en 1 conservé
+        assertNull(GameLogic.missedMate(true, Analysis(100000 - 5, null, "x"), Analysis(0, null, "y"))) // mat en 3 : non signalé
+    }
+
     /** Validation croisée du générateur de coups sur les 50 000 problèmes embarqués (si l'export est disponible). */
     @Test
     fun allEmbeddedPuzzlesAreLegal() {

@@ -112,11 +112,8 @@ val PIECE_RES = mapOf(
     BISHOP + BLACK to R.drawable.p_bb, KNIGHT + BLACK to R.drawable.p_bn, PAWN + BLACK to R.drawable.p_bp,
 )
 
-/** Mode enfant : la Girafe remplace le Cavalier et le Fou (« Fool ») remplace le Fou classique. */
-val KID_PIECE_RES = PIECE_RES + mapOf(
-    KNIGHT to R.drawable.p_wg, KNIGHT + BLACK to R.drawable.p_bg,
-    BISHOP to R.drawable.p_wt, BISHOP + BLACK to R.drawable.p_bt,
-)
+/** Mode enfant : la Girafe remplace le Cavalier ; toutes les autres pièces restent classiques. */
+val KID_PIECE_RES = PIECE_RES + mapOf(KNIGHT to R.drawable.p_wg, KNIGHT + BLACK to R.drawable.p_bg)
 
 @Composable
 fun rememberPieceImages(kid: Boolean = false): Array<ImageBitmap?> {

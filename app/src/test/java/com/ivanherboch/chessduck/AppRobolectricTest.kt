@@ -90,17 +90,20 @@ class AppRobolectricTest {
 
     @Test
     fun capturedBars() {
-        val pos = com.ivanherboch.chessduck.chess.Position.fromFen("r1b1kb1r/pppppp2/8/8/8/8/1PPP1PPP/RNBQKB2 w Qkq - 0 1")
+        // Pire cas : presque tout a été capturé des deux côtés ; la barre doit tout contenir sur 360 dp.
+        val worst = com.ivanherboch.chessduck.chess.Position.fromFen("4k3/8/8/8/8/8/8/3QK3 w - - 0 1")
+        val all = com.ivanherboch.chessduck.chess.Position.fromFen("4k3/8/8/8/8/8/8/4K3 w - - 0 1")
+        val few = com.ivanherboch.chessduck.chess.Position.fromFen("r1b1kb1r/pppppp2/8/8/8/8/1PPP1PPP/RNBQKB2 w Qkq - 0 1")
         rule.activity.setContent {
             androidx.compose.foundation.layout.Column {
                 for (dark in listOf(true, false)) com.ivanherboch.chessduck.ui.ChessDuckTheme(dark) {
-                    androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.background(com.ivanherboch.chessduck.ui.LocalDuck.current.bg).padding(12.dp)) {
-                        com.ivanherboch.chessduck.ui.CapturedBar(pos)
+                    androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.background(com.ivanherboch.chessduck.ui.LocalDuck.current.bg).padding(vertical = 8.dp)) {
+                        for (p in listOf(few, worst, all)) com.ivanherboch.chessduck.ui.CapturedBar(p, androidx.compose.ui.Modifier.padding(vertical = 4.dp))
                     }
                 }
                 com.ivanherboch.chessduck.feature.KidTheme {
-                    androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.background(com.ivanherboch.chessduck.ui.LocalDuck.current.bg).padding(12.dp)) {
-                        com.ivanherboch.chessduck.ui.CapturedBar(pos, kid = true)
+                    androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.background(com.ivanherboch.chessduck.ui.LocalDuck.current.bg).padding(8.dp)) {
+                        for (p in listOf(few, worst, all)) com.ivanherboch.chessduck.ui.CapturedBar(p, androidx.compose.ui.Modifier.padding(vertical = 4.dp), kid = true)
                     }
                 }
             }
@@ -129,12 +132,17 @@ class AppRobolectricTest {
         // Mode enfant : écran épuré à deux joueurs, puis retour au Jeu Libre réinitialisé.
         rule.onNodeWithText("⚙️").performClick(); settle(800); shot("5b_parametres_jour")
         rule.onNodeWithText("🧒 Activer le mode enfant").performClick(); settle(1500); shot("9_enfant")
+        // Leçons animées du mode enfant
+        rule.onNodeWithText("Cavalier").performClick(); settle(1400); shot("9b_lecon_cavalier")
+        rule.onNodeWithText("⬅️ Revenir à la partie").performClick(); settle(800)
+        rule.onNodeWithText("Pion").performClick(); settle(900); shot("9c_lecon_pion")
+        rule.onNodeWithText("⬅️ Revenir à la partie").performClick(); settle(800)
         rule.onNodeWithText("✕ Quitter le mode enfant").performClick(); settle(1500)
         // Régression : le mode enfant doit pouvoir être relancé plusieurs fois de suite.
         repeat(3) {
             rule.onNodeWithText("⚙️").performClick(); settle(800)
             rule.onNodeWithText("🧒 Activer le mode enfant").performClick(); settle(1200)
-            rule.onNodeWithText("Nom des pièces").assertExists()
+            rule.onNodeWithText("👆 Touche une pièce pour voir comment elle bouge !").assertExists()
             rule.onNodeWithText("✕ Quitter le mode enfant").performClick(); settle(1200)
             rule.onNodeWithText("Jeu Libre").assertExists()
         }

@@ -32,6 +32,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -163,7 +165,9 @@ fun FeedbackCard(text: String, tone: Tone, modifier: Modifier = Modifier, maxSiz
 fun DuckSheet(title: String, onClose: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     val c = LocalDuck.current
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val maxH = (LocalConfiguration.current.screenHeightDp * 0.82f).dp
+    // Hauteur réelle de l'écran, exprimée dans la densité courante (agrandie sur tablette).
+    val screenPx = LocalConfiguration.current.screenHeightDp * LocalContext.current.resources.displayMetrics.density
+    val maxH = (screenPx * 0.82f / LocalDensity.current.density).dp
     ModalBottomSheet(onDismissRequest = onClose, sheetState = state, containerColor = c.bg, contentColor = c.text) {
         Column(Modifier.fillMaxWidth().heightIn(max = maxH).navigationBarsPadding().padding(horizontal = 16.dp)) {
             Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -201,6 +205,24 @@ fun ModuleLayout(
     ) { measurables, constraints ->
         val w = constraints.maxWidth
         val h = constraints.maxHeight
+        if (w > h * 1.15f) {
+            // Paysage (tablette) : échiquier à gauche sur toute la hauteur, panneau de commandes à droite.
+            val gap = 8.dp.roundToPx()
+            val underH0 = measurables[3].minIntrinsicHeight(h)
+            val side = minOf(h - underH0, w - 300.dp.roundToPx(), (w * 0.64f).toInt()).coerceAtLeast(0)
+            val boardP = measurables[1].measure(Constraints.fixed(side, side))
+            val underP = measurables[3].measure(Constraints(minWidth = side, maxWidth = side, minHeight = 0, maxHeight = underH0))
+            val panelW = (w - side - gap).coerceAtLeast(0)
+            val topP = measurables[0].measure(Constraints(minWidth = panelW, maxWidth = panelW, minHeight = 0, maxHeight = h))
+            val bottomP = measurables[2].measure(Constraints.fixed(panelW, (h - topP.height).coerceAtLeast(0)))
+            val y0 = ((h - side - underP.height) / 2).coerceAtLeast(0)
+            return@Layout layout(w, h) {
+                boardP.place(0, y0)
+                underP.place(0, y0 + side)
+                topP.place(side + gap, 0)
+                bottomP.place(side + gap, topP.height)
+            }
+        }
         val topP = measurables[0].measure(Constraints(minWidth = w, maxWidth = w, minHeight = 0, maxHeight = h))
         val underH = measurables[3].minIntrinsicHeight(w)
         val side = minOf(w, h - topP.height - underH - bottomMin.roundToPx()).coerceAtLeast(0)

@@ -1,0 +1,29 @@
+name: Publier la release APK
+
+# Dès qu'un APK est poussé dans releases/, une release GitHub « vX.Y.Z » est créée (ou mise à jour) avec ce fichier.
+on:
+  push:
+    paths:
+      - 'releases/*.apk'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Créer ou mettre à jour la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          apk=$(ls releases/ChessDuck-*.apk | sort -V | tail -1)
+          version=$(basename "$apk" .apk | sed 's/^ChessDuck-//')
+          tag="v$version"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$apk" --clobber
+          else
+            gh release create "$tag" "$apk" --target "$GITHUB_SHA" --title "ChessDuck $version" --notes-file docs/release-notes.md
+          fi

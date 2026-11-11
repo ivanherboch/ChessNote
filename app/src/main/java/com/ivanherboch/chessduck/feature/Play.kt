@@ -16,6 +16,8 @@ import com.ivanherboch.chessduck.chess.pieceType
 import com.ivanherboch.chessduck.data.GameRecord
 import com.ivanherboch.chessduck.data.Settings
 import com.ivanherboch.chessduck.engine.MATE
+import com.ivanherboch.chessduck.engine.isMateScore
+import com.ivanherboch.chessduck.engine.mateIn
 import com.ivanherboch.chessduck.engine.winPercent
 import com.ivanherboch.chessduck.ui.BoardAnim
 import com.ivanherboch.chessduck.ui.Tone
@@ -92,6 +94,22 @@ object GameLogic {
         val cheapest = attackers.minOf { PIECE_VALUES[pieceType(after[it])] }
         val defended = after.attackers(m.to, !after.whiteToMove).isNotEmpty()
         return cheapest < PIECE_VALUES[moved] || !defended
+    }
+
+    /**
+     * Mat manqué : renvoie 1 ou 2 si le camp au trait disposait d'un mat en 1 ou 2 coups ([a0])
+     * et que le coup joué ne le conserve pas ([a1] = analyse de la position obtenue), sinon null.
+     */
+    fun missedMate(whiteToMove: Boolean, a0: Analysis?, a1: Analysis?): Int? {
+        if (a0 == null || a1 == null) return null
+        val sign = if (whiteToMove) 1 else -1
+        val before = sign * a0.eval
+        if (!isMateScore(before) || before <= 0) return null
+        val k = mateIn(before)
+        if (k !in 1..2) return null
+        val after = sign * a1.eval
+        val kept = isMateScore(after) && after > 0 && mateIn(after) <= k - 1
+        return if (kept) null else k
     }
 
     fun endText(end: GameEnd): String = when (end) {
@@ -342,6 +360,10 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
                 )
             }
         }
+    }
+
+    fun deleteGame(id: Long) {
+        viewModelScope.launch { duck.db.user().deleteGame(id) }
     }
 
     // ---- Revue de partie ----
