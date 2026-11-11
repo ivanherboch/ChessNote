@@ -14,6 +14,10 @@ private val Context.store by preferencesDataStore("chessduck")
 data class Settings(
     val dark: Boolean = true,
     val haptics: Boolean = true,
+    val sound: Boolean = true,
+    val kidMode: Boolean = false,
+    /** Identifiants des derniers problèmes joués, du plus récent au plus ancien. */
+    val recentPuzzles: List<String> = emptyList(),
     val pseudo: String = "Joueur",
     val elo: Int = 1200,
     val twoPlayers: Boolean = false,
@@ -33,6 +37,9 @@ class Prefs(private val context: Context) {
     private object K {
         val dark = booleanPreferencesKey("dark")
         val haptics = booleanPreferencesKey("haptics")
+        val sound = booleanPreferencesKey("sound")
+        val kid = booleanPreferencesKey("kid_mode")
+        val recent = stringPreferencesKey("recent_puzzles")
         val pseudo = stringPreferencesKey("pseudo")
         val elo = intPreferencesKey("elo")
         val twoPlayers = booleanPreferencesKey("two_players")
@@ -49,6 +56,9 @@ class Prefs(private val context: Context) {
         Settings(
             dark = p[K.dark] ?: true,
             haptics = p[K.haptics] ?: true,
+            sound = p[K.sound] ?: true,
+            kidMode = p[K.kid] ?: false,
+            recentPuzzles = (p[K.recent] ?: "").split(',').filter { it.isNotBlank() },
             pseudo = p[K.pseudo] ?: "Joueur",
             elo = p[K.elo] ?: 1200,
             twoPlayers = p[K.twoPlayers] ?: false,
@@ -64,6 +74,15 @@ class Prefs(private val context: Context) {
 
     suspend fun setDark(v: Boolean) = context.store.edit { it[K.dark] = v }
     suspend fun setHaptics(v: Boolean) = context.store.edit { it[K.haptics] = v }
+    suspend fun setSound(v: Boolean) = context.store.edit { it[K.sound] = v }
+    suspend fun setKidMode(v: Boolean) = context.store.edit { it[K.kid] = v }
+
+    /** Place [id] en tête de l'historique des problèmes joués (6 conservés : le courant + 5 précédents). */
+    suspend fun pushRecentPuzzle(id: String) = context.store.edit { p ->
+        val old = (p[K.recent] ?: "").split(',').filter { it.isNotBlank() && it != id }
+        p[K.recent] = (listOf(id) + old).take(6).joinToString(",")
+        p[K.puzzleId] = id
+    }
     suspend fun setPseudo(v: String) = context.store.edit { it[K.pseudo] = v }
     suspend fun setElo(v: Int) = context.store.edit { it[K.elo] = v }
     suspend fun setGameSettings(twoPlayers: Boolean, color: Int, aiElo: Int) = context.store.edit {

@@ -98,7 +98,7 @@ fun PlayScreen(vm: PlayViewModel) {
                     val d = tally.firstOrNull { it.outcome == 0 }?.n ?: 0
                     val l = tally.firstOrNull { it.outcome == -1 }?.n ?: 0
                     AutoText(
-                        "Bilan ${w}V / ${d}N / ${l}D · " + if (s.twoPlayers) "👥 2 joueurs" else "🤖 Stockfish ${s.aiElo}",
+                        "Bilan ${w}V / ${d}N / ${l}D · " + if (s.twoPlayers) "👥 2 joueurs" else "🤖 Ordinateur ${s.aiElo}",
                         color = c.muted, maxSize = 12.sp,
                     )
                 }
@@ -162,10 +162,10 @@ private fun liveStatus(s: PlayState): Pair<String, Tone> {
     s.result?.let { r ->
         return (if (s.cursor < s.line.size) "⏪ Coup ${s.cursor} / ${s.line.size}. " else "") + r.text to r.tone
     }
-    if (s.thinking) return "🤖 Stockfish (${s.aiElo} ELO) réfléchit…" to Tone.NEUTRAL
+    if (s.thinking) return "🤖 L'ordinateur (${s.aiElo} ELO) réfléchit…" to Tone.NEUTRAL
     val evalNote = if (s.evalOn) s.analysis[s.cursor]?.let { " Évaluation : ${evalLabel(it.eval)}." } ?: "" else ""
     if (s.canPlay && s.hintStage > 0) {
-        val h = s.hint ?: return "💡 Stockfish finit son calcul, l'indice s'affiche dans un instant…" to Tone.GOLD
+        val h = s.hint ?: return "💡 Calcul en cours, l'indice s'affiche dans un instant…" to Tone.GOLD
         return if (s.hintStage == 1) "💡 Indice 1/2 : la pièce à jouer est surlignée en vert. Touchez encore pour voir le coup." to Tone.GOLD
         else "💡 Indice 2/2 : coup suggéré ${pos.san(h)}.$evalNote" to Tone.GOLD
     }
@@ -175,7 +175,7 @@ private fun liveStatus(s: PlayState): Pair<String, Tone> {
     }
     val check = if (pos.inCheck) "Échec ! " else ""
     return if (s.twoPlayers) "$check👥 Trait aux $side : passez l'appareil au joueur concerné.$evalNote" to Tone.INFO
-    else if (s.line.size == 0) "⚔️ Nouvelle partie contre Stockfish ${s.aiElo}. Vous jouez les $side : à vous de commencer !$evalNote" to Tone.INFO
+    else if (s.line.size == 0) "⚔️ Nouvelle partie contre l'ordinateur (${s.aiElo} ELO). Vous jouez les $side : à vous de commencer !$evalNote" to Tone.INFO
     else "${check}À vous de jouer (les $side).$evalNote" to Tone.INFO
 }
 
@@ -221,7 +221,7 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
         top = {
             Row(Modifier.fillMaxWidth().padding(top = 4.dp).height(38.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Column(Modifier.weight(1.6f)) {
-                    AutoText("📜 Revue : ${g.opponent}", maxSize = 14.sp, weight = FontWeight.Bold)
+                    AutoText("📜 Revue : ${g.opponent.replace("Stockfish", "Ordinateur")}", maxSize = 14.sp, weight = FontWeight.Bold)
                     AutoText("${formatDate(g.date)} · ${g.result} (${g.reason})", color = c.muted, maxSize = 12.sp)
                 }
                 DuckButton("✕ Quitter la revue", vm::closeReview, Modifier.weight(1f), accent = c.red, height = 38.dp)
@@ -256,7 +256,7 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
                     append(".")
                     if (note != null && note.startsWith("?")) {
                         val best = r.analysis.getOrNull(cur - 1)?.best?.takeIf { it.isNotEmpty() }
-                        if (best != null) append(" Stockfish préférait ${before.san(com.ivanherboch.chessduck.chess.Move.fromUci(best))}.")
+                        if (best != null) append(" L'ordinateur préférait ${before.san(com.ivanherboch.chessduck.chess.Move.fromUci(best))}.")
                     }
                 }
                 if (a != null) append(" Évaluation : ${evalLabel(a.eval)}.") else append(" Analyse en cours…")
@@ -306,7 +306,7 @@ private fun HistorySheet(games: List<GameRecord>, onClose: () -> Unit, onReplay:
                 }
                 val nbMoves = (g.moves.count { it == ' ' } + 2) / 2
                 AutoText(
-                    "${formatDate(g.date)} · contre ${g.opponent}" + (if (g.vsComputer) " · avec les ${if (g.playerWhite) "Blancs" else "Noirs"}" else "") +
+                    "${formatDate(g.date)} · contre ${g.opponent.replace("Stockfish", "Ordinateur")}" + (if (g.vsComputer) " · avec les ${if (g.playerWhite) "Blancs" else "Noirs"}" else "") +
                         " · ${g.result} par ${g.reason} · $nbMoves coups",
                     color = c.muted, maxSize = 12.sp, maxLines = 3, modifier = Modifier.padding(vertical = 4.dp),
                 )
@@ -335,7 +335,7 @@ private fun GameSettingsSheet(twoPlayers: Boolean, color: Int, aiElo: Int, onClo
                 DuckChip("🎲 Aléatoire", col == 1, { col = 1 }, Modifier.weight(1f))
                 DuckChip("⬛ Noirs", col == 2, { col = 2 }, Modifier.weight(1f))
             }
-            SectionTitle("NIVEAU DE STOCKFISH : ${elo.toInt()} ELO")
+            SectionTitle("NIVEAU DE L'ORDINATEUR : ${elo.toInt()} ELO")
             Slider(
                 value = elo, onValueChange = { elo = (it / 50).toInt() * 50f }, valueRange = 600f..2400f, steps = 35,
                 colors = SliderDefaults.colors(thumbColor = c.gold, activeTrackColor = c.gold, inactiveTrackColor = c.surfaceHi, activeTickColor = Color.Transparent, inactiveTickColor = Color.Transparent),

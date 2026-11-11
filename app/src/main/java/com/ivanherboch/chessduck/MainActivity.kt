@@ -29,6 +29,8 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +51,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ivanherboch.chessduck.data.Settings
 import com.ivanherboch.chessduck.feature.AcademyScreen
 import com.ivanherboch.chessduck.feature.AcademyViewModel
+import com.ivanherboch.chessduck.feature.KidScreen
+import com.ivanherboch.chessduck.feature.KidViewModel
 import com.ivanherboch.chessduck.feature.MemoSheet
 import com.ivanherboch.chessduck.feature.NotationScreen
 import com.ivanherboch.chessduck.feature.NotationViewModel
@@ -74,13 +78,16 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by app.prefs.settings.collectAsStateWithLifecycle(initialValue = null)
             val st = settings ?: return@setContent
-            DisposableEffect(st.dark) {
-                val style = if (st.dark) SystemBarStyle.dark(AColor.TRANSPARENT) else SystemBarStyle.light(AColor.TRANSPARENT, AColor.TRANSPARENT)
+            DisposableEffect(st.dark, st.kidMode) {
+                val style = if (st.dark && !st.kidMode) SystemBarStyle.dark(AColor.TRANSPARENT) else SystemBarStyle.light(AColor.TRANSPARENT, AColor.TRANSPARENT)
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
                 onDispose {}
             }
             app.feedback.hapticsEnabled = st.haptics
-            ChessDuckTheme(st.dark) {
+            app.feedback.soundEnabled = st.sound
+            // Le mode enfant impose un écran clair et épuré.
+            val dark = st.dark && !st.kidMode
+            ChessDuckTheme(dark) {
                 CompositionLocalProvider(LocalFeedback provides app.feedback) { MainScreen(st, app) }
             }
         }
@@ -101,6 +108,21 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
     val academy: AcademyViewModel = viewModel()
     val puzzles: PuzzlesViewModel = viewModel()
     val play: PlayViewModel = viewModel()
+    val kid: KidViewModel = viewModel()
+    val scope = rememberCoroutineScope()
+
+    // En quittant le mode enfant, la grille du Jeu Libre repart de zéro.
+    var wasKid by remember { mutableStateOf(st.kidMode) }
+    LaunchedEffect(st.kidMode) {
+        if (wasKid && !st.kidMode) { kid.reset(); play.closeReview(); play.newGame() }
+        wasKid = st.kidMode
+    }
+    if (st.kidMode) {
+        Box(Modifier.fillMaxSize().background(c.bg).statusBarsPadding().navigationBarsPadding()) {
+            KidScreen(kid) { scope.launch { app.prefs.setKidMode(false) } }
+        }
+        return
+    }
 
     Column(Modifier.fillMaxSize().background(c.bg).statusBarsPadding().navigationBarsPadding()) {
         // En-tête global compact
@@ -159,11 +181,22 @@ private fun SettingsSheet(st: Settings, app: ChessDuckApp, onClose: () -> Unit) 
             DuckChip("🌙 Mode Nuit (sombre)", st.dark, { scope.launch { app.prefs.setDark(true) } }, Modifier.weight(1f))
             DuckChip("☀️ Mode Jour (clair)", !st.dark, { scope.launch { app.prefs.setDark(false) } }, Modifier.weight(1f))
         }
+        SectionTitle("BRUIT DES PIÈCES")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            DuckChip("🔉 Son activé", st.sound, { scope.launch { app.prefs.setSound(true) } }, Modifier.weight(1f))
+            DuckChip("🔇 Son désactivé", !st.sound, { scope.launch { app.prefs.setSound(false) } }, Modifier.weight(1f))
+        }
         SectionTitle("RETOUR HAPTIQUE")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DuckChip("📳 Vibration activée", st.haptics, { scope.launch { app.prefs.setHaptics(true) } }, Modifier.weight(1f))
             DuckChip("🔕 Vibration désactivée", !st.haptics, { scope.launch { app.prefs.setHaptics(false) } }, Modifier.weight(1f))
         }
+        SectionTitle("MODE ENFANT")
+        DuckButton("🧒 Activer le mode enfant", { scope.launch { app.prefs.setKidMode(true) }; onClose() }, Modifier.fillMaxWidth(), accent = c.green, filled = true, height = 44.dp, maxSize = 15.sp)
+        AutoText(
+            "Un écran clair et épuré pour jouer à deux avec un enfant : grand échiquier, rappel des pièces, Girafe et Fou rigolos, sans ordinateur ni historique.",
+            color = c.muted, maxSize = 12.sp, maxLines = 4, modifier = Modifier.padding(top = 6.dp),
+        )
         SectionTitle("PSEUDO DU JOUEUR")
         OutlinedTextField(
             value = pseudo,
@@ -181,9 +214,11 @@ private fun SettingsSheet(st: Settings, app: ChessDuckApp, onClose: () -> Unit) 
         SectionTitle("À PROPOS")
         AutoText(
             "ChessDuck fonctionne 100 % hors-ligne. Moteur : Stockfish 11 (GPLv3). Problèmes : base ouverte Lichess (CC0). " +
-                "Pièces : série classique de Cburnett, Wikimedia Commons (CC BY-SA 3.0).",
+                "Pièces : série classique de Cburnett et pièces féeriques Girafe et Fou, Wikimedia Commons (CC BY-SA 3.0).",
             color = c.muted, maxSize = 12.sp, maxLines = 6,
         )
-        AutoText("© Ivan Herboch, 2026", color = c.muted, maxSize = 12.sp, align = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp))
+        val context = LocalContext.current
+        val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "" }
+        AutoText("© Ivan Herboch, 2026 · v$version", color = c.muted, maxSize = 12.sp, align = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp))
     }
 }

@@ -16,6 +16,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -72,7 +78,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -105,6 +115,10 @@ data class PuzzleState(
 
 class ThemeCount(val total: Int, val solved: Int)
 
+/** Suggestion de recherche : identifiant Lichess + type de problème. */
+data class Suggestion(val id: String, val type: String, val rating: Int)
+data class Suggestions(val query: String = "", val items: List<Suggestion> = emptyList(), val more: Boolean = false)
+
 class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     private val duck = app as ChessDuckApp
     private val dao = duck.db.puzzles()
@@ -112,12 +126,19 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     val solvedIds = dao.solvedIds().map { it.toHashSet() as Set<String> }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
     val counts = MutableStateFlow<Map<String, ThemeCount>>(emptyMap())
+    val suggestions = MutableStateFlow(Suggestions())
+    /** Les 5 derniers problèmes joués avant le problème courant (persistés via DataStore). */
+    val recents = MutableStateFlow<List<Puzzle>>(emptyList())
     private var job: Job? = null
+    private var searchJob: Job? = null
+    private val metaLock = Mutex()
 
     // Index mémoire compact du catalogue (classement + masque de thèmes par problème).
     private var metaIds: Array<String> = emptyArray()
     private var metaRatings = IntArray(0)
     private var metaMasks = LongArray(0)
+    private var metaIdsLower: Array<String> = emptyArray()
+    private var metaThemes: Array<String> = emptyArray()
 
     init {
         viewModelScope.launch {
@@ -125,6 +146,79 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             state.update { it.copy(band = st.puzzleBand, theme = st.puzzleTheme) }
             val saved = if (st.puzzleId.isNotEmpty()) runCatching { dao.byId(st.puzzleId) }.getOrNull() else null
             if (saved != null) show(saved) else random()
+        }
+        viewModelScope.launch {
+            duck.prefs.settings.map { it.recentPuzzles }.distinctUntilChanged().collect { ids ->
+                val others = ids.drop(1).take(5)
+                val found = if (others.isEmpty()) emptyList() else runCatching { dao.byIds(others) }.getOrDefault(emptyList())
+                recents.value = others.mapNotNull { id -> found.firstOrNull { it.id == id } }
+            }
+        }
+        // L'index mémoire est préparé dès le lancement : la recherche répond ensuite instantanément.
+        viewModelScope.launch(Dispatchers.Default) { ensureMeta() }
+    }
+
+    private suspend fun ensureMeta() = metaLock.withLock {
+        if (metaIds.isNotEmpty()) return@withLock
+        val meta = runCatching { dao.allMeta() }.getOrDefault(emptyList())
+        val idx = PuzzleThemes.all.withIndex().associate { it.value.key to it.index }
+        metaRatings = IntArray(meta.size) { meta[it].rating }
+        metaMasks = LongArray(meta.size) { i ->
+            var m = 0L
+            for (t in meta[i].themes.split(' ')) idx[t]?.let { m = m or (1L shl it) }
+            m
+        }
+        metaThemes = Array(meta.size) { meta[it].themes }
+        metaIdsLower = Array(meta.size) { meta[it].id.lowercase() }
+        metaIds = Array(meta.size) { meta[it].id }
+    }
+
+    /**
+     * Suggestions pendant la saisie : correspondance insensible à la casse sur l'identifiant,
+     * classée par pertinence (identique, puis préfixe, puis contenu), limitée à 5 résultats.
+     */
+    fun search(raw: String) {
+        searchJob?.cancel()
+        val q = raw.trim().removePrefix("#").lowercase()
+        if (q.isEmpty()) { suggestions.value = Suggestions(); return }
+        searchJob = viewModelScope.launch(Dispatchers.Default) {
+            ensureMeta()
+            val exact = ArrayList<Int>()
+            val prefix = ArrayList<Int>()
+            val inside = ArrayList<Int>()
+            var total = 0
+            for (i in metaIdsLower.indices) {
+                val id = metaIdsLower[i]
+                val at = id.indexOf(q)
+                if (at < 0) continue
+                total++
+                when {
+                    id.length == q.length -> exact.add(i)
+                    at == 0 -> if (prefix.size < 6) prefix.add(i)
+                    else -> if (inside.size < 6) inside.add(i)
+                }
+                if (i and 0x3FF == 0) ensureActive()
+            }
+            val top = (exact + prefix + inside).take(5)
+            suggestions.value = Suggestions(
+                raw.trim().removePrefix("#"),
+                top.map { Suggestion(metaIds[it], PuzzleThemes.primary(metaThemes[it]).name, metaRatings[it]) },
+                total > top.size,
+            )
+        }
+    }
+
+    fun clearSearch() {
+        searchJob?.cancel()
+        suggestions.value = Suggestions()
+    }
+
+    fun openPuzzle(p: Puzzle) = show(p)
+
+    fun openSuggestion(id: String, onDone: () -> Unit) {
+        viewModelScope.launch {
+            runCatching { dao.byId(id) }.getOrNull()?.let { show(it) }
+            onDone()
         }
     }
 
@@ -141,7 +235,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             )
         }
         job = viewModelScope.launch {
-            duck.prefs.setPuzzleId(p.id)
+            duck.prefs.pushRecentPuzzle(p.id)
             delay(600)
             state.update { it.copy(progress = 1, cursor = 1, anim = moveAnim(line.positions[0], line.moves[0])) }
         }
@@ -181,17 +275,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     fun loadCounts(band: Int) {
         viewModelScope.launch {
             val res = withContext(Dispatchers.Default) {
-                if (metaIds.isEmpty()) {
-                    val meta = runCatching { dao.allMeta() }.getOrDefault(emptyList())
-                    val idx = PuzzleThemes.all.withIndex().associate { it.value.key to it.index }
-                    metaRatings = IntArray(meta.size) { meta[it].rating }
-                    metaMasks = LongArray(meta.size) { i ->
-                        var m = 0L
-                        for (t in meta[i].themes.split(' ')) idx[t]?.let { m = m or (1L shl it) }
-                        m
-                    }
-                    metaIds = Array(meta.size) { meta[it].id }
-                }
+                ensureMeta()
                 val solved = solvedIds.value
                 val range = PuzzleThemes.bandRange(band)
                 val n = PuzzleThemes.all.size
@@ -363,6 +447,13 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     }
 }
 
+/** Surligne, sans tenir compte de la casse, la partie de [text] qui correspond à [query]. */
+private fun highlight(text: String, query: String, bg: Color, fg: Color): AnnotatedString = buildAnnotatedString {
+    append(text)
+    val at = if (query.isEmpty()) -1 else text.indexOf(query, ignoreCase = true)
+    if (at >= 0) addStyle(SpanStyle(background = bg, color = fg), at, at + query.length)
+}
+
 private val frNumber: NumberFormat = NumberFormat.getIntegerInstance(Locale.FRANCE)
 fun fr(n: Int): String = frNumber.format(n).replace(' ', ' ').replace(' ', ' ')
 
@@ -375,6 +466,8 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
     val context = LocalContext.current
     var catalog by remember { mutableStateOf(false) }
     var shareChoice by remember { mutableStateOf(false) }
+    var recentSheet by remember { mutableStateOf(false) }
+    val recents by vm.recents.collectAsStateWithLifecycle()
     val line = s.line
     val p = s.puzzle
 
@@ -382,8 +475,9 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         bottomMin = 140.dp,
         top = {
             EqualRow(Modifier.padding(top = 4.dp)) {
-                DuckButton("🧩 ${fr(solved.size)} / ${fr(DuckDatabase.PUZZLE_COUNT)} ▾", { catalog = true }, Modifier.weight(1.5f), accent = c.blue, height = 38.dp, maxSize = 14.sp)
-                DuckButton("🎲 Aléatoire", vm::random, Modifier.weight(1f), accent = c.gold, filled = s.solved || s.empty, height = 38.dp)
+                DuckButton("🧩 ${fr(solved.size)} / ${fr(DuckDatabase.PUZZLE_COUNT)} ▾", { catalog = true }, Modifier.weight(1.45f), accent = c.blue, height = 38.dp, maxSize = 14.sp)
+                DuckButton("🎲 Aléatoire", vm::random, Modifier.weight(1.05f), accent = c.gold, filled = s.solved || s.empty, height = 38.dp)
+                DuckButton("🕘 Récents", { recentSheet = true }, Modifier.weight(1f), enabled = recents.isNotEmpty(), height = 38.dp)
                 DuckButton("📤 Partager", { shareChoice = true }, Modifier.weight(1f), enabled = p != null && line != null, height = 38.dp)
             }
             Row(Modifier.fillMaxWidth().padding(vertical = 5.dp).height(22.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -438,7 +532,25 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         },
     )
 
-    if (catalog) PuzzleCatalog(vm, s, onClose = { catalog = false })
+    if (catalog) PuzzleCatalog(vm, s, onClose = { catalog = false; vm.clearSearch() })
+    if (recentSheet) {
+        DuckSheet("🕘 Derniers problèmes joués", { recentSheet = false }) {
+            for (r in recents) {
+                val done = r.id in solved
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(10.dp)).background(c.surface)
+                        .clickable { recentSheet = false; vm.openPuzzle(r) }.padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        AutoText("#${r.id} · ${PuzzleThemes.primary(r.themes).name}", maxSize = 16.sp, weight = FontWeight.SemiBold)
+                        AutoText("${PuzzleThemes.BANDS[PuzzleThemes.bandOf(r.rating)]} · ${r.rating}", color = c.muted, maxSize = 13.sp)
+                    }
+                    AutoText(if (done) "✅ Résolu" else "À résoudre", color = if (done) c.green else c.gold, maxSize = 13.sp, weight = FontWeight.Bold)
+                }
+            }
+        }
+    }
     if (shareChoice && p != null && line != null) {
         DuckSheet("📤 Partager", { shareChoice = false }) {
             AutoText("Que souhaitez-vous envoyer ?", color = c.muted, maxSize = 14.sp, modifier = Modifier.padding(bottom = 10.dp))
@@ -466,12 +578,13 @@ private fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> U
     LaunchedEffect(band) { vm.loadCounts(band) }
     var query by remember { mutableStateOf("") }
     var notFound by remember { mutableStateOf(false) }
+    val sugg by vm.suggestions.collectAsStateWithLifecycle()
     val open = { vm.openById(query) { ok -> if (ok) onClose() else notFound = true } }
     DuckSheet("🧩 Catalogue des problèmes", onClose) {
         SectionTitle("RECHERCHER PAR IDENTIFIANT LICHESS")
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
-                value = query, onValueChange = { query = it.take(12); notFound = false }, singleLine = true,
+                value = query, onValueChange = { query = it.take(12); notFound = false; vm.search(query) }, singleLine = true,
                 placeholder = { AutoText("ex. 00sHx", color = c.muted, maxSize = 15.sp) },
                 isError = notFound,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search, autoCorrectEnabled = false),
@@ -483,6 +596,23 @@ private fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> U
                 ),
             )
             DuckButton("🔎 Ouvrir", { open() }, Modifier.width(110.dp), enabled = query.isNotBlank(), accent = c.gold, filled = true, height = 52.dp, maxSize = 15.sp)
+        }
+        if (sugg.items.isNotEmpty() && query.isNotBlank()) {
+            Column(Modifier.fillMaxWidth().padding(top = 6.dp).clip(RoundedCornerShape(10.dp)).background(c.surface)) {
+                for (item in sugg.items) {
+                    Row(
+                        Modifier.fillMaxWidth().clickable { vm.openSuggestion(item.id) { onClose() } }.padding(horizontal = 12.dp, vertical = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        BasicText(highlight("#${item.id}", sugg.query, c.gold, c.onAccent), style = TextStyle(color = c.text, fontSize = 16.sp, fontWeight = FontWeight.Bold))
+                        AutoText(item.type, color = c.blue, maxSize = 14.sp, modifier = Modifier.padding(start = 12.dp).weight(1f))
+                        AutoText("${item.rating}", color = c.muted, maxSize = 13.sp)
+                    }
+                }
+                if (sugg.more) AutoText("…", color = c.muted, maxSize = 18.sp, weight = FontWeight.Bold, modifier = Modifier.padding(start = 12.dp, bottom = 6.dp))
+            }
+        } else if (query.isNotBlank() && sugg.query.equals(query.trim().removePrefix("#"), ignoreCase = true) && !notFound) {
+            AutoText("Aucun identifiant ne contient « ${query.trim()} ».", color = c.muted, maxSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
         }
         if (notFound) AutoText(
             "Aucun problème « ${query.trim()} » parmi les 50 000 embarqués. Vérifiez l'identifiant (majuscules et minuscules comptent).",

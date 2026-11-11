@@ -31,6 +31,10 @@ class Feedback(context: Context) {
     @Volatile
     var hapticsEnabled = true
 
+    /** Bruit de pièce posée, désactivable dans les Paramètres. */
+    @Volatile
+    var soundEnabled = true
+
     private fun buzz(effect: VibrationEffect) {
         if (!hapticsEnabled) return
         runCatching { vibrator?.takeIf { it.hasVibrator() }?.vibrate(effect) }
@@ -38,7 +42,7 @@ class Feedback(context: Context) {
 
     /** Pièce posée sur l'échiquier : bruit de bois discret + légère vibration. */
     fun move() {
-        pool.play(wood, 0.55f, 0.55f, 1, 0, 1f)
+        if (soundEnabled) pool.play(wood, 0.2f, 0.2f, 1, 0, 1f)
         buzz(VibrationEffect.createOneShot(12, 70))
     }
 

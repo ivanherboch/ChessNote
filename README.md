@@ -8,7 +8,8 @@ Application Android francophone d'apprentissage, d'entraînement et de jeu aux �
 | ⌨️ Notation | Exercices de notation anglaise FIDE (SAN) sur positions réelles, clavier virtuel, diagnostic pédagogique, Mémo Anglais |
 | 🎓 Académie | 113 leçons (37 ouvertures, 38 milieux de partie, 38 finales) en Mode Guidé et Mode Défi |
 | 🧩 Problèmes | 50 000 problèmes Lichess hors-ligne, 50 thèmes, réfutation temporisée, indice en 2 temps, partage PNG |
-| ⚔️ Jeu Libre | Stockfish local 600–2400 ELO, 2 joueurs, ELO FIDE (K = 32), historique et revue annotée |
+| ⚔️ Jeu Libre | Ordinateur local (Stockfish) 600–2400 ELO, 2 joueurs, ELO FIDE (K = 32), historique et revue annotée |
+| 🧒 Mode enfant | Écran clair et épuré à 2 joueurs, grand échiquier, rappel des pièces, Girafe et Fou (Paramètres) |
 
 ## Compiler
 
@@ -31,6 +32,6 @@ Prérequis : JDK 17+, SDK Android 35. Le NDK n'est nécessaire que pour recompil
 
 - **Stockfish 11** — GPLv3 (`stockfish/Copying.txt`). Exécutable distinct piloté en UCI ; sources complètes fournies.
 - **Problèmes Lichess** — base ouverte database.lichess.org, CC0.
-- **Pièces d'échecs** — série « No background » de Cburnett, Wikimedia Commons, CC BY-SA 3.0.
+- **Pièces d'échecs** — série « No background » de Cburnett, et pièces féeriques Girafe (`Chess_G?t45`) et Fou (`Chess_t?t45`) du mode enfant, Wikimedia Commons, CC BY-SA 3.0.
 
 © Ivan Herboch, 2026

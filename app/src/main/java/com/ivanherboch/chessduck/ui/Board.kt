@@ -112,10 +112,16 @@ val PIECE_RES = mapOf(
     BISHOP + BLACK to R.drawable.p_bb, KNIGHT + BLACK to R.drawable.p_bn, PAWN + BLACK to R.drawable.p_bp,
 )
 
+/** Mode enfant : la Girafe remplace le Cavalier et le Fou (« Fool ») remplace le Fou classique. */
+val KID_PIECE_RES = PIECE_RES + mapOf(
+    KNIGHT to R.drawable.p_wg, KNIGHT + BLACK to R.drawable.p_bg,
+    BISHOP to R.drawable.p_wt, BISHOP + BLACK to R.drawable.p_bt,
+)
+
 @Composable
-fun rememberPieceImages(): Array<ImageBitmap?> {
+fun rememberPieceImages(kid: Boolean = false): Array<ImageBitmap?> {
     val arr = arrayOfNulls<ImageBitmap>(16)
-    for ((piece, res) in PIECE_RES) arr[piece] = ImageBitmap.imageResource(res)
+    for ((piece, res) in if (kid) KID_PIECE_RES else PIECE_RES) arr[piece] = ImageBitmap.imageResource(res)
     return arr
 }
 
@@ -135,11 +141,12 @@ fun ChessBoard(
     arrows: List<Arrow> = emptyList(),
     marks: List<Pair<Int, Color>> = emptyList(),
     badges: List<Badge> = emptyList(),
+    kid: Boolean = false,
     onMove: (Move) -> Unit = {},
 ) {
     val c = LocalDuck.current
     val fb = LocalFeedback.current
-    val images = rememberPieceImages()
+    val images = rememberPieceImages(kid)
     val measurer = rememberTextMeasurer()
     val slop = LocalViewConfiguration.current.touchSlop
 
@@ -340,7 +347,7 @@ fun ChessBoard(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     for (type in intArrayOf(QUEEN, ROOK, BISHOP, KNIGHT)) {
-                        val res = PIECE_RES.getValue(if (white) type else type + BLACK)
+                        val res = (if (kid) KID_PIECE_RES else PIECE_RES).getValue(if (white) type else type + BLACK)
                         Image(
                             painterResource(res), null,
                             Modifier.size(58.dp).clip(RoundedCornerShape(10.dp)).background(c.squareLight)

@@ -332,7 +332,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
                 duck.prefs.setElo(newElo)
                 duck.db.user().insertGame(
                     GameRecord(
-                        date = System.currentTimeMillis(), opponent = "Stockfish ${s.aiElo}", vsComputer = true, playerWhite = s.playerWhite,
+                        date = System.currentTimeMillis(), opponent = "Ordinateur ${s.aiElo}", vsComputer = true, playerWhite = s.playerWhite,
                         result = resultStr, outcome = outcome, reason = reason, eloBefore = st.elo, eloAfter = newElo, moves = line.uciMoves(), analysis = analysis,
                     )
                 )

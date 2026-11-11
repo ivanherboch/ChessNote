@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -94,7 +95,19 @@ class AppRobolectricTest {
         rule.onNodeWithText("Jeu Libre").performClick(); settle(2000); shot("4_jeu")
         rule.onNodeWithText("⚙️").performClick(); settle(800); shot("5_parametres")
         rule.onNodeWithText("🔕 Vibration désactivée").performClick(); settle(500)
+        rule.onNodeWithText("🔇 Son désactivé").performClick(); settle(500)
         rule.onNodeWithText("☀️ Mode Jour (clair)").performClick(); settle(800)
         rule.onAllNodesWithText("✕").onLast().performClick(); settle(800); shot("4c_jeu_jour")
+        // Mode enfant : écran épuré à deux joueurs, puis retour au Jeu Libre réinitialisé.
+        rule.onNodeWithText("⚙️").performClick(); settle(800); shot("5b_parametres_jour")
+        rule.onNodeWithText("🧒 Activer le mode enfant").performClick(); settle(1500); shot("9_enfant")
+        rule.onNodeWithText("✕ Quitter le mode enfant").performClick(); settle(1500)
+        rule.onNodeWithText("Problèmes").performClick(); settle(1500)
+        rule.onNodeWithText("🕘 Récents").assertExists()
+        // Recherche instantanée par identifiant Lichess.
+        rule.onAllNodesWithText("🧩", substring = true).onFirst().performClick(); settle(1500)
+        rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("0d"); settle(1500); shot("3c_recherche")
+        rule.onNodeWithText("#0D1Z6").performClick(); settle(2500)
+        rule.onNodeWithText("🕘 Récents").performClick(); settle(1000); shot("3d_recents")
     }
 }
