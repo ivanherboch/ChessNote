@@ -62,7 +62,10 @@ class AppRobolectricTest {
         assertEquals(30, db.puzzles().slice(100, 30).size)
         db.user().markLesson(LessonProgress(3, 1L))
         assertEquals(listOf(3), db.user().masteredLessons().first())
-        val id = db.user().insertGame(GameRecord(date = 1, opponent = "Stockfish 1200", vsComputer = true, playerWhite = true, result = "1-0", outcome = 1, reason = "échec et mat", eloBefore = 1200, eloAfter = 1216, moves = "e2e4 e7e5"))
+        // La base embarquée (v1) est migrée en v2 : noms des joueurs et ELO de l'ordinateur.
+        val id = db.user().insertGame(GameRecord(date = 1, opponent = "Ordinateur 1200", vsComputer = true, playerWhite = true, result = "1-0", outcome = 1, reason = "échec et mat", eloBefore = 1200, eloAfter = 1216, moves = "e2e4 e7e5", whiteName = "Ivan", blackName = "🤖 Ordinateur", opponentElo = 1200))
+        assertEquals("Ivan", db.user().games().first().first().whiteName)
+        assertEquals(1200, db.user().games().first().first().opponentElo)
         db.user().saveAnalysis(id, "10,5,e2e4")
         assertEquals(1, db.user().games().first().size)
         assertEquals(1, db.user().tally().first().first { it.outcome == 1 }.n)
@@ -102,6 +105,14 @@ class AppRobolectricTest {
         rule.onNodeWithText("⚙️").performClick(); settle(800); shot("5b_parametres_jour")
         rule.onNodeWithText("🧒 Activer le mode enfant").performClick(); settle(1500); shot("9_enfant")
         rule.onNodeWithText("✕ Quitter le mode enfant").performClick(); settle(1500)
+        // Régression : le mode enfant doit pouvoir être relancé plusieurs fois de suite.
+        repeat(3) {
+            rule.onNodeWithText("⚙️").performClick(); settle(800)
+            rule.onNodeWithText("🧒 Activer le mode enfant").performClick(); settle(1200)
+            rule.onNodeWithText("Nom des pièces").assertExists()
+            rule.onNodeWithText("✕ Quitter le mode enfant").performClick(); settle(1200)
+            rule.onNodeWithText("Jeu Libre").assertExists()
+        }
         rule.onNodeWithText("Problèmes").performClick(); settle(1500)
         rule.onNodeWithText("🕘 Récents").assertExists()
         // Recherche instantanée par identifiant Lichess.

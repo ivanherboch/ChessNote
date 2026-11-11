@@ -93,12 +93,12 @@ fun PlayScreen(vm: PlayViewModel) {
         top = {
             Row(Modifier.fillMaxWidth().padding(top = 4.dp).height(38.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Column(Modifier.weight(1.5f)) {
-                    AutoText("👤 ${st.pseudo} · ELO ${st.elo}", maxSize = 14.sp, weight = FontWeight.Bold)
+                    AutoText(if (s.twoPlayers) "👥 ${st.pseudo} – ${st.pseudo2}" else "👤 ${st.pseudo} · ELO ${st.elo}", maxSize = 14.sp, weight = FontWeight.Bold)
                     val w = tally.firstOrNull { it.outcome == 1 }?.n ?: 0
                     val d = tally.firstOrNull { it.outcome == 0 }?.n ?: 0
                     val l = tally.firstOrNull { it.outcome == -1 }?.n ?: 0
                     AutoText(
-                        "Bilan ${w}V / ${d}N / ${l}D · " + if (s.twoPlayers) "👥 2 joueurs" else "🤖 Ordinateur ${s.aiElo}",
+                        if (s.twoPlayers) "⬜ ${st.pseudo} · ⬛ ${st.pseudo2} · hors ELO" else "Bilan ${w}V / ${d}N / ${l}D · 🤖 Ordinateur ${s.aiElo}",
                         color = c.muted, maxSize = 12.sp,
                     )
                 }
@@ -134,7 +134,7 @@ fun PlayScreen(vm: PlayViewModel) {
         },
         bottom = {
             MoveStrip(s.line, s.cursor, Modifier.padding(top = 5.dp))
-            val (msg, tone) = liveStatus(s)
+            val (msg, tone) = liveStatus(s, st.pseudo, st.pseudo2)
             FeedbackCard(msg, tone, Modifier.padding(top = 5.dp).weight(1f), maxSize = 15.sp)
             EqualRow(Modifier.padding(vertical = 5.dp), gap = 5.dp) {
                 DuckButton("◀ Arrière", vm::back, Modifier.weight(1f), enabled = s.cursor > 0 && !s.thinking, height = 44.dp)
@@ -156,7 +156,7 @@ fun PlayScreen(vm: PlayViewModel) {
     }
 }
 
-private fun liveStatus(s: PlayState): Pair<String, Tone> {
+private fun liveStatus(s: PlayState, p1: String, p2: String): Pair<String, Tone> {
     val pos = s.position
     val side = if (pos.whiteToMove) "Blancs" else "Noirs"
     s.result?.let { r ->
@@ -174,7 +174,7 @@ private fun liveStatus(s: PlayState): Pair<String, Tone> {
         else "⏪ Coup ${s.cursor} / ${s.line.size}. Reculez ou avancez jusqu'à votre tour pour rejouer depuis ce moment.$evalNote" to Tone.INFO
     }
     val check = if (pos.inCheck) "Échec ! " else ""
-    return if (s.twoPlayers) "$check👥 Trait aux $side : passez l'appareil au joueur concerné.$evalNote" to Tone.INFO
+    return if (s.twoPlayers) "$check👥 À ${if (pos.whiteToMove) p1 else p2} de jouer (les $side).$evalNote" to Tone.INFO
     else if (s.line.size == 0) "⚔️ Nouvelle partie contre l'ordinateur (${s.aiElo} ELO). Vous jouez les $side : à vous de commencer !$evalNote" to Tone.INFO
     else "${check}À vous de jouer (les $side).$evalNote" to Tone.INFO
 }
@@ -221,7 +221,7 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
         top = {
             Row(Modifier.fillMaxWidth().padding(top = 4.dp).height(38.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Column(Modifier.weight(1.6f)) {
-                    AutoText("📜 Revue : ${g.opponent.replace("Stockfish", "Ordinateur")}", maxSize = 14.sp, weight = FontWeight.Bold)
+                    AutoText("📜 Revue : " + if (g.whiteName.isEmpty()) g.opponent.replace("Stockfish", "Ordinateur") else "${g.whiteName} – ${g.blackName}", maxSize = 14.sp, weight = FontWeight.Bold)
                     AutoText("${formatDate(g.date)} · ${g.result} (${g.reason})", color = c.muted, maxSize = 12.sp)
                 }
                 DuckButton("✕ Quitter la revue", vm::closeReview, Modifier.weight(1f), accent = c.red, height = 38.dp)
@@ -293,7 +293,7 @@ private fun HistorySheet(games: List<GameRecord>, onClose: () -> Unit, onReplay:
             Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(12.dp)).background(c.surface).padding(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val (label, col) = when {
-                        !g.vsComputer -> (if (g.outcome == 1) "Victoire des Blancs" else if (g.outcome == -1) "Victoire des Noirs" else "Nulle") to c.gold
+                        !g.vsComputer -> (if (g.outcome == 1) "Victoire de ${g.whiteName.ifEmpty { "Blancs" }}" else if (g.outcome == -1) "Victoire de ${g.blackName.ifEmpty { "Noirs" }}" else "Nulle") to c.gold
                         g.outcome == 1 -> "Victoire" to c.green
                         g.outcome == -1 -> "Défaite" to c.red
                         else -> "Nulle" to c.gold
@@ -305,10 +305,19 @@ private fun HistorySheet(games: List<GameRecord>, onClose: () -> Unit, onReplay:
                     }
                 }
                 val nbMoves = (g.moves.count { it == ' ' } + 2) / 2
+                val players = when {
+                    g.whiteName.isEmpty() -> "contre ${g.opponent.replace("Stockfish", "Ordinateur")}" + if (g.vsComputer) " · avec les ${if (g.playerWhite) "Blancs" else "Noirs"}" else ""
+                    g.vsComputer -> {
+                        val me = "(${g.eloBefore})"
+                        val ai = "(${g.opponentElo})"
+                        "⬜ ${g.whiteName} ${if (g.playerWhite) me else ai}  –  ⬛ ${g.blackName} ${if (g.playerWhite) ai else me}"
+                    }
+                    else -> "⬜ ${g.whiteName}  –  ⬛ ${g.blackName} · hors ELO"
+                }
+                AutoText(players, maxSize = 14.sp, weight = FontWeight.SemiBold, maxLines = 2, modifier = Modifier.padding(top = 4.dp))
                 AutoText(
-                    "${formatDate(g.date)} · contre ${g.opponent.replace("Stockfish", "Ordinateur")}" + (if (g.vsComputer) " · avec les ${if (g.playerWhite) "Blancs" else "Noirs"}" else "") +
-                        " · ${g.result} par ${g.reason} · $nbMoves coups",
-                    color = c.muted, maxSize = 12.sp, maxLines = 3, modifier = Modifier.padding(vertical = 4.dp),
+                    "${formatDate(g.date)} · ${g.result} par ${g.reason} · $nbMoves coups",
+                    color = c.muted, maxSize = 12.sp, maxLines = 2, modifier = Modifier.padding(vertical = 4.dp),
                 )
                 DuckButton("Rejouer sur l’échiquier", { onReplay(g) }, Modifier.fillMaxWidth(), accent = c.blue, filled = true, height = 38.dp, maxSize = 14.sp)
             }

@@ -62,7 +62,7 @@ fun AutoText(
     BasicText(
         text = text,
         modifier = modifier,
-        style = TextStyle(color = color, fontWeight = weight, textAlign = align, lineHeight = 1.25.em),
+        style = TextStyle(color = color, fontWeight = weight, textAlign = align, lineHeight = 1.25.em, fontFamily = LocalDuckFont.current),
         maxLines = maxLines,
         softWrap = maxLines > 1,
         autoSize = TextAutoSize.StepBased(minFontSize = minSize, maxFontSize = maxSize, stepSize = 0.5.sp),

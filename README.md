@@ -33,5 +33,6 @@ Prérequis : JDK 17+, SDK Android 35. Le NDK n'est nécessaire que pour recompil
 - **Stockfish 11** — GPLv3 (`stockfish/Copying.txt`). Exécutable distinct piloté en UCI ; sources complètes fournies.
 - **Problèmes Lichess** — base ouverte database.lichess.org, CC0.
 - **Pièces d'échecs** — série « No background » de Cburnett, et pièces féeriques Girafe (`Chess_G?t45`) et Fou (`Chess_t?t45`) du mode enfant, Wikimedia Commons, CC BY-SA 3.0.
+- **Police Fredoka** (mode enfant) — Google Fonts, SIL Open Font License (`art/fonts/Fredoka-OFL.txt`).
 
 © Ivan Herboch, 2026

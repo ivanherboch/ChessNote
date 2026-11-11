@@ -149,6 +149,7 @@ fun ChessBoard(
     val images = rememberPieceImages(kid)
     val measurer = rememberTextMeasurer()
     val slop = LocalViewConfiguration.current.touchSlop
+    val font = LocalDuckFont.current
 
     var selected by remember(position) { mutableIntStateOf(-1) }
     var dragFrom by remember(position) { mutableIntStateOf(-1) }
@@ -273,26 +274,26 @@ fun ChessBoard(
                 )
             }
             // Coordonnées intégrées en bordure des cases
-            val coordStyle = TextStyle(fontSize = (s * 0.21f).toSp(), fontWeight = FontWeight.Bold)
+            val coordStyle = TextStyle(fontSize = (s * 0.21f).toSp(), fontWeight = FontWeight.Bold, fontFamily = font)
             for (i in 0..7) {
                 val fileSq = if (flipped) sq(i, 7) else sq(i, 0)
                 val rankSq = if (flipped) sq(7, i) else sq(0, i)
                 val fl = measurer.measure(('a' + i).toString(), coordStyle)
                 val lightF = (fileOf(fileSq) + rankOf(fileSq)) % 2 == 1
-                drawText(fl, if (lightF) c.squareDark else c.squareLight, topLeft(fileSq) + Offset(s - fl.size.width - s * 0.05f, s - fl.size.height - s * 0.01f))
+                drawText(fl, if (lightF) c.coordOnLight else c.coordOnDark, topLeft(fileSq) + Offset(s - fl.size.width - s * 0.05f, s - fl.size.height - s * 0.01f))
                 val rl = measurer.measure(('1' + i).toString(), coordStyle)
                 val lightR = (fileOf(rankSq) + rankOf(rankSq)) % 2 == 1
-                drawText(rl, if (lightR) c.squareDark else c.squareLight, topLeft(rankSq) + Offset(s * 0.05f, s * 0.01f))
+                drawText(rl, if (lightR) c.coordOnLight else c.coordOnDark, topLeft(rankSq) + Offset(s * 0.05f, s * 0.01f))
             }
             // Sélection et case survolée
-            if (selected >= 0 && interactive) drawRect(Color(0x8010B981), topLeft(selected), cell)
+            if (selected >= 0 && interactive) drawRect(c.select.copy(alpha = 0.5f), topLeft(selected), cell)
             if (dragFrom >= 0) {
                 val col = (dragPos.x / s).toInt().coerceIn(0, 7)
                 val row = (dragPos.y / s).toInt().coerceIn(0, 7)
                 val hover = if (flipped) sq(7 - col, row) else sq(col, 7 - row)
                 if (targets.any { it.to == hover }) {
-                    drawRect(Color(0x9910B981), topLeft(hover), cell)
-                    drawCircle(Color(0x3310B981), s * 0.95f, center(hover))
+                    drawRect(c.select.copy(alpha = 0.6f), topLeft(hover), cell)
+                    drawCircle(c.select.copy(alpha = 0.2f), s * 0.95f, center(hover))
                 }
             }
             // Pièces
@@ -314,8 +315,8 @@ fun ChessBoard(
             }
             // Destinations légales : pastilles (cases vides) et anneaux (prises)
             for (m in targets.distinctBy { it.to }) {
-                if (position.isCapture(m)) drawCircle(Color(0xB310B981), s * 0.43f, center(m.to), style = Stroke(s * 0.09f))
-                else drawCircle(Color(0xB310B981), s * 0.16f, center(m.to))
+                if (position.isCapture(m)) drawCircle(c.select.copy(alpha = 0.7f), s * 0.43f, center(m.to), style = Stroke(s * 0.09f))
+                else drawCircle(c.select.copy(alpha = 0.7f), s * 0.16f, center(m.to))
             }
             for (sl in sliding) {
                 val piece = position[sl.to]

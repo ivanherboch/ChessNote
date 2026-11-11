@@ -34,6 +34,8 @@ class LessonsTest {
         assertTrue(PuzzleThemes.all.all { it.tip.length > 30 })
         assertEquals("fork", PuzzleThemes.primary(" crushing fork middlegame short ").key)
         assertEquals("smotheredMate", PuzzleThemes.primary(" mate mateIn2 smotheredMate middlegame ").key)
-        assertEquals("middlegame", PuzzleThemes.primary(" fork middlegame ", "middlegame").key)
+        // Un mat en 2 obtenu par attraction est classé « Mat en 2 », partout dans l'application.
+        assertEquals("mateIn2", PuzzleThemes.primary(" attraction mate mateIn2 middlegame short ").key)
+        assertEquals(PuzzleThemes.G_MATE, PuzzleThemes.groups.first())
     }
 }

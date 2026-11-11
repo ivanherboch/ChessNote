@@ -189,7 +189,7 @@ object ShareCard {
 
     // ---------------------------------------------------------------- Énoncé
 
-    fun render(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, preferredTheme: String = ""): Bitmap {
+    fun render(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?): Bitmap {
         val h = 1600
         val bmp = Bitmap.createBitmap(W, h, Bitmap.Config.ARGB_8888)
         val g = Painter(context, Canvas(bmp))
@@ -200,7 +200,7 @@ object ShareCard {
         g.board((W - side) / 2, top, side, position, !playerWhite, lastMove)
 
         // Légende : trait, difficulté, type de problème et conseil (sans la solution)
-        val theme = PuzzleThemes.primary(puzzle.themes, preferredTheme)
+        val theme = PuzzleThemes.primary(puzzle.themes)
         val base = top + side
         turnBox(g, 48f, base + 44f, playerWhite)
         g.text(if (playerWhite) "Trait aux Blancs" else "Trait aux Noirs", 110f, base + 86f, 54f, TEXT, bold = true)
@@ -377,9 +377,9 @@ object ShareCard {
         }
     }
 
-    fun share(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, preferredTheme: String = "") =
+    fun share(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?) =
         send(
-            context, render(context, puzzle, position, playerWhite, lastMove, preferredTheme), "chessduck-${puzzle.id}.png",
+            context, render(context, puzzle, position, playerWhite, lastMove), "chessduck-${puzzle.id}.png",
             "Saurez-vous résoudre ce problème ? ${if (playerWhite) "Trait aux Blancs" else "Trait aux Noirs"} — ChessDuck", "Partager le problème",
         )
 

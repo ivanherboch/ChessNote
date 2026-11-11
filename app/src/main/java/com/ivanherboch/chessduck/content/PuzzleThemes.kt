@@ -73,22 +73,28 @@ object PuzzleThemes {
 
     // Du plus caractéristique au plus général : le premier thème présent définit le « type » du problème.
     private val PRIORITY = listOf(
+        // 1. Mats nommés, 2. mats en N coups, 3. motifs tactiques, 4. thèmes généraux.
         "smotheredMate", "anastasiaMate", "arabianMate", "bodenMate", "doubleBishopMate", "dovetailMate", "hookMate", "backRankMate",
+        "mateIn1", "mateIn2", "mateIn3", "mateIn4", "mateIn5",
         "underPromotion", "enPassant", "castling", "doubleCheck", "discoveredCheck", "zugzwang", "interference", "xRayAttack",
         "trappedPiece", "capturingDefender", "intermezzo", "clearance", "attraction", "deflection", "skewer", "pin", "fork",
         "discoveredAttack", "hangingPiece", "quietMove", "defensiveMove", "sacrifice", "promotion", "advancedPawn",
-        "mateIn1", "mateIn2", "mateIn3", "mateIn4", "mateIn5", "attackingF2F7", "exposedKing", "kingsideAttack", "queensideAttack",
+        "attackingF2F7", "exposedKing", "kingsideAttack", "queensideAttack",
         "pawnEndgame", "rookEndgame", "bishopEndgame", "knightEndgame", "queenEndgame", "queenRookEndgame",
         "opening", "endgame", "middlegame",
     )
 
-    /** Type principal d'un problème (thèmes Lichess séparés par des espaces) ; [preferred] = filtre choisi par le joueur. */
-    fun primary(themes: String, preferred: String = ""): ThemeInfo {
+    /**
+     * Type principal d'un problème (thèmes Lichess séparés par des espaces).
+     * Une seule règle, partout dans l'application : recherche, écran, Récents et images exportées.
+     */
+    fun primary(themes: String): ThemeInfo {
         val set = themes.trim().split(' ').toSet()
-        if (preferred in set) byKey[preferred]?.let { return it }
         return PRIORITY.firstOrNull { it in set }?.let { byKey[it] } ?: byKey.getValue("middlegame")
     }
-    val groups = listOf(G_PHASE, G_TACTIC, G_ATTACK, G_SPECIAL, G_MATE, G_ENDGAME)
+
+    /** Ordre d'affichage du catalogue : les mats d'abord. */
+    val groups = listOf(G_MATE, G_TACTIC, G_ATTACK, G_SPECIAL, G_ENDGAME, G_PHASE)
 
     val BANDS = listOf("Tous", "Débutant", "Intermédiaire", "Avancé", "Expert")
     fun bandRange(band: Int): IntRange = when (band) {

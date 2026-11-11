@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 
 /** Palette ChessDuck : ardoise + accents fonctionnels (or, émeraude, ciel, corail). */
 data class DuckColors(
@@ -17,14 +18,19 @@ data class DuckColors(
     val text: Color,
     val muted: Color,
     val outline: Color,
+    val squareLight: Color = Color(0xFFF0D9B5),
+    val squareDark: Color = Color(0xFFB58863),
+    /** Couleur des coordonnées posées sur une case claire / foncée. */
+    val coordOnLight: Color = squareDark,
+    val coordOnDark: Color = squareLight,
+    /** Couleur de sélection et des destinations légales. */
+    val select: Color = Color(0xFF10B981),
 ) {
     val gold = Color(0xFFF59E0B)
     val green = Color(0xFF10B981)
     val blue = Color(0xFF38BDF8)
     val red = Color(0xFFEF4444)
     val onAccent = Color(0xFF0F172A)
-    val squareLight = Color(0xFFF0D9B5)
-    val squareDark = Color(0xFFB58863)
 }
 
 val NightColors = DuckColors(
@@ -38,7 +44,20 @@ val DayColors = DuckColors(
     text = Color(0xFF0F172A), muted = Color(0xFF475569), outline = Color(0xFF94A3B8),
 )
 
+/** Mode enfant : bleu ciel très doux, cases menthe et vanille. */
+val KidColors = DuckColors(
+    dark = false,
+    bg = Color(0xFFEBF6FF), surface = Color(0xFFFFFFFF), surfaceHi = Color(0xFFD6ECFF),
+    text = Color(0xFF1F3B57), muted = Color(0xFF5B7A99), outline = Color(0xFF9CC9F0),
+    squareLight = Color(0xFFFFFDF2), squareDark = Color(0xFF98DDCA),
+    coordOnLight = Color(0xFF3FA98F), coordOnDark = Color(0xFF1F7A66),
+    select = Color(0xFFFF9F1C),
+)
+
 val LocalDuck = staticCompositionLocalOf { NightColors }
+
+/** Police imposée à tous les textes (Fredoka en mode enfant, police système sinon). */
+val LocalDuckFont = staticCompositionLocalOf<FontFamily?> { null }
 
 @Composable
 fun ChessDuckTheme(dark: Boolean, content: @Composable () -> Unit) {

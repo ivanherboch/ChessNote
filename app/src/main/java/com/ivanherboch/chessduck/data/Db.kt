@@ -12,6 +12,8 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 /** Problème Lichess (base officielle database.lichess.org, licence CC0). */
@@ -49,6 +51,11 @@ data class GameRecord(
     val eloAfter: Int,
     val moves: String,
     @ColumnInfo(defaultValue = "") val analysis: String = "",
+    /** Noms des joueurs (vides pour les parties enregistrées avant la version 1.3). */
+    @ColumnInfo(defaultValue = "") val whiteName: String = "",
+    @ColumnInfo(defaultValue = "") val blackName: String = "",
+    /** ELO de l'ordinateur (0 pour une partie à 2 joueurs). */
+    @ColumnInfo(defaultValue = "0") val opponentElo: Int = 0,
 )
 
 data class PuzzleMeta(val id: String, val rating: Int, val themes: String)
@@ -124,7 +131,7 @@ interface UserDao {
 
 @Database(
     entities = [Puzzle::class, PuzzleProgress::class, LessonProgress::class, GameRecord::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class DuckDatabase : RoomDatabase() {
@@ -137,6 +144,16 @@ abstract class DuckDatabase : RoomDatabase() {
         fun create(context: Context): DuckDatabase =
             Room.databaseBuilder(context, DuckDatabase::class.java, "chessduck.db")
                 .createFromAsset("chessduck.db")
+                .addMigrations(MIGRATION_1_2)
                 .build()
+
+        /** v2 : noms des joueurs et ELO de l'ordinateur dans l'historique (la base embarquée reste en v1). */
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE games ADD COLUMN whiteName TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE games ADD COLUMN blackName TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE games ADD COLUMN opponentElo INTEGER NOT NULL DEFAULT 0")
+            }
+        }
     }
 }

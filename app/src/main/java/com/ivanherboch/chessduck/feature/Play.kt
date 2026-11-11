@@ -106,6 +106,8 @@ object GameLogic {
 
 data class GameResult(val text: String, val tone: Tone)
 
+const val COMPUTER = "🤖 Ordinateur"
+
 data class Review(
     val record: GameRecord,
     val line: Line,
@@ -302,15 +304,16 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
             val analysis = Analysis.encodeAll(List(line.size + 1) { s.analysis[it] })
             if (s.twoPlayers) {
                 val text = when (whiteResult) {
-                    1 -> "🏆 Victoire des Blancs par $reason."
-                    -1 -> "🏆 Victoire des Noirs par $reason."
+                    1 -> "🏆 Victoire de ${st.pseudo} (Blancs) par $reason."
+                    -1 -> "🏆 Victoire de ${st.pseudo2} (Noirs) par $reason."
                     else -> "🤝 Partie nulle ($reason)."
-                }
+                } + " Partie à 2 joueurs : l'ELO ne change pas."
                 state.update { it.copy(result = GameResult(text, Tone.GOLD), thinking = false) }
                 duck.db.user().insertGame(
                     GameRecord(
                         date = System.currentTimeMillis(), opponent = "2 joueurs", vsComputer = false, playerWhite = true, result = resultStr,
                         outcome = whiteResult, reason = reason, eloBefore = st.elo, eloAfter = st.elo, moves = line.uciMoves(), analysis = analysis,
+                        whiteName = st.pseudo, blackName = st.pseudo2,
                     )
                 )
             } else {
@@ -334,6 +337,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
                     GameRecord(
                         date = System.currentTimeMillis(), opponent = "Ordinateur ${s.aiElo}", vsComputer = true, playerWhite = s.playerWhite,
                         result = resultStr, outcome = outcome, reason = reason, eloBefore = st.elo, eloAfter = newElo, moves = line.uciMoves(), analysis = analysis,
+                        whiteName = if (s.playerWhite) st.pseudo else COMPUTER, blackName = if (s.playerWhite) COMPUTER else st.pseudo, opponentElo = s.aiElo,
                     )
                 )
             }

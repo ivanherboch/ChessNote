@@ -19,6 +19,8 @@ data class Settings(
     /** Identifiants des derniers problèmes joués, du plus récent au plus ancien. */
     val recentPuzzles: List<String> = emptyList(),
     val pseudo: String = "Joueur",
+    /** Second joueur humain du mode 2 joueurs. */
+    val pseudo2: String = "Joueur 2",
     val elo: Int = 1200,
     val twoPlayers: Boolean = false,
     /** 0 = Blancs, 1 = Aléatoire, 2 = Noirs. */
@@ -41,6 +43,7 @@ class Prefs(private val context: Context) {
         val kid = booleanPreferencesKey("kid_mode")
         val recent = stringPreferencesKey("recent_puzzles")
         val pseudo = stringPreferencesKey("pseudo")
+        val pseudo2 = stringPreferencesKey("pseudo2")
         val elo = intPreferencesKey("elo")
         val twoPlayers = booleanPreferencesKey("two_players")
         val color = intPreferencesKey("color")
@@ -60,6 +63,7 @@ class Prefs(private val context: Context) {
             kidMode = p[K.kid] ?: false,
             recentPuzzles = (p[K.recent] ?: "").split(',').filter { it.isNotBlank() },
             pseudo = p[K.pseudo] ?: "Joueur",
+            pseudo2 = p[K.pseudo2] ?: "Joueur 2",
             elo = p[K.elo] ?: 1200,
             twoPlayers = p[K.twoPlayers] ?: false,
             colorChoice = p[K.color] ?: 0,
@@ -84,6 +88,7 @@ class Prefs(private val context: Context) {
         p[K.puzzleId] = id
     }
     suspend fun setPseudo(v: String) = context.store.edit { it[K.pseudo] = v }
+    suspend fun setPseudo2(v: String) = context.store.edit { it[K.pseudo2] = v }
     suspend fun setElo(v: Int) = context.store.edit { it[K.elo] = v }
     suspend fun setGameSettings(twoPlayers: Boolean, color: Int, aiElo: Int) = context.store.edit {
         it[K.twoPlayers] = twoPlayers; it[K.color] = color; it[K.aiElo] = aiElo

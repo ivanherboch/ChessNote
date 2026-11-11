@@ -35,7 +35,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,6 +51,7 @@ import com.ivanherboch.chessduck.data.Settings
 import com.ivanherboch.chessduck.feature.AcademyScreen
 import com.ivanherboch.chessduck.feature.AcademyViewModel
 import com.ivanherboch.chessduck.feature.KidScreen
+import com.ivanherboch.chessduck.feature.KidTheme
 import com.ivanherboch.chessduck.feature.KidViewModel
 import com.ivanherboch.chessduck.feature.MemoSheet
 import com.ivanherboch.chessduck.feature.NotationScreen
@@ -109,7 +109,6 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
     val puzzles: PuzzlesViewModel = viewModel()
     val play: PlayViewModel = viewModel()
     val kid: KidViewModel = viewModel()
-    val scope = rememberCoroutineScope()
 
     // En quittant le mode enfant, la grille du Jeu Libre repart de zéro.
     var wasKid by remember { mutableStateOf(st.kidMode) }
@@ -118,8 +117,10 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
         wasKid = st.kidMode
     }
     if (st.kidMode) {
-        Box(Modifier.fillMaxSize().background(c.bg).statusBarsPadding().navigationBarsPadding()) {
-            KidScreen(kid) { scope.launch { app.prefs.setKidMode(false) } }
+        KidTheme {
+            Box(Modifier.fillMaxSize().background(LocalDuck.current.bg).statusBarsPadding().navigationBarsPadding()) {
+                KidScreen(kid) { app.scope.launch { app.prefs.setKidMode(false) } }
+            }
         }
         return
     }
@@ -173,8 +174,10 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
 @Composable
 private fun SettingsSheet(st: Settings, app: ChessDuckApp, onClose: () -> Unit) {
     val c = LocalDuck.current
-    val scope = rememberCoroutineScope()
+    // Les réglages sont écrits dans la portée de l'application : fermer le tiroir n'annule jamais l'écriture.
+    val scope = app.scope
     var pseudo by remember { mutableStateOf(st.pseudo) }
+    var pseudo2 by remember { mutableStateOf(st.pseudo2) }
     DuckSheet("⚙️ Paramètres", onClose) {
         SectionTitle("APPARENCE")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -192,7 +195,7 @@ private fun SettingsSheet(st: Settings, app: ChessDuckApp, onClose: () -> Unit) 
             DuckChip("🔕 Vibration désactivée", !st.haptics, { scope.launch { app.prefs.setHaptics(false) } }, Modifier.weight(1f))
         }
         SectionTitle("MODE ENFANT")
-        DuckButton("🧒 Activer le mode enfant", { scope.launch { app.prefs.setKidMode(true) }; onClose() }, Modifier.fillMaxWidth(), accent = c.green, filled = true, height = 44.dp, maxSize = 15.sp)
+        DuckButton("🧒 Activer le mode enfant", { onClose(); scope.launch { app.prefs.setKidMode(true) } }, Modifier.fillMaxWidth(), accent = c.green, filled = true, height = 44.dp, maxSize = 15.sp)
         AutoText(
             "Un écran clair et épuré pour jouer à deux avec un enfant : grand échiquier, rappel des pièces, Girafe et Fou rigolos, sans ordinateur ni historique.",
             color = c.muted, maxSize = 12.sp, maxLines = 4, modifier = Modifier.padding(top = 6.dp),
@@ -210,11 +213,24 @@ private fun SettingsSheet(st: Settings, app: ChessDuckApp, onClose: () -> Unit) 
                 focusedTextColor = c.text, unfocusedTextColor = c.text, focusedBorderColor = c.gold, unfocusedBorderColor = c.outline, cursorColor = c.gold,
             ),
         )
-        AutoText("Votre classement actuel : ${st.elo} ELO (formule FIDE, K = 32).", color = c.muted, maxSize = 13.sp, maxLines = 2, modifier = Modifier.padding(top = 8.dp))
+        SectionTitle("PSEUDO DU JOUEUR 2 (MODE 2 JOUEURS)")
+        OutlinedTextField(
+            value = pseudo2,
+            onValueChange = { v ->
+                pseudo2 = v.take(16)
+                scope.launch { app.prefs.setPseudo2(pseudo2.trim().ifEmpty { "Joueur 2" }) }
+            },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = c.text, unfocusedTextColor = c.text, focusedBorderColor = c.gold, unfocusedBorderColor = c.outline, cursorColor = c.gold,
+            ),
+        )
+        AutoText("Votre classement actuel : ${st.elo} ELO (formule FIDE, K = 32). Les parties à 2 joueurs ne comptent pas.", color = c.muted, maxSize = 13.sp, maxLines = 2, modifier = Modifier.padding(top = 8.dp))
         SectionTitle("À PROPOS")
         AutoText(
             "ChessDuck fonctionne 100 % hors-ligne. Moteur : Stockfish 11 (GPLv3). Problèmes : base ouverte Lichess (CC0). " +
-                "Pièces : série classique de Cburnett et pièces féeriques Girafe et Fou, Wikimedia Commons (CC BY-SA 3.0).",
+                "Pièces : série classique de Cburnett et pièces féeriques Girafe et Fou, Wikimedia Commons (CC BY-SA 3.0). Police du mode enfant : Fredoka (OFL).",
             color = c.muted, maxSize = 12.sp, maxLines = 6,
         )
         val context = LocalContext.current

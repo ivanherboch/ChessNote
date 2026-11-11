@@ -231,7 +231,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         state.update {
             it.copy(
                 puzzle = p, line = line, progress = 0, cursor = 0, solved = false, anim = null, hintStage = 0, refute = null, empty = false,
-                message = "${turnLabel(white)}. 💡 Conseil : ${PuzzleThemes.primary(p.themes, it.theme).tip}", tone = Tone.INFO,
+                message = "${turnLabel(white)}. 💡 Conseil : ${PuzzleThemes.primary(p.themes).tip}", tone = Tone.INFO,
             )
         }
         job = viewModelScope.launch {
@@ -441,7 +441,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         if (state.value.refute == null) return
         job?.cancel()
         state.update {
-            val tip = it.puzzle?.let { p -> PuzzleThemes.primary(p.themes, it.theme).tip } ?: ""
+            val tip = it.puzzle?.let { p -> PuzzleThemes.primary(p.themes).tip } ?: ""
             it.copy(refute = null, anim = null, tone = Tone.INFO, message = "↩️ Position rétablie, à vous de rejouer. 💡 Conseil : $tip")
         }
     }
@@ -483,9 +483,8 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
             Row(Modifier.fillMaxWidth().padding(vertical = 5.dp).height(22.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (p != null) {
                     AutoText(if (s.playerWhite) "⬜ Trait aux Blancs" else "⬛ Trait aux Noirs", maxSize = 14.sp, weight = FontWeight.Bold)
-                    val filter = PuzzleThemes.byKey[s.theme]?.name
                     AutoText(
-                        "   ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} · ${p.rating}" + (if (filter != null) " · $filter" else "") + "   #${p.id}",
+                        "   ${PuzzleThemes.primary(p.themes).name} · ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} ${p.rating}   #${p.id}",
                         color = c.muted, maxSize = 13.sp, modifier = Modifier.weight(1f),
                     )
                 }
@@ -521,7 +520,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         bottom = {
             FeedbackCard(
                 s.message, s.tone, Modifier.padding(top = 5.dp).weight(1f), maxSize = 15.sp,
-                title = p?.let { "🧩 Type de problème : ${PuzzleThemes.primary(it.themes, s.theme).name}" },
+                title = p?.let { "🧩 Type de problème : ${PuzzleThemes.primary(it.themes).name}" },
             )
             EqualRow(Modifier.padding(vertical = 5.dp), gap = 5.dp) {
                 DuckButton("◀ Arrière", vm::back, Modifier.weight(1f), enabled = s.refute == null && s.cursor > 0, height = 44.dp)
@@ -556,7 +555,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
             AutoText("Que souhaitez-vous envoyer ?", color = c.muted, maxSize = 14.sp, modifier = Modifier.padding(bottom = 10.dp))
             DuckButton(
                 "🧩 Partager le problème",
-                { shareChoice = false; ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0], s.theme) },
+                { shareChoice = false; ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0]) },
                 Modifier.fillMaxWidth(), accent = c.blue, filled = true, height = 50.dp, maxSize = 16.sp,
             )
             AutoText("L'énoncé seul : échiquier, trait, difficulté, type de problème et conseil — sans la solution.", color = c.muted, maxSize = 13.sp, maxLines = 3, modifier = Modifier.padding(top = 6.dp, bottom = 16.dp))
