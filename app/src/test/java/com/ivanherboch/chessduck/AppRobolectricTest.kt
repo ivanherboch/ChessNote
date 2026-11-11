@@ -70,6 +70,13 @@ class AppRobolectricTest {
         val bmp = com.ivanherboch.chessduck.feature.ShareCard.render(ApplicationProvider.getApplicationContext(), p, line.positions[1], line.positions[1].whiteToMove, line.moves[0])
         val dir = File(System.getenv("SHOT_DIR") ?: "build/screenshots").apply { mkdirs() }
         File(dir, "6_partage.png").outputStream().use { bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        val ctx: android.content.Context = ApplicationProvider.getApplicationContext()
+        for ((name, id) in listOf("7_solution_courte" to "0000D", "8_solution_longue" to "005f3")) {
+            val pz = db.puzzles().byId(id)!!
+            val sol = com.ivanherboch.chessduck.feature.ShareCard.renderSolution(ctx, pz)
+            File(dir, "$name.png").outputStream().use { sol.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        }
+        assertNotNull(db.puzzles().byIdIgnoreCase("0000d"))
         db.close()
     }
 
@@ -86,6 +93,7 @@ class AppRobolectricTest {
         rule.onAllNodesWithText("✕").onLast().performClick(); settle(800)
         rule.onNodeWithText("Jeu Libre").performClick(); settle(2000); shot("4_jeu")
         rule.onNodeWithText("⚙️").performClick(); settle(800); shot("5_parametres")
+        rule.onNodeWithText("🔕 Vibration désactivée").performClick(); settle(500)
         rule.onNodeWithText("☀️ Mode Jour (clair)").performClick(); settle(800)
         rule.onAllNodesWithText("✕").onLast().performClick(); settle(800); shot("4c_jeu_jour")
     }

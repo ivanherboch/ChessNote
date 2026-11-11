@@ -10,6 +10,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -152,6 +158,16 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             }.getOrNull()
             if (p != null) show(p)
             else state.update { it.copy(empty = true, tone = Tone.BAD, message = "Aucun problème ne correspond à ces filtres. Élargissez la sélection dans le catalogue.") }
+        }
+    }
+
+    /** Ouvre un problème par son identifiant Lichess (ex. « 00sHx ») ; renvoie faux s'il n'est pas embarqué. */
+    fun openById(raw: String, onResult: (Boolean) -> Unit) {
+        val id = raw.trim().removePrefix("#").substringAfterLast('/').trim()
+        viewModelScope.launch {
+            val p = if (id.isEmpty()) null else runCatching { dao.byId(id) ?: dao.byIdIgnoreCase(id) }.getOrNull()
+            if (p != null) show(p)
+            onResult(p != null)
         }
     }
 
@@ -358,6 +374,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
     val fb = LocalFeedback.current
     val context = LocalContext.current
     var catalog by remember { mutableStateOf(false) }
+    var shareChoice by remember { mutableStateOf(false) }
     val line = s.line
     val p = s.puzzle
 
@@ -367,11 +384,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
             EqualRow(Modifier.padding(top = 4.dp)) {
                 DuckButton("🧩 ${fr(solved.size)} / ${fr(DuckDatabase.PUZZLE_COUNT)} ▾", { catalog = true }, Modifier.weight(1.5f), accent = c.blue, height = 38.dp, maxSize = 14.sp)
                 DuckButton("🎲 Aléatoire", vm::random, Modifier.weight(1f), accent = c.gold, filled = s.solved || s.empty, height = 38.dp)
-                DuckButton(
-                    "📤 Partager",
-                    { if (p != null && line != null) ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0], s.theme) },
-                    Modifier.weight(1f), enabled = p != null, height = 38.dp,
-                )
+                DuckButton("📤 Partager", { shareChoice = true }, Modifier.weight(1f), enabled = p != null && line != null, height = 38.dp)
             }
             Row(Modifier.fillMaxWidth().padding(vertical = 5.dp).height(22.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (p != null) {
@@ -426,6 +439,23 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
     )
 
     if (catalog) PuzzleCatalog(vm, s, onClose = { catalog = false })
+    if (shareChoice && p != null && line != null) {
+        DuckSheet("📤 Partager", { shareChoice = false }) {
+            AutoText("Que souhaitez-vous envoyer ?", color = c.muted, maxSize = 14.sp, modifier = Modifier.padding(bottom = 10.dp))
+            DuckButton(
+                "🧩 Partager le problème",
+                { shareChoice = false; ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0], s.theme) },
+                Modifier.fillMaxWidth(), accent = c.blue, filled = true, height = 50.dp, maxSize = 16.sp,
+            )
+            AutoText("L'énoncé seul : échiquier, trait, difficulté, type de problème et conseil — sans la solution.", color = c.muted, maxSize = 13.sp, maxLines = 3, modifier = Modifier.padding(top = 6.dp, bottom = 16.dp))
+            DuckButton(
+                "✅ Partager la solution",
+                { shareChoice = false; ShareCard.shareSolution(context, p) },
+                Modifier.fillMaxWidth(), accent = c.green, filled = true, height = 50.dp, maxSize = 16.sp,
+            )
+            AutoText("La solution illustrée : une grille par coup, flèches des déplacements, symboles ✕ + # et pièces capturées.", color = c.muted, maxSize = 13.sp, maxLines = 3, modifier = Modifier.padding(top = 6.dp, bottom = 8.dp))
+        }
+    }
 }
 
 @Composable
@@ -434,7 +464,30 @@ private fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> U
     val counts by vm.counts.collectAsStateWithLifecycle()
     var band by remember { mutableIntStateOf(s.band) }
     LaunchedEffect(band) { vm.loadCounts(band) }
+    var query by remember { mutableStateOf("") }
+    var notFound by remember { mutableStateOf(false) }
+    val open = { vm.openById(query) { ok -> if (ok) onClose() else notFound = true } }
     DuckSheet("🧩 Catalogue des problèmes", onClose) {
+        SectionTitle("RECHERCHER PAR IDENTIFIANT LICHESS")
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = query, onValueChange = { query = it.take(12); notFound = false }, singleLine = true,
+                placeholder = { AutoText("ex. 00sHx", color = c.muted, maxSize = 15.sp) },
+                isError = notFound,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search, autoCorrectEnabled = false),
+                keyboardActions = KeyboardActions(onSearch = { open() }),
+                modifier = Modifier.weight(1f),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = c.text, unfocusedTextColor = c.text, focusedBorderColor = c.gold, unfocusedBorderColor = c.outline,
+                    cursorColor = c.gold, errorTextColor = c.text,
+                ),
+            )
+            DuckButton("🔎 Ouvrir", { open() }, Modifier.width(110.dp), enabled = query.isNotBlank(), accent = c.gold, filled = true, height = 52.dp, maxSize = 15.sp)
+        }
+        if (notFound) AutoText(
+            "Aucun problème « ${query.trim()} » parmi les 50 000 embarqués. Vérifiez l'identifiant (majuscules et minuscules comptent).",
+            color = c.red, maxSize = 13.sp, maxLines = 3, modifier = Modifier.padding(top = 6.dp),
+        )
         SectionTitle("1. DIFFICULTÉ")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             PuzzleThemes.BANDS.forEachIndexed { i, label ->

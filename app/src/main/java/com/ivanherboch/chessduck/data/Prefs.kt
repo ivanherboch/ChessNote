@@ -13,6 +13,7 @@ private val Context.store by preferencesDataStore("chessduck")
 
 data class Settings(
     val dark: Boolean = true,
+    val haptics: Boolean = true,
     val pseudo: String = "Joueur",
     val elo: Int = 1200,
     val twoPlayers: Boolean = false,
@@ -31,6 +32,7 @@ data class Settings(
 class Prefs(private val context: Context) {
     private object K {
         val dark = booleanPreferencesKey("dark")
+        val haptics = booleanPreferencesKey("haptics")
         val pseudo = stringPreferencesKey("pseudo")
         val elo = intPreferencesKey("elo")
         val twoPlayers = booleanPreferencesKey("two_players")
@@ -46,6 +48,7 @@ class Prefs(private val context: Context) {
     val settings: Flow<Settings> = context.store.data.map { p ->
         Settings(
             dark = p[K.dark] ?: true,
+            haptics = p[K.haptics] ?: true,
             pseudo = p[K.pseudo] ?: "Joueur",
             elo = p[K.elo] ?: 1200,
             twoPlayers = p[K.twoPlayers] ?: false,
@@ -60,6 +63,7 @@ class Prefs(private val context: Context) {
     }
 
     suspend fun setDark(v: Boolean) = context.store.edit { it[K.dark] = v }
+    suspend fun setHaptics(v: Boolean) = context.store.edit { it[K.haptics] = v }
     suspend fun setPseudo(v: String) = context.store.edit { it[K.pseudo] = v }
     suspend fun setElo(v: Int) = context.store.edit { it[K.elo] = v }
     suspend fun setGameSettings(twoPlayers: Boolean, color: Int, aiElo: Int) = context.store.edit {

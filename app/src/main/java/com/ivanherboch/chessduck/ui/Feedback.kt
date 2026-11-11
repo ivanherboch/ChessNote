@@ -27,7 +27,12 @@ class Feedback(context: Context) {
         context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     }
 
+    /** Retour haptique activable dans les Paramètres (le son de pièce en bois n'est pas concerné). */
+    @Volatile
+    var hapticsEnabled = true
+
     private fun buzz(effect: VibrationEffect) {
+        if (!hapticsEnabled) return
         runCatching { vibrator?.takeIf { it.hasVibrator() }?.vibrate(effect) }
     }
 

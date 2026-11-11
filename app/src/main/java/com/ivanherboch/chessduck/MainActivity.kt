@@ -79,6 +79,7 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
                 onDispose {}
             }
+            app.feedback.hapticsEnabled = st.haptics
             ChessDuckTheme(st.dark) {
                 CompositionLocalProvider(LocalFeedback provides app.feedback) { MainScreen(st, app) }
             }
@@ -157,6 +158,11 @@ private fun SettingsSheet(st: Settings, app: ChessDuckApp, onClose: () -> Unit) 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DuckChip("🌙 Mode Nuit (sombre)", st.dark, { scope.launch { app.prefs.setDark(true) } }, Modifier.weight(1f))
             DuckChip("☀️ Mode Jour (clair)", !st.dark, { scope.launch { app.prefs.setDark(false) } }, Modifier.weight(1f))
+        }
+        SectionTitle("RETOUR HAPTIQUE")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            DuckChip("📳 Vibration activée", st.haptics, { scope.launch { app.prefs.setHaptics(true) } }, Modifier.weight(1f))
+            DuckChip("🔕 Vibration désactivée", !st.haptics, { scope.launch { app.prefs.setHaptics(false) } }, Modifier.weight(1f))
         }
         SectionTitle("PSEUDO DU JOUEUR")
         OutlinedTextField(

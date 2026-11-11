@@ -1,67 +1,77 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <radialGradient id="body" cx="38%" cy="30%" r="80%">
-      <stop offset="0" stop-color="#FFF3A6"/><stop offset="0.35" stop-color="#FFD83A"/>
-      <stop offset="0.8" stop-color="#F7B500"/><stop offset="1" stop-color="#D98E00"/>
+    <radialGradient id="head" cx="36%" cy="26%" r="82%">
+      <stop offset="0" stop-color="#FFF9C9"/><stop offset="0.32" stop-color="#FFE14D"/>
+      <stop offset="0.78" stop-color="#FDBF12"/><stop offset="1" stop-color="#E79A00"/>
     </radialGradient>
-    <radialGradient id="head" cx="40%" cy="28%" r="78%">
-      <stop offset="0" stop-color="#FFF7B8"/><stop offset="0.4" stop-color="#FFDC42"/>
-      <stop offset="0.85" stop-color="#F8B704"/><stop offset="1" stop-color="#DC9300"/>
+    <radialGradient id="body" cx="34%" cy="18%" r="95%">
+      <stop offset="0" stop-color="#FFEE8A"/><stop offset="0.45" stop-color="#FFD12E"/>
+      <stop offset="0.85" stop-color="#F5AE06"/><stop offset="1" stop-color="#DB8E00"/>
     </radialGradient>
+    <linearGradient id="mane" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFB627"/><stop offset="1" stop-color="#E88A00"/>
+    </linearGradient>
     <linearGradient id="beakTop" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FFB45C"/><stop offset="1" stop-color="#F97316"/>
+      <stop offset="0" stop-color="#FFC27A"/><stop offset="0.55" stop-color="#FF9A3D"/><stop offset="1" stop-color="#F97316"/>
     </linearGradient>
     <linearGradient id="beakLow" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#EA580C"/><stop offset="1" stop-color="#C2410C"/>
+      <stop offset="0" stop-color="#F0701A"/><stop offset="1" stop-color="#D4540C"/>
     </linearGradient>
     <linearGradient id="wood" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#8A5A2B"/><stop offset="0.22" stop-color="#D9A066"/>
-      <stop offset="0.45" stop-color="#C8935A"/><stop offset="0.8" stop-color="#9C6A38"/><stop offset="1" stop-color="#6F4720"/>
+      <stop offset="0" stop-color="#7C4F24"/><stop offset="0.2" stop-color="#DDA76C"/>
+      <stop offset="0.42" stop-color="#CC965B"/><stop offset="0.78" stop-color="#A06C39"/><stop offset="1" stop-color="#6A421D"/>
     </linearGradient>
     <linearGradient id="woodTop" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#EBC08A"/><stop offset="1" stop-color="#B98248"/>
+      <stop offset="0" stop-color="#F2CC98"/><stop offset="1" stop-color="#C18A50"/>
     </linearGradient>
     <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
-      <stop offset="0" stop-color="#000" stop-opacity="0.35"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+      <stop offset="0" stop-color="#000" stop-opacity="0.38"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="mane" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#F5A800"/><stop offset="1" stop-color="#D98300"/>
-    </linearGradient>
+    <radialGradient id="iris" cx="40%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#5B3A1E"/><stop offset="1" stop-color="#1B1320"/>
+    </radialGradient>
   </defs>
-  <ellipse cx="256" cy="472" rx="190" ry="26" fill="url(#shadow)"/>
-  <!-- Socle tourné en bois -->
-  <path d="M96 436 q0 -20 22 -24 h276 q22 4 22 24 v14 q0 22 -160 22 q-160 0 -160 -22 z" fill="url(#wood)"/>
-  <ellipse cx="256" cy="434" rx="160" ry="22" fill="url(#woodTop)"/>
-  <path d="M132 404 q4 -26 36 -30 h176 q32 4 36 30 v22 q-4 16 -124 16 q-120 0 -124 -16 z" fill="url(#wood)"/>
-  <ellipse cx="256" cy="402" rx="124" ry="17" fill="url(#woodTop)"/>
-  <path d="M160 372 q6 -18 30 -20 h132 q24 2 30 20 v24 q-10 10 -96 10 q-86 0 -96 -10 z" fill="url(#wood)"/>
-  <ellipse cx="256" cy="370" rx="96" ry="13" fill="#E6BA84"/>
-  <path d="M108 446 q148 22 296 0" fill="none" stroke="#5E3B19" stroke-opacity="0.35" stroke-width="3"/>
-  <path d="M140 416 q116 18 232 0" fill="none" stroke="#5E3B19" stroke-opacity="0.3" stroke-width="3"/>
-  <!-- Crinière de cavalier -->
-  <path d="M300 92 q48 6 66 52 q30 14 34 60 q26 30 14 78 q10 48 -30 86 l-70 -6 z" fill="url(#mane)"/>
-  <!-- Buste -->
-  <path d="M178 372 q-22 -64 16 -128 q-10 -60 60 -84 q96 -22 124 70 q22 78 -22 142 q-90 20 -178 0 z" fill="url(#body)"/>
-  <path d="M190 366 q-12 -52 14 -104" fill="none" stroke="#FFF7C2" stroke-opacity="0.55" stroke-width="12" stroke-linecap="round"/>
+  <ellipse cx="256" cy="476" rx="200" ry="24" fill="url(#shadow)"/>
+  <!-- Socle tourné en bois naturel -->
+  <path d="M74 440 q0 -22 24 -26 h316 q24 4 24 26 v12 q0 24 -182 24 q-182 0 -182 -24 z" fill="url(#wood)"/>
+  <ellipse cx="256" cy="438" rx="182" ry="23" fill="url(#woodTop)"/>
+  <path d="M112 410 q4 -26 38 -30 h212 q34 4 38 30 v20 q-6 17 -144 17 q-138 0 -144 -17 z" fill="url(#wood)"/>
+  <ellipse cx="256" cy="408" rx="144" ry="18" fill="url(#woodTop)"/>
+  <path d="M150 380 q6 -19 30 -21 h152 q24 2 30 21 v22 q-10 11 -106 11 q-96 0 -106 -11 z" fill="url(#wood)"/>
+  <ellipse cx="256" cy="378" rx="106" ry="14" fill="#EFC791"/>
+  <path d="M90 450 q166 24 332 0" fill="none" stroke="#5A3716" stroke-opacity="0.35" stroke-width="3"/>
+  <path d="M124 420 q132 20 264 0" fill="none" stroke="#5A3716" stroke-opacity="0.3" stroke-width="3"/>
+  <path d="M120 432 q20 6 44 8" fill="none" stroke="#FFE7C2" stroke-opacity="0.5" stroke-width="4" stroke-linecap="round"/>
+  <!-- Crinière (rappel du cavalier), contenue dans la largeur du socle -->
+  <path d="M312 96 q34 -6 48 22 q30 4 32 38 q22 20 10 50 q14 30 -10 54 q4 34 -26 50 q-6 30 -30 44 l-40 -40 z" fill="url(#mane)"/>
+  <path d="M352 122 q10 16 6 34 M384 162 q4 18 -6 34 M392 214 q-2 18 -14 30 M368 268 q-6 16 -18 24" fill="none" stroke="#C97200" stroke-opacity="0.45" stroke-width="4" stroke-linecap="round"/>
+  <!-- Buste dodu -->
+  <path d="M184 380 q-14 -44 2 -84 q10 -40 64 -52 q70 -12 92 44 q16 46 -4 92 q-78 14 -154 0 z" fill="url(#body)"/>
+  <!-- Petite aile -->
+  <path d="M250 306 q44 -10 62 22 q6 26 -22 40 q-34 6 -48 -18 q-8 -26 8 -44 z" fill="#F5A800" fill-opacity="0.75"/>
+  <path d="M258 340 q18 14 40 4 M264 356 q14 8 28 2" fill="none" stroke="#C97200" stroke-opacity="0.5" stroke-width="4" stroke-linecap="round"/>
+  <path d="M196 368 q-8 -38 8 -72" fill="none" stroke="#FFF8CC" stroke-opacity="0.6" stroke-width="12" stroke-linecap="round"/>
   <!-- Houppe -->
-  <path d="M262 74 q-26 -44 8 -58 q0 30 18 50 z" fill="#FFD83A"/>
-  <path d="M286 76 q-2 -52 40 -52 q-16 26 -10 56 z" fill="#F7B500"/>
-  <path d="M244 86 q-40 -24 -30 -52 q18 24 46 34 z" fill="#FFE46B"/>
-  <!-- Tête -->
-  <ellipse cx="262" cy="176" rx="116" ry="108" fill="url(#head)"/>
-  <ellipse cx="222" cy="112" rx="50" ry="26" fill="#FFFBE0" fill-opacity="0.55" transform="rotate(-18 222 112)"/>
-  <!-- Bec orange souriant, pointé vers la gauche -->
-  <path d="M176 222 q-66 34 -128 8 q-12 -8 2 -14 q70 -6 122 -22 z" fill="url(#beakLow)"/>
-  <path d="M186 168 q-74 -8 -150 34 q-22 14 -2 22 q76 12 150 -14 q22 -12 2 -42 z" fill="url(#beakTop)"/>
-  <path d="M40 214 q74 10 142 -14 q14 -6 16 -20" fill="none" stroke="#9A3412" stroke-width="5" stroke-linecap="round"/>
-  <ellipse cx="96" cy="190" rx="34" ry="8" fill="#FFE0B0" fill-opacity="0.6" transform="rotate(-14 96 190)"/>
-  <ellipse cx="72" cy="198" rx="5" ry="3.4" fill="#9A3412" transform="rotate(-14 72 198)"/>
-  <!-- Joue -->
-  <ellipse cx="232" cy="224" rx="26" ry="16" fill="#FF8A5B" fill-opacity="0.38"/>
-  <!-- Œil pétillant -->
-  <ellipse cx="236" cy="150" rx="40" ry="44" fill="#FFFFFF"/>
-  <ellipse cx="226" cy="154" rx="24" ry="28" fill="#1E1B2E"/>
-  <circle cx="216" cy="142" r="10" fill="#FFFFFF"/>
-  <circle cx="236" cy="166" r="5" fill="#FFFFFF" fill-opacity="0.85"/>
-  <path d="M200 96 q34 -22 68 -8" fill="none" stroke="#B87400" stroke-width="6" stroke-linecap="round"/>
+  <path d="M248 84 q-34 -34 -10 -62 q10 30 34 52 z" fill="#FFE766"/>
+  <path d="M268 78 q-16 -50 22 -64 q-2 34 12 60 z" fill="#FFD12E"/>
+  <path d="M292 82 q10 -44 46 -40 q-22 20 -22 50 z" fill="#FDBF12"/>
+  <!-- Tête ronde -->
+  <ellipse cx="258" cy="190" rx="126" ry="118" fill="url(#head)"/>
+  <ellipse cx="214" cy="116" rx="54" ry="26" fill="#FFFDEB" fill-opacity="0.6" transform="rotate(-20 214 116)"/>
+  <!-- Bec souriant, pointé vers la gauche -->
+  <path d="M172 234 q-30 34 -70 20 q-10 -6 0 -14 q40 -2 66 -18 z" fill="url(#beakLow)"/>
+  <path d="M180 184 q-54 -10 -94 22 q-22 20 -2 32 q52 10 98 -12 q20 -12 -2 -42 z" fill="url(#beakTop)"/>
+  <path d="M84 238 q52 10 96 -12 q16 -8 22 -28" fill="none" stroke="#9A3412" stroke-width="5" stroke-linecap="round"/>
+  <ellipse cx="126" cy="206" rx="28" ry="8" fill="#FFF0D6" fill-opacity="0.7" transform="rotate(-16 126 206)"/>
+  <ellipse cx="104" cy="218" rx="5" ry="3.2" fill="#9A3412" transform="rotate(-16 104 218)"/>
+  <!-- Joue rose -->
+  <ellipse cx="246" cy="250" rx="30" ry="18" fill="#FF7A8A" fill-opacity="0.42"/>
+  <!-- Grand œil pétillant -->
+  <ellipse cx="244" cy="176" rx="46" ry="52" fill="#FFFFFF"/>
+  <ellipse cx="236" cy="182" rx="32" ry="38" fill="url(#iris)"/>
+  <circle cx="222" cy="164" r="14" fill="#FFFFFF"/>
+  <circle cx="250" cy="200" r="7" fill="#FFFFFF" fill-opacity="0.9"/>
+  <circle cx="226" cy="204" r="3.5" fill="#FFFFFF" fill-opacity="0.7"/>
+  <path d="M286 150 q10 -8 20 -6 M290 164 q10 -4 18 0" fill="none" stroke="#3B2A1A" stroke-width="5" stroke-linecap="round"/>
+  <path d="M206 112 q34 -20 70 -4" fill="none" stroke="#C98500" stroke-width="6" stroke-linecap="round"/>
 </svg>

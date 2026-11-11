@@ -62,6 +62,9 @@ interface PuzzleDao {
     @Query("SELECT * FROM puzzles WHERE id = :id")
     suspend fun byId(id: String): Puzzle?
 
+    @Query("SELECT * FROM puzzles WHERE id = :id COLLATE NOCASE LIMIT 1")
+    suspend fun byIdIgnoreCase(id: String): Puzzle?
+
     @Query(
         "SELECT * FROM puzzles WHERE rating BETWEEN :lo AND :hi " +
             "AND (:theme = '' OR themes LIKE '% ' || :theme || ' %') " +
