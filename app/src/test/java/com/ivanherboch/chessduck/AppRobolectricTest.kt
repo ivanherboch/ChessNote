@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
@@ -182,11 +183,23 @@ class AppRobolectricTest {
         rule.onAllNodesWithText("✕").onLast().performClick(); settle(800)
         // Thème choisi : chaque tirage aléatoire affiche ce thème, quel que soit le type principal du problème.
         rule.onAllNodesWithText("🧩", substring = true).onFirst().performClick(); settle(1500)
-        rule.onNodeWithText("Mat en 1").performClick(); settle(2500)
+        rule.onNodeWithText("Mat en 1").performScrollTo().performClick(); settle(2500)
         repeat(8) {
             rule.onNodeWithText("🧩 Type de problème : Mat en 1").assertExists()
             rule.onNodeWithText("🎲 Aléatoire").performClick(); settle(2000)
         }
         shot("3f_theme_choisi")
+        // Famille « Mats » : chaque tirage est un mat, de n'importe quelle catégorie.
+        rule.onAllNodesWithText("🧩", substring = true).onFirst().performClick(); settle(1500); shot("3g_familles")
+        rule.onNodeWithText("📂 Mats").performClick(); settle(2500)
+        val mates = com.ivanherboch.chessduck.content.PuzzleThemes.all.filter { it.group == com.ivanherboch.chessduck.content.PuzzleThemes.G_MATE }.map { it.name }
+        val seen = HashSet<String>()
+        repeat(8) {
+            val shown = mates.filter { name -> rule.onAllNodesWithText("🧩 Type de problème : $name").fetchSemanticsNodes().isNotEmpty() }
+            assertEquals(1, shown.size)
+            seen.addAll(shown)
+            rule.onNodeWithText("🎲 Aléatoire").performClick(); settle(2000)
+        }
+        org.junit.Assert.assertTrue("plusieurs catégories de mats attendues : $seen", seen.size >= 2)
     }
 }

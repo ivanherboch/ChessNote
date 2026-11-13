@@ -94,6 +94,21 @@ object PuzzleThemes {
         return PRIORITY.firstOrNull { it in set }?.let { byKey[it] } ?: byKey.getValue("middlegame")
     }
 
+    /** Clé de filtre d'un groupe entier de thèmes (ex. tous les mats). */
+    fun groupKey(group: String) = "g:" + groups.indexOf(group)
+
+    /** Groupe désigné par une clé de filtre « g:n », ou null si la clé est celle d'un thème. */
+    fun groupOf(key: String): String? = if (key.startsWith("g:")) groups.getOrNull(key.drop(2).toIntOrNull() ?: -1) else null
+
+    val GROUP_GOALS = mapOf(
+        G_MATE to "Tous les problèmes qui se terminent par un échec et mat.",
+        G_TACTIC to "Fourchettes, clouages, enfilades, découvertes, déviations…",
+        G_SPECIAL to "Promotions, prise en passant, roque.",
+        G_ATTACK to "Assauts contre le roi, pions avancés.",
+        G_ENDGAME to "Finales de pions, de tours, de pièces mineures, de dames.",
+        G_PHASE to "Les problèmes sans motif classique, en ouverture, milieu de partie ou finale.",
+    )
+
     /** Ordre d'affichage du catalogue : du plus caractéristique (les mats) au plus général. */
     val groups = listOf(G_MATE, G_TACTIC, G_SPECIAL, G_ATTACK, G_ENDGAME, G_PHASE)
 

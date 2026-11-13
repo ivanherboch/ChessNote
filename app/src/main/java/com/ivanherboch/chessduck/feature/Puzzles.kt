@@ -255,14 +255,18 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             // Tirage dans l'index mémoire : difficulté + thème unique du problème, non résolus d'abord.
             val id = withContext(Dispatchers.Default) {
                 ensureMeta()
-                val cat = PuzzleThemes.all.indexOfFirst { it.key == s.theme }
+                // Filtre : un thème précis, ou un groupe entier (tous les mats, toutes les finales…).
+                val group = PuzzleThemes.groupOf(s.theme)
+                val allowed = BooleanArray(PuzzleThemes.all.size) { i ->
+                    if (group != null) PuzzleThemes.all[i].group == group else s.theme.isEmpty() || PuzzleThemes.all[i].key == s.theme
+                }
                 val solved = solvedIds.value
                 var fresh = -1
                 var freshCount = 0
                 var any = -1
                 var anyCount = 0
                 for (i in metaIds.indices) {
-                    if (metaRatings[i] !in r || (cat >= 0 && metaCat[i].toInt() != cat) || metaIds[i] == cur) continue
+                    if (metaRatings[i] !in r || !allowed[metaCat[i].toInt()] || metaIds[i] == cur) continue
                     anyCount++
                     if (rnd.nextInt(anyCount) == 0) any = i
                     if (metaIds[i] !in solved) {
@@ -317,6 +321,10 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
                 val map = HashMap<String, ThemeCount>()
                 PuzzleThemes.all.forEachIndexed { i, t -> map[t.key] = ThemeCount(total[i], done[i]) }
                 map[""] = ThemeCount(total[n], done[n])
+                for (g in PuzzleThemes.groups) {
+                    val idx = PuzzleThemes.all.indices.filter { PuzzleThemes.all[it].group == g }
+                    map[PuzzleThemes.groupKey(g)] = ThemeCount(idx.sumOf { total[it] }, idx.sumOf { done[it] })
+                }
                 map
             }
             counts.value = res
@@ -665,6 +673,12 @@ private fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> U
         ThemeRow("🎯 Tous les thèmes", "Un mélange de toutes les idées, sans indication à l'avance.", counts[""], s.theme.isEmpty() && s.band == band) {
             vm.setFilter(band, ""); onClose()
         }
+        // Un bouton par famille : « Aléatoire » tire alors dans tous les thèmes de la famille.
+        for (g in PuzzleThemes.groups) {
+            val key = PuzzleThemes.groupKey(g)
+            ThemeRow("📂 $g", PuzzleThemes.GROUP_GOALS[g] ?: "", counts[key], s.theme == key && s.band == band) { vm.setFilter(band, key); onClose() }
+        }
+        SectionTitle("OU UN THÈME PRÉCIS")
         for (g in PuzzleThemes.groups) {
             SectionTitle(g.uppercase())
             for (t in PuzzleThemes.all.filter { it.group == g }) {
