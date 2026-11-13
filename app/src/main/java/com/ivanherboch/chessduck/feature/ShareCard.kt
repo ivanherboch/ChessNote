@@ -193,7 +193,7 @@ object ShareCard {
 
     // ---------------------------------------------------------------- Énoncé
 
-    fun render(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?): Bitmap {
+    fun render(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, chosen: String = ""): Bitmap {
         val h = 1600
         val bmp = Bitmap.createBitmap(W, h, Bitmap.Config.ARGB_8888)
         val g = Painter(context, Canvas(bmp))
@@ -204,7 +204,7 @@ object ShareCard {
         g.board((W - side) / 2, top, side, position, !playerWhite, lastMove)
 
         // Légende : trait, difficulté, type de problème et conseil (sans la solution)
-        val theme = PuzzleThemes.primary(puzzle.themes)
+        val theme = PuzzleThemes.shown(puzzle.themes, chosen)
         val base = top + side
         turnBox(g, 48f, base + 44f, playerWhite)
         g.text(if (playerWhite) "Trait aux Blancs" else "Trait aux Noirs", 110f, base + 86f, 54f, TEXT, bold = true)
@@ -260,7 +260,7 @@ object ShareCard {
      * Solution illustrée : une grille par coup du joueur. Flèche verte = coup à jouer,
      * flèche rouge = réponse adverse, badges ✕ (prise), + (échec), # (mat) et pièce capturée en légende.
      */
-    fun renderSolution(context: Context, puzzle: Puzzle): Bitmap {
+    fun renderSolution(context: Context, puzzle: Puzzle, chosen: String = ""): Bitmap {
         val line = Line.fromUci(puzzle.fen, puzzle.moves)
         val playerWhite = line.positions[1].whiteToMove
         val steps = (1 until line.size step 2).map { i ->
@@ -301,7 +301,7 @@ object ShareCard {
         val g = Painter(context, Canvas(bmp))
         g.background(h)
         g.header("Solution du problème  ·  Lichess #${puzzle.id}")
-        val theme = PuzzleThemes.primary(puzzle.themes)
+        val theme = PuzzleThemes.shown(puzzle.themes, chosen)
         turnBox(g, 48f, 208f, playerWhite)
         g.text((if (playerWhite) "Trait aux Blancs" else "Trait aux Noirs") + "  ·  ${theme.name}  ·  ${puzzle.rating}", 110f, 246f, 38f, TEXT, bold = true)
 
@@ -407,18 +407,18 @@ object ShareCard {
         }
     }.getOrNull()
 
-    fun saveProblem(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?): String? =
-        save(context, render(context, puzzle, position, playerWhite, lastMove), "chessduck-${puzzle.id}.png")
+    fun saveProblem(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, chosen: String = ""): String? =
+        save(context, render(context, puzzle, position, playerWhite, lastMove, chosen), "chessduck-${puzzle.id}.png")
 
-    fun saveSolution(context: Context, puzzle: Puzzle): String? =
-        save(context, renderSolution(context, puzzle), "chessduck-${puzzle.id}-solution.png")
+    fun saveSolution(context: Context, puzzle: Puzzle, chosen: String = ""): String? =
+        save(context, renderSolution(context, puzzle, chosen), "chessduck-${puzzle.id}-solution.png")
 
-    fun share(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?) =
+    fun share(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, chosen: String = "") =
         send(
-            context, render(context, puzzle, position, playerWhite, lastMove), "chessduck-${puzzle.id}.png",
+            context, render(context, puzzle, position, playerWhite, lastMove, chosen), "chessduck-${puzzle.id}.png",
             "Saurez-vous résoudre ce problème ? ${if (playerWhite) "Trait aux Blancs" else "Trait aux Noirs"} — ChessDuck", "Partager le problème",
         )
 
-    fun shareSolution(context: Context, puzzle: Puzzle) =
-        send(context, renderSolution(context, puzzle), "chessduck-${puzzle.id}-solution.png", "Solution du problème Lichess #${puzzle.id} — ChessDuck", "Partager la solution")
+    fun shareSolution(context: Context, puzzle: Puzzle, chosen: String = "") =
+        send(context, renderSolution(context, puzzle, chosen), "chessduck-${puzzle.id}-solution.png", "Solution du problème Lichess #${puzzle.id} — ChessDuck", "Partager la solution")
 }

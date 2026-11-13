@@ -179,5 +179,14 @@ class AppRobolectricTest {
         rule.onNodeWithText("🕘 Récents").performClick(); settle(1000); shot("3d_recents")
         rule.onAllNodesWithText("✕").onLast().performClick(); settle(800)
         rule.onNodeWithText("🖼️ Exporter").performClick(); settle(1000); shot("3e_exporter")
+        rule.onAllNodesWithText("✕").onLast().performClick(); settle(800)
+        // Thème choisi : chaque tirage aléatoire affiche ce thème, quel que soit le type principal du problème.
+        rule.onAllNodesWithText("🧩", substring = true).onFirst().performClick(); settle(1500)
+        rule.onNodeWithText("Mat en 1").performClick(); settle(2500)
+        repeat(6) {
+            rule.onNodeWithText("🧩 Type de problème : Mat en 1").assertExists()
+            rule.onNodeWithText("🎲 Aléatoire").performClick(); settle(2000)
+        }
+        shot("3f_theme_choisi")
     }
 }

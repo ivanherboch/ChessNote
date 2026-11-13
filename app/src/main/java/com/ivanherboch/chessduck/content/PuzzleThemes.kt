@@ -93,6 +93,14 @@ object PuzzleThemes {
         return PRIORITY.firstOrNull { it in set }?.let { byKey[it] } ?: byKey.getValue("middlegame")
     }
 
+    /**
+     * Thème à afficher pour un problème. Un problème Lichess porte plusieurs thèmes (par exemple « mat en 1 »
+     * ET « mat en queue d'aronde ») : si le joueur a choisi un thème dans le catalogue et que le problème le porte,
+     * c'est ce thème qui est affiché ; sinon, le type principal.
+     */
+    fun shown(themes: String, chosen: String): ThemeInfo =
+        byKey[chosen]?.takeIf { " $chosen " in " ${themes.trim()} " } ?: primary(themes)
+
     /** Ordre d'affichage du catalogue : les mats d'abord. */
     val groups = listOf(G_MATE, G_TACTIC, G_ATTACK, G_SPECIAL, G_ENDGAME, G_PHASE)
 

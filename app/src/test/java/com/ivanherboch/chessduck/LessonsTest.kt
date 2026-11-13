@@ -37,5 +37,12 @@ class LessonsTest {
         // Un mat en 2 obtenu par attraction est classé « Mat en 2 », partout dans l'application.
         assertEquals("mateIn2", PuzzleThemes.primary(" attraction mate mateIn2 middlegame short ").key)
         assertEquals(PuzzleThemes.G_MATE, PuzzleThemes.groups.first())
+        // #oWde7 est à la fois « mat en 1 » et « mat en queue d'aronde » : le thème choisi par le joueur est affiché.
+        val oWde7 = " dovetailMate mate mateIn1 middlegame oneMove pin "
+        assertEquals("dovetailMate", PuzzleThemes.primary(oWde7).key)
+        assertEquals("mateIn1", PuzzleThemes.shown(oWde7, "mateIn1").key)
+        assertEquals("pin", PuzzleThemes.shown(oWde7, "pin").key)
+        assertEquals("dovetailMate", PuzzleThemes.shown(oWde7, "").key)
+        assertEquals("dovetailMate", PuzzleThemes.shown(oWde7, "fork").key)
     }
 }

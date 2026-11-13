@@ -204,9 +204,10 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
                 if (i and 0x3FF == 0) ensureActive()
             }
             val top = (exact + prefix + inside).take(5)
+            val chosen = state.value.theme
             suggestions.value = Suggestions(
                 raw.trim().removePrefix("#"),
-                top.map { Suggestion(metaIds[it], PuzzleThemes.primary(metaThemes[it]).name, metaRatings[it]) },
+                top.map { Suggestion(metaIds[it], PuzzleThemes.shown(metaThemes[it], chosen).name, metaRatings[it]) },
                 total > top.size,
             )
         }
@@ -227,8 +228,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Conseil du thème que le joueur a choisi de travailler (si le problème le porte), sinon celui du type du problème. */
-    private fun tipFor(p: Puzzle, chosen: String): String =
-        (PuzzleThemes.byKey[chosen]?.takeIf { " $chosen " in p.themes } ?: PuzzleThemes.primary(p.themes)).tip
+    private fun tipFor(p: Puzzle, chosen: String): String = PuzzleThemes.shown(p.themes, chosen).tip
 
     private fun turnLabel(white: Boolean) = if (white) "⬜ Trait aux Blancs" else "⬛ Trait aux Noirs"
 
@@ -491,11 +491,9 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
             Row(Modifier.fillMaxWidth().padding(vertical = 5.dp).height(22.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (p != null) {
                     AutoText(if (s.playerWhite) "⬜ Trait aux Blancs" else "⬛ Trait aux Noirs", maxSize = 14.sp, weight = FontWeight.Bold)
-                    // Le thème choisi dans le catalogue reste affiché, même quand le problème a un autre type principal.
-                    val chosen = PuzzleThemes.byKey[s.theme]?.takeIf { " ${s.theme} " in p.themes }?.name
-                    val type = PuzzleThemes.primary(p.themes).name
+                    // Si un thème est choisi dans le catalogue, c'est lui qui est affiché (le problème le porte toujours).
                     AutoText(
-                        "   " + (if (chosen != null && chosen != type) "🎯 $chosen · " else "") + "$type · ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} ${p.rating}   #${p.id}",
+                        "   ${PuzzleThemes.shown(p.themes, s.theme).name} · ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} ${p.rating}   #${p.id}",
                         color = c.muted, maxSize = 13.sp, modifier = Modifier.weight(1f),
                     )
                 }
@@ -531,11 +529,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         bottom = {
             FeedbackCard(
                 s.message, s.tone, Modifier.padding(top = 5.dp).weight(1f), maxSize = 15.sp,
-                title = p?.let {
-                    val type = PuzzleThemes.primary(it.themes).name
-                    val chosen = PuzzleThemes.byKey[s.theme]?.takeIf { t -> " ${t.key} " in it.themes }?.name
-                    if (chosen != null && chosen != type) "🎯 Thème choisi : $chosen · Type : $type" else "🧩 Type de problème : $type"
-                },
+                title = p?.let { "🧩 Type de problème : ${PuzzleThemes.shown(it.themes, s.theme).name}" },
             )
             EqualRow(Modifier.padding(vertical = 5.dp), gap = 5.dp) {
                 DuckButton("◀ Arrière", vm::back, Modifier.weight(1f), enabled = s.refute == null && s.cursor > 0, height = 44.dp)
@@ -557,7 +551,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        AutoText("#${r.id} · ${PuzzleThemes.primary(r.themes).name}", maxSize = 16.sp, weight = FontWeight.SemiBold)
+                        AutoText("#${r.id} · ${PuzzleThemes.shown(r.themes, s.theme).name}", maxSize = 16.sp, weight = FontWeight.SemiBold)
                         AutoText("${PuzzleThemes.BANDS[PuzzleThemes.bandOf(r.rating)]} · ${r.rating}", color = c.muted, maxSize = 13.sp)
                     }
                     AutoText(if (done) "✅ Résolu" else "À résoudre", color = if (done) c.green else c.gold, maxSize = 13.sp, weight = FontWeight.Bold)
@@ -570,13 +564,13 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         DuckSheet("🖼️ Exporter en image", { shareChoice = false }) {
             ExportCard(
                 "🧩 Le problème", "L'énoncé seul : échiquier, trait, difficulté, type et conseil — sans la solution.", c.blue,
-                onShare = { shareChoice = false; ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0]) },
-                onSave = { status = ShareCard.saveProblem(context, p, line.positions[1], s.playerWhite, line.moves[0])?.let { "✅ $it" } ?: "❌ L'image n'a pas pu être enregistrée." },
+                onShare = { shareChoice = false; ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0], s.theme) },
+                onSave = { status = ShareCard.saveProblem(context, p, line.positions[1], s.playerWhite, line.moves[0], s.theme)?.let { "✅ $it" } ?: "❌ L'image n'a pas pu être enregistrée." },
             )
             ExportCard(
                 "✅ La solution", "Une grille par coup : flèches des déplacements, symboles ✕ + # et pièces capturées.", c.green,
-                onShare = { shareChoice = false; ShareCard.shareSolution(context, p) },
-                onSave = { status = ShareCard.saveSolution(context, p)?.let { "✅ $it" } ?: "❌ L'image n'a pas pu être enregistrée." },
+                onShare = { shareChoice = false; ShareCard.shareSolution(context, p, s.theme) },
+                onSave = { status = ShareCard.saveSolution(context, p, s.theme)?.let { "✅ $it" } ?: "❌ L'image n'a pas pu être enregistrée." },
             )
             status?.let { AutoText(it, color = if (it.startsWith("✅")) c.green else c.red, maxSize = 13.sp, weight = FontWeight.SemiBold, maxLines = 3, modifier = Modifier.padding(top = 4.dp, bottom = 6.dp)) }
         }
