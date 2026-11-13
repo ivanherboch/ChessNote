@@ -44,6 +44,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.border
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -122,10 +128,10 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
     val play: PlayViewModel = viewModel()
     val kid: KidViewModel = viewModel()
 
-    // En quittant le mode enfant, la grille du Jeu Libre repart de zéro.
+    // En quittant le mode enfant, sa partie est effacée ; la partie du Jeu Libre, elle, est retrouvée telle quelle.
     var wasKid by remember { mutableStateOf(st.kidMode) }
     LaunchedEffect(st.kidMode) {
-        if (wasKid && !st.kidMode) { kid.reset(); play.closeReview(); play.newGame() }
+        if (wasKid && !st.kidMode) kid.reset()
         wasKid = st.kidMode
     }
     if (st.kidMode) {
@@ -190,14 +196,32 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
     if (showSettings) SettingsSheet(st, app) { showSettings = false }
 }
 
+/**
+ * Onglet de navigation. L'onglet actif occupe tout son quart de bandeau avec un relief « enfoncé » :
+ * fond plus sombre teinté d'or, ombre intérieure en haut, liseré doré en bas, contenu légèrement abaissé.
+ */
 @Composable
 private fun TabItem(emoji: String, label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val c = LocalDuck.current
-    Column(modifier.clickable { onClick() }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Box(Modifier.clip(RoundedCornerShape(12.dp)).background(if (selected) c.gold.copy(alpha = 0.22f) else c.surface).padding(horizontal = 16.dp, vertical = 1.dp)) {
-            AutoText(emoji, maxSize = 19.sp, align = TextAlign.Center)
-        }
-        AutoText(label, color = if (selected) c.gold else c.muted, maxSize = 12.sp, weight = if (selected) FontWeight.Bold else FontWeight.Medium, align = TextAlign.Center)
+    val shape = RoundedCornerShape(14.dp)
+    val well = if (c.dark) Color(0xFF0B1220) else Color(0xFFC3CEDC)
+    Column(
+        modifier.padding(horizontal = 4.dp, vertical = 4.dp).clip(shape)
+            .then(
+                if (selected) Modifier.background(well).drawBehind {
+                    // Ombre intérieure haute : le bouton paraît creusé dans le bandeau.
+                    drawRect(Brush.verticalGradient(listOf(Color.Black.copy(alpha = if (c.dark) 0.55f else 0.22f), Color.Transparent), endY = size.height * 0.45f))
+                    drawRect(c.gold.copy(alpha = if (c.dark) 0.14f else 0.22f))
+                    drawRect(c.gold, topLeft = Offset(size.width * 0.2f, size.height - 3.dp.toPx()), size = Size(size.width * 0.6f, 3.dp.toPx()))
+                }.border(1.dp, Color.Black.copy(alpha = if (c.dark) 0.5f else 0.14f), shape)
+                else Modifier,
+            )
+            .clickable { onClick() }
+            .padding(top = if (selected) 2.dp else 0.dp),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+    ) {
+        AutoText(emoji, maxSize = 19.sp, align = TextAlign.Center)
+        AutoText(label, color = if (selected) (if (c.dark) c.gold else Color(0xFF8A5A00)) else c.muted, maxSize = 12.sp, weight = if (selected) FontWeight.Bold else FontWeight.Medium, align = TextAlign.Center)
     }
 }
 

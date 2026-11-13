@@ -9,7 +9,7 @@
       <stop offset="0.85" stop-color="#F3A906"/><stop offset="1" stop-color="#D98C00"/>
     </linearGradient>
     <linearGradient id="mane" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#FFB02E"/><stop offset="1" stop-color="#E07F00"/>
+      <stop offset="0" stop-color="#FFC62A"/><stop offset="1" stop-color="#E8A200"/>
     </linearGradient>
     <linearGradient id="beakTop" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#FFC27A"/><stop offset="0.55" stop-color="#FF9A3D"/><stop offset="1" stop-color="#F97316"/>
@@ -30,21 +30,31 @@
     <radialGradient id="iris" cx="40%" cy="35%" r="70%">
       <stop offset="0" stop-color="#5B3A1E"/><stop offset="1" stop-color="#1B1320"/>
     </radialGradient>
+    <linearGradient id="cyl" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E9A400"/><stop offset="0.2" stop-color="#FFE873"/>
+      <stop offset="0.45" stop-color="#FFD12E"/><stop offset="0.8" stop-color="#F2A700"/><stop offset="1" stop-color="#C98200"/>
+    </linearGradient>
+    <linearGradient id="top" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF6BF"/><stop offset="1" stop-color="#FFCF33"/>
+    </linearGradient>
   </defs>
-  <ellipse cx="262" cy="480" rx="186" ry="20" fill="url(#shadow)"/>
-  <!-- Socle Staunton tourné en bois : large pied, gorge creusée, collerette -->
-  <path d="M92 452 q0 -18 22 -22 h296 q22 4 22 22 v8 q0 22 -170 22 q-170 0 -170 -22 z" fill="url(#wood)"/>
-  <ellipse cx="262" cy="450" rx="170" ry="20" fill="url(#woodTop)"/>
-  <path d="M128 446 q2 -22 44 -34 q26 -8 30 -26 h120 q4 18 30 26 q42 12 44 34 q-12 14 -134 14 q-122 0 -134 -14 z" fill="url(#wood)"/>
-  <path d="M176 392 q0 -12 16 -14 h140 q16 2 16 14 v6 q-6 10 -86 10 q-80 0 -86 -10 z" fill="url(#wood)"/>
-  <ellipse cx="262" cy="390" rx="86" ry="11" fill="#EFC791"/>
-  <path d="M108 458 q154 22 308 0" fill="none" stroke="#5A3716" stroke-opacity="0.35" stroke-width="3"/>
-  <path d="M150 440 q30 8 70 10" fill="none" stroke="#FFE7C2" stroke-opacity="0.5" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="256" cy="488" rx="170" ry="16" fill="url(#shadow)"/>
+  <!-- Socle Staunton cylindrique mouluré, entièrement jaune : pied large, gorge creusée, double collerette -->
+  <path d="M112 456 q0 -16 20 -20 h248 q20 4 20 20 v12 q0 24 -144 24 q-144 0 -144 -24 z" fill="url(#cyl)"/>
+  <ellipse cx="256" cy="454" rx="144" ry="17" fill="url(#top)"/>
+  <path d="M112 470 q144 26 288 0" fill="none" stroke="#B87400" stroke-opacity="0.45" stroke-width="4"/>
+  <path d="M142 450 q4 -24 44 -36 q24 -8 28 -22 h84 q4 14 28 22 q40 12 44 36 q-16 13 -114 13 q-98 0 -114 -13 z" fill="url(#cyl)"/>
+  <path d="M164 440 q14 -12 34 -18" fill="none" stroke="#FFF6BF" stroke-opacity="0.7" stroke-width="6" stroke-linecap="round"/>
+  <path d="M176 396 q0 -11 14 -13 h132 q14 2 14 13 v8 q-6 10 -80 10 q-74 0 -80 -10 z" fill="url(#cyl)"/>
+  <ellipse cx="256" cy="395" rx="80" ry="10" fill="url(#top)"/>
+  <path d="M176 404 q80 16 160 0" fill="none" stroke="#B87400" stroke-opacity="0.4" stroke-width="3"/>
+  <path d="M192 378 q0 -9 12 -11 h104 q12 2 12 11 v8 q-6 8 -64 8 q-58 0 -64 -8 z" fill="url(#cyl)"/>
+  <ellipse cx="256" cy="377" rx="64" ry="8" fill="#FFF0A0"/>
   <!-- Crinière crantée le long de l'encolure -->
   <path d="M286 74 q40 2 58 30 q30 12 36 46 q24 22 20 56 q16 30 4 60 q8 34 -14 58 q0 30 -22 50 l-58 -20 z" fill="url(#mane)"/>
-  <path d="M344 104 q8 16 4 32 M380 150 q4 18 -4 34 M400 206 q0 18 -10 32 M404 266 q-4 18 -16 30 M390 324 q-6 14 -16 22" fill="none" stroke="#B86400" stroke-opacity="0.5" stroke-width="4" stroke-linecap="round"/>
+  <path d="M344 104 q8 16 4 32 M380 150 q4 18 -4 34 M400 206 q0 18 -10 32 M404 266 q-4 18 -16 30 M390 324 q-6 14 -16 22" fill="none" stroke="#B87400" stroke-opacity="0.45" stroke-width="4" stroke-linecap="round"/>
   <!-- Corps de cavalier Staunton : poitrail bombé, encolure arquée -->
-  <path d="M186 386 q-34 -46 -22 -92 q8 -34 44 -52 l72 -150 q62 16 84 78 q26 76 -4 150 q-10 36 -22 66 q-76 12 -152 0 z" fill="url(#body)"/>
+  <path d="M196 376 q-44 -40 -32 -84 q8 -34 44 -52 l72 -150 q62 16 84 78 q26 76 -4 150 q-10 36 -32 58 q-66 10 -132 0 z" fill="url(#body)"/>
   <path d="M184 372 q-22 -40 -6 -82" fill="none" stroke="#FFF8CC" stroke-opacity="0.65" stroke-width="11" stroke-linecap="round"/>
   <path d="M250 262 q44 30 40 100" fill="none" stroke="#C97200" stroke-opacity="0.28" stroke-width="5" stroke-linecap="round"/>
   <!-- Oreilles pointues de cavalier -->

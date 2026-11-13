@@ -63,7 +63,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -253,6 +256,44 @@ private fun PieceCard(p: KidPiece, modifier: Modifier, onClick: () -> Unit) {
 
 @Composable
 fun KidScreen(vm: KidViewModel, onQuit: () -> Unit) {
+    // Quitter demande une confirmation : l'écran se floute derrière la boîte de dialogue.
+    var confirm by remember { mutableStateOf(false) }
+    Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().then(if (confirm) Modifier.blur(14.dp) else Modifier)) {
+            KidGame(vm) { confirm = true }
+        }
+        if (confirm) QuitDialog(onStay = { confirm = false }, onQuit = { confirm = false; onQuit() })
+    }
+}
+
+/** Boîte de confirmation au style du mode enfant : « Non » rassurant en vert, « Oui, quitter » en corail. */
+@Composable
+private fun QuitDialog(onStay: () -> Unit, onQuit: () -> Unit) {
+    val c = LocalDuck.current
+    BackHandler(onBack = onStay)
+    Box(
+        // Voile cliquable : toucher en dehors de la boîte revient à répondre « Non ».
+        Modifier.fillMaxSize().background(Color(0x661F3B57)).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onStay() },
+        contentAlignment = Alignment.Center,
+    ) {
+        val shape = RoundedCornerShape(30.dp)
+        Column(
+            Modifier.padding(horizontal = 22.dp).widthIn(max = 420.dp).shadow(16.dp, shape).clip(shape).background(Color.White).border(4.dp, Color(0xFF9CC9F0), shape)
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+                .padding(horizontal = 20.dp, vertical = 22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Image(painterResource(R.drawable.mascot), null, Modifier.size(84.dp))
+            AutoText("Quitter le mode enfant ?", color = c.text, maxSize = 24.sp, weight = FontWeight.Bold, align = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
+            AutoText("La partie en cours du mode enfant sera effacée.", color = c.muted, maxSize = 16.sp, weight = FontWeight.Medium, align = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
+            KidButton("Non, on continue à jouer", KidGreen, onStay, Modifier.fillMaxWidth(), height = 58.dp, maxSize = 19.sp)
+            KidButton("Oui, quitter", KidCoral, onQuit, Modifier.fillMaxWidth().padding(top = 12.dp), height = 50.dp, maxSize = 17.sp)
+        }
+    }
+}
+
+@Composable
+private fun KidGame(vm: KidViewModel, onQuit: () -> Unit) {
     val s by vm.state.collectAsStateWithLifecycle()
     val c = LocalDuck.current
     val pos = s.position
@@ -392,6 +433,7 @@ private fun boldText(src: String): AnnotatedString = buildAnnotatedString {
 private fun KidDemo(piece: KidPiece, onClose: () -> Unit) {
     val c = LocalDuck.current
     val images = rememberPieceImages(kid = true)
+    val fb = LocalFeedback.current
     val phases = remember(piece.type) { demoPhases(piece.type) }
     var phase by remember { mutableStateOf(phases[0]) }
     var from by remember { mutableStateOf(phases[0].home) }
@@ -413,6 +455,7 @@ private fun KidDemo(piece: KidPiece, onClose: () -> Unit) {
                         t.snapTo(0f)
                         val far = maxOf(abs(step.first - cur.first), abs(step.second - cur.second))
                         t.animateTo(1f, tween(if (piece.type == KNIGHT) 560 else 250 + 110 * far, easing = LinearEasing))
+                        fb?.move() // même bruit de pièce posée que dans les parties
                         cur = step
                         if (step == ph.enemy) enemyAlive = false
                     }

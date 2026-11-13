@@ -478,7 +478,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                 DuckButton("🧩 ${fr(solved.size)} / ${fr(DuckDatabase.PUZZLE_COUNT)} ▾", { catalog = true }, Modifier.weight(1.45f), accent = c.blue, height = 38.dp, maxSize = 14.sp)
                 DuckButton("🎲 Aléatoire", vm::random, Modifier.weight(1.05f), accent = c.gold, filled = s.solved || s.empty, height = 38.dp)
                 DuckButton("🕘 Récents", { recentSheet = true }, Modifier.weight(1f), enabled = recents.isNotEmpty(), height = 38.dp)
-                DuckButton("📤 Partager", { shareChoice = true }, Modifier.weight(1f), enabled = p != null && line != null, height = 38.dp)
+                DuckButton("🖼️ Exporter", { shareChoice = true }, Modifier.weight(1f), enabled = p != null && line != null, height = 38.dp)
             }
             Row(Modifier.fillMaxWidth().padding(vertical = 5.dp).height(22.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (p != null) {
@@ -551,20 +551,33 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         }
     }
     if (shareChoice && p != null && line != null) {
-        DuckSheet("📤 Partager", { shareChoice = false }) {
-            AutoText("Que souhaitez-vous envoyer ?", color = c.muted, maxSize = 14.sp, modifier = Modifier.padding(bottom = 10.dp))
-            DuckButton(
-                "🧩 Partager le problème",
-                { shareChoice = false; ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0]) },
-                Modifier.fillMaxWidth(), accent = c.blue, filled = true, height = 50.dp, maxSize = 16.sp,
+        var status by remember { mutableStateOf<String?>(null) }
+        DuckSheet("🖼️ Exporter en image", { shareChoice = false }) {
+            ExportCard(
+                "🧩 Le problème", "L'énoncé seul : échiquier, trait, difficulté, type et conseil — sans la solution.", c.blue,
+                onShare = { shareChoice = false; ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0]) },
+                onSave = { status = ShareCard.saveProblem(context, p, line.positions[1], s.playerWhite, line.moves[0])?.let { "✅ $it" } ?: "❌ L'image n'a pas pu être enregistrée." },
             )
-            AutoText("L'énoncé seul : échiquier, trait, difficulté, type de problème et conseil — sans la solution.", color = c.muted, maxSize = 13.sp, maxLines = 3, modifier = Modifier.padding(top = 6.dp, bottom = 16.dp))
-            DuckButton(
-                "✅ Partager la solution",
-                { shareChoice = false; ShareCard.shareSolution(context, p) },
-                Modifier.fillMaxWidth(), accent = c.green, filled = true, height = 50.dp, maxSize = 16.sp,
+            ExportCard(
+                "✅ La solution", "Une grille par coup : flèches des déplacements, symboles ✕ + # et pièces capturées.", c.green,
+                onShare = { shareChoice = false; ShareCard.shareSolution(context, p) },
+                onSave = { status = ShareCard.saveSolution(context, p)?.let { "✅ $it" } ?: "❌ L'image n'a pas pu être enregistrée." },
             )
-            AutoText("La solution illustrée : une grille par coup, flèches des déplacements, symboles ✕ + # et pièces capturées.", color = c.muted, maxSize = 13.sp, maxLines = 3, modifier = Modifier.padding(top = 6.dp, bottom = 8.dp))
+            status?.let { AutoText(it, color = if (it.startsWith("✅")) c.green else c.red, maxSize = 13.sp, weight = FontWeight.SemiBold, maxLines = 3, modifier = Modifier.padding(top = 4.dp, bottom = 6.dp)) }
+        }
+    }
+}
+
+/** Une image exportable : son titre, sa description et deux actions, partager ou enregistrer. */
+@Composable
+private fun ExportCard(title: String, description: String, accent: Color, onShare: () -> Unit, onSave: () -> Unit) {
+    val c = LocalDuck.current
+    Column(Modifier.fillMaxWidth().padding(vertical = 5.dp).clip(RoundedCornerShape(14.dp)).background(c.surface).padding(12.dp)) {
+        AutoText(title, maxSize = 16.sp, weight = FontWeight.Bold)
+        AutoText(description, color = c.muted, maxSize = 13.sp, maxLines = 3, modifier = Modifier.padding(top = 2.dp, bottom = 10.dp))
+        EqualRow(gap = 8.dp) {
+            DuckButton("📤 Partager", onShare, Modifier.weight(1f), accent = accent, filled = true, height = 44.dp, maxSize = 15.sp)
+            DuckButton("⬇️ Enregistrer", onSave, Modifier.weight(1f), accent = accent, height = 44.dp, maxSize = 15.sp)
         }
     }
 }

@@ -137,13 +137,18 @@ class AppRobolectricTest {
         rule.onNodeWithText("⬅️ Revenir à la partie").performClick(); settle(800)
         rule.onNodeWithText("Pion").performClick(); settle(900); shot("9c_lecon_pion")
         rule.onNodeWithText("⬅️ Revenir à la partie").performClick(); settle(800)
-        rule.onNodeWithText("✕ Quitter le mode enfant").performClick(); settle(1500)
+        rule.onNodeWithText("✕ Quitter le mode enfant").performClick(); settle(800); shot("9d_quitter")
+        // « Non » referme la boîte et on reste en mode enfant ; « Oui » quitte.
+        rule.onNodeWithText("Non, on continue à jouer").performClick(); settle(600)
+        rule.onNodeWithText("✕ Quitter le mode enfant").performClick(); settle(600)
+        rule.onNodeWithText("Oui, quitter").performClick(); settle(1500)
         // Régression : le mode enfant doit pouvoir être relancé plusieurs fois de suite.
         repeat(3) {
             rule.onNodeWithText("⚙️").performClick(); settle(800)
             rule.onNodeWithText("🧒 Activer le mode enfant").performClick(); settle(1200)
             rule.onNodeWithText("👆 Touche une pièce pour voir comment elle bouge !").assertExists()
-            rule.onNodeWithText("✕ Quitter le mode enfant").performClick(); settle(1200)
+            rule.onNodeWithText("✕ Quitter le mode enfant").performClick(); settle(600)
+            rule.onNodeWithText("Oui, quitter").performClick(); settle(1200)
             rule.onNodeWithText("Jeu Libre").assertExists()
         }
         rule.onNodeWithText("Problèmes").performClick(); settle(1500)
@@ -153,5 +158,7 @@ class AppRobolectricTest {
         rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("0d"); settle(1500); shot("3c_recherche")
         rule.onNodeWithText("#0D1Z6").performClick(); settle(2500)
         rule.onNodeWithText("🕘 Récents").performClick(); settle(1000); shot("3d_recents")
+        rule.onAllNodesWithText("✕").onLast().performClick(); settle(800)
+        rule.onNodeWithText("🖼️ Exporter").performClick(); settle(1000); shot("3e_exporter")
     }
 }

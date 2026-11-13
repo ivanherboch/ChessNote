@@ -1,6 +1,10 @@
 package com.ivanherboch.chessduck.feature
 
+import android.content.ContentValues
 import android.content.Context
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -376,6 +380,38 @@ object ShareCard {
             context.startActivity(Intent.createChooser(intent, chooser).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
     }
+
+    /**
+     * Enregistre l'image dans la galerie (Images/ChessDuck). Renvoie un message de confirmation, ou null en cas d'échec.
+     * Android 10+ : MediaStore, sans aucune permission. Versions antérieures : dossier d'images de l'application.
+     */
+    private fun save(context: Context, bmp: Bitmap, name: String): String? = runCatching {
+        if (Build.VERSION.SDK_INT >= 29) {
+            val values = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, name)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/ChessDuck")
+                put(MediaStore.Images.Media.IS_PENDING, 1)
+            }
+            val resolver = context.contentResolver
+            val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return null
+            resolver.openOutputStream(uri)?.use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) } ?: return null
+            values.clear(); values.put(MediaStore.Images.Media.IS_PENDING, 0)
+            resolver.update(uri, values, null, null)
+            "Image enregistrée dans la galerie (Images/ChessDuck)."
+        } else {
+            val dir = File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "ChessDuck").apply { mkdirs() }
+            val file = File(dir, name)
+            file.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            "Image enregistrée : ${file.absolutePath}"
+        }
+    }.getOrNull()
+
+    fun saveProblem(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?): String? =
+        save(context, render(context, puzzle, position, playerWhite, lastMove), "chessduck-${puzzle.id}.png")
+
+    fun saveSolution(context: Context, puzzle: Puzzle): String? =
+        save(context, renderSolution(context, puzzle), "chessduck-${puzzle.id}-solution.png")
 
     fun share(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?) =
         send(

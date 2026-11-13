@@ -72,14 +72,6 @@ fun annotationColor(a: String): Color = when (a) {
     else -> Color(0xFFEF4444)
 }
 
-private fun annotationText(a: String): String = when (a) {
-    "!!" -> "coup brillant"
-    "!" -> "très bon coup, le seul vraiment fort"
-    "?!" -> "imprécision"
-    "?" -> "erreur"
-    else -> "gaffe"
-}
-
 @Composable
 fun PlayScreen(vm: PlayViewModel) {
     val s by vm.state.collectAsStateWithLifecycle()
@@ -254,42 +246,24 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
         underBoard = { CapturedBar(line.positions[cur], Modifier.padding(top = 3.dp, start = if (r.evalOn) 15.dp else 0.dp)) },
         bottom = {
             MoveStrip(line, cur, Modifier.padding(top = 5.dp))
-            val a = r.analysis.getOrNull(cur)
-            val missed = if (cur > 0) GameLogic.missedMate(line.positions[cur - 1].whiteToMove, r.analysis.getOrNull(cur - 1), a) else null
-            val text = buildString {
-                if (cur == 0) {
-                    append("Position initiale. La partie se déroule automatiquement : ⏸ pour l'arrêter, ◀ ▶ pour naviguer.")
-                    // Récapitulatif des mats en 1 ou 2 coups qui ont été manqués pendant la partie.
-                    val all = (1..line.size).mapNotNull { i ->
-                        GameLogic.missedMate(line.positions[i - 1].whiteToMove, r.analysis.getOrNull(i - 1), r.analysis.getOrNull(i))?.let { k -> "coup $i (mat en $k)" }
-                    }
-                    if (all.isNotEmpty()) append(" ⚠️ Mats manqués : ${all.joinToString(", ")}.")
+            // Commentaire en langage naturel : aucune évaluation chiffrée, le joueur concerné est toujours nommé.
+            val ready = r.analysis.count { it != null }
+            val (text, tone) = if (cur == 0) {
+                val all = (1..line.size).mapNotNull { i ->
+                    GameLogic.missedMate(line.positions[i - 1].whiteToMove, r.analysis.getOrNull(i - 1), r.analysis.getOrNull(i))?.let { k -> "coup $i (mat en $k)" }
                 }
-                else {
-                    val before = line.positions[cur - 1]
-                    append(moveLabel(before.fullmove, before.whiteToMove, line.sans[cur - 1]))
-                    if (note != null) append(" $note — ${annotationText(note)}")
-                    append(".")
-                    if (missed != null) {
-                        val who = sideName(g, before.whiteToMove)
-                        val best = r.analysis.getOrNull(cur - 1)?.best?.takeIf { it.isNotEmpty() }?.let { before.san(com.ivanherboch.chessduck.chess.Move.fromUci(it)) }
-                        append(" ⚠️ Mat en $missed manqué par $who" + (if (best != null) " : $best ${if (missed == 1) "matait immédiatement" else "forçait le mat en 2 coups"}." else "."))
-                    } else if (note != null && note.startsWith("?")) {
-                        val best = r.analysis.getOrNull(cur - 1)?.best?.takeIf { it.isNotEmpty() }
-                        if (best != null) append(" L'ordinateur préférait ${before.san(com.ivanherboch.chessduck.chess.Move.fromUci(best))}.")
-                    }
-                }
-                if (a != null) append(" Évaluation : ${evalLabel(a.eval)}.") else append(" Analyse en cours…")
-                if (cur == line.size) append(" Fin de la partie : ${g.result} (${g.reason}).")
+                ("Position initiale. La partie se déroule automatiquement : ⏸ pour l'arrêter, ◀ ▶ pour naviguer." +
+                    (if (all.isNotEmpty()) " ⚠️ Mats manqués : ${all.joinToString(", ")}." else "") +
+                    (if (ready <= line.size) " Analyse des coups : $ready / ${line.size + 1}…" else "")) to Tone.INFO
+            } else {
+                val (c0, t0) = ReviewComments.comment(g, line, cur - 1, r.analysis)
+                (c0 + if (cur == line.size) " " + ReviewComments.ending(g) else "") to t0
             }
-            val tone = when {
-                missed != null -> Tone.BAD
-                note == null -> Tone.INFO
-                note.startsWith("!") -> Tone.GOOD
-                note == "?!" -> Tone.GOLD
-                else -> Tone.BAD
+            val title = if (cur == 0) "Coup 0 / ${line.size}" else {
+                val before = line.positions[cur - 1]
+                "Coup $cur / ${line.size} · " + moveLabel(before.fullmove, before.whiteToMove, line.sans[cur - 1]) + (if (note != null) " $note" else "")
             }
-            FeedbackCard(text, tone, Modifier.padding(top = 5.dp).weight(1f), maxSize = 15.sp, title = "Coup $cur / ${line.size}")
+            FeedbackCard(text, tone, Modifier.padding(top = 5.dp).weight(1f), maxSize = 15.sp, title = title)
             EqualRow(Modifier.padding(vertical = 5.dp), gap = 5.dp) {
                 DuckButton("⏮", vm::reviewFirst, Modifier.weight(1f), enabled = cur > 0, height = 44.dp, maxSize = 17.sp)
                 DuckButton("◀", { vm.reviewStep(-1) }, Modifier.weight(1f), enabled = cur > 0, height = 44.dp, maxSize = 17.sp)
@@ -299,12 +273,6 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
             }
         },
     )
-}
-
-/** Nom du joueur qui avait le trait, pour les commentaires de revue. */
-private fun sideName(g: GameRecord, white: Boolean): String {
-    val name = if (white) g.whiteName else g.blackName
-    return if (name.isEmpty()) (if (white) "les Blancs" else "les Noirs") else "$name (${if (white) "Blancs" else "Noirs"})"
 }
 
 private fun formatDate(t: Long): String = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRANCE).format(Date(t))
