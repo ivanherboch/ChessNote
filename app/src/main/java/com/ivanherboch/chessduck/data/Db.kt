@@ -79,20 +79,6 @@ interface PuzzleDao {
     @Query("SELECT * FROM puzzles WHERE id = :id COLLATE NOCASE LIMIT 1")
     suspend fun byIdIgnoreCase(id: String): Puzzle?
 
-    @Query(
-        "SELECT * FROM puzzles WHERE rating BETWEEN :lo AND :hi " +
-            "AND (:theme = '' OR themes LIKE '% ' || :theme || ' %') " +
-            "AND id NOT IN (SELECT puzzleId FROM puzzle_progress) AND id != :exclude " +
-            "ORDER BY RANDOM() LIMIT 1"
-    )
-    suspend fun randomUnsolved(lo: Int, hi: Int, theme: String, exclude: String): Puzzle?
-
-    @Query(
-        "SELECT * FROM puzzles WHERE rating BETWEEN :lo AND :hi " +
-            "AND (:theme = '' OR themes LIKE '% ' || :theme || ' %') AND id != :exclude ORDER BY RANDOM() LIMIT 1"
-    )
-    suspend fun randomAny(lo: Int, hi: Int, theme: String, exclude: String): Puzzle?
-
     @Query("SELECT * FROM puzzles WHERE rowid >= :start LIMIT :n")
     suspend fun slice(start: Int, n: Int): List<Puzzle>
 

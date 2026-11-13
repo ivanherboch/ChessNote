@@ -58,7 +58,7 @@ class AppRobolectricTest {
     fun prepackagedDatabaseMatchesRoomSchema() = runBlocking {
         val db = DuckDatabase.create(ApplicationProvider.getApplicationContext())
         assertEquals(100_000, db.puzzles().count())
-        val p = db.puzzles().randomUnsolved(1200, 1599, "fork", "")
+        val p = db.puzzles().byId("0000D")
         assertNotNull(p)
         db.puzzles().markSolved(PuzzleProgress(p!!.id, 1L))
         assertEquals(listOf(p.id), db.puzzles().solvedIds().first())
@@ -183,7 +183,7 @@ class AppRobolectricTest {
         // Thème choisi : chaque tirage aléatoire affiche ce thème, quel que soit le type principal du problème.
         rule.onAllNodesWithText("🧩", substring = true).onFirst().performClick(); settle(1500)
         rule.onNodeWithText("Mat en 1").performClick(); settle(2500)
-        repeat(6) {
+        repeat(8) {
             rule.onNodeWithText("🧩 Type de problème : Mat en 1").assertExists()
             rule.onNodeWithText("🎲 Aléatoire").performClick(); settle(2000)
         }

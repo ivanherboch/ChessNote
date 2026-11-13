@@ -4,7 +4,7 @@ package com.ivanherboch.chessduck.content
 data class ThemeInfo(val key: String, val name: String, val goal: String, val group: String, val tip: String = "")
 
 object PuzzleThemes {
-    const val G_PHASE = "Phases de la partie"
+    const val G_PHASE = "Autres gains, par phase de jeu"
     const val G_TACTIC = "Motifs tactiques"
     const val G_ATTACK = "Attaque & défense"
     const val G_SPECIAL = "Coups spéciaux"
@@ -12,9 +12,9 @@ object PuzzleThemes {
     const val G_ENDGAME = "Finales"
 
     val all = listOf(
-        ThemeInfo("opening", "Ouverture", "Punir une imprécision dès les premiers coups.", G_PHASE, "Cherchez la pièce adverse mal défendue ou le roi encore au centre : en début de partie, un retard de développement se paie cher."),
-        ThemeInfo("middlegame", "Milieu de partie", "Trouver la tactique quand toutes les pièces sont en jeu.", G_PHASE, "Passez en revue, dans l'ordre, les échecs, les prises puis les menaces : le coup le plus forçant est souvent le bon."),
-        ThemeInfo("endgame", "Finale", "Être précis quand il reste peu de pièces.", G_PHASE, "Avec peu de pièces, chaque temps compte : activez votre roi et vos pions passés avant tout."),
+        ThemeInfo("opening", "Ouverture", "Punir une imprécision dès les premiers coups, sans motif classique.", G_PHASE, "Cherchez la pièce adverse mal défendue ou le roi encore au centre : en début de partie, un retard de développement se paie cher."),
+        ThemeInfo("middlegame", "Milieu de partie", "Trouver le coup gagnant en pleine bataille, sans motif classique.", G_PHASE, "Passez en revue, dans l'ordre, les échecs, les prises puis les menaces : le coup le plus forçant est souvent le bon."),
+        ThemeInfo("endgame", "Finale", "Être précis quand il reste peu de pièces, sans motif classique.", G_PHASE, "Avec peu de pièces, chaque temps compte : activez votre roi et vos pions passés avant tout."),
 
         ThemeInfo("fork", "Fourchette", "Attaquer deux cibles à la fois avec une seule pièce.", G_TACTIC, "Repérez deux cibles adverses non défendues (ou le roi et une pièce) qu'une seule de vos pièces peut attaquer en même temps."),
         ThemeInfo("pin", "Clouage", "Exploiter une pièce qui ne peut pas bouger sans exposer plus précieux.", G_TACTIC, "Cherchez deux pièces adverses alignées sur une colonne, une rangée ou une diagonale : celle de devant ne peut pas bouger librement."),
@@ -86,23 +86,16 @@ object PuzzleThemes {
 
     /**
      * Type principal d'un problème (thèmes Lichess séparés par des espaces).
-     * Une seule règle, partout dans l'application : recherche, écran, Récents et images exportées.
+     * Une seule règle, partout dans l'application : catalogue, tirage aléatoire, recherche, écran, Récents
+     * et images exportées. Chaque problème appartient donc à un seul thème du catalogue.
      */
     fun primary(themes: String): ThemeInfo {
         val set = themes.trim().split(' ').toSet()
         return PRIORITY.firstOrNull { it in set }?.let { byKey[it] } ?: byKey.getValue("middlegame")
     }
 
-    /**
-     * Thème à afficher pour un problème. Un problème Lichess porte plusieurs thèmes (par exemple « mat en 1 »
-     * ET « mat en queue d'aronde ») : si le joueur a choisi un thème dans le catalogue et que le problème le porte,
-     * c'est ce thème qui est affiché ; sinon, le type principal.
-     */
-    fun shown(themes: String, chosen: String): ThemeInfo =
-        byKey[chosen]?.takeIf { " $chosen " in " ${themes.trim()} " } ?: primary(themes)
-
-    /** Ordre d'affichage du catalogue : les mats d'abord. */
-    val groups = listOf(G_MATE, G_TACTIC, G_ATTACK, G_SPECIAL, G_ENDGAME, G_PHASE)
+    /** Ordre d'affichage du catalogue : du plus caractéristique (les mats) au plus général. */
+    val groups = listOf(G_MATE, G_TACTIC, G_SPECIAL, G_ATTACK, G_ENDGAME, G_PHASE)
 
     val BANDS = listOf("Tous", "Débutant", "Intermédiaire", "Avancé", "Expert")
     fun bandRange(band: Int): IntRange = when (band) {

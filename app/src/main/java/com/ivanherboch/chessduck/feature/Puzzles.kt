@@ -122,6 +122,7 @@ data class Suggestions(val query: String = "", val items: List<Suggestion> = emp
 class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     private val duck = app as ChessDuckApp
     private val dao = duck.db.puzzles()
+    private val rnd = kotlin.random.Random(System.nanoTime())
     val state = MutableStateFlow(PuzzleState())
     val solvedIds = dao.solvedIds().map { it.toHashSet() as Set<String> }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
@@ -136,7 +137,8 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     // Index mémoire compact du catalogue (classement + masque de thèmes par problème).
     private var metaIds: Array<String> = emptyArray()
     private var metaRatings = IntArray(0)
-    private var metaMasks = LongArray(0)
+    /** Thème unique de chaque problème (indice dans PuzzleThemes.all) : son idée la plus caractéristique. */
+    private var metaCat = ByteArray(0)
     private var metaIdsLower: Array<String> = emptyArray()
     private var metaThemes: Array<String> = emptyArray()
 
@@ -167,11 +169,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         val meta = runCatching { dao.allMeta() }.getOrDefault(emptyList())
         val idx = PuzzleThemes.all.withIndex().associate { it.value.key to it.index }
         metaRatings = IntArray(meta.size) { meta[it].rating }
-        metaMasks = LongArray(meta.size) { i ->
-            var m = 0L
-            for (t in meta[i].themes.split(' ')) idx[t]?.let { m = m or (1L shl it) }
-            m
-        }
+        metaCat = ByteArray(meta.size) { i -> (idx[PuzzleThemes.primary(meta[i].themes).key] ?: 0).toByte() }
         metaThemes = Array(meta.size) { meta[it].themes }
         metaIdsLower = Array(meta.size) { meta[it].id.lowercase() }
         metaIds = Array(meta.size) { meta[it].id }
@@ -204,10 +202,9 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
                 if (i and 0x3FF == 0) ensureActive()
             }
             val top = (exact + prefix + inside).take(5)
-            val chosen = state.value.theme
             suggestions.value = Suggestions(
                 raw.trim().removePrefix("#"),
-                top.map { Suggestion(metaIds[it], PuzzleThemes.shown(metaThemes[it], chosen).name, metaRatings[it]) },
+                top.map { Suggestion(metaIds[it], PuzzleThemes.primary(metaThemes[it]).name, metaRatings[it]) },
                 total > top.size,
             )
         }
@@ -228,7 +225,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Conseil du thème que le joueur a choisi de travailler (si le problème le porte), sinon celui du type du problème. */
-    private fun tipFor(p: Puzzle, chosen: String): String = PuzzleThemes.shown(p.themes, chosen).tip
+    private fun tipFor(p: Puzzle, @Suppress("UNUSED_PARAMETER") chosen: String): String = PuzzleThemes.primary(p.themes).tip
 
     private fun turnLabel(white: Boolean) = if (white) "⬜ Trait aux Blancs" else "⬛ Trait aux Noirs"
 
@@ -255,9 +252,28 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             val s = state.value
             val r = PuzzleThemes.bandRange(s.band)
             val cur = s.puzzle?.id ?: ""
-            val p = runCatching {
-                dao.randomUnsolved(r.first, r.last, s.theme, cur) ?: dao.randomAny(r.first, r.last, s.theme, cur)
-            }.getOrNull()
+            // Tirage dans l'index mémoire : difficulté + thème unique du problème, non résolus d'abord.
+            val id = withContext(Dispatchers.Default) {
+                ensureMeta()
+                val cat = PuzzleThemes.all.indexOfFirst { it.key == s.theme }
+                val solved = solvedIds.value
+                var fresh = -1
+                var freshCount = 0
+                var any = -1
+                var anyCount = 0
+                for (i in metaIds.indices) {
+                    if (metaRatings[i] !in r || (cat >= 0 && metaCat[i].toInt() != cat) || metaIds[i] == cur) continue
+                    anyCount++
+                    if (rnd.nextInt(anyCount) == 0) any = i
+                    if (metaIds[i] !in solved) {
+                        freshCount++
+                        if (rnd.nextInt(freshCount) == 0) fresh = i
+                    }
+                }
+                val pick = if (fresh >= 0) fresh else any
+                if (pick >= 0) metaIds[pick] else null
+            }
+            val p = id?.let { runCatching { dao.byId(it) }.getOrNull() }
             if (p != null) show(p)
             else state.update { it.copy(empty = true, tone = Tone.BAD, message = "Aucun problème ne correspond à ces filtres. Élargissez la sélection dans le catalogue.") }
         }
@@ -294,13 +310,9 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
                     val isSolved = metaIds[i] in solved
                     total[n]++
                     if (isSolved) done[n]++
-                    var m = metaMasks[i]
-                    while (m != 0L) {
-                        val b = java.lang.Long.numberOfTrailingZeros(m)
-                        total[b]++
-                        if (isSolved) done[b]++
-                        m = m and (m - 1)
-                    }
+                    val b = metaCat[i].toInt()
+                    total[b]++
+                    if (isSolved) done[b]++
                 }
                 val map = HashMap<String, ThemeCount>()
                 PuzzleThemes.all.forEachIndexed { i, t -> map[t.key] = ThemeCount(total[i], done[i]) }
@@ -493,7 +505,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                     AutoText(if (s.playerWhite) "⬜ Trait aux Blancs" else "⬛ Trait aux Noirs", maxSize = 14.sp, weight = FontWeight.Bold)
                     // Si un thème est choisi dans le catalogue, c'est lui qui est affiché (le problème le porte toujours).
                     AutoText(
-                        "   ${PuzzleThemes.shown(p.themes, s.theme).name} · ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} ${p.rating}   #${p.id}",
+                        "   ${PuzzleThemes.primary(p.themes).name} · ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} ${p.rating}   #${p.id}",
                         color = c.muted, maxSize = 13.sp, modifier = Modifier.weight(1f),
                     )
                 }
@@ -529,7 +541,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         bottom = {
             FeedbackCard(
                 s.message, s.tone, Modifier.padding(top = 5.dp).weight(1f), maxSize = 15.sp,
-                title = p?.let { "🧩 Type de problème : ${PuzzleThemes.shown(it.themes, s.theme).name}" },
+                title = p?.let { "🧩 Type de problème : ${PuzzleThemes.primary(it.themes).name}" },
             )
             EqualRow(Modifier.padding(vertical = 5.dp), gap = 5.dp) {
                 DuckButton("◀ Arrière", vm::back, Modifier.weight(1f), enabled = s.refute == null && s.cursor > 0, height = 44.dp)
@@ -551,7 +563,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        AutoText("#${r.id} · ${PuzzleThemes.shown(r.themes, s.theme).name}", maxSize = 16.sp, weight = FontWeight.SemiBold)
+                        AutoText("#${r.id} · ${PuzzleThemes.primary(r.themes).name}", maxSize = 16.sp, weight = FontWeight.SemiBold)
                         AutoText("${PuzzleThemes.BANDS[PuzzleThemes.bandOf(r.rating)]} · ${r.rating}", color = c.muted, maxSize = 13.sp)
                     }
                     AutoText(if (done) "✅ Résolu" else "À résoudre", color = if (done) c.green else c.gold, maxSize = 13.sp, weight = FontWeight.Bold)
@@ -564,13 +576,13 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         DuckSheet("🖼️ Exporter en image", { shareChoice = false }) {
             ExportCard(
                 "🧩 Le problème", "L'énoncé seul : échiquier, trait, difficulté, type et conseil — sans la solution.", c.blue,
-                onShare = { shareChoice = false; ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0], s.theme) },
-                onSave = { status = ShareCard.saveProblem(context, p, line.positions[1], s.playerWhite, line.moves[0], s.theme)?.let { "✅ $it" } ?: "❌ L'image n'a pas pu être enregistrée." },
+                onShare = { shareChoice = false; ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0]) },
+                onSave = { status = ShareCard.saveProblem(context, p, line.positions[1], s.playerWhite, line.moves[0])?.let { "✅ $it" } ?: "❌ L'image n'a pas pu être enregistrée." },
             )
             ExportCard(
                 "✅ La solution", "Une grille par coup : flèches des déplacements, symboles ✕ + # et pièces capturées.", c.green,
-                onShare = { shareChoice = false; ShareCard.shareSolution(context, p, s.theme) },
-                onSave = { status = ShareCard.saveSolution(context, p, s.theme)?.let { "✅ $it" } ?: "❌ L'image n'a pas pu être enregistrée." },
+                onShare = { shareChoice = false; ShareCard.shareSolution(context, p) },
+                onSave = { status = ShareCard.saveSolution(context, p)?.let { "✅ $it" } ?: "❌ L'image n'a pas pu être enregistrée." },
             )
             status?.let { AutoText(it, color = if (it.startsWith("✅")) c.green else c.red, maxSize = 13.sp, weight = FontWeight.SemiBold, maxLines = 3, modifier = Modifier.padding(top = 4.dp, bottom = 6.dp)) }
         }
@@ -646,7 +658,11 @@ private fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> U
             }
         }
         SectionTitle("2. THÈME — 50 thèmes officiels Lichess")
-        ThemeRow("🎯 Tous les thèmes", "Un mélange de toutes les idées tactiques.", counts[""], s.theme.isEmpty() && s.band == band) {
+        AutoText(
+            "Chaque problème est rangé dans un seul thème : son idée la plus caractéristique.",
+            color = c.muted, maxSize = 12.sp, maxLines = 2, modifier = Modifier.padding(bottom = 6.dp),
+        )
+        ThemeRow("🎯 Tous les thèmes", "Un mélange de toutes les idées, sans indication à l'avance.", counts[""], s.theme.isEmpty() && s.band == band) {
             vm.setFilter(band, ""); onClose()
         }
         for (g in PuzzleThemes.groups) {
