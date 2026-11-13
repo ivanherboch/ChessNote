@@ -7,7 +7,7 @@ Application Android francophone d'apprentissage, d'entraînement et de jeu aux �
 |---|---|
 | ⌨️ Notation | Exercices de notation anglaise FIDE (SAN) sur positions réelles, clavier virtuel, diagnostic pédagogique, Mémo Anglais |
 | 🎓 Académie | 113 leçons (37 ouvertures, 38 milieux de partie, 38 finales) en Mode Guidé et Mode Défi |
-| 🧩 Problèmes | 50 000 problèmes Lichess hors-ligne, 50 thèmes, réfutation temporisée, indice en 2 temps, partage PNG |
+| 🧩 Problèmes | 100 000 problèmes Lichess hors-ligne, 50 thèmes, réfutation temporisée, indice en 2 temps, partage PNG |
 | ⚔️ Jeu Libre | Ordinateur local (Stockfish) 600–2400 ELO, 2 joueurs, ELO FIDE (K = 32), historique et revue annotée |
 | 🧒 Mode enfant | Écran joyeux à 2 joueurs, grand échiquier, cavalier-girafe, leçons animées du déplacement de chaque pièce (Paramètres) |
 
@@ -28,7 +28,7 @@ Prérequis : JDK 17+, SDK Android 35. Le NDK n'est nécessaire que pour recompil
 
 - `scripts/build_stockfish.sh` : compile Stockfish 11 (`stockfish/src`) pour arm64-v8a, armeabi-v7a et x86_64.
 - `scripts/build_puzzle_db.py` : construit `app/src/main/assets/chessduck.db` depuis `lichess_db_puzzle.csv.zst`
-  (les 50 000 problèmes les plus joués parmi ceux notés ≥ 90 % par les joueurs, avec un minimum par thème et par niveau).
+  (les 100 000 problèmes les plus joués parmi ceux notés ≥ 90 % par les joueurs, avec un minimum par thème et par niveau).
 - `scripts/gen_lessons.py` : génère les leçons Kotlin à partir de `scripts/lessons/*.txt`.
 - `art/` : sources SVG de la mascotte et des pièces.
 

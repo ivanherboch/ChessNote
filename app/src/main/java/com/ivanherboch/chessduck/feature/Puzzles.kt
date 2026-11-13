@@ -155,7 +155,11 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
         // L'index mémoire est préparé dès le lancement : la recherche répond ensuite instantanément.
-        viewModelScope.launch(Dispatchers.Default) { ensureMeta() }
+        viewModelScope.launch(Dispatchers.Default) {
+            // Après une mise à jour de l'application, les nouveaux problèmes du catalogue sont d'abord importés.
+            if (DuckDatabase.syncPuzzles(duck, duck.db)) metaLock.withLock { metaIds = emptyArray() }
+            ensureMeta()
+        }
     }
 
     private suspend fun ensureMeta() = metaLock.withLock {
@@ -222,6 +226,10 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Conseil du thème que le joueur a choisi de travailler (si le problème le porte), sinon celui du type du problème. */
+    private fun tipFor(p: Puzzle, chosen: String): String =
+        (PuzzleThemes.byKey[chosen]?.takeIf { " $chosen " in p.themes } ?: PuzzleThemes.primary(p.themes)).tip
+
     private fun turnLabel(white: Boolean) = if (white) "⬜ Trait aux Blancs" else "⬛ Trait aux Noirs"
 
     private fun show(p: Puzzle) {
@@ -231,7 +239,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         state.update {
             it.copy(
                 puzzle = p, line = line, progress = 0, cursor = 0, solved = false, anim = null, hintStage = 0, refute = null, empty = false,
-                message = "${turnLabel(white)}. 💡 Conseil : ${PuzzleThemes.primary(p.themes).tip}", tone = Tone.INFO,
+                message = "${turnLabel(white)}. 💡 Conseil : ${tipFor(p, it.theme)}", tone = Tone.INFO,
             )
         }
         job = viewModelScope.launch {
@@ -441,7 +449,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         if (state.value.refute == null) return
         job?.cancel()
         state.update {
-            val tip = it.puzzle?.let { p -> PuzzleThemes.primary(p.themes).tip } ?: ""
+            val tip = it.puzzle?.let { p -> tipFor(p, it.theme) } ?: ""
             it.copy(refute = null, anim = null, tone = Tone.INFO, message = "↩️ Position rétablie, à vous de rejouer. 💡 Conseil : $tip")
         }
     }
@@ -483,8 +491,11 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
             Row(Modifier.fillMaxWidth().padding(vertical = 5.dp).height(22.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (p != null) {
                     AutoText(if (s.playerWhite) "⬜ Trait aux Blancs" else "⬛ Trait aux Noirs", maxSize = 14.sp, weight = FontWeight.Bold)
+                    // Le thème choisi dans le catalogue reste affiché, même quand le problème a un autre type principal.
+                    val chosen = PuzzleThemes.byKey[s.theme]?.takeIf { " ${s.theme} " in p.themes }?.name
+                    val type = PuzzleThemes.primary(p.themes).name
                     AutoText(
-                        "   ${PuzzleThemes.primary(p.themes).name} · ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} ${p.rating}   #${p.id}",
+                        "   " + (if (chosen != null && chosen != type) "🎯 $chosen · " else "") + "$type · ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} ${p.rating}   #${p.id}",
                         color = c.muted, maxSize = 13.sp, modifier = Modifier.weight(1f),
                     )
                 }
@@ -520,7 +531,11 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         bottom = {
             FeedbackCard(
                 s.message, s.tone, Modifier.padding(top = 5.dp).weight(1f), maxSize = 15.sp,
-                title = p?.let { "🧩 Type de problème : ${PuzzleThemes.primary(it.themes).name}" },
+                title = p?.let {
+                    val type = PuzzleThemes.primary(it.themes).name
+                    val chosen = PuzzleThemes.byKey[s.theme]?.takeIf { t -> " ${t.key} " in it.themes }?.name
+                    if (chosen != null && chosen != type) "🎯 Thème choisi : $chosen · Type : $type" else "🧩 Type de problème : $type"
+                },
             )
             EqualRow(Modifier.padding(vertical = 5.dp), gap = 5.dp) {
                 DuckButton("◀ Arrière", vm::back, Modifier.weight(1f), enabled = s.refute == null && s.cursor > 0, height = 44.dp)
@@ -627,7 +642,7 @@ private fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> U
             AutoText("Aucun identifiant ne contient « ${query.trim()} ».", color = c.muted, maxSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
         }
         if (notFound) AutoText(
-            "Aucun problème « ${query.trim()} » parmi les 50 000 embarqués. Vérifiez l'identifiant (majuscules et minuscules comptent).",
+            "Aucun problème « ${query.trim()} » parmi les ${fr(DuckDatabase.PUZZLE_COUNT)} embarqués. Vérifiez l'identifiant (majuscules et minuscules comptent).",
             color = c.red, maxSize = 13.sp, maxLines = 3, modifier = Modifier.padding(top = 6.dp),
         )
         SectionTitle("1. DIFFICULTÉ")

@@ -12,6 +12,10 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import android.database.sqlite.SQLiteDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
@@ -101,6 +105,9 @@ interface PuzzleDao {
     @Query("SELECT COUNT(*) FROM puzzles")
     suspend fun count(): Int
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAll(puzzles: List<Puzzle>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun markSolved(p: PuzzleProgress)
 
@@ -142,13 +149,38 @@ abstract class DuckDatabase : RoomDatabase() {
     abstract fun user(): UserDao
 
     companion object {
-        const val PUZZLE_COUNT = 50_000
+        const val PUZZLE_COUNT = 100_000
 
         fun create(context: Context): DuckDatabase =
             Room.databaseBuilder(context, DuckDatabase::class.java, "chessduck.db")
                 .createFromAsset("chessduck.db")
                 .addMigrations(MIGRATION_1_2)
                 .build()
+
+        /**
+         * Mise à jour d'une installation existante : Room ne recopie la base embarquée qu'à la première création.
+         * Si la base de l'appareil contient moins de problèmes que le catalogue livré, on importe les manquants
+         * (progression, historique et réglages sont conservés). Sans effet sur une installation neuve.
+         */
+        suspend fun syncPuzzles(context: Context, db: DuckDatabase): Boolean = withContext(Dispatchers.IO) {
+            if (db.puzzles().count() >= PUZZLE_COUNT) return@withContext false
+            val tmp = File(context.cacheDir, "catalogue.db")
+            runCatching {
+                context.assets.open("chessduck.db").use { input -> tmp.outputStream().use { input.copyTo(it) } }
+                SQLiteDatabase.openDatabase(tmp.path, null, SQLiteDatabase.OPEN_READONLY).use { src ->
+                    src.rawQuery("SELECT id, fen, moves, rating, popularity, plays, themes FROM puzzles", null).use { c ->
+                        val batch = ArrayList<Puzzle>(2000)
+                        while (c.moveToNext()) {
+                            batch.add(Puzzle(c.getString(0), c.getString(1), c.getString(2), c.getInt(3), c.getInt(4), c.getInt(5), c.getString(6)))
+                            if (batch.size == 2000) { db.puzzles().insertAll(batch.toList()); batch.clear() }
+                        }
+                        if (batch.isNotEmpty()) db.puzzles().insertAll(batch)
+                    }
+                }
+            }
+            tmp.delete()
+            true
+        }
 
         /** v2 : noms des joueurs et ELO de l'ordinateur dans l'historique (la base embarquée reste en v1). */
         val MIGRATION_1_2 = object : Migration(1, 2) {

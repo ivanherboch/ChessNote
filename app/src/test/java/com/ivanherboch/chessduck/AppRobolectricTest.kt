@@ -33,7 +33,7 @@ import org.robolectric.annotation.GraphicsMode
 import java.io.File
 import java.time.Duration
 
-/** Vérifie la base embarquée (schéma Room + 50 000 problèmes) et produit des captures de chaque écran. */
+/** Vérifie la base embarquée (schéma Room + 100 000 problèmes) et produit des captures de chaque écran. */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34], qualifiers = "w360dp-h760dp-xxhdpi")
@@ -57,12 +57,14 @@ class AppRobolectricTest {
     @Test
     fun prepackagedDatabaseMatchesRoomSchema() = runBlocking {
         val db = DuckDatabase.create(ApplicationProvider.getApplicationContext())
-        assertEquals(50_000, db.puzzles().count())
+        assertEquals(100_000, db.puzzles().count())
         val p = db.puzzles().randomUnsolved(1200, 1599, "fork", "")
         assertNotNull(p)
         db.puzzles().markSolved(PuzzleProgress(p!!.id, 1L))
         assertEquals(listOf(p.id), db.puzzles().solvedIds().first())
-        assertEquals(50_000, db.puzzles().allMeta().size)
+        assertEquals(100_000, db.puzzles().allMeta().size)
+        // Une base déjà complète n'est pas réimportée.
+        assertEquals(false, DuckDatabase.syncPuzzles(ApplicationProvider.getApplicationContext(), db))
         assertEquals(30, db.puzzles().slice(100, 30).size)
         db.user().markLesson(LessonProgress(3, 1L))
         assertEquals(listOf(3), db.user().masteredLessons().first())
@@ -85,6 +87,23 @@ class AppRobolectricTest {
             File(dir, "$name.png").outputStream().use { sol.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
         }
         assertNotNull(db.puzzles().byIdIgnoreCase("0000d"))
+        db.close()
+    }
+
+    @Test
+    fun upgradeImportsNewPuzzlesAndKeepsProgress() = runBlocking {
+        val old = File(System.getenv("OLD_DB") ?: "/opt/work/old50k.db")
+        if (!old.exists()) return@runBlocking
+        val ctx: android.content.Context = ApplicationProvider.getApplicationContext()
+        // Simule une installation existante : l'ancienne base (v1, 50 000 problèmes) est déjà sur l'appareil.
+        val target = ctx.getDatabasePath("chessduck.db").apply { parentFile?.mkdirs() }
+        old.copyTo(target, overwrite = true)
+        val db = DuckDatabase.create(ctx)
+        assertEquals(50_000, db.puzzles().count())
+        db.puzzles().markSolved(PuzzleProgress("0000D", 1L))
+        assertEquals(true, DuckDatabase.syncPuzzles(ctx, db))
+        assertEquals(100_000, db.puzzles().count())
+        assertEquals(listOf("0000D"), db.puzzles().solvedIds().first())
         db.close()
     }
 

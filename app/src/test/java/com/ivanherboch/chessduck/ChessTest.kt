@@ -105,7 +105,7 @@ class ChessTest {
         assertNull(GameLogic.missedMate(true, Analysis(100000 - 5, null, "x"), Analysis(0, null, "y"))) // mat en 3 : non signalé
     }
 
-    /** Validation croisée du générateur de coups sur les 50 000 problèmes embarqués (si l'export est disponible). */
+    /** Validation croisée du générateur de coups sur les 100 000 problèmes embarqués (si l'export est disponible). */
     @Test
     fun allEmbeddedPuzzlesAreLegal() {
         val f = File(System.getenv("PUZZLE_DUMP") ?: "/opt/work/puzzles_dump.txt")
@@ -122,6 +122,6 @@ class ChessTest {
             assertTrue("Problème $id : position initiale déjà terminée", line.positions[0].legalMoves.isNotEmpty())
             n++
         }
-        assertEquals(50_000, n)
+        assertEquals(100_000, n)
     }
 }

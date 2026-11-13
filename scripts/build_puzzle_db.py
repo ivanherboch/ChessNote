@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Construit app/src/main/assets/chessduck.db : les 50 000 problèmes Lichess les plus populaires.
+"""Construit app/src/main/assets/chessduck.db : les 100 000 problèmes Lichess les plus populaires.
 
 Source : https://database.lichess.org/lichess_db_puzzle.csv.zst (licence CC0).
 Usage : build_puzzle_db.py lichess_db_puzzle.csv.zst app/schemas/.../1.json app/src/main/assets/chessduck.db
@@ -14,7 +14,7 @@ quietMove defensiveMove zugzwang kingsideAttack queensideAttack exposedKing atta
 underPromotion enPassant castling mateIn1 mateIn2 mateIn3 mateIn4 mateIn5 backRankMate smotheredMate anastasiaMate
 arabianMate bodenMate doubleBishopMate dovetailMate hookMate pawnEndgame rookEndgame bishopEndgame knightEndgame
 queenEndgame queenRookEndgame""".split()
-TOTAL = 50_000
+TOTAL = 100_000
 MIN_PER_THEME = 300      # chaque thème du catalogue reste jouable hors-ligne
 MIN_PER_BAND = 9_000     # chaque niveau de difficulté est bien fourni
 
