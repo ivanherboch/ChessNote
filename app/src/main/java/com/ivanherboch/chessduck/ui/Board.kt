@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck.ui
 
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Job
+import java.util.concurrent.atomic.AtomicInteger
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -99,8 +103,8 @@ data class Slide(val from: Int, val to: Int)
 data class BoardAnim(val id: Int, val slides: List<Slide>)
 data class Badge(val sq: Int, val text: String, val color: Color)
 
-private var animCounter = 0
-fun nextAnimId() = ++animCounter
+private val animCounter = AtomicInteger(0)
+fun nextAnimId() = animCounter.incrementAndGet()
 
 /** Animation du coup [m] joué depuis [before] (tour comprise pour un roque). */
 fun moveAnim(before: Position, m: Move): BoardAnim {
@@ -127,9 +131,32 @@ val KID_PIECE_RES = PIECE_RES + mapOf(KNIGHT to R.drawable.p_wg, KNIGHT + BLACK 
 
 @Composable
 fun rememberPieceImages(kid: Boolean = false): Array<ImageBitmap?> {
-    val arr = arrayOfNulls<ImageBitmap>(16)
-    for ((piece, res) in if (kid) KID_PIECE_RES else PIECE_RES) arr[piece] = ImageBitmap.imageResource(res)
-    return arr
+    val resources = LocalContext.current.resources
+    // Chargées une seule fois par jeu de pièces (et non à chaque recomposition).
+    return remember(kid, resources) {
+        val arr = arrayOfNulls<ImageBitmap>(16)
+        for ((piece, res) in if (kid) KID_PIECE_RES else PIECE_RES) arr[piece] = ImageBitmap.imageResource(resources, res)
+        arr
+    }
+}
+
+/**
+ * Cache des mises en page de texte dessinées dans un Canvas (coordonnées, badges) : chaque libellé n'est
+ * mesuré qu'une fois pour un style donné (la taille dépend de la case, donc reste stable entre les images).
+ */
+class TextLayoutCache(private val measurer: TextMeasurer) {
+    private val map = HashMap<Pair<String, TextStyle>, TextLayoutResult>()
+    fun get(text: String, style: TextStyle): TextLayoutResult =
+        map.getOrPut(text to style) {
+            if (map.size > 256) map.clear()
+            measurer.measure(text, style)
+        }
+}
+
+@Composable
+fun rememberTextLayoutCache(): TextLayoutCache {
+    val measurer = rememberTextMeasurer()
+    return remember(measurer) { TextLayoutCache(measurer) }
 }
 
 /**
@@ -156,7 +183,7 @@ fun ChessBoard(
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     val images = rememberPieceImages(kid)
-    val measurer = rememberTextMeasurer()
+    val texts = rememberTextLayoutCache()
     val slop = LocalViewConfiguration.current.touchSlop
     val font = LocalDuckFont.current
     val showCoords = LocalShowCoords.current
@@ -164,14 +191,20 @@ fun ChessBoard(
     // Secousse d'une pièce qui ne peut pas bouger.
     val shake = remember { Animatable(0f) }
     var shakeSq by remember { mutableIntStateOf(-1) }
+    val shakeJob = remember { arrayOfNulls<Job>(1) }
     fun refuse(sq: Int) {
+        // Une nouvelle secousse remplace la précédente (pas d'animations concurrentes sur le même Animatable).
+        shakeJob[0]?.cancel()
         shakeSq = sq
         fb?.error()
         onIllegalTouch?.invoke(sq)
-        scope.launch {
-            shake.snapTo(0f)
-            for (x in floatArrayOf(1f, -1f, 0.7f, -0.7f, 0.35f, 0f)) shake.animateTo(x, tween(45))
-            shakeSq = -1
+        shakeJob[0] = scope.launch {
+            try {
+                shake.snapTo(0f)
+                for (x in floatArrayOf(1f, -1f, 0.7f, -0.7f, 0.35f, 0f)) shake.animateTo(x, tween(45))
+            } finally {
+                if (shakeSq == sq) shakeSq = -1
+            }
         }
     }
 
@@ -199,7 +232,9 @@ fun ChessBoard(
         }
         fb?.move()
     }
-    val t = when {
+    // La progression de l'animation n'est lue que pendant le dessin (phase Draw) : l'animation
+    // de 180 ms ne provoque aucune recomposition de l'échiquier ni de sa description TalkBack.
+    fun animT() = when {
         skipping -> 1f
         pending -> 0f
         else -> progress.value
@@ -328,6 +363,7 @@ fun ChessBoard(
                     filterQuality = FilterQuality.High,
                 )
             }
+            val t = animT()
             val sliding = if (anim != null && t < 1f) anim.slides else emptyList()
             for (q in 0 until 64) {
                 val piece = position[q]
@@ -339,7 +375,7 @@ fun ChessBoard(
                 val coordStyle = TextStyle(fontSize = (s * 0.19f).toSp(), fontWeight = FontWeight.Bold, fontFamily = font)
                 // Pastille dans un coin de la case : lettres en bas à droite, chiffres en haut à gauche.
                 fun label(text: String, cell: Offset, bottomRight: Boolean) {
-                    val l = measurer.measure(text, coordStyle)
+                    val l = texts.get(text, coordStyle)
                     val pad = s * 0.035f
                     val w = l.size.width + pad * 2
                     val h = l.size.height.toFloat()
@@ -370,7 +406,7 @@ fun ChessBoard(
             val seen = HashSet<Int>()
             for (b in badges) {
                 val right = seen.add(b.sq)
-                drawBadge(measurer, b, topLeft(b.sq) + Offset(if (right) s * 0.80f else s * 0.20f, s * 0.20f), s)
+                drawBadge(texts, b, topLeft(b.sq) + Offset(if (right) s * 0.80f else s * 0.20f, s * 0.20f), s)
             }
             // Pièce en cours de glissement : surélevée au-dessus du doigt, avec ombre portée
             if (dragFrom >= 0) {
@@ -404,12 +440,12 @@ fun ChessBoard(
     }
 }
 
-private fun DrawScope.drawBadge(measurer: TextMeasurer, b: Badge, center: Offset, s: Float) {
+private fun DrawScope.drawBadge(texts: TextLayoutCache, b: Badge, center: Offset, s: Float) {
     val r = s * 0.19f
     drawCircle(Color(0x55000000), r * 1.08f, center + Offset(0f, r * 0.12f))
     drawCircle(b.color, r, center)
     val size = if (b.text.length > 1) r * 1.05f else r * 1.25f
-    val layout = measurer.measure(b.text, TextStyle(fontSize = size.toSp(), fontWeight = FontWeight.Black))
+    val layout = texts.get(b.text, TextStyle(fontSize = size.toSp(), fontWeight = FontWeight.Black))
     drawText(layout, Color.White, center - Offset(layout.size.width / 2f, layout.size.height / 2f))
 }
 
@@ -492,7 +528,7 @@ fun EvalBar(evalWhite: Int, flipped: Boolean, modifier: Modifier = Modifier) {
         abs(evalWhite) < 30 -> "Évaluation : position équilibrée"
         else -> "Évaluation : avantage ${if (whiteAhead) "Blancs" else "Noirs"} ${label.drop(1).replace('.', ',')}"
     }
-    val style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFeatureSettings = TNUM)
+    val labelLayout = remember(label, measurer) { measurer.measure(label, TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFeatureSettings = TNUM)) }
     val c = LocalDuck.current
     Canvas(
         modifier.fillMaxHeight().width(26.dp).clip(RoundedCornerShape(6.dp)).border(1.dp, c.outlineStrong, RoundedCornerShape(6.dp))
@@ -505,7 +541,7 @@ fun EvalBar(evalWhite: Int, flipped: Boolean, modifier: Modifier = Modifier) {
         drawRect(light, Offset(0f, if (flipped) 0f else size.height - h), Size(size.width, h))
         // Encoche médiane nette (égalité)
         drawRect(Color(0xFFF59E0B), Offset(0f, size.height / 2 - 1.5.dp.toPx()), Size(size.width, 3.dp.toPx()))
-        val t = measurer.measure(label, style)
+        val t = labelLayout
         val whiteAtBottom = !flipped
         val atBottom = whiteAhead == whiteAtBottom
         val y = if (atBottom) size.height - t.size.height - 3.dp.toPx() else 3.dp.toPx()

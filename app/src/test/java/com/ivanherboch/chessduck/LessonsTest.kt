@@ -39,5 +39,10 @@ class LessonsTest {
         assertEquals(PuzzleThemes.G_MATE, PuzzleThemes.groups.first())
         // #oWde7 porte « mat en 1 », « queue d'aronde » et « clouage » : il est rangé dans le plus caractéristique.
         assertEquals("dovetailMate", PuzzleThemes.primary(" dovetailMate mate mateIn1 middlegame oneMove pin ").key)
+        // Cas limites : chaîne vide, espaces multiples, thèmes inconnus → « milieu de partie ».
+        assertEquals("middlegame", PuzzleThemes.primary("").key)
+        assertEquals("middlegame", PuzzleThemes.primary("   long  short ").key)
+        assertEquals("pin", PuzzleThemes.primary("pin   endgame").key)
+        assertEquals(PuzzleThemes.all.indexOfFirst { it.key == "fork" }, PuzzleThemes.primaryIndex(" fork "))
     }
 }

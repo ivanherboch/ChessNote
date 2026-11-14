@@ -89,9 +89,38 @@ object PuzzleThemes {
      * Une seule règle, partout dans l'application : catalogue, tirage aléatoire, recherche, écran, Récents
      * et images exportées. Chaque problème appartient donc à un seul thème du catalogue.
      */
-    fun primary(themes: String): ThemeInfo {
-        val set = themes.trim().split(' ').toSet()
-        return PRIORITY.firstOrNull { it in set }?.let { byKey[it] } ?: byKey.getValue("middlegame")
+    fun primary(themes: String): ThemeInfo = all[primaryIndex(themes)]
+
+    /** Rang de priorité de chaque clé (0 = la plus caractéristique), consulté en O(1) par mot. */
+    private val PRIORITY_RANK: Map<String, Int> =
+        PRIORITY.withIndex().filter { (_, k) -> all.any { it.key == k } }.associate { it.value to it.index }
+
+    /** Indice dans [all] de chaque clé de [PRIORITY]. */
+    private val PRIORITY_THEME_INDEX: IntArray = IntArray(PRIORITY.size) { r -> all.indexOfFirst { it.key == PRIORITY[r] } }
+
+    private val MIDDLEGAME_INDEX = all.indexOfFirst { it.key == "middlegame" }
+
+    /**
+     * Indice dans [all] du type principal (même règle que [primary]) : parcours de la chaîne mot par mot,
+     * sans découpage en liste ni ensemble temporaires (appelé pour chacun des 150 000 problèmes).
+     */
+    fun primaryIndex(themes: String): Int {
+        var best = Int.MAX_VALUE
+        var i = 0
+        val n = themes.length
+        while (i < n) {
+            while (i < n && themes[i] == ' ') i++
+            val start = i
+            while (i < n && themes[i] != ' ') i++
+            if (i > start) {
+                val rank = PRIORITY_RANK[themes.substring(start, i)]
+                if (rank != null && rank < best) {
+                    best = rank
+                    if (best == 0) break
+                }
+            }
+        }
+        return if (best == Int.MAX_VALUE) MIDDLEGAME_INDEX else PRIORITY_THEME_INDEX[best]
     }
 
     /** Clé de filtre d'un groupe entier de thèmes (ex. tous les mats). */

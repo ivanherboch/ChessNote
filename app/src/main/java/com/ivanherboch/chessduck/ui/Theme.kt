@@ -71,7 +71,6 @@ data class DuckColors(
     val redText get() = redRole.text
 
     /** Texte posé sur un remplissage or (badge ELO, bouton principal or). */
-    val onAccent get() = goldRole.onFill
 
     val neutralRole get() = AccentRole(text, surfaceHi, text)
 

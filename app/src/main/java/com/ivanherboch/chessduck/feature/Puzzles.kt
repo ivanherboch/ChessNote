@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
+import android.graphics.Bitmap
+import androidx.compose.runtime.rememberCoroutineScope
+import com.ivanherboch.chessduck.util.runCatchingSuspend
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -67,7 +70,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -116,7 +118,6 @@ import com.ivanherboch.chessduck.engine.isMateScore
 import com.ivanherboch.chessduck.engine.mateIn
 import com.ivanherboch.chessduck.ui.Arrow
 import com.ivanherboch.chessduck.ui.AutoText
-import com.ivanherboch.chessduck.ui.Badge
 import com.ivanherboch.chessduck.ui.BoardAnim
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.DuckButton
@@ -152,7 +153,7 @@ import java.text.NumberFormat
 import java.util.Locale
 
 /** Affichage temporaire d'un mauvais coup puis de sa réfutation (la grille reste dégagée). */
-data class Refutation(val position: Position, val last: Move, val arrow: Arrow?, val badge: Badge?)
+data class Refutation(val position: Position, val last: Move, val arrow: Arrow?)
 
 data class PuzzleState(
     val puzzle: Puzzle? = null,
@@ -209,21 +210,20 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     private var metaIds: Array<String> = emptyArray()
     private var metaRatings = IntArray(0)
     /** Thème unique de chaque problème (indice dans PuzzleThemes.all) : son idée la plus caractéristique. */
-    private var metaCat = ByteArray(0)
+    private var metaCat = ShortArray(0)
     private var metaIdsLower: Array<String> = emptyArray()
-    private var metaThemes: Array<String> = emptyArray()
 
     init {
         viewModelScope.launch {
             val st = duck.prefs.settings.first()
             state.update { it.copy(band = st.puzzleBand, theme = st.puzzleTheme) }
-            val saved = if (st.puzzleId.isNotEmpty()) runCatching { dao.byId(st.puzzleId) }.getOrNull() else null
+            val saved = if (st.puzzleId.isNotEmpty()) runCatchingSuspend { dao.byId(st.puzzleId) }.getOrNull() else null
             if (saved != null) show(saved) else random()
         }
         viewModelScope.launch {
             duck.prefs.settings.map { it.recentPuzzles }.distinctUntilChanged().collect { ids ->
                 val others = ids.drop(1).take(5)
-                val found = if (others.isEmpty()) emptyList() else runCatching { dao.byIds(others) }.getOrDefault(emptyList())
+                val found = if (others.isEmpty()) emptyList() else runCatchingSuspend { dao.byIds(others) }.getOrDefault(emptyList())
                 recents.value = others.mapNotNull { id -> found.firstOrNull { it.id == id } }
             }
         }
@@ -237,11 +237,9 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
 
     private suspend fun ensureMeta() = metaLock.withLock {
         if (metaIds.isNotEmpty()) return@withLock
-        val meta = runCatching { dao.allMeta() }.getOrDefault(emptyList())
-        val idx = PuzzleThemes.all.withIndex().associate { it.value.key to it.index }
+        val meta = runCatchingSuspend { dao.allMeta() }.getOrDefault(emptyList())
         metaRatings = IntArray(meta.size) { meta[it].rating }
-        metaCat = ByteArray(meta.size) { i -> (idx[PuzzleThemes.primary(meta[i].themes).key] ?: 0).toByte() }
-        metaThemes = Array(meta.size) { meta[it].themes }
+        metaCat = ShortArray(meta.size) { i -> PuzzleThemes.primaryIndex(meta[i].themes).toShort() }
         metaIdsLower = Array(meta.size) { meta[it].id.lowercase() }
         metaIds = Array(meta.size) { meta[it].id }
     }
@@ -275,7 +273,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             val top = (exact + prefix + inside).take(5)
             suggestions.value = Suggestions(
                 raw.trim().removePrefix("#"),
-                top.map { Suggestion(metaIds[it], PuzzleThemes.primary(metaThemes[it]).name, metaRatings[it]) },
+                top.map { Suggestion(metaIds[it], PuzzleThemes.all[metaCat[it].toInt()].name, metaRatings[it]) },
                 total > top.size,
             )
         }
@@ -290,7 +288,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
 
     fun openSuggestion(id: String, onDone: () -> Unit) {
         viewModelScope.launch {
-            runCatching { dao.byId(id) }.getOrNull()?.let { show(it) }
+            runCatchingSuspend { dao.byId(id) }.getOrNull()?.let { show(it) }
             onDone()
         }
     }
@@ -346,7 +344,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
                 val pick = if (fresh >= 0) fresh else any
                 if (pick >= 0) metaIds[pick] else null
             }
-            val p = id?.let { runCatching { dao.byId(it) }.getOrNull() }
+            val p = id?.let { runCatchingSuspend { dao.byId(it) }.getOrNull() }
             if (p != null) show(p)
             else state.update { it.copy(empty = true, tone = Tone.BAD, message = "Aucun problème ne correspond à ces filtres. Élargissez la sélection dans le catalogue.") }
         }
@@ -356,7 +354,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     fun openById(raw: String, onResult: (Boolean) -> Unit) {
         val id = raw.trim().removePrefix("#").substringAfterLast('/').trim()
         viewModelScope.launch {
-            val p = if (id.isEmpty()) null else runCatching { dao.byId(id) ?: dao.byIdIgnoreCase(id) }.getOrNull()
+            val p = if (id.isEmpty()) null else runCatchingSuspend { dao.byId(id) ?: dao.byIdIgnoreCase(id) }.getOrNull()
             if (p != null) show(p)
             onResult(p != null)
         }
@@ -501,7 +499,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         state.update {
             it.copy(
                 progress = minOf(it.progress, cur).coerceAtLeast(cur), cursor = cur, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m),
-                refute = Refutation(after, m, null, null), refuteUntil = 0L, refuteHold = 0L,
+                refute = Refutation(after, m, null), refuteUntil = 0L, refuteHold = 0L,
                 message = "$san n'est pas la solution. Regardez la réponse des $oppName…",
             )
         }
@@ -534,7 +532,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             state.update {
                 it.copy(
                     anim = moveAnim(after, reply),
-                    refute = Refutation(after2, reply, Arrow(reply.from, reply.to, androidx.compose.ui.graphics.Color(0xFFEF4444)), null),
+                    refute = Refutation(after2, reply, Arrow(reply.from, reply.to, androidx.compose.ui.graphics.Color(0xFFEF4444))),
                     refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD,
                     message = "Réfutation : après $san, les $oppName répondent $replySan$detail Le coup sera annulé automatiquement.",
                 )
@@ -573,6 +571,8 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
     val context = LocalContext.current
     var catalog by remember { mutableStateOf(false) }
     var shareChoice by remember { mutableStateOf(false) }
+    var exporting by remember { mutableStateOf(false) }
+    val exportScope = rememberCoroutineScope()
     var recentSheet by remember { mutableStateOf(false) }
     val recents by vm.recents.collectAsStateWithLifecycle()
     val line = s.line
@@ -701,12 +701,27 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         DuckSheet("Exporter en image", { shareChoice = false }) {
             var style by remember { mutableStateOf(ShareStyle.load(context)) }
             val setStyle = { v: ShareStyle -> style = v; ShareStyle.save(context, v) }
-            // Aperçus calculés hors du fil principal, recalculés à chaque changement de réglage.
-            val problemPreview by produceState<ImageBitmap?>(null, style, p.id) {
-                value = withContext(Dispatchers.Default) { ShareCard.render(context, p, line.positions[1], s.playerWhite, line.moves[0], style).asImageBitmap() }
+            // Aperçus calculés hors du fil principal, recalculés à chaque changement de réglage ;
+            // la clé (style, problème) permet de réutiliser le bitmap à l'export s'il correspond encore.
+            val problemShot by produceState<Pair<Any, Bitmap>?>(null, style, p.id) {
+                val key = style to p.id
+                value = key to withContext(Dispatchers.Default) { ShareCard.render(context, p, line.positions[1], s.playerWhite, line.moves[0], style) }
             }
-            val solutionPreview by produceState<ImageBitmap?>(null, style, p.id) {
-                value = withContext(Dispatchers.Default) { ShareCard.renderSolution(context, p, style).asImageBitmap() }
+            val solutionShot by produceState<Pair<Any, Bitmap>?>(null, style, p.id) {
+                val key = style to p.id
+                value = key to withContext(Dispatchers.Default) { ShareCard.renderSolution(context, p, style) }
+            }
+            val key = style to p.id
+            val problemReady = problemShot?.takeIf { it.first == key }?.second
+            val solutionReady = solutionShot?.takeIf { it.first == key }?.second
+            val problemPreview = remember(problemReady) { problemReady?.asImageBitmap() }
+            val solutionPreview = remember(solutionReady) { solutionReady?.asImageBitmap() }
+            val failed = false to "L'image n'a pas pu être enregistrée."
+            // Export lancé dans la portée de l'écran (survit à la fermeture du tiroir), un seul à la fois.
+            fun export(block: suspend () -> Unit) {
+                if (exporting) return
+                exporting = true
+                exportScope.launch { try { block() } finally { exporting = false } }
             }
             ExportOption("Format", listOf("Portrait 4:5" to (style.format == ShareFormat.PORTRAIT), "Carré 1:1" to (style.format == ShareFormat.SQUARE))) { i ->
                 setStyle(style.copy(format = if (i == 0) ShareFormat.PORTRAIT else ShareFormat.SQUARE))
@@ -719,13 +734,15 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
             ExportOption("Fond", listOf("Sombre" to !style.light, "Clair" to style.light)) { i -> setStyle(style.copy(light = i == 1)) }
             ExportCard(
                 "Le problème", "L'énoncé seul : le défi, l'échiquier, la difficulté et un indice — sans la solution.", c.blue, Icons.Rounded.Extension, problemPreview,
-                onShare = { shareChoice = false; ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0], style) },
-                onSave = { status = ShareCard.saveProblem(context, p, line.positions[1], s.playerWhite, line.moves[0], style)?.let { true to it } ?: (false to "L'image n'a pas pu être enregistrée.") },
+                enabled = !exporting,
+                onShare = { shareChoice = false; export { ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0], style, problemReady) } },
+                onSave = { export { status = ShareCard.saveProblem(context, p, line.positions[1], s.playerWhite, line.moves[0], style, problemReady)?.let { true to it } ?: failed } },
             )
             ExportCard(
                 "La solution", "Une carte par coup : flèches, échecs (+), mat (#), pièces prises et conclusion.", c.green, Icons.Rounded.CheckCircle, solutionPreview, masked = !s.solved,
-                onShare = { shareChoice = false; ShareCard.shareSolution(context, p, style) },
-                onSave = { status = ShareCard.saveSolution(context, p, style)?.let { true to it } ?: (false to "L'image n'a pas pu être enregistrée.") },
+                enabled = !exporting,
+                onShare = { shareChoice = false; export { ShareCard.shareSolution(context, p, style, solutionReady) } },
+                onSave = { export { status = ShareCard.saveSolution(context, p, style, solutionReady)?.let { true to it } ?: failed } },
             )
             status?.let { (ok, msg) ->
                 Row(Modifier.padding(top = 4.dp, bottom = 6.dp).semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }, verticalAlignment = Alignment.CenterVertically) {
@@ -779,7 +796,7 @@ private fun ExportOption(label: String, options: List<Pair<String, Boolean>>, on
 @Composable
 private fun ExportCard(
     title: String, description: String, accent: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, preview: ImageBitmap?,
-    masked: Boolean = false, onShare: () -> Unit, onSave: () -> Unit,
+    masked: Boolean = false, enabled: Boolean = true, onShare: () -> Unit, onSave: () -> Unit,
 ) {
     val c = LocalDuck.current
     // Anti-spoiler : l'aperçu de la solution reste caché tant que le problème n'est pas résolu.
@@ -810,8 +827,8 @@ private fun ExportCard(
             }
         }
         EqualRow(gap = 8.dp, modifier = Modifier.padding(top = 10.dp)) {
-            DuckButton("Partager", onShare, Modifier.weight(1f), accent = accent, filled = true, icon = Icons.Rounded.Share, contentDescription = "Partager : $title")
-            DuckButton("Enregistrer", onSave, Modifier.weight(1f), accent = accent, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Download, contentDescription = "Enregistrer dans la galerie : $title")
+            DuckButton("Partager", onShare, Modifier.weight(1f), enabled = enabled, accent = accent, filled = true, icon = Icons.Rounded.Share, contentDescription = "Partager : $title")
+            DuckButton("Enregistrer", onSave, Modifier.weight(1f), enabled = enabled, accent = accent, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Download, contentDescription = "Enregistrer dans la galerie : $title")
         }
     }
 }

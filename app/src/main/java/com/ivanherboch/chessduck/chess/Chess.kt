@@ -387,12 +387,6 @@ class Line(val startFen: String, moves: List<Move> = emptyList()) {
         return l
     }
 
-    fun truncate(n: Int) {
-        while (moves.size > n) {
-            moves.removeAt(moves.size - 1); sans.removeAt(sans.size - 1); positions.removeAt(positions.size - 1)
-        }
-    }
-
     fun uciMoves(upTo: Int = size) = moves.take(upTo).joinToString(" ") { it.uci }
 
     fun end(): GameEnd {

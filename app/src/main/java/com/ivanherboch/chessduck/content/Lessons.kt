@@ -3,8 +3,8 @@ package com.ivanherboch.chessduck.content
 import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.chess.START_FEN
 
-enum class LessonCategory(val label: String, val emoji: String) {
-    OPENING("Ouvertures", "🚀"), MIDDLEGAME("Milieu de partie", "⚔️"), ENDGAME("Finales", "🏁")
+enum class LessonCategory(val label: String) {
+    OPENING("Ouvertures"), MIDDLEGAME("Milieu de partie"), ENDGAME("Finales")
 }
 
 /**

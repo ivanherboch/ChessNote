@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.data
 
+import kotlin.coroutines.cancellation.CancellationException
 import android.content.Context
 import androidx.room.ColumnInfo
 import androidx.room.Dao
@@ -151,7 +152,7 @@ abstract class DuckDatabase : RoomDatabase() {
         suspend fun syncPuzzles(context: Context, db: DuckDatabase): Boolean = withContext(Dispatchers.IO) {
             if (db.puzzles().count() >= PUZZLE_COUNT) return@withContext false
             val tmp = File(context.cacheDir, "catalogue.db")
-            runCatching {
+            try {
                 context.assets.open("chessduck.db").use { input -> tmp.outputStream().use { input.copyTo(it) } }
                 SQLiteDatabase.openDatabase(tmp.path, null, SQLiteDatabase.OPEN_READONLY).use { src ->
                     src.rawQuery("SELECT id, fen, moves, rating, popularity, plays, themes FROM puzzles", null).use { c ->
@@ -163,9 +164,14 @@ abstract class DuckDatabase : RoomDatabase() {
                         if (batch.isNotEmpty()) db.puzzles().insertAll(batch)
                     }
                 }
+                true
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                false
+            } finally {
+                tmp.delete()
             }
-            tmp.delete()
-            true
         }
 
         /** v2 : noms des joueurs et ELO de l'ordinateur dans l'historique (la base embarquée reste en v1). */

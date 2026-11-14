@@ -149,13 +149,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private class TabSpec(val label: String, val description: String, val icon: @Composable () -> Painter, val selectedIcon: @Composable () -> Painter)
+private class TabSpec(val label: String, val icon: @Composable () -> Painter, val selectedIcon: @Composable () -> Painter)
 
 private val TABS = listOf(
-    TabSpec("Notation", "Notation : apprendre la notation anglaise", { rememberVectorPainter(Icons.Outlined.Keyboard) }, { rememberVectorPainter(Icons.Rounded.Keyboard) }),
-    TabSpec("Académie", "Académie : leçons interactives", { rememberVectorPainter(Icons.Outlined.School) }, { rememberVectorPainter(Icons.Rounded.School) }),
-    TabSpec("Problèmes", "Problèmes Lichess", { rememberVectorPainter(Icons.Outlined.Extension) }, { rememberVectorPainter(Icons.Rounded.Extension) }),
-    TabSpec("Jeu Libre", "Jeu libre contre l'ordinateur ou à deux", { painterResource(R.drawable.ic_knight) }, { painterResource(R.drawable.ic_knight) }),
+    TabSpec("Notation", { rememberVectorPainter(Icons.Outlined.Keyboard) }, { rememberVectorPainter(Icons.Rounded.Keyboard) }),
+    TabSpec("Académie", { rememberVectorPainter(Icons.Outlined.School) }, { rememberVectorPainter(Icons.Rounded.School) }),
+    TabSpec("Problèmes", { rememberVectorPainter(Icons.Outlined.Extension) }, { rememberVectorPainter(Icons.Rounded.Extension) }),
+    TabSpec("Jeu Libre", { painterResource(R.drawable.ic_knight) }, { painterResource(R.drawable.ic_knight) }),
 )
 
 @Composable

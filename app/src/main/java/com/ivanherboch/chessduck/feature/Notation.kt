@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.chess.BISHOP
+import com.ivanherboch.chessduck.chess.ROOK
+import com.ivanherboch.chessduck.chess.QUEEN
+import com.ivanherboch.chessduck.util.runCatchingSuspend
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -285,7 +289,7 @@ class NotationViewModel(app: Application) : AndroidViewModel(app) {
     private suspend fun generate(level: Int): NotationExercise {
         val dao = duck.db.puzzles()
         val target = if (level == 0) rnd.nextInt(1, 4) else level
-        runCatching {
+        runCatchingSuspend {
             repeat(6) {
                 val start = rnd.nextInt(1, DuckDatabase.PUZZLE_COUNT - 40)
                 val kind = if (target == 3) rnd.nextInt(1, 5) else 0
@@ -478,8 +482,9 @@ fun NotationScreen(vm: NotationViewModel) {
             val on = !s.solved
             Column(Modifier.padding(top = 6.dp, bottom = 6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(Modifier.fillMaxWidth().height(48.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    for ((k, sub) in listOf("K" to "King", "Q" to "Queen", "R" to "Rook", "B" to "Bishop", "N" to "Knight")) {
-                        Key(k, sub, Modifier.weight(1f), on, "$k, ${sub}, ${PIECE_NAMES_FR[" PNBRQK".indexOf(k)]}") { type(k) }
+                    for ((pt, sub) in listOf(KING to "King", QUEEN to "Queen", ROOK to "Rook", BISHOP to "Bishop", KNIGHT to "Knight")) {
+                        val k = pieceLetter(pt).toString()
+                        Key(k, sub, Modifier.weight(1f), on, "$k, ${sub}, ${PIECE_NAMES_FR[pt]}") { type(k) }
                     }
                 }
                 Row(Modifier.fillMaxWidth().height(46.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {

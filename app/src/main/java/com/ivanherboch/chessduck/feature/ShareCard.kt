@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.util.runCatchingSuspend
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import android.content.ContentValues
 import android.content.Context
 import android.os.Build
@@ -101,6 +104,14 @@ object ShareCard {
         Color.WHITE, Color.argb(26, 15, 23, 42), Color.parseColor("#CBD5E1"), Color.argb(60, 15, 23, 42),
         Color.parseColor("#92400E"), Color.parseColor("#065F46"), Color.parseColor("#047857"), Color.WHITE, Color.parseColor("#B91C1C"), Color.parseColor("#075985"),
     )
+
+    /** Mascotte décodée une seule fois puis réutilisée par toutes les images. */
+    @Volatile private var mascotCache: Bitmap? = null
+
+    private fun mascot(context: Context): Bitmap =
+        mascotCache ?: synchronized(this) {
+            mascotCache ?: BitmapFactory.decodeResource(context.resources, R.drawable.mascot).also { mascotCache = it }
+        }
 
     private class Painter(val context: Context, val cv: Canvas, val pal: Pal = NIGHT) {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -224,7 +235,7 @@ object ShareCard {
         /** Pied de page discret : mascotte, nom et référence Lichess ; aucune URL ni appel à installer. */
         fun footer(h: Int, id: String) {
             val y = h - 24f
-            val mascot = BitmapFactory.decodeResource(context.resources, R.drawable.mascot)
+            val mascot = mascot(context)
             paint.style = Paint.Style.FILL
             paint.color = Color.WHITE
             cv.drawBitmap(mascot, null, RectF(M, y - 34f, M + 42f, y + 8f), paint)
@@ -643,60 +654,89 @@ object ShareCard {
 
     // ---------------------------------------------------------------- Envoi
 
-    private fun send(context: Context, bmp: Bitmap, name: String, text: String, chooser: String) {
-        runCatching {
-            val dir = File(context.cacheDir, "share").apply { mkdirs() }
-            val file = File(dir, name)
-            file.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
-            val uri = FileProvider.getUriForFile(context, "${context.packageName}.share", file)
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "image/png"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                putExtra(Intent.EXTRA_TEXT, text)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            context.startActivity(Intent.createChooser(intent, chooser).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    /** Durée de vie des PNG temporaires de partage (le temps que l'application destinataire les lise). */
+    private const val SHARE_CACHE_TTL_MS = 60 * 60 * 1000L
+
+    /** Supprime les PNG de partage périmés pour éviter que le cache ne grossisse indéfiniment. */
+    private fun purgeShareCache(dir: File, now: Long = System.currentTimeMillis()) {
+        dir.listFiles()?.forEach { f -> if (now - f.lastModified() > SHARE_CACHE_TTL_MS) f.delete() }
+    }
+
+    /**
+     * Compression PNG et écriture sur Dispatchers.IO, puis ouverture du sélecteur de partage sur le fil principal.
+     * Renvoie faux si l'image n'a pas pu être préparée.
+     */
+    private suspend fun send(context: Context, bmp: Bitmap, name: String, text: String, chooser: String): Boolean {
+        val uri = withContext(Dispatchers.IO) {
+            runCatchingSuspend {
+                val dir = File(context.cacheDir, "share").apply { mkdirs() }
+                purgeShareCache(dir)
+                val file = File(dir, name)
+                file.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                FileProvider.getUriForFile(context, "${context.packageName}.share", file)
+            }.getOrNull()
+        } ?: return false
+        return withContext(Dispatchers.Main) {
+            runCatching {
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "image/png"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_TEXT, text)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(Intent.createChooser(intent, chooser).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }.isSuccess
         }
     }
 
     /**
-     * Enregistre l'image dans la galerie (Images/ChessDuck). Renvoie un message de confirmation, ou null en cas d'échec.
+     * Enregistre l'image dans la galerie (Images/ChessDuck), sur Dispatchers.IO.
+     * Renvoie un message de confirmation, ou null en cas d'échec.
      * Android 10+ : MediaStore, sans aucune permission. Versions antérieures : dossier d'images de l'application.
      */
-    private fun save(context: Context, bmp: Bitmap, name: String): String? = runCatching {
-        if (Build.VERSION.SDK_INT >= 29) {
-            val values = ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, name)
-                put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/ChessDuck")
-                put(MediaStore.Images.Media.IS_PENDING, 1)
+    private suspend fun save(context: Context, bmp: Bitmap, name: String): String? = withContext(Dispatchers.IO) {
+        runCatchingSuspend {
+            if (Build.VERSION.SDK_INT >= 29) {
+                val values = ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, name)
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                    put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/ChessDuck")
+                    put(MediaStore.Images.Media.IS_PENDING, 1)
+                }
+                val resolver = context.contentResolver
+                val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return@runCatchingSuspend null
+                resolver.openOutputStream(uri)?.use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) } ?: return@runCatchingSuspend null
+                values.clear(); values.put(MediaStore.Images.Media.IS_PENDING, 0)
+                resolver.update(uri, values, null, null)
+                "Image enregistrée dans la galerie (Images/ChessDuck)."
+            } else {
+                val dir = File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "ChessDuck").apply { mkdirs() }
+                val file = File(dir, name)
+                file.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                "Image enregistrée : ${file.absolutePath}"
             }
-            val resolver = context.contentResolver
-            val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return null
-            resolver.openOutputStream(uri)?.use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) } ?: return null
-            values.clear(); values.put(MediaStore.Images.Media.IS_PENDING, 0)
-            resolver.update(uri, values, null, null)
-            "Image enregistrée dans la galerie (Images/ChessDuck)."
-        } else {
-            val dir = File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "ChessDuck").apply { mkdirs() }
-            val file = File(dir, name)
-            file.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
-            "Image enregistrée : ${file.absolutePath}"
-        }
-    }.getOrNull()
+        }.getOrNull()
+    }
 
-    fun saveProblem(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle()): String? =
-        save(context, render(context, puzzle, position, playerWhite, lastMove, style), "chessduck-${puzzle.id}.png")
+    /** Image de l'énoncé : réutilise [ready] (aperçu déjà calculé) sinon la génère sur Dispatchers.Default. */
+    private suspend fun problemBitmap(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle, ready: Bitmap?) =
+        ready ?: withContext(Dispatchers.Default) { render(context, puzzle, position, playerWhite, lastMove, style) }
 
-    fun saveSolution(context: Context, puzzle: Puzzle, style: ShareStyle = ShareStyle()): String? =
-        save(context, renderSolution(context, puzzle, style), "chessduck-${puzzle.id}-solution.png")
+    private suspend fun solutionBitmap(context: Context, puzzle: Puzzle, style: ShareStyle, ready: Bitmap?) =
+        ready ?: withContext(Dispatchers.Default) { renderSolution(context, puzzle, style) }
 
-    fun share(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle()) =
+    suspend fun saveProblem(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle(), ready: Bitmap? = null): String? =
+        save(context, problemBitmap(context, puzzle, position, playerWhite, lastMove, style, ready), "chessduck-${puzzle.id}.png")
+
+    suspend fun saveSolution(context: Context, puzzle: Puzzle, style: ShareStyle = ShareStyle(), ready: Bitmap? = null): String? =
+        save(context, solutionBitmap(context, puzzle, style, ready), "chessduck-${puzzle.id}-solution.png")
+
+    suspend fun share(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle(), ready: Bitmap? = null): Boolean =
         send(
-            context, render(context, puzzle, position, playerWhite, lastMove, style), "chessduck-${puzzle.id}.png",
-            Line.fromUci(puzzle.fen, puzzle.moves).let { challenge(puzzle, it, playerWhite) } + ". Saurez-vous trouver la solution ?", "Partager le problème",
+            context, problemBitmap(context, puzzle, position, playerWhite, lastMove, style, ready), "chessduck-${puzzle.id}.png",
+            challenge(puzzle, Line.fromUci(puzzle.fen, puzzle.moves), playerWhite) + ". Saurez-vous trouver la solution ?", "Partager le problème",
         )
 
-    fun shareSolution(context: Context, puzzle: Puzzle, style: ShareStyle = ShareStyle()) =
-        send(context, renderSolution(context, puzzle, style), "chessduck-${puzzle.id}-solution.png", "Solution du problème Lichess #${puzzle.id}", "Partager la solution")
+    suspend fun shareSolution(context: Context, puzzle: Puzzle, style: ShareStyle = ShareStyle(), ready: Bitmap? = null): Boolean =
+        send(context, solutionBitmap(context, puzzle, style, ready), "chessduck-${puzzle.id}-solution.png", "Solution du problème Lichess #${puzzle.id}", "Partager la solution")
 }

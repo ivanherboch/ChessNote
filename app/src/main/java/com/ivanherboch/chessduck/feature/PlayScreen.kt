@@ -125,7 +125,7 @@ private fun LiveGame(vm: PlayViewModel) {
     val c = LocalDuck.current
     var history by remember { mutableStateOf(false) }
     var gameSettings by remember { mutableStateOf(false) }
-    var confirm by remember { mutableStateOf<String?>(null) }
+    var confirm by remember { mutableStateOf<ConfirmAction?>(null) }
     val players = if (s.twoPlayers) Players(st.pseudo to null, st.pseudo2 to null)
     else {
         val me = st.pseudo to "${st.elo}"
@@ -210,11 +210,11 @@ private fun LiveGame(vm: PlayViewModel) {
                         enabled = undo >= 0, icon = Icons.AutoMirrored.Rounded.Undo,
                     )
                     DuckIconButton(
-                        Icons.Rounded.Flag, "Abandonner", { if (st.confirmActions && s.inProgress) confirm = "resign" else vm.resign() },
+                        Icons.Rounded.Flag, "Abandonner", { if (st.confirmActions && s.inProgress) confirm = ConfirmAction.RESIGN else vm.resign() },
                         enabled = s.line.size > 0, accent = c.red,
                     )
                     DuckIconButton(
-                        Icons.Rounded.Add, "Nouvelle partie", { if (st.confirmActions && s.inProgress) confirm = "new" else vm.newGame() },
+                        Icons.Rounded.Add, "Nouvelle partie", { if (st.confirmActions && s.inProgress) confirm = ConfirmAction.NEW_GAME else vm.newGame() },
                         accent = c.gold,
                     )
                 }
@@ -223,15 +223,16 @@ private fun LiveGame(vm: PlayViewModel) {
     )
 
     when (confirm) {
-        "resign" -> ConfirmDialog(
+        ConfirmAction.RESIGN -> ConfirmDialog(
             "Abandonner la partie ?",
             if (s.twoPlayers) "Le camp au trait perd la partie." else "La partie sera comptée comme une défaite et votre ELO sera mis à jour.",
             "Abandonner", { confirm = null; vm.resign() }, { confirm = null },
         )
-        "new" -> ConfirmDialog(
+        ConfirmAction.NEW_GAME -> ConfirmDialog(
             "Commencer une nouvelle partie ?", "La partie en cours sera perdue (elle n'est pas enregistrée).",
             "Nouvelle partie", { confirm = null; vm.newGame() }, { confirm = null },
         )
+        null -> Unit
     }
     if (history) HistorySheet(games, onClose = { history = false }, onDelete = vm::deleteGame) { g ->
         // Fermeture instantanée du tiroir, puis lecture automatique sur l'échiquier.
@@ -544,3 +545,6 @@ private fun GameSettingsSheet(twoPlayers: Boolean, color: Int, aiElo: Int, onClo
         Text("Le pseudo, le thème et les confirmations se règlent dans Paramètres, en haut à droite.", color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
     }
 }
+
+/** Action destructive en attente de confirmation dans le Jeu Libre. */
+private enum class ConfirmAction { RESIGN, NEW_GAME }

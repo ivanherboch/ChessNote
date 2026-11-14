@@ -12,8 +12,7 @@ import kotlinx.coroutines.flow.map
 private val Context.store by preferencesDataStore("chessduck")
 
 data class Settings(
-    val dark: Boolean = true,
-    /** 0 = suivre le système, 1 = Jour, 2 = Nuit (déduit de [dark] tant que l'utilisateur n'a rien choisi). */
+    /** 0 = suivre le système, 1 = Jour, 2 = Nuit (déduit de la clé historique « dark » tant que l'utilisateur n'a rien choisi). */
     val themeMode: Int = 2,
     /** Couleurs dynamiques Material You (Android 12+), désactivées par défaut. */
     val dynamicColor: Boolean = false,
@@ -72,7 +71,6 @@ class Prefs(private val context: Context) {
 
     val settings: Flow<Settings> = context.store.data.map { p ->
         Settings(
-            dark = p[K.dark] ?: true,
             themeMode = p[K.themeMode] ?: if (p[K.dark] ?: true) 2 else 1,
             dynamicColor = p[K.dynamic] ?: false,
             coords = p[K.coords] ?: true,
@@ -95,8 +93,6 @@ class Prefs(private val context: Context) {
             lessonId = p[K.lesson] ?: 1,
         )
     }
-
-    suspend fun setDark(v: Boolean) = context.store.edit { it[K.dark] = v; it[K.themeMode] = if (v) 2 else 1 }
 
     /** 0 = système, 1 = Jour, 2 = Nuit ; la clé historique « dark » reste cohérente. */
     suspend fun setThemeMode(v: Int) = context.store.edit {
@@ -124,7 +120,6 @@ class Prefs(private val context: Context) {
         it[K.twoPlayers] = twoPlayers; it[K.color] = color; it[K.aiElo] = aiElo
     }
     suspend fun setPuzzleFilter(band: Int, theme: String) = context.store.edit { it[K.band] = band; it[K.theme] = theme }
-    suspend fun setPuzzleId(id: String) = context.store.edit { it[K.puzzleId] = id }
     suspend fun setNotationLevel(v: Int) = context.store.edit { it[K.level] = v }
     suspend fun setLesson(v: Int) = context.store.edit { it[K.lesson] = v }
 }

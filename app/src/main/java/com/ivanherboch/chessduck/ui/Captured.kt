@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.ui
 
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -145,11 +146,14 @@ private fun DrawScope.drawCaptured(
 @Composable
 fun CapturedBar(position: Position, modifier: Modifier = Modifier, kid: Boolean = false) {
     val c = LocalDuck.current
-    val m = materialOf(position)
+    val m = remember(position) { materialOf(position) }
     if (m.blackLost.isEmpty() && m.whiteLost.isEmpty()) return
     val images = rememberPieceImages(kid)
     val measurer = rememberTextMeasurer()
     val font = LocalDuckFont.current
+    val lead = remember(m.diff, measurer, font, c.text) {
+        if (m.diff != 0) measurer.measure("+${abs(m.diff)}", TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = font, color = c.text, fontFeatureSettings = TNUM)) else null
+    }
     val shape = RoundedCornerShape(if (kid) 16.dp else 8.dp)
     val desc = "Pièces prises par les Blancs : ${describePieces(m.blackLost)}. Pièces prises par les Noirs : ${describePieces(m.whiteLost)}." +
         if (m.diff != 0) " Avantage ${if (m.diff > 0) "Blancs" else "Noirs"} +${abs(m.diff)}." else " Matériel égal."
@@ -160,8 +164,6 @@ fun CapturedBar(position: Position, modifier: Modifier = Modifier, kid: Boolean 
     ) {
         val pad = (if (kid) 12.dp else 8.dp).toPx()
         val half = (size.width - 2 * pad - 10.dp.toPx()) / 2
-        val style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = font, color = c.text, fontFeatureSettings = TNUM)
-        val lead = if (m.diff != 0) measurer.measure("+${abs(m.diff)}", style) else null
         val pieceSize = (if (kid) 22.dp else 20.dp).toPx()
         drawCaptured(m.blackLost, lead.takeIf { m.diff > 0 }, images, c.dark, pad, half, pieceSize, alignEnd = false)
         drawCaptured(m.whiteLost, lead.takeIf { m.diff < 0 }, images, c.dark, size.width - pad - half, half, pieceSize, alignEnd = true)
@@ -193,11 +195,14 @@ fun PlayerBar(
     thinking: Boolean = false,
 ) {
     val c = LocalDuck.current
-    val m = materialOf(position)
+    val m = remember(position) { materialOf(position) }
     val captured = if (white) m.blackLost else m.whiteLost
     val lead = if (white) m.diff else -m.diff
     val images = rememberPieceImages(false)
     val measurer = rememberTextMeasurer()
+    val leadText = remember(lead, measurer, c.text) {
+        if (lead > 0) measurer.measure("+$lead", TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold, color = c.text, fontFeatureSettings = TNUM)) else null
+    }
     val side = if (white) "Blancs" else "Noirs"
     val desc = buildString {
         append("$name, $side")
@@ -221,9 +226,7 @@ fun PlayerBar(
         } else if (toMove) {
             Box(Modifier.padding(start = 8.dp).size(8.dp).clip(CircleShape).background(c.greenRole.fill))
         }
-        val style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold, color = c.text, fontFeatureSettings = TNUM)
         Canvas(Modifier.weight(1f).fillMaxHeight().padding(start = 8.dp)) {
-            val leadText = if (lead > 0) measurer.measure("+$lead", style) else null
             drawCaptured(captured, leadText, images, c.dark, 0f, size.width, 20.dp.toPx(), alignEnd = true)
         }
     }

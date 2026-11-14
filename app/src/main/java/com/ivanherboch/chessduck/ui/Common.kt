@@ -213,10 +213,9 @@ fun DuckButton(
  * Bouton-icône 48 × 48 dp avec info-bulle (appui long) et description TalkBack.
  * [selected] l'affiche comme un interrupteur actif ; [badge] ajoute un petit compteur (ex. « 1/2 »).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DuckIconButton(
-    icon: Any,
+    icon: ImageVector,
     contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -225,6 +224,34 @@ fun DuckIconButton(
     filled: Boolean = false,
     selected: Boolean? = null,
     badge: String? = null,
+) = DuckIconButtonImpl(rememberVectorPainter(icon), contentDescription, onClick, modifier, enabled, accent, filled, selected, badge)
+
+/** Variante pour une icône dessinée (ressource vectorielle de l'application). */
+@Composable
+fun DuckIconButton(
+    icon: Painter,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    accent: Color? = null,
+    filled: Boolean = false,
+    selected: Boolean? = null,
+    badge: String? = null,
+) = DuckIconButtonImpl(icon, contentDescription, onClick, modifier, enabled, accent, filled, selected, badge)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DuckIconButtonImpl(
+    painter: Painter,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier,
+    enabled: Boolean,
+    accent: Color?,
+    filled: Boolean,
+    selected: Boolean?,
+    badge: String?,
 ) {
     val c = LocalDuck.current
     val fb = LocalFeedback.current
@@ -241,11 +268,6 @@ fun DuckIconButton(
         on -> if (accent != null) r.onFill else c.bg
         accent != null -> r.text
         else -> c.text
-    }
-    val painter: Painter = when (icon) {
-        is ImageVector -> rememberVectorPainter(icon)
-        is Painter -> icon
-        else -> error("icône non prise en charge")
     }
     TooltipBox(
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),

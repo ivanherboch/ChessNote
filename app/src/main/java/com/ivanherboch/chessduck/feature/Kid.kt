@@ -537,12 +537,15 @@ private fun KidDemo(piece: KidPiece, onClose: () -> Unit) {
         board = {
             val frame = RoundedCornerShape(22.dp)
             Box(Modifier.fillMaxSize().padding(horizontal = 4.dp).clip(frame).background(Color(0xFF3DB89C)).padding(7.dp)) {
+                val knightPath = remember { Path() }
                 Canvas(Modifier.fillMaxSize().clip(RoundedCornerShape(15.dp))) {
                     val s = size.width / 8f
+                    val cell = Size(s, s)
                     fun topLeft(q: Pair<Int, Int>) = Offset(q.first * s, (7 - q.second) * s)
                     fun center(q: Pair<Int, Int>) = topLeft(q) + Offset(s / 2, s / 2)
+                    // Cases dessinées sans allouer de paire par case et par image.
                     for (f in 0..7) for (r in 0..7) {
-                        drawRect(if ((f + r) % 2 == 1) c.squareLight else c.squareDark, topLeft(f to r), Size(s, s))
+                        drawRect(if ((f + r) % 2 == 1) c.squareLight else c.squareDark, Offset(f * s, (7 - r) * s), cell)
                     }
                     // Cases où la pièce a le droit d'aller
                     for (d in phase.dots) {
@@ -555,7 +558,8 @@ private fun KidDemo(piece: KidPiece, onClose: () -> Unit) {
                     if (piece.type == KNIGHT && tg != null) {
                         val h = phase.home
                         val corner = if (abs(tg.second - h.second) == 2) h.first to tg.second else tg.first to h.second
-                        val path = Path().apply {
+                        val path = knightPath.apply {
+                            rewind()
                             moveTo(center(h).x, center(h).y); lineTo(center(corner).x, center(corner).y); lineTo(center(tg).x, center(tg).y)
                         }
                         drawPath(path, piece.edge.copy(alpha = 0.55f), style = Stroke(s * 0.14f, cap = StrokeCap.Round, join = StrokeJoin.Round))

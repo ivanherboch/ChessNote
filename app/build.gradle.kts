@@ -41,7 +41,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
 
     packaging {
@@ -52,8 +51,15 @@ android {
     androidResources { noCompress += "db" }
     testOptions {
         unitTests.isIncludeAndroidResources = true
-        unitTests.all { it.systemProperty("roborazzi.test.record", "true") }
+        // Par défaut, Roborazzi enregistre les captures (build/screenshots n'est pas versionné) ;
+        // -Proborazzi.test.record=false active le mode vérification quand des captures de référence existent.
+        val roborazziRecord = providers.gradleProperty("roborazzi.test.record").orElse("true").get()
+        unitTests.all { it.systemProperty("roborazzi.test.record", roborazziRecord) }
     }
+}
+
+kotlin {
+    compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
 }
 
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }

@@ -81,6 +81,13 @@ class AppRobolectricTest {
         assertEquals(150_000, meta.size)
         assertEquals(150_000, meta.map { it.id }.toSet().size) // aucun doublon
         // Au moins 300 problèmes par difficulté × thème, sauf les cases que la base Lichess entière ne peut pas remplir.
+        // La règle optimisée de PuzzleThemes.primary donne exactement le même thème que la règle de référence.
+        val byKey = com.ivanherboch.chessduck.content.PuzzleThemes.byKey
+        for (pm in meta) {
+            val set = pm.themes.trim().split(' ').toSet()
+            val ref = REFERENCE_PRIORITY.firstOrNull { it in set && it in byKey } ?: "middlegame"
+            assertEquals(pm.id, ref, com.ivanherboch.chessduck.content.PuzzleThemes.primary(pm.themes).key)
+        }
         val cells = meta.groupingBy { com.ivanherboch.chessduck.content.PuzzleThemes.bandOf(it.rating) to com.ivanherboch.chessduck.content.PuzzleThemes.primary(it.themes).key }.eachCount()
         val shortCells = (1..4).flatMap { b -> com.ivanherboch.chessduck.content.PuzzleThemes.all.map { b to it.key } }.filter { (cells[it] ?: 0) < 300 }
         assertEquals(18, shortCells.size)
@@ -266,5 +273,19 @@ class AppRobolectricTest {
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1000)
         rule.onNodeWithContentDescription("Annuler mon coup", substring = false).assertDoesNotExist()
         rule.onNodeWithText("Annuler mon coup").assertExists()
+    }
+
+    private companion object {
+        /** Ordre de priorité de référence (copie figée de PuzzleThemes) pour vérifier la non-régression. */
+        val REFERENCE_PRIORITY = listOf(
+            "smotheredMate", "anastasiaMate", "arabianMate", "bodenMate", "doubleBishopMate", "dovetailMate", "hookMate", "backRankMate",
+            "mateIn1", "mateIn2", "mateIn3", "mateIn4", "mateIn5",
+            "underPromotion", "enPassant", "castling", "doubleCheck", "discoveredCheck", "zugzwang", "interference", "xRayAttack",
+            "trappedPiece", "capturingDefender", "intermezzo", "clearance", "attraction", "deflection", "skewer", "pin", "fork",
+            "discoveredAttack", "hangingPiece", "quietMove", "defensiveMove", "sacrifice", "promotion", "advancedPawn",
+            "attackingF2F7", "exposedKing", "kingsideAttack", "queensideAttack",
+            "pawnEndgame", "rookEndgame", "bishopEndgame", "knightEndgame", "queenEndgame", "queenRookEndgame",
+            "opening", "endgame", "middlegame",
+        )
     }
 }
