@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.LinePlaybackController
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import android.app.Application
@@ -180,7 +181,8 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
     private var applyJob: Job? = null
     private var aiJob: Job? = null
     private var analysisJob: Job? = null
-    private var reviewJob: Job? = null
+    /** Lecture automatique de la revue de partie. */
+    private val reviewPlayback = LinePlaybackController(viewModelScope)
     private var reviewAnalysisJob: Job? = null
     private var analysisGameId = -1L
     /** Analyses en cours ou terminées, par partie : la revue s'ouvre sans rien recalculer. */
@@ -472,7 +474,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Ouvre une partie de l'historique : évaluation activée et lecture automatique lancée. */
     fun openReview(g: GameRecord) {
-        reviewJob?.cancel()
+        reviewPlayback.cancel()
         val line = runCatching { Line.fromUci(START_FEN, g.moves) }.getOrNull() ?: return
         val analysis = analysisCache[g.id] ?: Analysis.decodeAll(g.analysis, line.size + 1)
         _state.update { it.copy(review = Review(g, line, 0, true, analysis, flipped = g.vsComputer && !g.playerWhite)) }
@@ -481,16 +483,12 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun autoplay() {
-        reviewJob?.cancel()
-        reviewJob = viewModelScope.launch {
-            while (true) {
-                delay(1150)
-                val r = state.value.review ?: return@launch
-                if (r.cursor >= r.line.size) break
-                reviewGo(r.cursor + 1)
-            }
-            _state.update { s -> s.review?.let { s.copy(review = it.copy(playing = false)) } ?: s }
-        }
+        reviewPlayback.autoplay(
+            cursor = { state.value.review?.cursor }, size = { state.value.review?.line?.size ?: 0 },
+            delayFor = { 1150L }, checkBeforeDelay = false,
+            advance = ::reviewGo,
+            onEnd = { _state.update { s -> s.review?.let { s.copy(review = it.copy(playing = false)) } ?: s } },
+        )
     }
 
     private fun reviewGo(target: Int) {
@@ -498,17 +496,12 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
             val r = s.review ?: return@update s
             val t = target.coerceIn(0, r.line.size)
             if (t == r.cursor) return@update s
-            val anim = when (t) {
-                r.cursor + 1 -> moveAnim(r.line.positions[r.cursor], r.line.moves[r.cursor])
-                r.cursor - 1 -> undoAnim(r.line.positions[t], r.line.moves[t])
-                else -> null
-            }
-            s.copy(review = r.copy(cursor = t, anim = anim))
+            s.copy(review = r.copy(cursor = t, anim = LinePlaybackController.transition(r.line, r.cursor, t)))
         }
     }
 
     fun reviewPause() {
-        reviewJob?.cancel()
+        reviewPlayback.cancel()
         _state.update { s -> s.review?.let { s.copy(review = it.copy(playing = false)) } ?: s }
     }
 
@@ -529,7 +522,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
 
     fun closeReview() {
         // L'analyse continue en arrière-plan : elle sera prête à la prochaine ouverture.
-        reviewJob?.cancel()
+        reviewPlayback.cancel()
         _state.update { it.copy(review = null) }
     }
 }

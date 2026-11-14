@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.chess.PieceLexiconFr
 import com.ivanherboch.chessduck.chess.BISHOP
 import com.ivanherboch.chessduck.chess.KING
 import com.ivanherboch.chessduck.chess.KNIGHT
@@ -47,11 +48,10 @@ object ReviewComments {
         return Voice(name, human, white)
     }
 
-    private val NAME = arrayOf("", "pion", "cavalier", "fou", "tour", "dame", "roi")
-    private fun fem(t: Int) = t == ROOK || t == QUEEN
-    private fun the(t: Int) = (if (fem(t)) "la " else "le ") + NAME[t]
-    private fun it(t: Int) = if (fem(t)) "la" else "le"
-    private fun poss(v: Voice, t: Int) = v.f(if (fem(t)) "ta " else "ton ", if (fem(t)) "sa " else "son ") + NAME[t]
+    // Formes grammaticales des pièces : lexique français partagé par toute l'application.
+    private fun the(t: Int) = PieceLexiconFr.definite(t)
+    private fun it(t: Int) = PieceLexiconFr.pronoun(t)
+    private fun poss(v: Voice, t: Int) = v.f(PieceLexiconFr.possessive(t, true), PieceLexiconFr.possessive(t, false))
 
     /** Tendance de la partie, du point de vue des Blancs : -2 … +2. */
     private fun bucket(evalWhite: Int): Int {
@@ -79,15 +79,15 @@ object ReviewComments {
         val t = pieceType(p[m.from])
         val base = when {
             p.isCastle(m) -> "roque pour mettre son roi à l'abri"
-            m.promo != 0 -> "mène son pion à promotion et obtient une ${NAME[m.promo]}".replace("une cavalier", "un cavalier").replace("une fou", "un fou")
+            m.promo != 0 -> "mène son pion à promotion et obtient ${PieceLexiconFr.indefinite(m.promo)}"
             p.isCapture(m) -> {
                 val victim = if (p.isEnPassant(m)) PAWN else pieceType(p[m.to])
                 (if (prev != null && prev.to == m.to) "reprend en capturant " else "capture ") + the(victim) + " en ${sqName(m.to)}"
             }
-            p.fullmove <= 12 && (t == KNIGHT || t == BISHOP) && rankOf(m.from) == (if (v.white) 0 else 7) -> "développe son ${NAME[t]}"
+            p.fullmove <= 12 && (t == KNIGHT || t == BISHOP) && rankOf(m.from) == (if (v.white) 0 else 7) -> "développe ${PieceLexiconFr.possessive(t, false)}"
             t == PAWN && fileOf(m.to) in 3..4 && rankOf(m.to) in 3..4 -> "avance un pion au centre"
             t == PAWN -> "avance son pion en ${sqName(m.to)}"
-            else -> "joue ${if (fem(t)) "sa" else "son"} ${NAME[t]} en ${sqName(m.to)}"
+            else -> "joue ${PieceLexiconFr.possessive(t, false)} en ${sqName(m.to)}"
         }
         val tail = when {
             san.endsWith("#") -> " et fait échec et mat !"
@@ -134,7 +134,7 @@ object ReviewComments {
             }
             // 4. Une pièce attaquée n'a pas été mise à l'abri.
             if (attackedCheaply(p, best.from) && bt != PAWN && bt != KING && best.from != m.from) {
-                return "${poss(v, bt)} en ${sqName(best.from)} était attaqué${if (fem(bt)) "e" else ""} : il fallait ${it(bt)} mettre à l'abri avec $bs."
+                return "${poss(v, bt)} en ${sqName(best.from)} était attaqué${if (PieceLexiconFr.isFeminine(bt)) "e" else ""} : il fallait ${it(bt)} mettre à l'abri avec $bs."
             }
             // 5. Un échec fort a été manqué.
             if (bs.endsWith("+")) return "${v.f("tu aurais dû", "il aurait dû")} donner échec avec $bs pour garder l'initiative."

@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.data.Settings
+import com.ivanherboch.chessduck.chess.PieceLexiconFr
 import com.ivanherboch.chessduck.util.runCatchingSuspend
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
@@ -46,20 +48,14 @@ import kotlin.math.sqrt
 /** Format de l'image : portrait 4:5 (WhatsApp, fil Instagram) ou carré 1:1 (publication Instagram). */
 enum class ShareFormat(val height: Int, val label: String) { PORTRAIT(1350, "Portrait 4:5"), SQUARE(1080, "Carré 1:1") }
 
-/** Réglages d'une image partagée : format et fond clair ou sombre. */
+/** Réglages d'une image partagée : format et fond clair ou sombre (persistés dans DataStore, voir Prefs). */
 data class ShareStyle(val format: ShareFormat = ShareFormat.PORTRAIT, val light: Boolean = false) {
     companion object {
-        private const val FILE = "share_style"
-        fun load(context: Context): ShareStyle {
-            val p = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-            return ShareStyle(
-                runCatching { ShareFormat.valueOf(p.getString("format", null) ?: "") }.getOrDefault(ShareFormat.PORTRAIT),
-                p.getBoolean("light", false),
-            )
-        }
-        fun save(context: Context, s: ShareStyle) {
-            context.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putString("format", s.format.name).putBoolean("light", s.light).apply()
-        }
+        /** Style enregistré dans les réglages (format inconnu : portrait). */
+        fun from(settings: Settings) = ShareStyle(
+            ShareFormat.entries.firstOrNull { it.name == settings.shareFormat } ?: ShareFormat.PORTRAIT,
+            settings.shareLight,
+        )
     }
 }
 
@@ -474,9 +470,6 @@ object ShareCard {
 
     // ---------------------------------------------------------------- Solution
 
-    private val ARTICLE = arrayOf("", "Le pion", "Le cavalier", "Le fou", "La tour", "La dame", "Le roi")
-    private val OBJECT = arrayOf("", "le pion", "le cavalier", "le fou", "la tour", "la dame", "le roi")
-    private val PROMO = arrayOf("", "", "cavalier", "fou", "tour", "dame", "")
 
     /** Phrase décrivant un coup : pièce, prise éventuelle, case, promotion, échec ou mat. */
     fun describe(p: Position, m: Move, san: String): String {
@@ -485,10 +478,10 @@ object ShareCard {
         when {
             p.isCastle(m) -> sb.append(if (fileOf(m.to) == 6) "Petit roque" else "Grand roque")
             p.isEnPassant(m) -> sb.append("Le pion capture le pion en passant, en ${sqName(m.to)}")
-            p.isCapture(m) -> sb.append("${ARTICLE[type]} capture ${OBJECT[pieceType(p[m.to])]} en ${sqName(m.to)}")
-            else -> sb.append("${ARTICLE[type]} va en ${sqName(m.to)}")
+            p.isCapture(m) -> sb.append("${PieceLexiconFr.definiteCapitalized(type)} capture ${PieceLexiconFr.definite(pieceType(p[m.to]))} en ${sqName(m.to)}")
+            else -> sb.append("${PieceLexiconFr.definiteCapitalized(type)} va en ${sqName(m.to)}")
         }
-        if (m.promo != 0) sb.append(" et se promeut en ${PROMO[m.promo]}")
+        if (m.promo != 0) sb.append(" et se promeut en ${PieceLexiconFr.name(m.promo)}")
         sb.append(when {
             san.endsWith("#") -> " : échec et mat !"
             san.endsWith("+") -> ", avec échec."

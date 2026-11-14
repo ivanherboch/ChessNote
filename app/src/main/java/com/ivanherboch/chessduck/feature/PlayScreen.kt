@@ -1,6 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
-import android.content.res.Configuration
+import com.ivanherboch.chessduck.ui.LocalIsTwoPane
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -60,7 +60,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -288,7 +287,7 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
     val notes = remember(r.analysis, line) {
         List(line.size) { i -> GameLogic.annotate(line.positions[i], line.moves[i], r.analysis.getOrNull(i), r.analysis.getOrNull(i + 1), if (i > 0) line.moves[i - 1] else null) }
     }
-    val wide = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val wide = LocalIsTwoPane.current
     val names = Players(
         g.whiteName.ifEmpty { if (g.vsComputer && !g.playerWhite) COMPUTER else "Blancs" } to null,
         g.blackName.ifEmpty { if (g.vsComputer && g.playerWhite) COMPUTER else "Noirs" } to null,

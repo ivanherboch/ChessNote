@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.util.normalizeForSearch
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.ivanherboch.chessduck.ui.DuckSegmentedRow
@@ -67,7 +68,6 @@ import com.ivanherboch.chessduck.ui.SideDot
 import com.ivanherboch.chessduck.ui.DuckIconButton
 import com.ivanherboch.chessduck.ui.EmptyState
 import com.ivanherboch.chessduck.ui.LoadingState
-import java.text.Normalizer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -720,15 +720,21 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
     if (shareChoice) {
         var status by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
         DuckSheet("Exporter en image", { shareChoice = false }) {
-            var style by remember { mutableStateOf(ShareStyle.load(context)) }
-            val setStyle = { v: ShareStyle -> style = v; ShareStyle.save(context, v) }
+            val duckApp = context.applicationContext as ChessDuckApp
+            var styleOrNull by remember { mutableStateOf<ShareStyle?>(null) }
+            LaunchedEffect(Unit) { if (styleOrNull == null) styleOrNull = ShareStyle.from(duckApp.prefs.settings.first()) }
+            val style = styleOrNull ?: ShareStyle()
+            // Écrit dans la portée de l'application : fermer le tiroir n'annule jamais l'enregistrement.
+            val setStyle = { v: ShareStyle -> styleOrNull = v; duckApp.scope.launch { duckApp.prefs.setShareStyle(v.format.name, v.light) }; Unit }
             // Aperçus calculés hors du fil principal, recalculés à chaque changement de réglage ;
             // la clé (style, problème) permet de réutiliser le bitmap à l'export s'il correspond encore.
-            val problemShot by produceState<Pair<Any, Bitmap>?>(null, style, p.id) {
+            val problemShot by produceState<Pair<Any, Bitmap>?>(null, styleOrNull, p.id) {
+                if (styleOrNull == null) return@produceState
                 val key = style to p.id
                 value = key to withContext(Dispatchers.Default) { ShareCard.render(context, p, line.positions[1], s.playerWhite, line.moves[0], style) }
             }
-            val solutionShot by produceState<Pair<Any, Bitmap>?>(null, style, p.id) {
+            val solutionShot by produceState<Pair<Any, Bitmap>?>(null, styleOrNull, p.id) {
+                if (styleOrNull == null) return@produceState
                 val key = style to p.id
                 value = key to withContext(Dispatchers.Default) { ShareCard.renderSolution(context, p, style) }
             }
@@ -843,7 +849,6 @@ private fun ExportCard(
     }
 }
 
-private fun norm(t: String) = Normalizer.normalize(t, Normalizer.Form.NFD).replace(Regex("\\p{M}"), "").lowercase()
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -859,8 +864,8 @@ private fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> U
     val expanded = remember {
         androidx.compose.runtime.mutableStateListOf<String>().apply { PuzzleThemes.byKey[s.theme]?.group?.let { add(it) } }
     }
-    val q = norm(query.trim().removePrefix("#"))
-    val themeMatches = if (q.length >= 2) PuzzleThemes.all.filter { norm(it.name).contains(q) || norm(it.goal).contains(q) } else emptyList()
+    val q = normalizeForSearch(query.trim().removePrefix("#"))
+    val themeMatches = if (q.length >= 2) PuzzleThemes.all.filter { normalizeForSearch(it.name).contains(q) || normalizeForSearch(it.goal).contains(q) } else emptyList()
     DuckSheet("Catalogue des problèmes", onClose) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DuckTextField(

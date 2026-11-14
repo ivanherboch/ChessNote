@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck.data
 
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.migrations.SharedPreferencesView
+import androidx.datastore.migrations.SharedPreferencesMigration
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -9,7 +12,22 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.store by preferencesDataStore("chessduck")
+/** Ancien fichier SharedPreferences des réglages d'export (format, fond), migré une fois dans DataStore. */
+private const val LEGACY_SHARE_STYLE = "share_style"
+
+private val Context.store by preferencesDataStore(
+    name = "chessduck",
+    produceMigrations = { ctx ->
+        listOf(
+            SharedPreferencesMigration(ctx, LEGACY_SHARE_STYLE, setOf("format", "light")) { old: SharedPreferencesView, prefs: Preferences ->
+                val m = prefs.toMutablePreferences()
+                old.getString("format")?.let { m[Prefs.SHARE_FORMAT] = it }
+                if (old.contains("light")) m[Prefs.SHARE_LIGHT] = old.getBoolean("light", false)
+                m.toPreferences()
+            },
+        )
+    },
+)
 
 data class Settings(
     /** 0 = suivre le système, 1 = Jour, 2 = Nuit (déduit de la clé historique « dark » tant que l'utilisateur n'a rien choisi). */
@@ -41,10 +59,19 @@ data class Settings(
     val puzzleId: String = "",
     val notationLevel: Int = 0,
     val lessonId: Int = 1,
+    /** Format des images exportées : nom de ShareFormat (« PORTRAIT » ou « SQUARE »). */
+    val shareFormat: String = "PORTRAIT",
+    /** Images exportées sur fond clair (sinon sombre). */
+    val shareLight: Boolean = false,
 )
 
 /** Préférences persistées via Jetpack DataStore Preferences. */
 class Prefs(private val context: Context) {
+    companion object {
+        internal val SHARE_FORMAT = stringPreferencesKey("share_format")
+        internal val SHARE_LIGHT = booleanPreferencesKey("share_light")
+    }
+
     private object K {
         val dark = booleanPreferencesKey("dark")
         val themeMode = intPreferencesKey("theme_mode")
@@ -91,6 +118,8 @@ class Prefs(private val context: Context) {
             puzzleId = p[K.puzzleId] ?: "",
             notationLevel = p[K.level] ?: 0,
             lessonId = p[K.lesson] ?: 1,
+            shareFormat = p[SHARE_FORMAT] ?: "PORTRAIT",
+            shareLight = p[SHARE_LIGHT] ?: false,
         )
     }
 
@@ -122,4 +151,5 @@ class Prefs(private val context: Context) {
     suspend fun setPuzzleFilter(band: Int, theme: String) = context.store.edit { it[K.band] = band; it[K.theme] = theme }
     suspend fun setNotationLevel(v: Int) = context.store.edit { it[K.level] = v }
     suspend fun setLesson(v: Int) = context.store.edit { it[K.lesson] = v }
+    suspend fun setShareStyle(format: String, light: Boolean) = context.store.edit { it[SHARE_FORMAT] = format; it[SHARE_LIGHT] = light }
 }

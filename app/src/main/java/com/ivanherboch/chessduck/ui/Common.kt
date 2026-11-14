@@ -640,6 +640,7 @@ fun ModuleLayout(
 ) {
     // Place supplémentaire prise à l'échiquier pour que les textes du bas tiennent sans défilement.
     // Elle ne fait que croître pendant la vie de l'écran (pas de « respiration » de la grille à chaque coup).
+    val twoPane = LocalIsTwoPane.current
     var reserve by remember { mutableIntStateOf(0) }
     val animReserve by animateIntAsState(reserve, tween(260), label = "reserve")
     Layout(
@@ -653,7 +654,7 @@ fun ModuleLayout(
     ) { measurables, constraints ->
         val w = constraints.maxWidth
         val h = constraints.maxHeight
-        if (w > h * 1.15f) {
+        if (twoPane) {
             // Paysage : échiquier à gauche sur toute la hauteur, panneau de commandes à droite.
             val gap = 12.dp.roundToPx()
             val probe = minOf(h, (w * 0.6f).toInt())

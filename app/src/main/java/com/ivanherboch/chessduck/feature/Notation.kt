@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.chess.PieceLexiconFr
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.ivanherboch.chessduck.chess.BISHOP
@@ -166,7 +167,7 @@ object NotationLogic {
         else -> true
     }
 
-    private fun nameOf(type: Int) = "${PIECE_NAMES_FR[type]} (${PIECE_NAMES_EN[type]})"
+    private fun nameOf(type: Int) = "${PieceLexiconFr.title(type)} (${PIECE_NAMES_EN[type]})"
 
     /** Diagnostic pédagogique d'une réponse fausse, sans donner la solution. */
     fun diagnose(input: String, ex: NotationExercise): String {

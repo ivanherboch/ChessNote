@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.LinePlaybackController
+import com.ivanherboch.chessduck.util.normalizeForSearch
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.ivanherboch.chessduck.ui.DuckSegmentedRow
@@ -50,7 +52,6 @@ import com.ivanherboch.chessduck.ui.DuckIconButton
 import com.ivanherboch.chessduck.ui.EmptyState
 import com.ivanherboch.chessduck.ui.InfoPill
 import com.ivanherboch.chessduck.ui.MoveStrip
-import java.text.Normalizer
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -124,7 +125,8 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
     val state: StateFlow<AcademyState> = _state.asStateFlow()
     val mastered = duck.db.user().masteredLessons().map { it.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
-    private var job: Job? = null
+    /** Lecture automatique et séquences du mode Défi : un seul travail à la fois. */
+    private val playback = LinePlaybackController(viewModelScope)
 
     val lesson: Lesson get() = Lessons.byId(state.value.lessonId)
 
@@ -136,7 +138,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun open(id: Int, save: Boolean = true) {
-        job?.cancel()
+        playback.cancel()
         val l = Lessons.byId(id)
         val challenge = state.value.challenge
         _state.update {
@@ -158,7 +160,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setChallenge(on: Boolean) {
         if (state.value.challenge == on) return
-        job?.cancel()
+        playback.cancel()
         _state.update { it.copy(challenge = on, cursor = 0, playing = false, anim = null, hintStage = 0, done = false, message = "", tone = Tone.INFO) }
         if (on) startChallenge()
     }
@@ -169,11 +171,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
         val s = state.value
         val t = target.coerceIn(0, l.line.size)
         if (t == s.cursor) return
-        val anim = when (t) {
-            s.cursor + 1 -> moveAnim(l.line.positions[s.cursor], l.line.moves[s.cursor])
-            s.cursor - 1 -> undoAnim(l.line.positions[t], l.line.moves[t])
-            else -> null
-        }
+        val anim = LinePlaybackController.transition(l.line, s.cursor, t)
         _state.update { it.copy(cursor = t, anim = anim) }
     }
 
@@ -181,22 +179,20 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
     fun rewind() { pause(); goTo(0) }
 
     fun pause() {
-        job?.cancel()
+        playback.cancel()
         _state.update { it.copy(playing = false) }
     }
 
     fun togglePlay() {
         if (state.value.playing) return pause()
-        job?.cancel()
+        playback.cancel()
         if (state.value.cursor >= lesson.line.size) goTo(0)
         _state.update { it.copy(playing = true) }
-        job = viewModelScope.launch {
-            while (state.value.cursor < lesson.line.size) {
-                delay(if (state.value.cursor == 0) 700 else 2600)
-                goTo(state.value.cursor + 1)
-            }
-            _state.update { it.copy(playing = false) }
-        }
+        playback.autoplay(
+            cursor = { state.value.cursor }, size = { lesson.line.size },
+            delayFor = { c -> if (c == 0) 700L else 2600L }, checkBeforeDelay = true,
+            advance = ::goTo, onEnd = { _state.update { it.copy(playing = false) } },
+        )
     }
 
     // ---- Mode Défi ----
@@ -214,7 +210,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun restartChallenge() {
-        job?.cancel()
+        playback.cancel()
         startChallenge()
     }
 
@@ -225,8 +221,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Joue les réponses adverses jusqu'au prochain coup du joueur, puis conclut la leçon si elle est finie. */
     private fun advanceOpponent() {
-        job?.cancel()
-        job = viewModelScope.launch {
+        playback.launch {
             val l = lesson
             while (state.value.cursor < l.line.size && !heroToMove(state.value.cursor)) {
                 delay(650)
@@ -412,12 +407,11 @@ private fun LessonCatalog(vm: AcademyViewModel, s: AcademyState, mastered: Set<I
     var status by remember { mutableIntStateOf(0) }
     var cat by remember { mutableStateOf(s.filter) }
     val total = Lessons.all.size
-    fun norm(t: String) = Normalizer.normalize(t, Normalizer.Form.NFD).replace(Regex("\\p{M}"), "").lowercase()
-    val q = norm(query.trim())
+    val q = normalizeForSearch(query.trim())
     val items = Lessons.all.filter { l ->
         (cat == null || l.category == cat) &&
             (status == 0 || (status == 1) == (l.id !in mastered)) &&
-            (q.isEmpty() || norm(l.title).contains(q) || norm(l.summary).contains(q) || l.id.toString() == q)
+            (q.isEmpty() || normalizeForSearch(l.title).contains(q) || normalizeForSearch(l.summary).contains(q) || l.id.toString() == q)
     }
     DuckSheet("Leçons — ${mastered.size} / $total maîtrisées", onClose) {
         DuckTextField(

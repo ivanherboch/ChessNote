@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.ui
 
+import androidx.compose.ui.unit.Dp
 import android.os.Build
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -137,6 +138,15 @@ val LocalDuck = staticCompositionLocalOf { NightColors }
 
 /** Police imposée à tous les textes (Fredoka en mode enfant, police système sinon). */
 val LocalDuckFont = staticCompositionLocalOf<FontFamily?> { null }
+
+/**
+ * Mise en page à deux colonnes (échiquier à gauche, commandes à droite) : source de vérité unique, calculée une
+ * fois à la racine à partir de la taille de la fenêtre et lue par la navigation, ModuleLayout et la revue.
+ */
+val LocalIsTwoPane = staticCompositionLocalOf { false }
+
+/** Règle unique : la fenêtre est nettement plus large que haute (tablette en paysage). */
+fun isTwoPane(width: Dp, height: Dp): Boolean = width > height * 1.15f
 
 /** Affichage des coordonnées a–h / 1–8 sur l'échiquier (réglage utilisateur). */
 val LocalShowCoords = staticCompositionLocalOf { true }

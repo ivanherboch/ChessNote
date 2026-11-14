@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.ui
 
+import com.ivanherboch.chessduck.chess.PieceLexiconFr
 import androidx.compose.runtime.remember
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -78,12 +79,10 @@ fun materialOf(p: Position): Material {
     return Material(lost(black, BLACK), lost(white, 0), diff)
 }
 
-private val PLURAL = arrayOf("", "pions", "cavaliers", "fous", "tours", "dames", "rois")
-private val SINGULAR = arrayOf("", "pion", "cavalier", "fou", "tour", "dame", "roi")
 
 /** Résumé TalkBack d'une liste de pièces : « 2 pions, 1 cavalier ». */
 fun describePieces(pieces: List<Int>): String =
-    if (pieces.isEmpty()) "aucune" else pieces.groupBy { pieceType(it) }.entries.joinToString(", ") { (t, l) -> "${l.size} ${if (l.size > 1) PLURAL[t] else SINGULAR[t]}" }
+    if (pieces.isEmpty()) "aucune" else pieces.groupBy { pieceType(it) }.entries.joinToString(", ") { (t, l) -> PieceLexiconFr.count(t, l.size) }
 
 /**
  * Dessine des pièces capturées en miniature (mêmes images que l'échiquier), les pièces identiques

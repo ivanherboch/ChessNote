@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck
 
+import com.ivanherboch.chessduck.ui.isTwoPane
+import com.ivanherboch.chessduck.ui.LocalIsTwoPane
 import com.ivanherboch.chessduck.feature.SettingsSheet
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -161,8 +163,13 @@ class MainActivity : ComponentActivity() {
                 app.feedback.soundEnabled = st.sound
             }
             ChessDuckTheme(dark = dark, kid = st.kidMode, dynamic = st.dynamicColor) {
-                CompositionLocalProvider(LocalFeedback provides app.feedback, LocalShowCoords provides st.coords) {
-                    MainScreen(st, app)
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    CompositionLocalProvider(
+                        LocalFeedback provides app.feedback, LocalShowCoords provides st.coords,
+                        LocalIsTwoPane provides isTwoPane(maxWidth, maxHeight),
+                    ) {
+                        MainScreen(st, app)
+                    }
                 }
             }
         }
@@ -243,7 +250,7 @@ fun MainScreen(st: AppChrome, app: ChessDuckApp) {
     }
 
     BoxWithConstraints(Modifier.fillMaxSize().background(c.bg)) {
-        if (maxWidth > maxHeight) {
+        if (LocalIsTwoPane.current) {
             // Paysage (tablette) : rail de navigation à gauche, l'échiquier garde toute la hauteur.
             Row(Modifier.fillMaxSize()) {
                 NavigationRail(containerColor = c.surface, contentColor = c.text) {
