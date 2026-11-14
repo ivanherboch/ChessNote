@@ -9,7 +9,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 
 - **Application Android francophone d'échecs**, 100 % hors-ligne : Kotlin, Jetpack Compose, Material 3, Room, DataStore,
   Coroutines/Flow, Stockfish 11 embarqué (exécutable natif `libstockfish.so`).
-- **Dépôt** : `ivanherboch/ChessDuck` (seul nom à utiliser pour le projet et le dépôt).
+- **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
 - **Version actuelle** : `2.2.0` (`versionCode = 21`), publiée en release GitHub `v2.2.0`.
@@ -124,7 +124,7 @@ Paquet racine : `app/src/main/java/com/ivanherboch/chessduck/`
 4. Ajouter une section **en tête** de `docs/release-notes.md` (« ## ChessDuck X.Y.Z — titre », puis liste des changements).
 5. Commiter et pousser : le workflow `.github/workflows/release.yml` crée la release `vX.Y.Z` (notes = `docs/release-notes.md`).
 6. Vérifier la release, puis donner le lien :
-   `https://github.com/ivanherboch/ChessDuck/releases/download/vX.Y.Z/ChessDuck-X.Y.Z.apk`
+   `https://github.com/ivanherboch/ChessNote/releases/download/vX.Y.Z/ChessDuck-X.Y.Z.apk`
 
 ### Commits
 - Messages en français, détaillés, terminés par les lignes d'attribution demandées par la session.
