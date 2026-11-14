@@ -1,3 +1,11 @@
+## ChessDuck 2.1.1 — échiquiers plus grands dans les images partagées
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Problème : l'échiquier occupe presque toute la largeur (≈ 1 040 px en portrait au lieu de ≈ 790, ≈ 800 px en carré au lieu de ≈ 640).
+- En-tête et pied de page compactés : l'objectif (« 2 coups à trouver ») passe dans le sur-titre, le thème dans la carte d'indice.
+- Solution : marges réduites, grille choisie automatiquement pour obtenir les plus grands échiquiers, coup et réponse sur une seule ligne.
+
 ## ChessDuck 2.1.0 — images de partage : formats, fond clair, prêtes pour WhatsApp
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

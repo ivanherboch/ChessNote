@@ -68,7 +68,9 @@ data class ShareStyle(val format: ShareFormat = ShareFormat.PORTRAIT, val light:
  */
 object ShareCard {
     private const val W = 1080
-    private const val M = 56f
+    private const val M = 44f
+    /** Hauteur du pied de page compact. */
+    private const val FOOTER_H = 62f
     private val LIGHT_SQ = Color.parseColor("#F0D9B5")
     private val DARK_SQ = Color.parseColor("#B58863")
     private val GOLD = Color.parseColor("#F59E0B")
@@ -221,16 +223,14 @@ object ShareCard {
 
         /** Pied de page discret : mascotte, nom et référence Lichess ; aucune URL ni appel à installer. */
         fun footer(h: Int, id: String) {
-            val y = h - 38f
-            paint.style = Paint.Style.FILL
-            paint.color = pal.stroke
-            cv.drawRect(M, h - 92f, W - M, h - 90f, paint)
+            val y = h - 24f
             val mascot = BitmapFactory.decodeResource(context.resources, R.drawable.mascot)
+            paint.style = Paint.Style.FILL
             paint.color = Color.WHITE
-            cv.drawBitmap(mascot, null, RectF(M, y - 42f, M + 52f, y + 10f), paint)
-            text("ChessDuck", M + 64f, y, 30f, pal.soft, bold = true)
-            text("Lichess #$id", M + 64f + width("ChessDuck", 30f, bold = true) + 20f, y, 28f, pal.faint)
-            text("© Ivan Herboch, 2026", W - M, y, 26f, pal.faint, align = Paint.Align.RIGHT)
+            cv.drawBitmap(mascot, null, RectF(M, y - 34f, M + 42f, y + 8f), paint)
+            text("ChessDuck", M + 52f, y, 26f, pal.soft, bold = true)
+            text("Lichess #$id", M + 52f + width("ChessDuck", 26f, bold = true) + 16f, y, 24f, pal.faint)
+            text("© Ivan Herboch, 2026", W - M, y, 24f, pal.faint, align = Paint.Align.RIGHT)
         }
 
         /**
@@ -383,35 +383,37 @@ object ShareCard {
 
     private fun coups(n: Int) = if (n > 1) "$n coups" else "1 coup"
 
-    private const val EYEBROW_Y = 80f
+    private const val EYEBROW_Y = 64f
 
-    /** Titre sur une ligne si possible (taille réduite jusqu'à 46 px), sinon sur plusieurs lignes. */
+    /** Titre sur une ligne si possible (taille réduite jusqu'à 44 px), sinon sur plusieurs lignes. */
     private fun fitTitle(p: Painter, text: String, max: Float): Pair<List<String>, Float> {
-        val width = W - 2 * M - 60f
+        val width = W - 2 * M - 56f
         var size = max
-        while (size > 46f && p.width(text, size, bold = true) > width) size -= 2f
+        while (size > 44f && p.width(text, size, bold = true) > width) size -= 2f
         return p.wrap(text, size, width, bold = true) to size
     }
 
-    /** Hauteur de l'en-tête (sur-titre, titre, sous-titre éventuel). */
-    private fun headerHeight(lines: Int, size: Float, sub: Boolean) =
-        EYEBROW_Y + size * 1.35f + (lines - 1) * size * 1.15f + (if (sub) size * 0.2f + 44f else 0f) + 14f
+    /** Hauteur de l'en-tête compact (sur-titre et titre) : l'échiquier garde le maximum de place. */
+    private fun headerHeight(lines: Int, size: Float) = EYEBROW_Y + size * 1.3f + (lines - 1) * size * 1.15f + size * 0.32f
 
-    /** En-tête commun énoncé / solution. */
-    private fun header(g: Painter, eyebrow: String, eyebrowColor: Int, puzzle: Puzzle, title: List<String>, size: Float, sub: String?, playerWhite: Boolean) {
-        g.text(eyebrow.uppercase(), M, EYEBROW_Y, 30f, eyebrowColor, bold = true, spacing = 0.14f)
+    /** En-tête commun énoncé / solution : sur-titre (avec l'objectif chiffré), difficulté et défi. */
+    private fun header(g: Painter, eyebrow: String, eyebrowColor: Int, puzzle: Puzzle, title: List<String>, size: Float, playerWhite: Boolean) {
+        g.text(eyebrow.uppercase(), M, EYEBROW_Y, 28f, eyebrowColor, bold = true, spacing = 0.12f)
         g.difficulty(puzzle.rating, W - M, EYEBROW_Y)
-        var y = EYEBROW_Y + size * 1.35f
-        g.sideDot(M + 20f, y - size * 0.36f, 20f, playerWhite)
+        var y = EYEBROW_Y + size * 1.3f
+        g.sideDot(M + 18f, y - size * 0.36f, 18f, playerWhite)
         title.forEachIndexed { i, l ->
             if (i > 0) y += size * 1.15f
-            g.text(l, M + 60f, y, size, g.pal.text, bold = true)
+            g.text(l, M + 54f, y, size, g.pal.text, bold = true)
         }
-        if (sub != null) g.text(sub, M, y + size * 0.2f + 40f, 34f, g.pal.muted)
     }
 
     // ---------------------------------------------------------------- Énoncé
 
+    /**
+     * Énoncé : l'échiquier occupe presque toute la largeur ; au-dessus, le défi ; en dessous, l'indice
+     * (avec le thème) dans une carte compacte, puis un pied de page discret.
+     */
     fun render(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle()): Bitmap {
         val pal = if (style.light) DAY else NIGHT
         val square = style.format == ShareFormat.SQUARE
@@ -421,45 +423,33 @@ object ShareCard {
         val mate = line.sans.lastOrNull()?.endsWith("#") == true
         val n = playerMoves(line)
         val probe = Painter(context, Canvas(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)), pal)
-        val (title, titleSize) = fitTitle(probe, challenge(puzzle, line, playerWhite), if (square) 54f else 62f)
-        val sub = if (square) null else when {
-            mate && n == 1 -> "Un seul coup suffit. Le voyez-vous ?"
-            mate -> "Le mat est forcé. Saurez-vous le trouver ?"
-            else -> "Saurez-vous trouver le coup gagnant ?"
-        }
-        // Indice : « Indice : » en doré puis le conseil, dans une carte compacte.
-        val tipSize = if (square) 28f else 30f
-        val tipLineH = tipSize * 1.34f
-        val tipText = if (theme.tip.isNotEmpty()) "Indice : ${theme.tip}" else ""
-        val tip = if (tipText.isNotEmpty()) probe.wrap(tipText, tipSize, W - 2 * M - 56f) else emptyList()
-        val tipH = if (tip.isEmpty()) 0f else 40f + tip.size * tipLineH
-        val chipsH = if (square) 0f else 56f + 22f
-        val footerH = 92f
-        val top = headerHeight(title.size, titleSize, sub != null) + 22f
-        val bottom = chipsH + (if (tip.isEmpty()) 0f else tipH + 22f) + footerH + 8f
-        val side = minOf(W - 2 * M, h - top - 28f - bottom)
+        val (title, titleSize) = fitTitle(probe, challenge(puzzle, line, playerWhite), if (square) 52f else 58f)
+        val eyebrow = if (mate) "Problème d'échecs" else "Problème · ${coups(n)} à trouver"
+        val tipSize = 28f
+        val tipLineH = tipSize * 1.32f
+        val label = if (mate || theme.tip.isEmpty()) "Indice :" else "Indice · ${theme.name} :"
+        val tipText = if (theme.tip.isNotEmpty()) "$label ${theme.tip}" else ""
+        val tip = if (tipText.isNotEmpty()) probe.wrap(tipText, tipSize, W - 2 * M - 48f) else emptyList()
+        val tipH = if (tip.isEmpty()) 0f else 28f + tip.size * tipLineH
+        val top = headerHeight(title.size, titleSize) + 6f
+        val bottom = (if (tip.isEmpty()) 0f else tipH + 16f) + FOOTER_H + 4f
+        val side = minOf(W - 2 * 20f, h - top - 16f - bottom)
 
         val bmp = Bitmap.createBitmap(W, h, Bitmap.Config.ARGB_8888)
         val g = Painter(context, Canvas(bmp), pal)
         g.background(h)
-        header(g, "Problème d'échecs", pal.goldText, puzzle, title, titleSize, sub, playerWhite)
+        header(g, eyebrow, pal.goldText, puzzle, title, titleSize, playerWhite)
         g.board((W - side) / 2, top, side, position, !playerWhite, lastMove)
 
-        var y = top + side + 28f
-        if (!square) {
-            var x = M
-            x += g.chip(if (mate) "Mat en ${coups(n)}" else "${coups(n)} à trouver", x, y, pal.greenText) + 14f
-            if (!mate) g.chip("Thème : ${theme.name}", x, y, pal.blueText)
-            y += chipsH
-        }
         if (tip.isNotEmpty()) {
+            val y = top + side + 16f
             g.panel(RectF(M, y, W - M, y + tipH), accent = GOLD)
-            var ty = y + 20f + tipSize
+            var ty = y + 14f + tipSize
             tip.forEachIndexed { i, l ->
-                if (i == 0 && l.startsWith("Indice :")) {
-                    g.text("Indice :", M + 30f, ty, tipSize, pal.goldText, bold = true)
-                    g.text(l.removePrefix("Indice :"), M + 30f + g.width("Indice :", tipSize, bold = true), ty, tipSize, pal.body)
-                } else g.text(l, M + 30f, ty, tipSize, pal.body)
+                if (i == 0 && l.startsWith(label)) {
+                    g.text(label, M + 26f, ty, tipSize, pal.goldText, bold = true)
+                    g.text(l.removePrefix(label), M + 26f + g.width(label, tipSize, bold = true), ty, tipSize, pal.body)
+                } else g.text(l, M + 26f, ty, tipSize, pal.body)
                 ty += tipLineH
             }
         }
@@ -495,8 +485,9 @@ object ShareCard {
     private class Step(val before: Position, val move: Move, val san: String, val prev: Move?, val reply: Move?, val replySan: String?)
 
     /**
-     * Solution illustrée, toujours sur une seule image au format choisi : une carte par coup du joueur.
-     * Une ou deux étapes : grandes grilles et phrases complètes ; au-delà, grille compacte (notation seule).
+     * Solution illustrée, toujours sur une seule image au format choisi : une carte par coup du joueur,
+     * avec des grilles aussi grandes que possible (marges et légendes réduites au strict nécessaire).
+     * Une ou deux étapes : phrases complètes ; au-delà, notation seule « coup — réponse » sur une ligne.
      * Flèche verte = coup à jouer, flèche rouge = réponse adverse, badges + et #, roi maté mis en lumière.
      */
     fun renderSolution(context: Context, puzzle: Puzzle, style: ShareStyle = ShareStyle()): Bitmap {
@@ -508,51 +499,56 @@ object ShareCard {
         val steps = (1 until line.size step 2).map { i ->
             Step(line.positions[i], line.moves[i], line.sans[i], line.moves[i - 1], line.moves.getOrNull(i + 1), line.sans.getOrNull(i + 1))
         }
-        val theme = PuzzleThemes.primary(puzzle.themes)
-        val mate = line.sans.lastOrNull()?.endsWith("#") == true
         val n = steps.size
-        val cols = when { n == 1 -> 1; n <= 4 -> 2; else -> 3 }
-        val rows = (n + cols - 1) / cols
-        val detailed = rows == 1
-        val margin = 40f
-        val gap = 20f
-        val pad = if (cols == 1) 22f else 16f
-        val titleSz = when (cols) { 1 -> 42f; 2 -> 36f; else -> 32f }
-        val textSize = when (cols) { 1 -> 32f; 2 -> 27f; else -> 25f }
-        val lineH = textSize * 1.3f
-        val panelW = (W - 2 * margin - (cols - 1) * gap) / cols
-        val textW = panelW - 2 * pad
-
         val probe = Painter(context, Canvas(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)), pal)
-        val (title, titleSize) = fitTitle(probe, challenge(puzzle, line, playerWhite), if (square) 52f else 58f)
-        val sub = if (square) null else "Solution en ${coups(n)}" + if (mate) "" else "  ·  Thème : ${theme.name}"
-        // Légendes : phrases complètes (1 rangée) ou notation seule (grille compacte).
-        val bodies = steps.map { st -> if (detailed) probe.wrap(describe(st.before, st.move, st.san), textSize, textW) else emptyList() }
-        val replies = steps.map { st ->
-            when {
-                st.replySan == null || st.reply == null -> emptyList()
-                detailed -> probe.wrap("Réponse : ${st.replySan} — ${describe(st.before.play(st.move), st.reply, st.replySan).replaceFirstChar { it.lowercase() }}", textSize, textW - textSize * 0.8f)
-                else -> listOf("Réponse : ${st.replySan}")
+        val (title, titleSize) = fitTitle(probe, challenge(puzzle, line, playerWhite), if (square) 50f else 56f)
+        val top = headerHeight(title.size, titleSize) + 4f
+        val legendH = 44f
+        val margin = 16f
+        val gap = 12f
+        val gridH = h - top - legendH - FOOTER_H - 6f
+
+        // Choix de la grille qui donne les plus grands échiquiers.
+        val detailed = n <= 2
+        val titleSz = if (n == 1) 40f else if (n <= 4) 34f else 30f
+        val textSize = if (n == 1) 30f else if (n <= 2) 26f else 24f
+        val lineH = textSize * 1.28f
+        val pad = if (n == 1) 18f else 10f
+        fun layout(cols: Int): Triple<Int, Float, Float> {
+            val rows = (n + cols - 1) / cols
+            val panelW = (W - 2 * margin - (cols - 1) * gap) / cols
+            return Triple(rows, panelW, panelW - 2 * pad)
+        }
+        val textW0 = { cols: Int -> layout(cols).third }
+        fun captionH(cols: Int): Float {
+            val w = textW0(cols)
+            return (0 until n).maxOf { k ->
+                val st = steps[k]
+                var hh = titleSz * 1.2f + 6f
+                if (detailed) {
+                    hh += probe.wrap(describe(st.before, st.move, st.san), textSize, w).size * lineH
+                    if (st.reply != null && st.replySan != null) hh += probe.wrap(replyText(st), textSize, w - textSize * 0.8f).size * lineH
+                }
+                if (k == n - 1) hh += textSize * 1.7f + 10f
+                hh
             }
         }
-        val pillH = textSize * 1.7f + 12f
-        val captionH = (0 until n).maxOf { k ->
-            titleSz * 1.25f + 8f + (bodies[k].size + replies[k].size) * lineH + (if (k == n - 1) pillH else 0f)
+        fun sideFor(cols: Int): Float {
+            val (rows, _, textW) = layout(cols)
+            val panelH = (gridH - (rows - 1) * gap) / rows
+            return minOf(textW, panelH - 2 * pad - 10f - captionH(cols))
         }
-        val top = headerHeight(title.size, titleSize, sub != null) + 18f
-        val legendH = 62f
-        val footerH = 92f
-        val gridH = h - top - legendH - footerH - 10f
-        val maxPanelH = (gridH - (rows - 1) * gap) / rows
-        val side = minOf(textW, maxPanelH - 2 * pad - 14f - captionH).coerceAtLeast(120f)
-        // Cartes ajustées à leur contenu, grille centrée verticalement dans l'espace disponible.
-        val panelH = minOf(maxPanelH, 2 * pad + side + 14f + captionH + 6f)
+        val cols = (1..minOf(n, 3)).maxByOrNull { sideFor(it) } ?: 1
+        val (rows, panelW, textW) = layout(cols)
+        val side = sideFor(cols).coerceAtLeast(120f)
+        val capH = captionH(cols)
+        val panelH = 2 * pad + side + 10f + capH
         val gridTop = top + ((gridH - rows * panelH - (rows - 1) * gap) / 2).coerceAtLeast(0f)
 
         val bmp = Bitmap.createBitmap(W, h, Bitmap.Config.ARGB_8888)
         val g = Painter(context, Canvas(bmp), pal)
         g.background(h)
-        header(g, "Solution", pal.greenText, puzzle, title, titleSize, sub, playerWhite)
+        header(g, "Solution · ${coups(n)}", pal.greenText, puzzle, title, titleSize, playerWhite)
 
         var y = gridTop
         for (r in 0 until rows) {
@@ -565,13 +561,12 @@ object ShareCard {
                 val last = k == n - 1
                 g.panel(RectF(x, y, x + panelW, y + panelH))
                 val bx = x + pad
-                val boardX = x + (panelW - side) / 2
                 val by = y + pad
                 val glow = if (last && st.san.endsWith("#")) {
                     val after = st.before.play(st.move)
                     (0 until 64).firstOrNull { q -> after[q] != 0 && pieceType(after[q]) == KING && isWhite(after[q]) != playerWhite } ?: -1
                 } else -1
-                val at = g.board(boardX, by, side, st.before, !playerWhite, st.prev, glow)
+                val at = g.board(x + (panelW - side) / 2, by, side, st.before, !playerWhite, st.prev, glow)
                 val s = side / 8
                 st.reply?.let { g.arrow(it, at, s, RED, 0.10f) }
                 g.arrow(st.move, at, s, GREEN, 0.17f)
@@ -580,34 +575,42 @@ object ShareCard {
                     st.san.endsWith("#") -> g.badge("#", dx + s * 0.80f, dy + s * 0.20f, s * 0.22f, RED)
                     st.san.endsWith("+") -> g.badge("+", dx + s * 0.80f, dy + s * 0.20f, s * 0.22f, GOLD, INK)
                 }
-                // Titre de l'étape : numéro, coup, pièce prise.
-                var ty = by + side + 14f + titleSz * 0.95f
-                val br = titleSz * 0.52f
-                g.badge("${k + 1}", bx + br, ty - titleSz * 0.34f, br, pal.greenFill, pal.onGreen)
-                g.text(st.san, bx + 2 * br + 12f, ty, titleSz, pal.text, bold = true)
+                // Ligne de titre : numéro, coup, réponse (grille compacte) et pièce prise.
+                val ty0 = by + side + 10f + titleSz * 0.95f
+                val br = titleSz * 0.5f
+                g.badge("${k + 1}", bx + br, ty0 - titleSz * 0.34f, br, pal.greenFill, pal.onGreen)
+                val sanX = bx + 2 * br + 10f
+                g.text(st.san, sanX, ty0, titleSz, pal.text, bold = true)
+                if (!detailed && st.replySan != null) {
+                    g.text("— ${st.replySan}", sanX + g.width(st.san, titleSz, bold = true) + 12f, ty0, titleSz * 0.85f, pal.redText, bold = true)
+                }
                 val victim = when {
                     st.before.isEnPassant(st.move) -> PAWN + (if (isWhite(st.before[st.move.from])) 8 else 0)
                     else -> st.before[st.move.to]
                 }
                 if (victim != 0) {
-                    val ps = titleSz * 1.1f
+                    val ps = titleSz * 1.05f
                     val px = bx + textW - ps
-                    val py = ty - ps * 0.8f
+                    val py = ty0 - ps * 0.8f
                     g.paint.style = Paint.Style.FILL
                     g.paint.color = LIGHT_SQ
                     g.cv.drawRoundRect(RectF(px, py, px + ps, py + ps), 10f, 10f, g.paint)
                     g.cv.drawBitmap(g.piece(victim), null, RectF(px, py, px + ps, py + ps), g.paint)
-                    if (cols < 3) g.text("prend", px - 10f, ty - titleSz * 0.12f, textSize * 0.9f, pal.muted, align = Paint.Align.RIGHT)
+                    if (detailed) g.text("prend", px - 10f, ty0 - titleSz * 0.12f, textSize * 0.9f, pal.muted, align = Paint.Align.RIGHT)
                 }
-                ty += titleSz * 0.3f
-                for (l in bodies[k]) { ty += lineH; g.text(l, bx, ty, textSize, pal.body) }
-                replies[k].forEachIndexed { i, l ->
-                    ty += lineH
-                    if (i == 0) { g.paint.color = RED; g.cv.drawCircle(bx + textSize * 0.25f, ty - textSize * 0.34f, textSize * 0.2f, g.paint) }
-                    g.text(l, bx + textSize * 0.8f, ty, textSize, pal.redText)
+                var ty = ty0 + titleSz * 0.25f
+                if (detailed) {
+                    for (l in probe.wrap(describe(st.before, st.move, st.san), textSize, textW)) { ty += lineH; g.text(l, bx, ty, textSize, pal.body) }
+                    if (st.reply != null && st.replySan != null) {
+                        probe.wrap(replyText(st), textSize, textW - textSize * 0.8f).forEachIndexed { i, l ->
+                            ty += lineH
+                            if (i == 0) { g.paint.color = RED; g.cv.drawCircle(bx + textSize * 0.25f, ty - textSize * 0.34f, textSize * 0.2f, g.paint) }
+                            g.text(l, bx + textSize * 0.8f, ty, textSize, pal.redText)
+                        }
+                    }
                 }
                 if (last) {
-                    ty += 12f
+                    ty += 10f
                     if (st.san.endsWith("#")) g.pill("Échec et mat !", bx, ty, textSize, GOLD, INK)
                     else g.pill("Avantage décisif", bx, ty, textSize, pal.greenFill, pal.onGreen)
                 }
@@ -616,19 +619,22 @@ object ShareCard {
             y += panelH + gap
         }
         // Légende des symboles
-        val ly = h - footerH - 28f
+        val ly = h - FOOTER_H - 18f
         g.paint.style = Paint.Style.FILL
-        g.paint.color = GREEN; g.cv.drawRoundRect(RectF(M, ly - 17f, M + 56f, ly - 3f), 7f, 7f, g.paint)
-        g.text("votre coup", M + 68f, ly, 28f, pal.muted)
-        g.paint.color = RED; g.cv.drawRoundRect(RectF(M + 260f, ly - 14f, M + 316f, ly - 6f), 4f, 4f, g.paint)
-        g.text("réponse adverse", M + 328f, ly, 28f, pal.muted)
-        g.badge("+", M + 640f, ly - 10f, 15f, GOLD, INK)
-        g.text("échec", M + 664f, ly, 28f, pal.muted)
-        g.badge("#", M + 780f, ly - 10f, 15f, RED)
-        g.text("mat", M + 804f, ly, 28f, pal.muted)
+        g.paint.color = GREEN; g.cv.drawRoundRect(RectF(M, ly - 15f, M + 48f, ly - 3f), 6f, 6f, g.paint)
+        g.text("votre coup", M + 58f, ly, 25f, pal.muted)
+        g.paint.color = RED; g.cv.drawRoundRect(RectF(M + 230f, ly - 13f, M + 278f, ly - 5f), 4f, 4f, g.paint)
+        g.text("réponse adverse", M + 288f, ly, 25f, pal.muted)
+        g.badge("+", M + 560f, ly - 9f, 14f, GOLD, INK)
+        g.text("échec", M + 582f, ly, 25f, pal.muted)
+        g.badge("#", M + 680f, ly - 9f, 14f, RED)
+        g.text("mat", M + 702f, ly, 25f, pal.muted)
         g.footer(h, puzzle.id)
         return bmp
     }
+
+    private fun replyText(st: Step) =
+        "Réponse : ${st.replySan} — ${describe(st.before.play(st.move), st.reply!!, st.replySan!!).replaceFirstChar { it.lowercase() }}"
 
     // ---------------------------------------------------------------- Envoi
 
