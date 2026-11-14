@@ -271,11 +271,7 @@ fun ChessBoard(
                 .pointerInput(position, flipped, interactive) {
                     if (!interactive) return@pointerInput
                     val s = size.width / 8f
-                    fun at(o: Offset): Int {
-                        val col = (o.x / s).toInt().coerceIn(0, 7)
-                        val row = (o.y / s).toInt().coerceIn(0, 7)
-                        return if (flipped) sq(7 - col, row) else sq(col, 7 - row)
-                    }
+                    fun at(o: Offset): Int = BoardGeometry.squareAt(o.x, o.y, s, flipped)
                     awaitEachGesture {
                         val down = awaitFirstDown()
                         if (promo != null) return@awaitEachGesture
@@ -320,11 +316,7 @@ fun ChessBoard(
                 }
         ) {
             val s = size.width / 8f
-            fun topLeft(q: Int): Offset {
-                val col = if (flipped) 7 - fileOf(q) else fileOf(q)
-                val row = if (flipped) rankOf(q) else 7 - rankOf(q)
-                return Offset(col * s, row * s)
-            }
+            fun topLeft(q: Int): Offset = Offset(BoardGeometry.column(q, flipped) * s, BoardGeometry.row(q, flipped) * s)
             fun center(q: Int) = topLeft(q) + Offset(s / 2, s / 2)
             val cell = Size(s, s)
 
@@ -349,9 +341,7 @@ fun ChessBoard(
             // Sélection et case survolée
             if (selected >= 0 && interactive) drawRect(c.select.copy(alpha = 0.5f), topLeft(selected), cell)
             if (dragFrom >= 0) {
-                val col = (dragPos.x / s).toInt().coerceIn(0, 7)
-                val row = (dragPos.y / s).toInt().coerceIn(0, 7)
-                val hover = if (flipped) sq(7 - col, row) else sq(col, 7 - row)
+                val hover = BoardGeometry.squareAt(dragPos.x, dragPos.y, s, flipped)
                 if (targets.any { it.to == hover }) {
                     drawRect(c.select.copy(alpha = 0.6f), topLeft(hover), cell)
                     drawCircle(c.select.copy(alpha = 0.2f), s * 0.95f, center(hover))
@@ -456,39 +446,20 @@ private fun DrawScope.drawBadge(texts: TextLayoutCache, b: Badge, center: Offset
 
 /** Flèche directionnelle ; coudée en « L » pour un saut de Cavalier. */
 private fun DrawScope.drawArrow(a: Arrow, s: Float, center: (Int) -> Offset) {
-    val df = abs(fileOf(a.to) - fileOf(a.from))
-    val dr = abs(rankOf(a.to) - rankOf(a.from))
-    val pts = arrayListOf(center(a.from))
-    if ((df == 1 && dr == 2) || (df == 2 && dr == 1)) {
-        pts.add(if (dr == 2) center(sq(fileOf(a.from), rankOf(a.to))) else center(sq(fileOf(a.to), rankOf(a.from))))
-    }
-    pts.add(center(a.to))
+    val squares = BoardGeometry.arrowSquares(a.from, a.to)
+    val cx = FloatArray(squares.size) { center(squares[it]).x }
+    val cy = FloatArray(squares.size) { center(squares[it]).y }
+    val shape = BoardGeometry.arrowShape(cx, cy, s, head = s * 0.42f)
     val color = a.color.copy(alpha = 0.85f)
-    val width = s * 0.17f
-    val head = s * 0.42f
-    fun unit(p: Offset, q: Offset): Offset {
-        val d = q - p
-        val len = sqrt(d.x * d.x + d.y * d.y).coerceAtLeast(0.001f)
-        return Offset(d.x / len, d.y / len)
-    }
-    val n = pts.size
-    val uStart = unit(pts[0], pts[1])
-    val uEnd = unit(pts[n - 2], pts[n - 1])
-    val start = pts[0] + uStart * (s * 0.28f)
-    val tip = pts[n - 1] + uEnd * (s * 0.12f)
-    val shaftEnd = tip - uEnd * (head * 0.85f)
     val path = Path().apply {
-        moveTo(start.x, start.y)
-        for (i in 1 until n - 1) lineTo(pts[i].x, pts[i].y)
-        lineTo(shaftEnd.x, shaftEnd.y)
+        moveTo(shape.shaftX[0], shape.shaftY[0])
+        for (i in 1 until shape.shaftX.size) lineTo(shape.shaftX[i], shape.shaftY[i])
     }
-    drawPath(path, color, style = Stroke(width, cap = StrokeCap.Round, join = StrokeJoin.Round))
-    val ang = atan2(uEnd.y, uEnd.x)
-    val spread = 0.52f
+    drawPath(path, color, style = Stroke(s * 0.17f, cap = StrokeCap.Round, join = StrokeJoin.Round))
     val headPath = Path().apply {
-        moveTo(tip.x, tip.y)
-        lineTo(tip.x - head * cos(ang - spread), tip.y - head * sin(ang - spread))
-        lineTo(tip.x - head * cos(ang + spread), tip.y - head * sin(ang + spread))
+        moveTo(shape.headX[0], shape.headY[0])
+        lineTo(shape.headX[1], shape.headY[1])
+        lineTo(shape.headX[2], shape.headY[2])
         close()
     }
     drawPath(headPath, color)

@@ -12,11 +12,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.rounded.Logout
+import com.ivanherboch.chessduck.ui.icons.Logout
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Flag
-import androidx.compose.material.icons.rounded.Replay
-import androidx.compose.material.icons.rounded.SportsEsports
+import com.ivanherboch.chessduck.ui.icons.Flag
+import com.ivanherboch.chessduck.ui.icons.Replay
+import com.ivanherboch.chessduck.ui.icons.SportsEsports
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text

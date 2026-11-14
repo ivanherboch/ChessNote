@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.chess.rankOf
+import com.ivanherboch.chessduck.chess.fileOf
+import com.ivanherboch.chessduck.chess.sq
+import com.ivanherboch.chessduck.ui.BoardGeometry
 import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,11 +16,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.rounded.Logout
+import com.ivanherboch.chessduck.ui.icons.Logout
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Flag
-import androidx.compose.material.icons.rounded.Replay
-import androidx.compose.material.icons.rounded.SportsEsports
+import com.ivanherboch.chessduck.ui.icons.Flag
+import com.ivanherboch.chessduck.ui.icons.Replay
+import com.ivanherboch.chessduck.ui.icons.SportsEsports
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -510,7 +514,9 @@ private fun KidDemo(piece: KidPiece, onClose: () -> Unit) {
                     val tg = target
                     if (piece.type == KNIGHT && tg != null) {
                         val h = phase.home
-                        val corner = if (abs(tg.second - h.second) == 2) h.first to tg.second else tg.first to h.second
+                        // Coude du « L » : même règle que les flèches de l'échiquier (BoardGeometry).
+                        val c = BoardGeometry.knightCorner(sq(h.first, h.second), sq(tg.first, tg.second))
+                        val corner = if (c >= 0) fileOf(c) to rankOf(c) else tg
                         val path = knightPath.apply {
                             rewind()
                             moveTo(center(h).x, center(h).y); lineTo(center(corner).x, center(corner).y); lineTo(center(tg).x, center(tg).y)

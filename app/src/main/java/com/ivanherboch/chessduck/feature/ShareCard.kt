@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.BoardGeometry
 import com.ivanherboch.chessduck.data.Settings
 import com.ivanherboch.chessduck.chess.PieceLexiconFr
 import com.ivanherboch.chessduck.util.runCatchingSuspend
@@ -247,8 +248,8 @@ object ShareCard {
         fun board(left: Float, top: Float, side: Float, position: Position, flipped: Boolean, lastMove: Move?, glow: Int = -1): (Int) -> Pair<Float, Float> {
             val s = side / 8
             val radius = side * 0.018f
-            fun x(q: Int) = left + (if (flipped) 7 - fileOf(q) else fileOf(q)) * s
-            fun y(q: Int) = top + (if (flipped) rankOf(q) else 7 - rankOf(q)) * s
+            fun x(q: Int) = left + BoardGeometry.column(q, flipped) * s
+            fun y(q: Int) = top + BoardGeometry.row(q, flipped) * s
             val rect = RectF(left, top, left + side, top + side)
             paint.style = Paint.Style.FILL
             paint.color = DARK_SQ
@@ -305,30 +306,15 @@ object ShareCard {
 
         /** Flèche directionnelle, coudée en « L » pour un Cavalier. */
         fun arrow(m: Move, at: (Int) -> Pair<Float, Float>, s: Float, color: Int, widthFactor: Float) {
-            fun c(q: Int) = at(q).let { (x, y) -> x + s / 2 to y + s / 2 }
-            val df = abs(fileOf(m.to) - fileOf(m.from))
-            val dr = abs(rankOf(m.to) - rankOf(m.from))
-            val pts = arrayListOf(c(m.from))
-            if ((df == 1 && dr == 2) || (df == 2 && dr == 1)) {
-                pts.add(if (dr == 2) c(sq(fileOf(m.from), rankOf(m.to))) else c(sq(fileOf(m.to), rankOf(m.from))))
-            }
-            pts.add(c(m.to))
-            fun unit(a: Pair<Float, Float>, b: Pair<Float, Float>): Pair<Float, Float> {
-                val dx = b.first - a.first
-                val dy = b.second - a.second
-                val len = sqrt(dx * dx + dy * dy).coerceAtLeast(0.001f)
-                return dx / len to dy / len
-            }
-            val n = pts.size
-            val u0 = unit(pts[0], pts[1])
-            val u1 = unit(pts[n - 2], pts[n - 1])
+            // Même géométrie que l'échiquier à l'écran (BoardGeometry) : coude du Cavalier, décalages, pointe.
+            val squares = BoardGeometry.arrowSquares(m.from, m.to)
+            val cx = FloatArray(squares.size) { at(squares[it]).first + s / 2 }
+            val cy = FloatArray(squares.size) { at(squares[it]).second + s / 2 }
             val head = s * 0.42f * (widthFactor / 0.17f).coerceAtMost(1f).coerceAtLeast(0.8f)
-            val tipX = pts[n - 1].first + u1.first * s * 0.12f
-            val tipY = pts[n - 1].second + u1.second * s * 0.12f
+            val shape = BoardGeometry.arrowShape(cx, cy, s, head)
             val path = Path().apply {
-                moveTo(pts[0].first + u0.first * s * 0.28f, pts[0].second + u0.second * s * 0.28f)
-                for (i in 1 until n - 1) lineTo(pts[i].first, pts[i].second)
-                lineTo(tipX - u1.first * head * 0.85f, tipY - u1.second * head * 0.85f)
+                moveTo(shape.shaftX[0], shape.shaftY[0])
+                for (i in 1 until shape.shaftX.size) lineTo(shape.shaftX[i], shape.shaftY[i])
             }
             paint.color = color
             paint.alpha = 225
@@ -339,12 +325,10 @@ object ShareCard {
             paint.setShadowLayer(s * 0.06f, 0f, s * 0.02f, Color.argb(90, 0, 0, 0))
             cv.drawPath(path, paint)
             paint.style = Paint.Style.FILL
-            val ang = atan2(u1.second, u1.first)
-            val spread = 0.52f
             cv.drawPath(Path().apply {
-                moveTo(tipX, tipY)
-                lineTo(tipX - head * cos(ang - spread), tipY - head * sin(ang - spread))
-                lineTo(tipX - head * cos(ang + spread), tipY - head * sin(ang + spread))
+                moveTo(shape.headX[0], shape.headY[0])
+                lineTo(shape.headX[1], shape.headY[1])
+                lineTo(shape.headX[2], shape.headY[2])
                 close()
             }, paint)
             paint.clearShadowLayer()
