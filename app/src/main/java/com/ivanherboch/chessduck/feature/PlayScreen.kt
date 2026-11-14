@@ -108,17 +108,16 @@ fun annotationColor(a: String): Color = when (a) {
 private data class Players(val white: Pair<String, String?>, val black: Pair<String, String?>)
 
 @Composable
-fun PlayScreen(vm: PlayViewModel) {
-    val s by vm.state.collectAsStateWithLifecycle()
-    val review = s.review
+fun PlayScreen(vm: PlayViewModel, rv: GameReviewViewModel) {
+    val review by rv.review.collectAsStateWithLifecycle()
     // Entrée et sortie de la revue en fondu ; le bouton Retour Android quitte la revue.
     AnimatedContent(review != null, label = "revue", transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(140)) }) { inReview ->
-        if (inReview) s.review?.let { ReviewLayout(vm, it) } else LiveGame(vm)
+        if (inReview) review?.let { ReviewLayout(rv, it) } else LiveGame(vm, rv::openReview)
     }
 }
 
 @Composable
-private fun LiveGame(vm: PlayViewModel) {
+private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
     val s by vm.state.collectAsStateWithLifecycle()
     val st by vm.settings.collectAsStateWithLifecycle()
     val tally by vm.tally.collectAsStateWithLifecycle()
@@ -197,7 +196,7 @@ private fun LiveGame(vm: PlayViewModel) {
                 if (s.result != null) {
                     // Fin de partie : l'analyse est à un geste.
                     DuckButton(
-                        "Analyser la partie", { s.lastRecord?.let(vm::openReview) }, Modifier.weight(1f), enabled = s.lastRecord != null,
+                        "Analyser la partie", { s.lastRecord?.let(openReview) }, Modifier.weight(1f), enabled = s.lastRecord != null,
                         accent = c.blue, filled = true, icon = Icons.Rounded.Analytics,
                     )
                     DuckButton("Nouvelle partie", vm::newGame, Modifier.weight(1f), accent = c.gold, filled = true, icon = Icons.Rounded.Add)
@@ -238,7 +237,7 @@ private fun LiveGame(vm: PlayViewModel) {
     if (history) HistorySheet(games, onClose = { history = false }, onDelete = vm::deleteGame) { g ->
         // Fermeture instantanée du tiroir, puis lecture automatique sur l'échiquier.
         history = false
-        vm.openReview(g)
+        openReview(g)
     }
     if (gameSettings) GameSettingsSheet(st.twoPlayers, st.colorChoice, st.aiElo, onClose = { gameSettings = false }) { two, color, elo ->
         gameSettings = false
@@ -276,9 +275,9 @@ private val NOTES = listOf("!!", "!", "?!", "?", "??")
 private val NOTE_NAMES = mapOf("!!" to "brillant", "!" to "très bon", "?!" to "imprécision", "?" to "erreur", "??" to "gaffe")
 
 @Composable
-private fun ReviewLayout(vm: PlayViewModel, r: Review) {
+private fun ReviewLayout(vm: GameReviewViewModel, r: Review) {
     val c = LocalDuck.current
-    BackHandler { vm.closeReview() }
+    BackHandler { vm.close() }
     val line = r.line
     val cur = r.cursor.coerceIn(0, line.size)
     val g = r.record
@@ -310,7 +309,7 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
         bottomMin = 170.dp,
         top = {
             Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                DuckIconButton(Icons.AutoMirrored.Rounded.ArrowBack, "Quitter la revue", vm::closeReview)
+                DuckIconButton(Icons.AutoMirrored.Rounded.ArrowBack, "Quitter la revue", vm::close)
                 Column(Modifier.padding(start = 4.dp).weight(1f)) {
                     Text(
                         "Revue : " + if (g.whiteName.isEmpty()) g.opponent.replace("Stockfish", "Ordinateur") else "${g.whiteName} – ${g.blackName}",
@@ -333,7 +332,7 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
         },
         underBoard = { Box(Modifier.padding(start = if (r.evalOn) 30.dp else 0.dp)) { bar(!r.flipped) } },
         bottom = {
-            if (!wide) MoveStrip(line, cur, Modifier.padding(top = 2.dp), onSelect = vm::reviewJump, onPrev = { vm.reviewStep(-1) }, onNext = { vm.reviewStep(1) })
+            if (!wide) MoveStrip(line, cur, Modifier.padding(top = 2.dp), onSelect = vm::jump, onPrev = { vm.step(-1) }, onNext = { vm.step(1) })
             val ready = r.analysis.count { it != null }
             if (cur == 0) {
                 ReviewSummary(g, line, r.analysis, notes, ready, Modifier.padding(top = 4.dp).weight(1f))
@@ -350,14 +349,14 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
                     FeedbackCard(text, t0, Modifier.padding(top = 4.dp).weight(1f), title = title)
                 }
             }
-            if (wide) MoveTable(line, cur, notes, vm::reviewJump, Modifier.padding(top = 6.dp).weight(1f))
+            if (wide) MoveTable(line, cur, notes, vm::jump, Modifier.padding(top = 6.dp).weight(1f))
             EqualRow(Modifier.padding(vertical = 6.dp)) {
-                DuckButton("Début", vm::reviewFirst, Modifier.weight(1f), enabled = cur > 0, icon = Icons.Rounded.SkipPrevious)
+                DuckButton("Début", vm::first, Modifier.weight(1f), enabled = cur > 0, icon = Icons.Rounded.SkipPrevious)
                 DuckButton(
-                    if (r.playing) "Pause" else "Lecture", vm::reviewToggle, Modifier.weight(1.4f), accent = c.blue, filled = true,
+                    if (r.playing) "Pause" else "Lecture", vm::toggle, Modifier.weight(1.4f), accent = c.blue, filled = true,
                     icon = if (r.playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                 )
-                DuckButton("Fin", vm::reviewLast, Modifier.weight(1f), enabled = cur < line.size, icon = Icons.Rounded.SkipNext)
+                DuckButton("Fin", vm::last, Modifier.weight(1f), enabled = cur < line.size, icon = Icons.Rounded.SkipNext)
             }
         },
     )

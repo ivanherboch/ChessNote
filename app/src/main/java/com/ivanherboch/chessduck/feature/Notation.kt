@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.lifecycle.ViewModel
+import com.ivanherboch.chessduck.data.PuzzleRepository
+import com.ivanherboch.chessduck.data.SettingsRepository
 import com.ivanherboch.chessduck.chess.PieceLexiconFr
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -255,8 +258,10 @@ object NotationLogic {
     )
 }
 
-class NotationViewModel(app: Application) : AndroidViewModel(app) {
-    private val duck = app as ChessDuckApp
+class NotationViewModel(
+    private val prefs: SettingsRepository,
+    private val puzzles: PuzzleRepository,
+) : ViewModel() {
     private val rnd = Random(System.nanoTime())
     private val _state = MutableStateFlow(NotationState())
     val state: StateFlow<NotationState> = _state.asStateFlow()
@@ -266,7 +271,7 @@ class NotationViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         viewModelScope.launch {
-            val st = duck.prefs.settings.first()
+            val st = prefs.settings.first()
             _state.update { it.copy(level = st.notationLevel, best = st.notationBest) }
             next()
         }
@@ -274,7 +279,7 @@ class NotationViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setLevel(level: Int) {
         _state.update { it.copy(level = level) }
-        viewModelScope.launch { duck.prefs.setNotationLevel(level) }
+        viewModelScope.launch { prefs.setNotationLevel(level) }
         next()
     }
 
@@ -294,7 +299,7 @@ class NotationViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private suspend fun generate(level: Int): NotationExercise {
-        val dao = duck.db.puzzles()
+        val dao = puzzles
         val target = if (level == 0) rnd.nextInt(1, 4) else level
         runCatchingSuspend {
             repeat(6) {
@@ -383,7 +388,7 @@ class NotationViewModel(app: Application) : AndroidViewModel(app) {
                     message = "Exact : ${ex.san}. " + explain(ex),
                 )
             }
-            if (streak > s.best) viewModelScope.launch { duck.prefs.setNotationBest(streak) }
+            if (streak > s.best) viewModelScope.launch { prefs.setNotationBest(streak) }
             return true
         }
         _state.update { it.copy(tone = Tone.BAD, streak = 0, message = NotationLogic.diagnose(s.input, ex)) }

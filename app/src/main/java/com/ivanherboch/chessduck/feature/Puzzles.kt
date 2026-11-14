@@ -1,5 +1,10 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import com.ivanherboch.chessduck.engine.ChessEngine
+import com.ivanherboch.chessduck.data.PuzzleRepository
+import com.ivanherboch.chessduck.data.SettingsRepository
 import androidx.compose.foundation.lazy.items
 import com.ivanherboch.chessduck.ui.DuckLazySheet
 import com.ivanherboch.chessduck.util.normalizeForSearch
@@ -197,9 +202,13 @@ data class Suggestions(val query: String = "", val items: List<Suggestion> = emp
 /** Durée d'affichage de la réfutation avant l'annulation automatique. */
 const val REFUTE_HOLD = 4000L
 
-class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
-    private val duck = app as ChessDuckApp
-    private val dao = duck.db.puzzles()
+class PuzzlesViewModel(
+    private val prefs: SettingsRepository,
+    private val dao: PuzzleRepository,
+    private val engine: ChessEngine,
+    /** Problème courant mémorisé pour survivre à l'arrêt du processus par Android. */
+    private val saved: SavedStateHandle = SavedStateHandle(),
+) : ViewModel() {
     private val rnd = kotlin.random.Random(System.nanoTime())
     private val _state = MutableStateFlow(PuzzleState())
     val state: StateFlow<PuzzleState> = _state.asStateFlow()
@@ -228,13 +237,14 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         viewModelScope.launch {
-            val st = duck.prefs.settings.first()
+            val st = prefs.settings.first()
             _state.update { it.copy(band = st.puzzleBand, theme = st.puzzleTheme) }
-            val saved = if (st.puzzleId.isNotEmpty()) runCatchingSuspend { dao.byId(st.puzzleId) }.getOrNull() else null
-            if (saved != null) show(saved) else random()
+            val id = saved.get<String>(KEY_PUZZLE)?.takeIf { it.isNotEmpty() } ?: st.puzzleId
+            val current = if (id.isNotEmpty()) runCatchingSuspend { dao.byId(id) }.getOrNull() else null
+            if (current != null) show(current) else random()
         }
         viewModelScope.launch {
-            duck.prefs.settings.map { it.recentPuzzles }.distinctUntilChanged().collect { ids ->
+            prefs.settings.map { it.recentPuzzles }.distinctUntilChanged().collect { ids ->
                 val others = ids.drop(1).take(5)
                 val found = if (others.isEmpty()) emptyList() else runCatchingSuspend { dao.byIds(others) }.getOrDefault(emptyList())
                 _recents.value = others.mapNotNull { id -> found.firstOrNull { it.id == id } }
@@ -243,7 +253,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         // L'index mémoire est préparé dès le lancement : la recherche répond ensuite instantanément.
         viewModelScope.launch(Dispatchers.Default) {
             // Après une mise à jour de l'application, les nouveaux problèmes du catalogue sont d'abord importés.
-            if (DuckDatabase.syncPuzzles(duck, duck.db)) metaLock.withLock { metaIds = emptyArray() }
+            if (dao.syncCatalogue()) metaLock.withLock { metaIds = emptyArray() }
             ensureMeta()
         }
     }
@@ -318,6 +328,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun show(p: Puzzle) {
         job?.cancel()
+        saved[KEY_PUZZLE] = p.id
         val line = runCatching { Line.fromUci(p.fen, p.moves) }.getOrNull() ?: return
         val white = line.positions[1].whiteToMove
         _state.update {
@@ -327,7 +338,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             )
         }
         job = viewModelScope.launch {
-            duck.prefs.pushRecentPuzzle(p.id)
+            prefs.pushRecentPuzzle(p.id)
             delay(600)
             _state.update { it.copy(progress = 1, cursor = 1, anim = moveAnim(line.positions[0], line.moves[0])) }
         }
@@ -388,12 +399,12 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     /** Change la difficulté sans tirer de problème : le filtre s'applique au prochain tirage aléatoire. */
     fun setBand(band: Int) {
         _state.update { it.copy(band = band) }
-        viewModelScope.launch { duck.prefs.setPuzzleFilter(band, state.value.theme) }
+        viewModelScope.launch { prefs.setPuzzleFilter(band, state.value.theme) }
     }
 
     fun setFilter(band: Int, theme: String) {
         _state.update { it.copy(band = band, theme = theme) }
-        viewModelScope.launch { duck.prefs.setPuzzleFilter(band, theme) }
+        viewModelScope.launch { prefs.setPuzzleFilter(band, theme) }
         random()
     }
 
@@ -486,7 +497,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
                 )
             }
             if (finished) {
-                viewModelScope.launch { dao.markSolved(PuzzleProgress(p.id, System.currentTimeMillis())) }
+                viewModelScope.launch { dao.markSolved(p.id) }
                 return 2
             }
             job = viewModelScope.launch {
@@ -534,7 +545,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
                 retry()
                 return@launch
             }
-            val search = async { withTimeoutOrNull(1800) { duck.engine.search(after.toFen(), 380) } }
+            val search = async { withTimeoutOrNull(1800) { engine.search(after.toFen(), 380) } }
             val res = search.await()
             delay((650 - (System.currentTimeMillis() - t0)).coerceAtLeast(0))
             val reply = res?.best?.takeIf { after.isLegal(it) }
@@ -572,6 +583,10 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         _state.update {
             it.copy(refute = null, anim = null, tone = Tone.INFO, refuteUntil = 0L, message = "Position rétablie : à vous de rejouer.")
         }
+    }
+
+    private companion object {
+        const val KEY_PUZZLE = "puzzles_current"
     }
 }
 

@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import com.ivanherboch.chessduck.data.LessonProgressRepository
+import com.ivanherboch.chessduck.data.SettingsRepository
 import androidx.compose.foundation.lazy.items
 import com.ivanherboch.chessduck.ui.DuckLazySheet
 import com.ivanherboch.chessduck.ui.LinePlaybackController
@@ -121,11 +125,15 @@ data class AcademyState(
     val done: Boolean = false,
 )
 
-class AcademyViewModel(app: Application) : AndroidViewModel(app) {
-    private val duck = app as ChessDuckApp
+class AcademyViewModel(
+    private val prefs: SettingsRepository,
+    private val lessons: LessonProgressRepository,
+    /** Leçon, mode et position mémorisés pour survivre à l'arrêt du processus par Android. */
+    private val saved: SavedStateHandle = SavedStateHandle(),
+) : ViewModel() {
     private val _state = MutableStateFlow(AcademyState())
     val state: StateFlow<AcademyState> = _state.asStateFlow()
-    val mastered = duck.db.user().masteredLessons().map { it.toSet() }
+    val mastered = lessons.masteredLessons().map { it.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
     /** Lecture automatique et séquences du mode Défi : un seul travail à la fois. */
     private val playback = LinePlaybackController(viewModelScope)
@@ -134,9 +142,25 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         viewModelScope.launch {
-            val id = duck.prefs.settings.first().lessonId
-            open(id, save = false)
+            val restoredId = saved.get<Int>(KEY_LESSON)
+            val restoredChallenge = saved.get<Boolean>(KEY_CHALLENGE) ?: false
+            val restoredCursor = saved.get<Int>(KEY_CURSOR) ?: 0
+            open(restoredId ?: prefs.settings.first().lessonId, save = false)
+            if (restoredId != null) {
+                if (restoredChallenge) setChallenge(true) else if (restoredCursor > 0) goTo(restoredCursor)
+            }
+            state.collect { st ->
+                saved[KEY_LESSON] = st.lessonId
+                saved[KEY_CHALLENGE] = st.challenge
+                saved[KEY_CURSOR] = st.cursor
+            }
         }
+    }
+
+    private companion object {
+        const val KEY_LESSON = "academy_lesson"
+        const val KEY_CHALLENGE = "academy_challenge"
+        const val KEY_CURSOR = "academy_cursor"
     }
 
     fun open(id: Int, save: Boolean = true) {
@@ -149,7 +173,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
                 filter = if (it.filter != null && it.filter != l.category) l.category else it.filter,
             )
         }
-        if (save) viewModelScope.launch { duck.prefs.setLesson(l.id) }
+        if (save) viewModelScope.launch { prefs.setLesson(l.id) }
         if (challenge) startChallenge() else _state.update { it.copy(message = "", tone = Tone.INFO) }
     }
 
@@ -231,7 +255,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
                 _state.update { it.copy(cursor = cur + 1, anim = moveAnim(l.line.positions[cur], l.line.moves[cur]), hintStage = 0) }
             }
             if (state.value.cursor >= l.line.size) {
-                duck.db.user().markLesson(LessonProgress(l.id, System.currentTimeMillis()))
+                lessons.markLesson(l.id)
                 _state.update {
                     it.copy(done = true, tone = Tone.GOOD, message = "Leçon maîtrisée ! Vous avez joué tous les coups clés de « ${l.title} ».")
                 }

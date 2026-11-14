@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck
 
+import com.ivanherboch.chessduck.feature.GameReviewViewModel
 import com.ivanherboch.chessduck.ui.isTwoPane
 import com.ivanherboch.chessduck.ui.LocalIsTwoPane
 import com.ivanherboch.chessduck.feature.SettingsSheet
@@ -197,7 +198,7 @@ fun MainScreen(st: AppChrome, app: ChessDuckApp) {
     // ne sont donc chargés que si l'utilisateur ouvre le Jeu Libre ou les Problèmes).
     val holder = rememberSaveableStateHolder()
     var kidUsed by rememberSaveable { mutableStateOf(st.kidMode) }
-    val kid: KidViewModel? = if (st.kidMode || kidUsed) viewModel() else null
+    val kid: KidViewModel? = if (st.kidMode || kidUsed) viewModel(factory = DuckViewModels.Factory) else null
 
     // En quittant le mode enfant, sa partie est effacée ; la partie du Jeu Libre, elle, est retrouvée telle quelle.
     var wasKid by remember { mutableStateOf(st.kidMode) }
@@ -240,10 +241,13 @@ fun MainScreen(st: AppChrome, app: ChessDuckApp) {
             // Chaque onglet garde son état d'interface (défilements, tiroirs, champs) quand on en change.
             holder.SaveableStateProvider(t) {
                 when (t) {
-                    0 -> NotationScreen(viewModel<NotationViewModel>())
-                    1 -> AcademyScreen(viewModel<AcademyViewModel>())
-                    2 -> PuzzlesScreen(viewModel<PuzzlesViewModel>())
-                    else -> PlayScreen(viewModel<PlayViewModel>())
+                    0 -> NotationScreen(viewModel<NotationViewModel>(factory = DuckViewModels.Factory))
+                    1 -> AcademyScreen(viewModel<AcademyViewModel>(factory = DuckViewModels.Factory))
+                    2 -> PuzzlesScreen(viewModel<PuzzlesViewModel>(factory = DuckViewModels.Factory))
+                    else -> PlayScreen(
+                        viewModel<PlayViewModel>(factory = DuckViewModels.Factory),
+                        viewModel<GameReviewViewModel>(factory = DuckViewModels.Factory),
+                    )
                 }
             }
         }

@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.lifecycle.ViewModel
+import com.ivanherboch.chessduck.engine.ChessEngine
+import com.ivanherboch.chessduck.data.GameRepository
+import com.ivanherboch.chessduck.data.SettingsRepository
 import com.ivanherboch.chessduck.ui.LinePlaybackController
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -155,7 +159,6 @@ data class PlayState(
     val hintStage: Int = 0,
     val analysis: Map<Int, Analysis> = emptyMap(),
     val evalOn: Boolean = false,
-    val review: Review? = null,
     /** Partie qui vient de se terminer, enregistrée dans l'historique : « Analyser la partie » l'ouvre en revue. */
     val lastRecord: GameRecord? = null,
 ) {
@@ -163,47 +166,46 @@ data class PlayState(
     val inProgress: Boolean get() = result == null && line.size >= 2
 
     val position: Position get() = line.positions[cursor.coerceIn(0, line.size)]
-    val canPlay: Boolean get() = result == null && !thinking && review == null && (twoPlayers || position.whiteToMove == playerWhite)
+    val canPlay: Boolean get() = result == null && !thinking && (twoPlayers || position.whiteToMove == playerWhite)
     val hint: Move? get() = analysis[cursor]?.best?.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }
 }
 
-class PlayViewModel(app: Application) : AndroidViewModel(app) {
-    private val duck = app as ChessDuckApp
+class PlayViewModel(
+    private val prefs: SettingsRepository,
+    private val gamesRepo: GameRepository,
+    private val engine: ChessEngine,
+    private val analyzer: GameAnalysisService,
+) : ViewModel() {
     private val rnd = Random(System.nanoTime())
     private val _state = MutableStateFlow(PlayState())
     val state: StateFlow<PlayState> = _state.asStateFlow()
     // Flux partagés seulement tant que l'écran les observe (5 s de grâce pour une rotation ou un changement d'onglet).
-    val settings = duck.prefs.settings.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Settings())
-    val games = duck.db.user().games().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-    val tally = duck.db.user().tally().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val settings = prefs.settings.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Settings())
+    val games = gamesRepo.games().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val tally = gamesRepo.tally().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     /** Jeton de partie : incrémenté à chaque nouvelle partie, il invalide les résultats asynchrones d'une partie précédente. */
     private var gameGeneration = 0L
     private var applyJob: Job? = null
     private var aiJob: Job? = null
     private var analysisJob: Job? = null
     /** Lecture automatique de la revue de partie. */
-    private val reviewPlayback = LinePlaybackController(viewModelScope)
-    private var reviewAnalysisJob: Job? = null
-    private var analysisGameId = -1L
-    /** Analyses en cours ou terminées, par partie : la revue s'ouvre sans rien recalculer. */
-    private val analysisCache = HashMap<Long, List<Analysis?>>()
 
     init {
-        viewModelScope.launch { newGame(duck.prefs.settings.first()) }
+        viewModelScope.launch { newGame(prefs.settings.first()) }
     }
 
     fun applySettings(twoPlayers: Boolean, color: Int, aiElo: Int) {
         applyJob?.cancel()
         applyJob = viewModelScope.launch {
-            duck.prefs.setGameSettings(twoPlayers, color, aiElo)
-            newGame(duck.prefs.settings.first())
+            prefs.setGameSettings(twoPlayers, color, aiElo)
+            newGame(prefs.settings.first())
         }
     }
 
     /** Nouvelle partie avec les réglages enregistrés (lus dans DataStore, même si l'écran n'est pas abonné). */
     fun newGame() {
         applyJob?.cancel()
-        applyJob = viewModelScope.launch { newGame(duck.prefs.settings.first()) }
+        applyJob = viewModelScope.launch { newGame(prefs.settings.first()) }
     }
 
     private fun newGame(st: Settings) {
@@ -218,17 +220,17 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
         _state.update {
             PlayState(
                 playerWhite = playerWhite, twoPlayers = st.twoPlayers, aiElo = st.aiElo, flipped = !playerWhite,
-                evalOn = it.evalOn, review = it.review,
+                evalOn = it.evalOn,
             )
         }
         if (!st.twoPlayers && !playerWhite) aiMove() else precompute()
     }
 
-    fun flip() = _state.update { s -> s.review?.let { s.copy(review = it.copy(flipped = !it.flipped)) } ?: s.copy(flipped = !s.flipped) }
+    fun flip() = _state.update { it.copy(flipped = !it.flipped) }
 
     fun toggleEval() {
-        _state.update { s -> s.review?.let { s.copy(review = it.copy(evalOn = !it.evalOn)) } ?: s.copy(evalOn = !s.evalOn) }
-        if (state.value.review == null) precompute()
+        _state.update { it.copy(evalOn = !it.evalOn) }
+        precompute()
     }
 
     /** Indice en 2 temps ; le meilleur coup est déjà pré-calculé en tâche de fond. */
@@ -277,14 +279,14 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
             // le niveau choisi (jamais un coup tiré totalement au hasard).
             var move: Move? = null
             if (elo < 1350 && rnd.nextDouble() < (1350 - elo) / 1500.0) {
-                val lines = duck.engine.search(pos.toFen(), 160, multiPv = 30, depth = 4).lines
+                val lines = engine.search(pos.toFen(), 160, multiPv = 30, depth = 4).lines
                 val top = lines.firstOrNull()?.score
                 if (top != null) {
                     val cap = 150 + ((1350 - elo) * 1.2).toInt()
                     move = lines.drop(1).filter { top - it.score <= cap && pos.isLegal(it.move) }.randomOrNull(rnd)?.move
                 }
             }
-            if (move == null) move = duck.engine.search(pos.toFen(), 220 + elo / 10, elo = elo.coerceAtLeast(1350)).best
+            if (move == null) move = engine.search(pos.toFen(), 220 + elo / 10, elo = elo.coerceAtLeast(1350)).best
             if (move == null || !pos.isLegal(move)) move = pos.legalMoves.random(rnd)
             delay((550 - (System.currentTimeMillis() - t0)).coerceAtLeast(0))
             // La partie a changé pendant la réflexion (nouvelle partie, réglages) : ce coup ne la concerne plus.
@@ -297,13 +299,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private suspend fun analyse(pos: Position, ms: Int): Analysis? {
-        if (pos.legalMoves.isEmpty()) return Analysis(if (pos.inCheck) (if (pos.whiteToMove) -MATE else MATE) else 0, null, "")
-        val r = duck.engine.search(pos.toFen(), ms, multiPv = 2)
-        val first = r.lines.firstOrNull() ?: return null
-        val sign = if (pos.whiteToMove) 1 else -1
-        return Analysis(sign * first.score, r.lines.getOrNull(1)?.let { sign * it.score }, first.move.uci)
-    }
+    private suspend fun analyse(pos: Position, ms: Int): Analysis? = analyzer.analyse(pos, ms)
 
     /** Pré-calcule en tâche de fond le meilleur coup de la position affichée (indice instantané). */
     private fun precompute() {
@@ -334,7 +330,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
      * (deux demi-coups si l'ordinateur a déjà répondu) ; à deux joueurs, d'un demi-coup. -1 si impossible.
      */
     fun undoTarget(s: PlayState = state.value): Int {
-        if (s.thinking || s.result != null || s.review != null || s.cursor == 0) return -1
+        if (s.thinking || s.result != null || s.cursor == 0) return -1
         if (s.twoPlayers) return s.cursor - 1
         var t = s.cursor - 1
         while (t >= 0 && s.line.positions[t].whiteToMove != s.playerWhite) t--
@@ -360,7 +356,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
 
     fun resign() {
         val s = state.value
-        if (s.result != null || s.review != null) return
+        if (s.result != null) return
         aiJob?.cancel()
         _state.update { it.copy(thinking = false) }
         finish(GameEnd.NONE, if (s.twoPlayers) s.line.last.whiteToMove else s.playerWhite)
@@ -387,7 +383,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
         fun show(f: (PlayState) -> PlayState) = _state.update { if (gen == gameGeneration) f(it) else it }
         // La partie est réellement terminée : son enregistrement et l'ELO ne sont jamais annulés.
         viewModelScope.launch(NonCancellable) {
-            val st = duck.prefs.settings.first()
+            val st = prefs.settings.first()
             val analysis = Analysis.encodeAll(List(line.size + 1) { s.analysis[it] })
             if (s.twoPlayers) {
                 val text = when (whiteResult) {
@@ -401,9 +397,9 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
                         outcome = whiteResult, reason = reason, eloBefore = st.elo, eloAfter = st.elo, moves = line.uciMoves(), analysis = analysis,
                         whiteName = st.pseudo, blackName = st.pseudo2,
                     )
-                record = record.copy(id = duck.db.user().insertGame(record))
+                record = record.copy(id = gamesRepo.insertGame(record))
                 show { it.copy(lastRecord = record) }
-                startAnalysis(record, line)
+                analyzer.start(record, line)
             } else {
                 val outcome = if (s.playerWhite) whiteResult else -whiteResult
                 val newElo = GameLogic.newElo(st.elo, s.aiElo, (outcome + 1) / 2.0)
@@ -420,109 +416,21 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
                         result = GameResult("$head ELO ${st.elo} → $newElo ($delta).", if (outcome == 1) Tone.GOOD else if (outcome == 0) Tone.GOLD else Tone.BAD),
                     )
                 }
-                duck.prefs.setElo(newElo)
+                prefs.setElo(newElo)
                 var record = GameRecord(
                         date = System.currentTimeMillis(), opponent = "Ordinateur ${s.aiElo}", vsComputer = true, playerWhite = s.playerWhite,
                         result = resultStr, outcome = outcome, reason = reason, eloBefore = st.elo, eloAfter = newElo, moves = line.uciMoves(), analysis = analysis,
                         whiteName = if (s.playerWhite) st.pseudo else COMPUTER, blackName = if (s.playerWhite) COMPUTER else st.pseudo, opponentElo = s.aiElo,
                     )
-                record = record.copy(id = duck.db.user().insertGame(record))
+                record = record.copy(id = gamesRepo.insertGame(record))
                 show { it.copy(lastRecord = record) }
-                startAnalysis(record, line)
+                analyzer.start(record, line)
             }
         }
     }
 
     fun deleteGame(id: Long) {
-        viewModelScope.launch { duck.db.user().deleteGame(id) }
+        viewModelScope.launch { gamesRepo.deleteGame(id) }
     }
 
-    // ---- Revue de partie ----
-
-    /**
-     * Analyse une partie en tâche de fond (une position après l'autre, recherche courte) et enregistre le résultat.
-     * Lancée dès la fin de la partie : quand on ouvre la revue, l'essentiel est déjà prêt.
-     */
-    private fun startAnalysis(g: GameRecord, line: Line) {
-        if (analysisGameId == g.id && reviewAnalysisJob?.isActive == true) return
-        reviewAnalysisJob?.cancel()
-        analysisGameId = g.id
-        val list = (analysisCache[g.id] ?: Analysis.decodeAll(g.analysis, line.size + 1)).toMutableList()
-        analysisCache[g.id] = list.toList()
-        reviewAnalysisJob = viewModelScope.launch {
-            var changed = false
-            try {
-                for (i in 0..line.size) {
-                    val existing = list[i]
-                    if (existing != null && (existing.second != null || existing.best.isEmpty())) continue
-                    val a = analyse(line.positions[i], 110) ?: continue
-                    list[i] = a
-                    changed = true
-                    val snapshot = list.toList()
-                    analysisCache[g.id] = snapshot
-                    _state.update { s ->
-                        val r = s.review
-                        if (r == null || r.record.id != g.id) s else s.copy(review = r.copy(analysis = snapshot))
-                    }
-                }
-            } finally {
-                // Même interrompue, l'analyse déjà faite est conservée.
-                if (changed) withContext(NonCancellable) { duck.db.user().saveAnalysis(g.id, Analysis.encodeAll(list)) }
-            }
-        }
-    }
-
-    /** Ouvre une partie de l'historique : évaluation activée et lecture automatique lancée. */
-    fun openReview(g: GameRecord) {
-        reviewPlayback.cancel()
-        val line = runCatching { Line.fromUci(START_FEN, g.moves) }.getOrNull() ?: return
-        val analysis = analysisCache[g.id] ?: Analysis.decodeAll(g.analysis, line.size + 1)
-        _state.update { it.copy(review = Review(g, line, 0, true, analysis, flipped = g.vsComputer && !g.playerWhite)) }
-        autoplay()
-        startAnalysis(g, line)
-    }
-
-    private fun autoplay() {
-        reviewPlayback.autoplay(
-            cursor = { state.value.review?.cursor }, size = { state.value.review?.line?.size ?: 0 },
-            delayFor = { 1150L }, checkBeforeDelay = false,
-            advance = ::reviewGo,
-            onEnd = { _state.update { s -> s.review?.let { s.copy(review = it.copy(playing = false)) } ?: s } },
-        )
-    }
-
-    private fun reviewGo(target: Int) {
-        _state.update { s ->
-            val r = s.review ?: return@update s
-            val t = target.coerceIn(0, r.line.size)
-            if (t == r.cursor) return@update s
-            s.copy(review = r.copy(cursor = t, anim = LinePlaybackController.transition(r.line, r.cursor, t)))
-        }
-    }
-
-    fun reviewPause() {
-        reviewPlayback.cancel()
-        _state.update { s -> s.review?.let { s.copy(review = it.copy(playing = false)) } ?: s }
-    }
-
-    fun reviewToggle() {
-        val r = state.value.review ?: return
-        if (r.playing) return reviewPause()
-        if (r.cursor >= r.line.size) reviewGo(0)
-        _state.update { s -> s.review?.let { s.copy(review = it.copy(playing = true)) } ?: s }
-        autoplay()
-    }
-
-    /** Revue : saute directement au coup [n] (clic dans la liste ou le tableau des coups). */
-    fun reviewJump(n: Int) { reviewPause(); reviewGo(n) }
-
-    fun reviewStep(delta: Int) { reviewPause(); reviewGo((state.value.review?.cursor ?: 0) + delta) }
-    fun reviewFirst() { reviewPause(); reviewGo(0) }
-    fun reviewLast() { reviewPause(); reviewGo(Int.MAX_VALUE) }
-
-    fun closeReview() {
-        // L'analyse continue en arrière-plan : elle sera prête à la prochaine ouverture.
-        reviewPlayback.cancel()
-        _state.update { it.copy(review = null) }
-    }
 }

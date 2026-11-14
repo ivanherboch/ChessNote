@@ -33,6 +33,12 @@ fun winPercent(cp: Int): Double {
     return 50.0 + 50.0 * (2.0 / (1.0 + exp(-0.00368208 * cp)) - 1.0)
 }
 
+/** Moteur d'analyse (Stockfish en production, faux moteur dans les tests). */
+interface ChessEngine {
+    /** Recherche depuis [fen] ; [elo] non nul bride la force ; résultat vide si le moteur est indisponible. */
+    suspend fun search(fen: String, movetimeMs: Int, multiPv: Int = 1, elo: Int? = null, depth: Int? = null): SearchResult
+}
+
 /** Forme d'un coup UCI valide : case de départ, case d'arrivée et promotion éventuelle (ex. e2e4, e7e8q). */
 private val UCI_MOVE = Regex("^[a-h][1-8][a-h][1-8][qrbn]?$")
 
@@ -42,7 +48,7 @@ private val UCI_MOVE = Regex("^[a-h][1-8][a-h][1-8][qrbn]?$")
  * le moteur est resynchronisé (stop puis isready/readyok) ; s'il ne répond plus, il est relancé, afin
  * qu'aucun « bestmove » orphelin ne soit lu par la recherche suivante.
  */
-class Stockfish(private val context: Context) : Closeable {
+class Stockfish(private val context: Context) : ChessEngine, Closeable {
     private val mutex = Mutex()
     private var process: Process? = null
     private var out: BufferedWriter? = null
@@ -122,12 +128,12 @@ class Stockfish(private val context: Context) : Closeable {
      * Lance une recherche. [elo] non nul limite la force (UCI_LimitStrength, 1350–2850).
      * Renvoie un résultat vide si le moteur est indisponible.
      */
-    suspend fun search(
+    override suspend fun search(
         fen: String,
         movetimeMs: Int,
-        multiPv: Int = 1,
-        elo: Int? = null,
-        depth: Int? = null,
+        multiPv: Int,
+        elo: Int?,
+        depth: Int?,
     ): SearchResult = mutex.withLock {
         withContext(Dispatchers.IO) {
             try {
