@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.data
 
+import android.database.sqlite.SQLiteDatabase
+import com.ivanherboch.chessduck.content.PuzzleThemes
 import kotlin.coroutines.cancellation.CancellationException
 import android.content.Context
 import androidx.room.ColumnInfo
@@ -13,7 +15,6 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import android.database.sqlite.SQLiteDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -21,8 +22,12 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
-/** Problème Lichess (base officielle database.lichess.org, licence CC0). */
-@Entity(tableName = "puzzles", indices = [Index("rating")])
+/**
+ * Problème Lichess (base officielle database.lichess.org, licence CC0).
+ * v3 : [primaryTheme] (type principal, règle PuzzleThemes.primary) indexé avec le classement pour le tirage,
+ * les compteurs du catalogue et les exercices de notation directement en SQL.
+ */
+@Entity(tableName = "puzzles", indices = [Index("rating"), Index("primaryTheme", "rating")])
 data class Puzzle(
     @PrimaryKey val id: String,
     val fen: String,
@@ -32,6 +37,9 @@ data class Puzzle(
     val plays: Int,
     /** Thèmes Lichess séparés par des espaces, avec un espace en tête et en queue. */
     val themes: String,
+    /** Clé du thème principal (voir PuzzleThemes.primary), calculée une fois pour toutes. */
+    @ColumnInfo(defaultValue = "")
+    val primaryTheme: String = "",
 )
 
 @Entity(tableName = "puzzle_progress")
@@ -63,12 +71,19 @@ data class GameRecord(
     @ColumnInfo(defaultValue = "0") val opponentElo: Int = 0,
 )
 
-data class PuzzleMeta(val id: String, val rating: Int, val themes: String)
+data class PuzzleMeta(val id: String, val rating: Int, val themes: String, val primaryTheme: String)
+
+/** Suggestion de recherche : identifiant, classement et thème principal. */
+data class PuzzleHit(val id: String, val rating: Int, val primaryTheme: String)
+
+/** Compteurs du catalogue pour un thème principal : problèmes et problèmes résolus. */
+data class ThemeCountRow(val theme: String, val total: Int, val solved: Int)
 data class Tally(val outcome: Int, val n: Int)
 
 @Dao
 interface PuzzleDao {
-    @Query("SELECT id, rating, themes FROM puzzles")
+    /** Index complet (vérification du catalogue dans les tests) : l'application interroge désormais la base indexée. */
+    @Query("SELECT id, rating, themes, primaryTheme FROM puzzles")
     suspend fun allMeta(): List<PuzzleMeta>
 
     @Query("SELECT * FROM puzzles WHERE id = :id")
@@ -83,8 +98,57 @@ interface PuzzleDao {
     @Query("SELECT * FROM puzzles WHERE rowid >= :start LIMIT :n")
     suspend fun slice(start: Int, n: Int): List<Puzzle>
 
-    @Query("SELECT * FROM puzzles WHERE rowid >= :start AND themes LIKE '% ' || :theme || ' %' LIMIT :n")
-    suspend fun sliceTheme(start: Int, theme: String, n: Int): List<Puzzle>
+    /** Échantillon indexé de problèmes dont le thème principal est l'un de [themes]. */
+    @Query("SELECT * FROM puzzles WHERE rowid >= :start AND primaryTheme IN (:themes) LIMIT :n")
+    suspend fun sliceThemes(start: Int, themes: List<String>, n: Int): List<Puzzle>
+
+    // ---- Tirage aléatoire indexé : comptage puis lecture à un rang tiré au hasard ----
+
+    @Query(
+        "SELECT COUNT(*) FROM puzzles WHERE primaryTheme IN (:themes) AND rating BETWEEN :lo AND :hi AND id != :exclude " +
+            "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress))",
+    )
+    suspend fun countInThemes(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean): Int
+
+    @Query(
+        "SELECT id FROM puzzles WHERE primaryTheme IN (:themes) AND rating BETWEEN :lo AND :hi AND id != :exclude " +
+            "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress)) LIMIT 1 OFFSET :offset",
+    )
+    suspend fun idInThemesAt(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int): String?
+
+    @Query(
+        "SELECT COUNT(*) FROM puzzles WHERE rating BETWEEN :lo AND :hi AND id != :exclude " +
+            "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress))",
+    )
+    suspend fun countAll(lo: Int, hi: Int, exclude: String, includeSolved: Boolean): Int
+
+    @Query(
+        "SELECT id FROM puzzles WHERE rating BETWEEN :lo AND :hi AND id != :exclude " +
+            "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress)) LIMIT 1 OFFSET :offset",
+    )
+    suspend fun idAllAt(lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int): String?
+
+    /** Compteurs agrégés du catalogue par thème principal, pour une tranche de classement. */
+    @Query(
+        "SELECT primaryTheme AS theme, COUNT(*) AS total, " +
+            "SUM(CASE WHEN id IN (SELECT puzzleId FROM puzzle_progress) THEN 1 ELSE 0 END) AS solved " +
+            "FROM puzzles WHERE rating BETWEEN :lo AND :hi GROUP BY primaryTheme",
+    )
+    suspend fun themeCounts(lo: Int, hi: Int): List<ThemeCountRow>
+
+    /**
+     * Recherche d'identifiant insensible à la casse : identique, puis préfixe, puis contenu (ordre du catalogue).
+     * [pattern] est déjà échappé (\\, %, _).
+     */
+    @Query(
+        "SELECT id, rating, primaryTheme FROM puzzles WHERE id LIKE '%' || :pattern || '%' ESCAPE '\\' " +
+            "ORDER BY CASE WHEN id = :exact COLLATE NOCASE THEN 0 WHEN id LIKE :pattern || '%' ESCAPE '\\' THEN 1 ELSE 2 END, rowid " +
+            "LIMIT :limit",
+    )
+    suspend fun searchIds(pattern: String, exact: String, limit: Int): List<PuzzleHit>
+
+    @Query("SELECT COUNT(*) FROM puzzles WHERE id LIKE '%' || :pattern || '%' ESCAPE '\\'")
+    suspend fun countIds(pattern: String): Int
 
     @Query("SELECT * FROM puzzles WHERE rowid >= :start AND fen NOT LIKE '% w - %' AND fen NOT LIKE '% b - %' LIMIT :n")
     suspend fun sliceCastling(start: Int, n: Int): List<Puzzle>
@@ -128,7 +192,7 @@ interface UserDao {
 
 @Database(
     entities = [Puzzle::class, PuzzleProgress::class, LessonProgress::class, GameRecord::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class DuckDatabase : RoomDatabase() {
@@ -141,7 +205,7 @@ abstract class DuckDatabase : RoomDatabase() {
         fun create(context: Context): DuckDatabase =
             Room.databaseBuilder(context, DuckDatabase::class.java, "chessduck.db")
                 .createFromAsset("chessduck.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
 
         /**
@@ -154,14 +218,20 @@ abstract class DuckDatabase : RoomDatabase() {
             val tmp = File(context.cacheDir, "catalogue.db")
             try {
                 context.assets.open("chessduck.db").use { input -> tmp.outputStream().use { input.copyTo(it) } }
-                SQLiteDatabase.openDatabase(tmp.path, null, SQLiteDatabase.OPEN_READONLY).use { src ->
-                    src.rawQuery("SELECT id, fen, moves, rating, popularity, plays, themes FROM puzzles", null).use { c ->
-                        val batch = ArrayList<Puzzle>(2000)
-                        while (c.moveToNext()) {
-                            batch.add(Puzzle(c.getString(0), c.getString(1), c.getString(2), c.getInt(3), c.getInt(4), c.getInt(5), c.getString(6)))
-                            if (batch.size == 2000) { db.puzzles().insertAll(batch.toList()); batch.clear() }
-                        }
-                        if (batch.isNotEmpty()) db.puzzles().insertAll(batch)
+                // Import en SQL natif : la base livrée est attachée puis copiée en une instruction (pas de boucle Kotlin).
+                // Connexion dédiée au même fichier (et non celle de Room, dont les déclencheurs d'invalidation
+                // reposent sur une table temporaire propre à sa connexion) ; SQLite sérialise les écritures.
+                val path = db.openHelper.writableDatabase.path ?: return@withContext false
+                SQLiteDatabase.openDatabase(path, null, SQLiteDatabase.OPEN_READWRITE).use { conn ->
+                    conn.rawQuery("PRAGMA busy_timeout = 10000", null).use { it.moveToFirst() }
+                    conn.execSQL("ATTACH DATABASE ? AS catalogue", arrayOf<Any>(tmp.path))
+                    try {
+                        conn.execSQL(
+                            "INSERT OR IGNORE INTO puzzles (id, fen, moves, rating, popularity, plays, themes, primaryTheme) " +
+                                "SELECT id, fen, moves, rating, popularity, plays, themes, " + PuzzleThemes.primarySql() + " FROM catalogue.puzzles",
+                        )
+                    } finally {
+                        conn.execSQL("DETACH DATABASE catalogue")
                     }
                 }
                 true
@@ -180,6 +250,19 @@ abstract class DuckDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE games ADD COLUMN whiteName TEXT NOT NULL DEFAULT ''")
                 db.execSQL("ALTER TABLE games ADD COLUMN blackName TEXT NOT NULL DEFAULT ''")
                 db.execSQL("ALTER TABLE games ADD COLUMN opponentElo INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        /**
+         * v3 : thème principal de chaque problème, calculé en SQL avec exactement l'ordre de PuzzleThemes, et index
+         * (thème principal, classement). La base livrée est déjà en v3 : cette migration ne sert qu'aux installations
+         * existantes.
+         */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE puzzles ADD COLUMN primaryTheme TEXT NOT NULL DEFAULT ''")
+                db.execSQL("UPDATE puzzles SET primaryTheme = " + PuzzleThemes.primarySql())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_puzzles_primaryTheme_rating` ON `puzzles` (`primaryTheme`, `rating`)")
             }
         }
     }

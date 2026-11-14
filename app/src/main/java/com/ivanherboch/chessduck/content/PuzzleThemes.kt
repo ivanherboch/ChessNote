@@ -72,7 +72,7 @@ object PuzzleThemes {
     val byKey = all.associateBy { it.key }
 
     // Du plus caractéristique au plus général : le premier thème présent définit le « type » du problème.
-    private val PRIORITY = listOf(
+    internal val PRIORITY = listOf(
         // 1. Mats nommés, 2. mats en N coups, 3. motifs tactiques, 4. thèmes généraux.
         "smotheredMate", "anastasiaMate", "arabianMate", "bodenMate", "doubleBishopMate", "dovetailMate", "hookMate", "backRankMate",
         "mateIn1", "mateIn2", "mateIn3", "mateIn4", "mateIn5",
@@ -90,6 +90,14 @@ object PuzzleThemes {
      * et images exportées. Chaque problème appartient donc à un seul thème du catalogue.
      */
     fun primary(themes: String): ThemeInfo = all[primaryIndex(themes)]
+
+    /**
+     * Même règle que [primary], en SQL (colonne `primaryTheme` de la base, migration v3) : le premier thème
+     * de la liste de priorité présent dans [column] (thèmes entourés d'espaces, comparaison sensible à la casse).
+     */
+    fun primarySql(column: String = "themes"): String =
+        PRIORITY.filter { k -> all.any { it.key == k } }
+            .joinToString(" ", prefix = "CASE ", postfix = " ELSE 'middlegame' END") { k -> "WHEN instr($column, ' $k ') > 0 THEN '$k'" }
 
     /** Rang de priorité de chaque clé (0 = la plus caractéristique), consulté en O(1) par mot. */
     private val PRIORITY_RANK: Map<String, Int> =

@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.data
 
+import kotlin.random.Random
 import android.content.Context
 import kotlinx.coroutines.flow.Flow
 
@@ -24,8 +25,18 @@ interface PuzzleRepository {
     /** Index compact du catalogue (identifiant, classement, thèmes) pour le tirage et la recherche. */
     suspend fun allMeta(): List<PuzzleMeta>
     suspend fun slice(start: Int, n: Int): List<Puzzle>
-    suspend fun sliceTheme(start: Int, theme: String, n: Int): List<Puzzle>
+    /** Échantillon de problèmes dont le thème principal est l'un de [themes] (requête indexée). */
+    suspend fun sliceThemes(start: Int, themes: List<String>, n: Int): List<Puzzle>
     suspend fun sliceCastling(start: Int, n: Int): List<Puzzle>
+    /**
+     * Tire au hasard un problème du filtre ([themes] null = tous les thèmes) dans la tranche [range], autre que
+     * [exclude] : un problème non résolu d'abord, sinon un déjà résolu ; null si aucun ne correspond.
+     */
+    suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random): String?
+    /** Compteurs (problèmes, résolus) par thème principal pour une tranche de classement. */
+    suspend fun themeCounts(range: IntRange): List<ThemeCountRow>
+    /** Recherche d'identifiant : au plus [limit] résultats classés et le nombre total de correspondances. */
+    suspend fun searchIds(query: String, limit: Int): Pair<List<PuzzleHit>, Int>
     suspend fun markSolved(id: String, at: Long = System.currentTimeMillis())
     fun solvedIds(): Flow<List<String>>
     /** Importe les problèmes du catalogue livré absents de l'appareil ; vrai si un import a eu lieu. */
@@ -54,7 +65,26 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
     override suspend fun byIdIgnoreCase(id: String) = dao.byIdIgnoreCase(id)
     override suspend fun allMeta() = dao.allMeta()
     override suspend fun slice(start: Int, n: Int) = dao.slice(start, n)
-    override suspend fun sliceTheme(start: Int, theme: String, n: Int) = dao.sliceTheme(start, theme, n)
+    override suspend fun sliceThemes(start: Int, themes: List<String>, n: Int) = dao.sliceThemes(start, themes, n)
+
+    override suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random): String? {
+        for (includeSolved in listOf(false, true)) {
+            val n = if (themes == null) dao.countAll(range.first, range.last, exclude, includeSolved)
+            else dao.countInThemes(themes, range.first, range.last, exclude, includeSolved)
+            if (n == 0) continue
+            val k = random.nextInt(n)
+            return if (themes == null) dao.idAllAt(range.first, range.last, exclude, includeSolved, k)
+            else dao.idInThemesAt(themes, range.first, range.last, exclude, includeSolved, k)
+        }
+        return null
+    }
+
+    override suspend fun themeCounts(range: IntRange) = dao.themeCounts(range.first, range.last)
+
+    override suspend fun searchIds(query: String, limit: Int): Pair<List<PuzzleHit>, Int> {
+        val pattern = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        return dao.searchIds(pattern, query, limit) to dao.countIds(pattern)
+    }
     override suspend fun sliceCastling(start: Int, n: Int) = dao.sliceCastling(start, n)
     override suspend fun markSolved(id: String, at: Long) = dao.markSolved(PuzzleProgress(id, at))
     override fun solvedIds() = dao.solvedIds()

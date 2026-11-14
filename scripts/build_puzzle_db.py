@@ -2,7 +2,7 @@
 """Construit app/src/main/assets/chessduck.db à partir de la base officielle des problèmes Lichess.
 
 Source : https://database.lichess.org/lichess_db_puzzle.csv.zst (licence CC0).
-Usage : build_puzzle_db.py lichess_db_puzzle.csv.zst app/schemas/.../2.json app/src/main/assets/chessduck.db
+Usage : build_puzzle_db.py lichess_db_puzzle.csv.zst app/schemas/.../3.json app/src/main/assets/chessduck.db
 
 Sélection, toujours « les plus populaires en priorité » (les plus joués parmi les mieux notés) :
   1. un socle de 100 000 problèmes (identique aux versions précédentes : la progression des joueurs est conservée) ;
@@ -10,7 +10,10 @@ Sélection, toujours « les plus populaires en priorité » (les plus joués par
      même règle que PuzzleThemes.PRIORITY dans l'application) ;
   3. des mats populaires pour arrondir le total.
 Aucun doublon : chaque identifiant Lichess n'apparaît qu'une fois.
-Le schéma SQL est repris du schéma exporté par Room pour garantir la compatibilité.
+Le schéma SQL est repris du schéma exporté par Room pour garantir la compatibilité (v3 : colonne
+primaryTheme indexée avec le classement, table room_master_table et user_version renseignés).
+
+Pour migrer sur place une base existante sans le CSV Lichess : scripts/migrate_asset_v3.py.
 """
 import csv, io, json, os, sqlite3, sys
 from collections import Counter
@@ -115,8 +118,11 @@ def main(src, schema, out):
         db.execute(e["createSql"].replace("${TABLE_NAME}", e["tableName"]))
         for i in e.get("indices", []):
             db.execute(i["createSql"].replace("${TABLE_NAME}", e["tableName"]))
-    db.executemany("INSERT INTO puzzles (id, fen, moves, rating, popularity, plays, themes) VALUES (?,?,?,?,?,?,?)",
-                   [(r[0], r[1], r[2], r[3], r[4], r[5], " " + r[6] + " ") for r in chosen])
+    for q in sch.get("setupQueries", []):
+        db.execute(q)
+    db.execute("INSERT OR REPLACE INTO room_master_table (id, identity_hash) VALUES (42, ?)", (sch["identityHash"],))
+    db.executemany("INSERT INTO puzzles (id, fen, moves, rating, popularity, plays, themes, primaryTheme) VALUES (?,?,?,?,?,?,?,?)",
+                   [(r[0], r[1], r[2], r[3], r[4], r[5], " " + r[6] + " ", primary(r[6])) for r in chosen])
     db.execute("PRAGMA user_version = %d" % sch["version"])
     db.commit(); db.execute("VACUUM"); db.close()
 

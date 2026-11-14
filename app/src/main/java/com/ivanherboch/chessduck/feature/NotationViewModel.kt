@@ -175,8 +175,8 @@ class NotationViewModel(
                 val kind = if (target == 3) rnd.nextInt(1, 5) else 0
                 val batch: List<Puzzle> = when (kind) {
                     1 -> dao.sliceCastling(start, 60)
-                    2 -> dao.sliceTheme(start, "promotion", 30)
-                    3 -> dao.sliceTheme(start, "mateIn1", 30)
+                    2 -> dao.sliceThemes(start, listOf("promotion", "underPromotion"), 30)
+                    3 -> dao.sliceThemes(start, listOf("mateIn1"), 30)
                     else -> dao.slice(start, 30)
                 }
                 val positions = batch.flatMap { pz ->

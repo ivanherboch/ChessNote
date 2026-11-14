@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.data.PuzzleHit
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -232,14 +233,6 @@ class PuzzlesViewModel(
     private var loadJob: Job? = null
     private var countsJob: Job? = null
     private var searchJob: Job? = null
-    private val metaLock = Mutex()
-
-    // Index mémoire compact du catalogue (classement + masque de thèmes par problème).
-    private var metaIds: Array<String> = emptyArray()
-    private var metaRatings = IntArray(0)
-    /** Thème unique de chaque problème (indice dans PuzzleThemes.all) : son idée la plus caractéristique. */
-    private var metaCat = ShortArray(0)
-    private var metaIdsLower: Array<String> = emptyArray()
 
     init {
         viewModelScope.launch {
@@ -256,25 +249,11 @@ class PuzzlesViewModel(
                 _recents.value = others.mapNotNull { id -> found.firstOrNull { it.id == id } }
             }
         }
-        // L'index mémoire est préparé dès le lancement : la recherche répond ensuite instantanément.
-        viewModelScope.launch(Dispatchers.Default) {
-            // Après une mise à jour de l'application, les nouveaux problèmes du catalogue sont d'abord importés.
-            if (dao.syncCatalogue()) metaLock.withLock { metaIds = emptyArray() }
-            ensureMeta()
-        }
+        // Après une mise à jour de l'application, les nouveaux problèmes du catalogue sont importés (SQL natif).
+        // Tirage, compteurs et recherche interrogent directement la base indexée : rien n'est chargé en mémoire.
+        viewModelScope.launch(Dispatchers.IO) { dao.syncCatalogue() }
     }
 
-    /** Problèmes résolus, lus directement en base : exact même si aucun écran n'observe [solvedIds]. */
-    private suspend fun solvedNow(): Set<String> = dao.solvedIds().first().toHashSet()
-
-    private suspend fun ensureMeta() = metaLock.withLock {
-        if (metaIds.isNotEmpty()) return@withLock
-        val meta = runCatchingSuspend { dao.allMeta() }.getOrDefault(emptyList())
-        metaRatings = IntArray(meta.size) { meta[it].rating }
-        metaCat = ShortArray(meta.size) { i -> PuzzleThemes.primaryIndex(meta[i].themes).toShort() }
-        metaIdsLower = Array(meta.size) { meta[it].id.lowercase() }
-        metaIds = Array(meta.size) { meta[it].id }
-    }
 
     /**
      * Suggestions pendant la saisie : correspondance insensible à la casse sur l'identifiant,
@@ -284,29 +263,12 @@ class PuzzlesViewModel(
         searchJob?.cancel()
         val q = raw.trim().removePrefix("#").lowercase()
         if (q.isEmpty()) { _suggestions.value = Suggestions(); return }
-        searchJob = viewModelScope.launch(Dispatchers.Default) {
-            ensureMeta()
-            val exact = ArrayList<Int>()
-            val prefix = ArrayList<Int>()
-            val inside = ArrayList<Int>()
-            var total = 0
-            for (i in metaIdsLower.indices) {
-                val id = metaIdsLower[i]
-                val at = id.indexOf(q)
-                if (at < 0) continue
-                total++
-                when {
-                    id.length == q.length -> exact.add(i)
-                    at == 0 -> if (prefix.size < 6) prefix.add(i)
-                    else -> if (inside.size < 6) inside.add(i)
-                }
-                if (i and 0x3FF == 0) ensureActive()
-            }
-            val top = (exact + prefix + inside).take(5)
+        searchJob = viewModelScope.launch {
+            val (hits, total) = runCatchingSuspend { dao.searchIds(q, 5) }.getOrDefault(emptyList<PuzzleHit>() to 0)
             _suggestions.value = Suggestions(
                 raw.trim().removePrefix("#"),
-                top.map { Suggestion(metaIds[it], PuzzleThemes.all[metaCat[it].toInt()].name, metaRatings[it]) },
-                total > top.size,
+                hits.map { Suggestion(it.id, (PuzzleThemes.byKey[it.primaryTheme] ?: PuzzleThemes.primary("")).name, it.rating) },
+                total > hits.size,
             )
         }
     }
@@ -357,31 +319,15 @@ class PuzzlesViewModel(
             val s = state.value
             val r = PuzzleThemes.bandRange(s.band)
             val cur = s.puzzle?.id ?: ""
-            // Tirage dans l'index mémoire : difficulté + thème unique du problème, non résolus d'abord.
-            val id = withContext(Dispatchers.Default) {
-                ensureMeta()
-                // Filtre : un thème précis, ou un groupe entier (tous les mats, toutes les finales…).
-                val group = PuzzleThemes.groupOf(s.theme)
-                val allowed = BooleanArray(PuzzleThemes.all.size) { i ->
-                    if (group != null) PuzzleThemes.all[i].group == group else s.theme.isEmpty() || PuzzleThemes.all[i].key == s.theme
-                }
-                val solved = solvedNow()
-                var fresh = -1
-                var freshCount = 0
-                var any = -1
-                var anyCount = 0
-                for (i in metaIds.indices) {
-                    if (metaRatings[i] !in r || !allowed[metaCat[i].toInt()] || metaIds[i] == cur) continue
-                    anyCount++
-                    if (rnd.nextInt(anyCount) == 0) any = i
-                    if (metaIds[i] !in solved) {
-                        freshCount++
-                        if (rnd.nextInt(freshCount) == 0) fresh = i
-                    }
-                }
-                val pick = if (fresh >= 0) fresh else any
-                if (pick >= 0) metaIds[pick] else null
+            // Tirage indexé en base : difficulté + thème principal du problème, non résolus d'abord.
+            // Filtre : un thème précis, un groupe entier (tous les mats, toutes les finales…) ou tous les thèmes.
+            val group = PuzzleThemes.groupOf(s.theme)
+            val themes = when {
+                group != null -> PuzzleThemes.all.filter { it.group == group }.map { it.key }
+                s.theme.isEmpty() -> null
+                else -> listOf(s.theme)
             }
+            val id = runCatchingSuspend { dao.randomId(themes, r, cur, rnd) }.getOrNull()
             val p = id?.let { runCatchingSuspend { dao.byId(it) }.getOrNull() }
             if (p != null) show(p)
             else _state.update { it.copy(empty = true, tone = Tone.BAD, message = "Aucun problème ne correspond à ces filtres. Élargissez la sélection dans le catalogue.") }
@@ -418,31 +364,16 @@ class PuzzlesViewModel(
     fun loadCounts(band: Int) {
         countsJob?.cancel()
         countsJob = viewModelScope.launch {
-            val res = withContext(Dispatchers.Default) {
-                ensureMeta()
-                val solved = solvedNow()
-                val range = PuzzleThemes.bandRange(band)
-                val n = PuzzleThemes.all.size
-                val total = IntArray(n + 1)
-                val done = IntArray(n + 1)
-                for (i in metaIds.indices) {
-                    if (metaRatings[i] !in range) continue
-                    val isSolved = metaIds[i] in solved
-                    total[n]++
-                    if (isSolved) done[n]++
-                    val b = metaCat[i].toInt()
-                    total[b]++
-                    if (isSolved) done[b]++
-                }
-                val map = HashMap<String, ThemeCount>()
-                PuzzleThemes.all.forEachIndexed { i, t -> map[t.key] = ThemeCount(total[i], done[i]) }
-                map[""] = ThemeCount(total[n], done[n])
-                for (g in PuzzleThemes.groups) {
-                    val idx = PuzzleThemes.all.indices.filter { PuzzleThemes.all[it].group == g }
-                    map[PuzzleThemes.groupKey(g)] = ThemeCount(idx.sumOf { total[it] }, idx.sumOf { done[it] })
-                }
-                map
+            val rows = runCatchingSuspend { dao.themeCounts(PuzzleThemes.bandRange(band)) }.getOrDefault(emptyList())
+            val byTheme = rows.associateBy { it.theme }
+            val map = HashMap<String, ThemeCount>()
+            for (t in PuzzleThemes.all) map[t.key] = byTheme[t.key]?.let { ThemeCount(it.total, it.solved) } ?: ThemeCount(0, 0)
+            map[""] = ThemeCount(rows.sumOf { it.total }, rows.sumOf { it.solved })
+            for (g in PuzzleThemes.groups) {
+                val keys = PuzzleThemes.all.filter { it.group == g }.map { it.key }
+                map[PuzzleThemes.groupKey(g)] = ThemeCount(keys.sumOf { map.getValue(it).total }, keys.sumOf { map.getValue(it).solved })
             }
+            val res: Map<String, ThemeCount> = map
             _counts.value = res
         }
     }

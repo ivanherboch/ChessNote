@@ -26,6 +26,8 @@ import com.ivanherboch.chessduck.data.PuzzleProgress
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
@@ -87,7 +89,26 @@ class AppRobolectricTest {
             val set = pm.themes.trim().split(' ').toSet()
             val ref = REFERENCE_PRIORITY.firstOrNull { it in set && it in byKey } ?: "middlegame"
             assertEquals(pm.id, ref, com.ivanherboch.chessduck.content.PuzzleThemes.primary(pm.themes).key)
+            // Colonne v3 précalculée dans la base livrée : même thème principal.
+            assertEquals(pm.id, ref, pm.primaryTheme)
         }
+        // Requêtes indexées (v3) : compteurs, tirage filtré et recherche d'identifiant.
+        val repo = com.ivanherboch.chessduck.data.RoomPuzzleRepository(ApplicationProvider.getApplicationContext(), db)
+        val counts = repo.themeCounts(0..4000)
+        assertEquals(150_000, counts.sumOf { it.total })
+        assertEquals(1, counts.sumOf { it.solved })
+        assertEquals(meta.count { it.primaryTheme == "fork" && it.rating in 1200..1599 }, repo.themeCounts(1200..1599).first { it.theme == "fork" }.total)
+        val rnd = kotlin.random.Random(7)
+        repeat(20) {
+            val id = repo.randomId(listOf("pin", "skewer"), 1600..1999, "", rnd)!!
+            val pz = db.puzzles().byId(id)!!
+            assertTrue(pz.primaryTheme in setOf("pin", "skewer") && pz.rating in 1600..1999)
+        }
+        assertNull(repo.randomId(listOf("fork"), 5000..6000, "", rnd))
+        val (hits, total) = repo.searchIds("0000d", 5)
+        assertEquals("0000D", hits.first().id)
+        assertTrue(total >= hits.size)
+        assertEquals(0, repo.searchIds("%_", 5).second)
         val cells = meta.groupingBy { com.ivanherboch.chessduck.content.PuzzleThemes.bandOf(it.rating) to com.ivanherboch.chessduck.content.PuzzleThemes.primary(it.themes).key }.eachCount()
         val shortCells = (1..4).flatMap { b -> com.ivanherboch.chessduck.content.PuzzleThemes.all.map { b to it.key } }.filter { (cells[it] ?: 0) < 300 }
         assertEquals(18, shortCells.size)
@@ -152,6 +173,8 @@ class AppRobolectricTest {
         assertEquals(true, DuckDatabase.syncPuzzles(ctx, db))
         assertEquals(150_000, db.puzzles().count())
         assertEquals(listOf("0000D"), db.puzzles().solvedIds().first())
+        // Migrations 1 → 2 → 3 puis import SQL natif : chaque problème a le même thème principal que la règle Kotlin.
+        for (pm in db.puzzles().allMeta()) assertEquals(pm.id, com.ivanherboch.chessduck.content.PuzzleThemes.primary(pm.themes).key, pm.primaryTheme)
         db.close()
     }
 

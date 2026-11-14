@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""Génère les fichiers Kotlin des 113 leçons à partir de scripts/lessons/*.txt.
+"""Prépare les 113 leçons à partir de scripts/lessons/*.txt (étape 1 sur 2).
 
 Les leçons « PUZZLE id » reprennent une position réelle de la base Lichess (puzzles.json) :
 le premier coup est la faute adverse, le joueur joue ensuite la combinaison.
-Usage : python3 scripts/gen_lessons.py [--tool fichier]  (--tool : export pour LessonToolTest)
+
+Étape 1 : python3 scripts/gen_lessons.py   → app/build/lessons/lessons.tsv (coups SAN ou UCI, textes)
+Étape 2 : LESSON_COMPILE=app/build/lessons/lessons.tsv ./gradlew :app:testDebugUnitTest --tests '*LessonCompilerTool*'
+          → content/Lessons{Openings,Middlegames,Endgames}.kt : structures Kotlin typées, coups convertis en UCI
+          (validés) par le moteur de l'application lui-même. Aucun analyse de texte ni de SAN au démarrage.
+Option : --tool fichier  (export pour LessonToolTest)
 """
 import json, os, sys
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -37,28 +42,27 @@ def parse(name):
         assert c["moves"], c["title"]
     return lessons
 
-def emit(lessons, var, fname):
-    out = ["package com.ivanherboch.chessduck.content", "",
-           "// Fichier généré par scripts/gen_lessons.py — modifier scripts/lessons/*.txt.", "",
-           f'internal val {var} = """']
+SEP = "\x1f"  # séparateur des commentaires dans le fichier intermédiaire
+
+def emit(lessons, var, fname, rows):
     for c in lessons:
-        out.append(f'# {c["title"]} | {c["summary"]} | {c["hero"]}')
-        if c["fen"] != START: out.append("FEN: " + c["fen"])
-        out += [f"{m} : {t}" for m, t in zip(c["moves"], c["texts"])]
-        out.append("")
-    out.append('"""')
-    text = "\n".join(out) + "\n"
-    assert "$" not in text
-    open(os.path.join(OUT, fname), "w", encoding="utf-8").write(text)
+        for field in (c["title"], c["summary"], *c["texts"]):
+            assert "|" not in field and SEP not in field and "\n" not in field, field
+        rows.append("|".join([var, fname, c["title"], c["summary"], c["hero"], c["fen"], " ".join(c["moves"]), SEP.join(c["texts"])]))
 
 sets = [("openings.txt", "OPENING_LESSONS", "LessonsOpenings.kt", 37),
         ("middlegames.txt", "MIDDLEGAME_LESSONS", "LessonsMiddlegames.kt", 38),
         ("endgames.txt", "ENDGAME_LESSONS", "LessonsEndgames.kt", 38)]
 allL = []
+rows = []
 for src, var, fname, n in sets:
-    ls = parse(src); assert len(ls) == n, (src, len(ls)); emit(ls, var, fname); allL += ls
+    ls = parse(src); assert len(ls) == n, (src, len(ls)); emit(ls, var, fname, rows); allL += ls
 assert len({c["title"] for c in allL}) == 113
 if "--tool" in sys.argv:
     with open(sys.argv[sys.argv.index("--tool") + 1], "w") as f:
         for c in allL: f.write(f'{c["title"]}|{c["hero"]}|{c["fen"]}|{" ".join(c["moves"])}\n')
-print("113 leçons générées")
+tsv = os.path.join(ROOT, "..", "app", "build", "lessons", "lessons.tsv")
+os.makedirs(os.path.dirname(tsv), exist_ok=True)
+open(tsv, "w", encoding="utf-8").write("\n".join(rows) + "\n")
+print("113 leçons préparées :", os.path.normpath(tsv))
+print("Étape 2 : LESSON_COMPILE=app/build/lessons/lessons.tsv ./gradlew :app:testDebugUnitTest --tests '*LessonCompilerTool*'")
