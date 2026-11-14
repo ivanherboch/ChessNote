@@ -2,6 +2,8 @@ package com.ivanherboch.chessduck
 
 import android.os.Looper
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
@@ -195,6 +197,44 @@ class AppRobolectricTest {
         // Migrations 1 → 2 → 3 puis import SQL natif : chaque problème a le même thème principal que la règle Kotlin.
         for (pm in db.puzzles().allMeta()) assertEquals(pm.id, com.ivanherboch.chessduck.content.PuzzleThemes.primary(pm.themes).key, pm.primaryTheme)
         db.close()
+    }
+
+    @Test
+    fun reviewSummaryLabelsAreNeverTruncated() {
+        // Cas réel : « L'ordinateur (Blancs) » + 5 compteurs + « 1 mat manqué » sur un téléphone de 360 dp.
+        rule.activity.setContent {
+            com.ivanherboch.chessduck.ui.ChessDuckTheme(true) {
+                val c = com.ivanherboch.chessduck.ui.LocalDuck.current
+                androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.width(360.dp).background(c.bg).padding(12.dp)) {
+                    for ((label, missed) in listOf("L'ordinateur (Blancs)" to "1 mat manqué", "Guduche (Noirs)" to "", "Un pseudo vraiment très long (Noirs)" to "2 mats manqués")) {
+                        com.ivanherboch.chessduck.ui.LabelWithTrailing(
+                            label = label, style = androidx.compose.material3.MaterialTheme.typography.labelLarge, color = c.text,
+                            trailing = {
+                                androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
+                                    for (n in listOf("!!", "!", "?!", "?", "??")) androidx.compose.material3.Text("$n 0", color = c.text, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
+                                    if (missed.isNotEmpty()) androidx.compose.material3.Text(missed, color = c.redText, style = androidx.compose.material3.MaterialTheme.typography.labelMedium)
+                                }
+                            },
+                            modifier = androidx.compose.ui.Modifier.fillMaxWidth().padding(top = 6.dp),
+                        )
+                    }
+                }
+            }
+        }
+        settle(500)
+        for (label in listOf("L'ordinateur (Blancs)", "Guduche (Noirs)", "Un pseudo vraiment très long (Noirs)")) {
+            val node = rule.onNodeWithText(label).fetchSemanticsNode()
+            val layouts = ArrayList<androidx.compose.ui.text.TextLayoutResult>()
+            node.config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+            val tl = layouts.first()
+            // Tout le texte est mis en page et chaque ligne tient dans la largeur réellement affichée (aucune troncature).
+            org.junit.Assert.assertEquals(label, label.length, tl.getLineEnd(tl.lineCount - 1))
+            for (i in 0 until tl.lineCount) {
+                org.junit.Assert.assertFalse(label, tl.isLineEllipsized(i))
+                org.junit.Assert.assertTrue(label, tl.getLineRight(i) <= node.size.width + 1f)
+            }
+        }
+        shot("11_resume_libelles")
     }
 
     @Test

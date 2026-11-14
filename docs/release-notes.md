@@ -1,3 +1,10 @@
+## ChessDuck 2.2.2 — noms des joueurs toujours entiers dans le résumé de revue
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Revue de partie : le nom de chaque camp (« L'ordinateur (Blancs) », pseudos longs) s'affiche toujours en entier ; si les compteurs d'annotations ne tiennent pas à côté, ils passent à la ligne.
+- La phrase d'aide du résumé n'est plus jamais coupée ; l'historique des parties n'abrège plus « Victoire de … ».
+
 ## ChessDuck 2.2.1 — noms des pièces en français dans le clavier de Notation
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

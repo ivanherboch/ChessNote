@@ -551,6 +551,58 @@ fun DuckSegmentedRow(
     }
 }
 
+/**
+ * Libellé suivi d'éléments alignés à droite (compteurs, badges) : sur une seule ligne quand tout tient,
+ * sinon le libellé occupe toute la largeur (en entier, sur plusieurs lignes si besoin) et les éléments passent
+ * dessous, alignés à droite. Le libellé n'est jamais tronqué : sa largeur naturelle est mesurée exactement.
+ */
+@Composable
+fun LabelWithTrailing(
+    label: String,
+    style: TextStyle,
+    color: Color,
+    trailing: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    gap: Dp = 6.dp,
+) {
+    val measurer = rememberTextMeasurer()
+    Layout(content = { Text(label, color = color, style = style); Box { trailing() } }, modifier = modifier) { measurables, constraints ->
+        val w = constraints.maxWidth
+        val gapPx = gap.roundToPx()
+        val t = measurables[1].measure(Constraints(maxWidth = w))
+        val natural = measurer.measure(label, style, maxLines = 1, softWrap = false, density = this, layoutDirection = layoutDirection).size.width
+        if (natural + gapPx + t.width <= w) {
+            val l = measurables[0].measure(Constraints(minWidth = natural.coerceAtMost(w), maxWidth = (w - gapPx - t.width).coerceAtLeast(natural.coerceAtMost(w))))
+            val h = maxOf(l.height, t.height)
+            layout(w, h) {
+                l.place(0, (h - l.height) / 2)
+                t.place(w - t.width, (h - t.height) / 2)
+            }
+        } else {
+            val l = measurables[0].measure(Constraints(maxWidth = w))
+            val top = 2.dp.roundToPx()
+            layout(w, l.height + top + t.height) {
+                l.place(0, 0)
+                t.place(w - t.width, l.height + top)
+            }
+        }
+    }
+}
+
+/**
+ * Affiche [content] en entier ou pas du tout : s'il ne tient pas dans la hauteur disponible, il est masqué
+ * plutôt que coupé (texte d'aide facultatif). Sa hauteur intrinsèque reste annoncée, si bien que
+ * [ModuleLayout] peut libérer la place nécessaire.
+ */
+@Composable
+fun WholeOrNothing(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Layout(content = content, modifier = modifier) { measurables, constraints ->
+        val p = measurables.firstOrNull()?.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
+            ?: return@Layout layout(0, 0) {}
+        if (p.height <= constraints.maxHeight) layout(p.width, p.height) { p.place(0, 0) } else layout(p.width, 0) {}
+    }
+}
+
 /** État vide : icône, message clair et action directe. */
 @Composable
 fun EmptyState(

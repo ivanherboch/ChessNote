@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.WholeOrNothing
+import com.ivanherboch.chessduck.ui.LabelWithTrailing
 import androidx.compose.foundation.lazy.items
 import com.ivanherboch.chessduck.ui.DuckLazySheet
 import com.ivanherboch.chessduck.ui.LocalIsTwoPane
@@ -389,23 +391,24 @@ private fun ReviewSummary(g: GameRecord, line: Line, analysis: List<Analysis?>, 
         for (white in listOf(true, false)) {
             val v = ReviewComments.voice(g, white)
             val st = stats.getValue(white)
-            Row(
-                Modifier.fillMaxWidth().padding(top = 6.dp).semantics(mergeDescendants = true) {
+            // Nom du camp toujours affiché en entier : les compteurs passent dessous s'ils ne tiennent pas à côté.
+            LabelWithTrailing(
+                label = v.label, style = MaterialTheme.typography.labelLarge, color = c.text,
+                trailing = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        for (n in NOTES) NoteCount(n, st.counts[n] ?: 0)
+                        if (st.missed > 0) Text("${st.missed} mat${if (st.missed > 1) "s" else ""} manqué${if (st.missed > 1) "s" else ""}", color = c.redText, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp).semantics(mergeDescendants = true) {
                     contentDescription = v.label + " : " + NOTES.joinToString(", ") { "${st.counts[it]} ${NOTE_NAMES[it]}" } + ", ${st.missed} mat manqué"
                 },
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(v.label, color = c.text, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                for (n in NOTES) NoteCount(n, st.counts[n] ?: 0)
-                if (st.missed > 0) Text("${st.missed} mat${if (st.missed > 1) "s" else ""} manqué${if (st.missed > 1) "s" else ""}", color = c.redText, style = MaterialTheme.typography.labelMedium, maxLines = 1)
-            }
+            )
         }
-        Text(
-            "Touchez Lecture ou un coup de la liste pour lire les commentaires.",
-            color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 8.dp).weight(1f, fill = false),
-        )
+        // Aide facultative : affichée en entier quand la place le permet, sinon masquée (jamais tronquée).
+        WholeOrNothing(Modifier.padding(top = 8.dp).weight(1f, fill = false)) {
+            Text("Touchez Lecture ou un coup pour lire les commentaires.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        }
     }
 }
 

@@ -116,7 +116,7 @@ internal fun HistorySheet(games: List<GameRecord>, onClose: () -> Unit, onDelete
                         g.outcome == -1 -> "Défaite" to c.redText
                         else -> "Nulle" to c.goldText
                     }
-                    Text(label, color = col, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(label, color = col, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                     if (g.vsComputer) {
                         val d = g.eloAfter - g.eloBefore
                         Text("ELO ${g.eloAfter} (${if (d >= 0) "+$d" else "−${-d}"})", color = if (d >= 0) c.greenText else c.redText, style = MaterialTheme.typography.labelLarge)
