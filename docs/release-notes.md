@@ -1,3 +1,9 @@
+## ChessDuck 2.2.4 — nouvelle icône
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Nouvelle icône : canard-cavalier jaune en relief sur un damier bleu-violet, adaptée à toutes les formes d'icônes Android (carré arrondi, cercle, goutte) et aux icônes à thème (Android 13+).
+
 ## ChessDuck 2.2.3 — résumé de revue plus lisible
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
