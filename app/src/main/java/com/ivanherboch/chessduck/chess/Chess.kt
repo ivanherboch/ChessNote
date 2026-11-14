@@ -65,7 +65,43 @@ class Position(
         return -1
     }
 
-    fun isAttacked(target: Int, byWhite: Boolean): Boolean = attackers(target, byWhite, true).isNotEmpty()
+    fun isAttacked(target: Int, byWhite: Boolean): Boolean = hasAttacker(target, byWhite)
+
+    /** Vrai si une pièce de la couleur donnée attaque [target] (sans allocation : chemin chaud de la génération de coups). */
+    fun hasAttacker(target: Int, byWhite: Boolean): Boolean {
+        val c = if (byWhite) 0 else BLACK
+        val f = fileOf(target)
+        val r = rankOf(target)
+        val pr = if (byWhite) r - 1 else r + 1
+        if (pr in 0..7) {
+            if (f > 0 && board[sq(f - 1, pr)] == PAWN + c) return true
+            if (f < 7 && board[sq(f + 1, pr)] == PAWN + c) return true
+        }
+        for (i in 0 until 8) {
+            val nf = f + KN_DF[i]
+            val nr = r + KN_DR[i]
+            if (nf in 0..7 && nr in 0..7 && board[sq(nf, nr)] == KNIGHT + c) return true
+            val kf = f + K_DF[i]
+            val kr = r + K_DR[i]
+            if (kf in 0..7 && kr in 0..7 && board[sq(kf, kr)] == KING + c) return true
+        }
+        for (d in 0 until 8) {
+            var nf = f + K_DF[d]
+            var nr = r + K_DR[d]
+            while (nf in 0..7 && nr in 0..7) {
+                val p = board[sq(nf, nr)]
+                if (p != 0) {
+                    val t = p and 7
+                    val diag = K_DF[d] != 0 && K_DR[d] != 0
+                    if ((p >= BLACK) != byWhite && (t == QUEEN || (diag && t == BISHOP) || (!diag && t == ROOK))) return true
+                    break
+                }
+                nf += K_DF[d]
+                nr += K_DR[d]
+            }
+        }
+        return false
+    }
 
     /** Cases des pièces de la couleur donnée qui attaquent [target]. */
     fun attackers(target: Int, byWhite: Boolean, firstOnly: Boolean = false): List<Int> {
@@ -254,11 +290,48 @@ class Position(
             return minors <= 1
         }
 
-    /** Clé de répétition : placement, trait, roques, prise en passant. */
-    val key: String get() = toFen().substringBeforeLast(' ').substringBeforeLast(' ')
+    /**
+     * Prise en passant réellement jouable : on ne génère les coups légaux que si un pion du camp au trait
+     * est à côté du pion qui vient d'avancer de deux cases (cas rare).
+     */
+    private val epCaptureLegal: Boolean by lazy(LazyThreadSafetyMode.NONE) {
+        if (ep < 0) return@lazy false
+        val pawn = if (whiteToMove) PAWN else PAWN + BLACK
+        val r = if (whiteToMove) 4 else 3
+        val f = fileOf(ep)
+        val adjacent = (f > 0 && board[sq(f - 1, r)] == pawn) || (f < 7 && board[sq(f + 1, r)] == pawn)
+        adjacent && legalMoves.any { isEnPassant(it) }
+    }
+
+    /** Clé de répétition : placement, trait, roques, prise en passant (calculée une fois, sans passer par toFen). */
+    val key: String by lazy(LazyThreadSafetyMode.NONE) {
+        val sb = StringBuilder(72)
+        appendPlacement(sb)
+        appendStateFields(sb)
+        sb.toString()
+    }
+
+    private fun appendStateFields(sb: StringBuilder) {
+        sb.append(if (whiteToMove) " w " else " b ")
+        if (castling == 0) sb.append('-') else {
+            if (castling and 1 != 0) sb.append('K')
+            if (castling and 2 != 0) sb.append('Q')
+            if (castling and 4 != 0) sb.append('k')
+            if (castling and 8 != 0) sb.append('q')
+        }
+        // Comme Lichess/Stockfish : la case e.p. n'est écrite que si la prise est réellement possible.
+        sb.append(' ').append(if (epCaptureLegal) sqName(ep) else "-")
+    }
 
     fun toFen(): String {
         val sb = StringBuilder()
+        appendPlacement(sb)
+        appendStateFields(sb)
+        sb.append(' ').append(halfmove).append(' ').append(fullmove)
+        return sb.toString()
+    }
+
+    private fun appendPlacement(sb: StringBuilder) {
         for (r in 7 downTo 0) {
             var empty = 0
             for (f in 0..7) {
@@ -271,22 +344,18 @@ class Position(
             if (empty > 0) sb.append(empty)
             if (r > 0) sb.append('/')
         }
-        sb.append(if (whiteToMove) " w " else " b ")
-        if (castling == 0) sb.append('-') else {
-            if (castling and 1 != 0) sb.append('K')
-            if (castling and 2 != 0) sb.append('Q')
-            if (castling and 4 != 0) sb.append('k')
-            if (castling and 8 != 0) sb.append('q')
-        }
-        // Comme Lichess/Stockfish : la case e.p. n'est écrite que si la prise est réellement possible.
-        val epLegal = ep >= 0 && legalMoves.any { isEnPassant(it) }
-        sb.append(' ').append(if (epLegal) sqName(ep) else "-")
-        sb.append(' ').append(halfmove).append(' ').append(fullmove)
-        return sb.toString()
     }
 
     /** Notation algébrique FIDE (lettres anglaises) du coup légal [m]. */
     fun san(m: Move): String {
+        val sb = StringBuilder(sanBody(m))
+        val n = play(m)
+        if (n.inCheck) sb.append(if (n.legalMoves.isEmpty()) '#' else '+')
+        return sb.toString()
+    }
+
+    /** SAN sans le suffixe d'échec (+) ou de mat (#) : ne joue pas le coup (utilisé pour l'analyse de notation). */
+    fun sanBody(m: Move): String {
         val p = board[m.from]
         val t = p and 7
         val sb = StringBuilder()
@@ -309,15 +378,13 @@ class Position(
             sb.append(sqName(m.to))
             if (m.promo != 0) sb.append('=').append(pieceLetter(m.promo))
         }
-        val n = play(m)
-        if (n.inCheck) sb.append(if (n.legalMoves.isEmpty()) '#' else '+')
         return sb.toString()
     }
 
     /** Retrouve le coup légal correspondant à une notation SAN (tolère l'absence de +, #, !, ?). */
     fun parseSan(san: String): Move? {
         val clean = san.trim().trimEnd('+', '#', '!', '?').replace("0", "O")
-        return legalMoves.firstOrNull { san(it).trimEnd('+', '#') == clean }
+        return legalMoves.firstOrNull { sanBody(it) == clean }
     }
 
     companion object {
@@ -328,8 +395,10 @@ class Position(
 
         val START: Position by lazy { fromFen(START_FEN) }
 
+        private val FEN_WHITESPACE = Regex("\\s+")
+
         fun fromFen(fen: String): Position {
-            val parts = fen.trim().split(Regex("\\s+"))
+            val parts = fen.trim().split(FEN_WHITESPACE)
             val b = IntArray(64)
             var r = 7
             var f = 0
@@ -358,13 +427,18 @@ class Position(
 }
 
 /** Partie : position initiale + suite de coups, avec positions et SAN précalculés. */
-class Line(val startFen: String, moves: List<Move> = emptyList()) {
-    val positions = ArrayList<Position>()
-    val moves = ArrayList<Move>()
-    val sans = ArrayList<String>()
+class Line private constructor(
+    val startFen: String,
+    initialPositions: List<Position>,
+    initialMoves: List<Move>,
+    initialSans: List<String>,
+) {
+    val positions = ArrayList<Position>(initialPositions)
+    val moves = ArrayList<Move>(initialMoves)
+    val sans = ArrayList<String>(initialSans)
 
-    init {
-        positions.add(Position.fromFen(startFen))
+    constructor(startFen: String, moves: List<Move> = emptyList()) :
+        this(startFen, listOf(Position.fromFen(startFen)), emptyList(), emptyList()) {
         moves.forEach { push(it) }
     }
 
@@ -380,11 +454,9 @@ class Line(val startFen: String, moves: List<Move> = emptyList()) {
 
     /** Copie indépendante limitée aux [n] premiers coups. */
     fun copy(n: Int = size): Line {
-        val l = Line(startFen)
+        // Positions immuables partagées : aucune analyse de FEN ni aucun coup rejoué.
         val k = n.coerceIn(0, size)
-        l.moves.addAll(moves.subList(0, k)); l.sans.addAll(sans.subList(0, k))
-        l.positions.clear(); l.positions.addAll(positions.subList(0, k + 1))
-        return l
+        return Line(startFen, positions.subList(0, k + 1), moves.subList(0, k), sans.subList(0, k))
     }
 
     fun uciMoves(upTo: Int = size) = moves.take(upTo).joinToString(" ") { it.uci }

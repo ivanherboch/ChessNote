@@ -34,6 +34,34 @@ class ChessTest {
     }
 
     @Test
+    fun repetitionKeyAndSanBodyMatchReference() {
+        // Clé de répétition = FEN sans les compteurs ; la case e.p. n'y figure que si la prise est jouable.
+        val fens = listOf(
+            START_FEN,
+            "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3", // e.p. jouable (exf6)
+            "rnbqkbnr/pppp1ppp/8/8/4pP2/8/PPPPP1PP/RNBQKBNR b KQkq f3 0 2", // e.p. jouable (exf3)
+            "rnbqkbnr/pppppp1p/8/6p1/8/8/PPPPPPPP/RNBQKBNR w KQkq g6 0 2", // pas de pion adjacent
+            "4k3/8/8/2KpP2r/8/8/8/8 w - d6 0 1", // pion adjacent mais prise illégale (clouage)
+        )
+        for (f in fens) {
+            val p = Position.fromFen(f)
+            assertEquals(f, p.toFen().substringBeforeLast(' ').substringBeforeLast(' '), p.key)
+            // Règle historique : la case e.p. n'est écrite que si un coup légal la prend.
+            assertEquals(f, p.legalMoves.any { p.isEnPassant(it) }, !p.key.endsWith(" -"))
+        }
+        assertTrue(Position.fromFen(fens[1]).key.endsWith(" f6"))
+        assertTrue(Position.fromFen(fens[4]).key.endsWith(" -"))
+        val l = Line.fromSan(START_FEN, "e4 e5 Nf3 Nc6 Bb5 a6 Bxc6 dxc6 O-O f6".split(" "))
+        for (i in 0 until l.size) assertEquals(l.sans[i].trimEnd('+', '#'), l.positions[i].sanBody(l.moves[i]))
+        // Une copie partage les positions sans rejouer les coups.
+        val c = l.copy(4)
+        assertEquals(4, c.size)
+        assertEquals(l.positions[4].toFen(), c.last.toFen())
+        c.push(Move.fromUci("f8c5"))
+        assertEquals(l.size, 10)
+    }
+
+    @Test
     fun sanAndFen() {
         val l = Line.fromSan(START_FEN, "e4 e5 Nf3 Nc6 Bb5 a6 Bxc6 dxc6 O-O f6 d4 exd4 Nxd4 c5 Nb3 Qxd1 Rxd1".split(" "))
         assertEquals("r1b1kbnr/1pp3pp/p4p2/2p5/4P3/1N6/PPP2PPP/RNBR2K1 b kq - 0 9", l.last.toFen())
