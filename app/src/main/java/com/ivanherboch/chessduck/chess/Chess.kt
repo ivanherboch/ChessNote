@@ -426,16 +426,24 @@ class Position(
     }
 }
 
-/** Partie : position initiale + suite de coups, avec positions et SAN précalculés. */
+/**
+ * Partie : position initiale + suite de coups, avec positions et SAN précalculés.
+ * Seul [push] la prolonge, avant publication : une ligne placée dans un état d'interface n'est plus modifiée
+ * (on en fait une [copy] pour jouer un coup). Déclarée stable pour Compose dans compose-stability.conf.
+ */
 class Line private constructor(
     val startFen: String,
     initialPositions: List<Position>,
     initialMoves: List<Move>,
     initialSans: List<String>,
 ) {
-    val positions = ArrayList<Position>(initialPositions)
-    val moves = ArrayList<Move>(initialMoves)
-    val sans = ArrayList<String>(initialSans)
+    // Listes internes modifiables seulement par push ; l'extérieur n'en voit que des vues en lecture seule.
+    private val _positions = ArrayList<Position>(initialPositions)
+    private val _moves = ArrayList<Move>(initialMoves)
+    private val _sans = ArrayList<String>(initialSans)
+    val positions: List<Position> get() = _positions
+    val moves: List<Move> get() = _moves
+    val sans: List<String> get() = _sans
 
     constructor(startFen: String, moves: List<Move> = emptyList()) :
         this(startFen, listOf(Position.fromFen(startFen)), emptyList(), emptyList()) {
@@ -446,10 +454,10 @@ class Line private constructor(
     val last get() = positions.last()
 
     fun push(m: Move) {
-        val p = positions.last()
-        sans.add(p.san(m))
-        moves.add(m)
-        positions.add(p.play(m))
+        val p = _positions.last()
+        _sans.add(p.san(m))
+        _moves.add(m)
+        _positions.add(p.play(m))
     }
 
     /** Copie indépendante limitée aux [n] premiers coups. */

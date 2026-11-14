@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.animation.AnimatedContent
@@ -133,62 +134,6 @@ import com.ivanherboch.chessduck.ui.undoAnim
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
-data class KidState(
-    val line: Line = Line(START_FEN),
-    val cursor: Int = 0,
-    val anim: BoardAnim? = null,
-    /** Message de fin de partie (null tant que la partie continue). */
-    val result: String? = null,
-) {
-    val position: Position get() = line.positions[cursor.coerceIn(0, line.size)]
-}
-
-/**
- * Mode enfant : une partie à 2 joueurs sur le même écran, sans ordinateur,
- * sans évaluation et sans enregistrement dans l'historique.
- */
-class KidViewModel : ViewModel() {
-    private val _state = MutableStateFlow(KidState())
-    val state: StateFlow<KidState> = _state.asStateFlow()
-
-    fun reset() = _state.update { KidState() }
-
-    fun move(m: Move) {
-        val s = state.value
-        if (s.result != null || !s.position.isLegal(m)) return
-        val nl = s.line.copy(s.cursor)
-        nl.push(m)
-        val white = !nl.last.whiteToMove
-        val result = when (nl.end()) {
-            GameEnd.CHECKMATE -> "🎉 Échec et mat ! Bravo aux ${if (white) "Blancs" else "Noirs"} !"
-            GameEnd.NONE -> null
-            else -> "🤝 Partie nulle : personne n'a perdu !"
-        }
-        _state.update { it.copy(line = nl, cursor = nl.size, anim = moveAnim(s.position, m), result = result) }
-    }
-
-    fun back() {
-        val s = state.value
-        if (s.cursor <= 0) return
-        val t = s.cursor - 1
-        _state.update { it.copy(cursor = t, anim = undoAnim(s.line.positions[t], s.line.moves[t]), result = null) }
-    }
-
-    fun forward() {
-        val s = state.value
-        if (s.cursor >= s.line.size) return
-        _state.update { it.copy(cursor = s.cursor + 1, anim = moveAnim(s.position, s.line.moves[s.cursor])) }
-    }
-
-    fun resign() {
-        val s = state.value
-        if (s.result != null) return
-        val loser = if (s.position.whiteToMove) "Blancs" else "Noirs"
-        val winner = if (s.position.whiteToMove) "Noirs" else "Blancs"
-        _state.update { it.copy(result = "🏳️ Les $loser abandonnent : bravo aux $winner !") }
-    }
-}
-
 /** Une pièce du mode enfant : couleurs de sa carte, couleur du texte et phrase d'explication (**gras**). */
 internal class KidPiece(val type: Int, val name: String, val bg: Color, val edge: Color, val ink: Color, val article: String, val text: String)
 
@@ -203,8 +148,11 @@ internal val KID_LEGEND = listOf(
 
 // Couleurs denses : texte blanc ≥ 4,5:1 (face) et bordure basse plus sombre (effet « coussin »).
 internal val KidBlue = Color(0xFF0369A1) to Color(0xFF024B73)
+
 internal val KidOrange = Color(0xFFC2410C) to Color(0xFF8F300A)
+
 internal val KidCoral = Color(0xFFD93829) to Color(0xFF9E281D)
+
 internal val KidGreen = Color(0xFF237A36) to Color(0xFF175326)
 
 /** Bouton pilule à effet « coussin » : la bordure basse plus sombre s'écrase quand on appuie. */
@@ -427,6 +375,7 @@ private fun QuitPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 // ------------------------------------------------------------------ Leçons animées
 
+
 /** Une étape de démonstration : case de départ, trajets (suite de cases), cases à signaler, pièce à manger. */
 private class DemoPhase(
     val home: Pair<Int, Int>,
@@ -444,6 +393,7 @@ private fun ray(from: Pair<Int, Int>, df: Int, dr: Int): List<Pair<Int, Int>> {
 }
 
 private val STRAIGHT = listOf(0 to 1, 1 to 0, 0 to -1, -1 to 0)
+
 private val DIAGONAL = listOf(1 to 1, 1 to -1, -1 to -1, -1 to 1)
 
 /** Scénario de la leçon : les différents types de coups de la pièce, montrés l'un après l'autre. */

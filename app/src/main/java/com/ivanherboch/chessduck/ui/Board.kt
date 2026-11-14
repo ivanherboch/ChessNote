@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.ui
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Job
@@ -96,11 +97,15 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+@Immutable
 data class Arrow(val from: Int, val to: Int, val color: Color)
+@Immutable
 data class Slide(val from: Int, val to: Int)
 
 /** Glissement de pièce(s) à animer : les pièces présentes en [Slide.to] arrivent de [Slide.from]. */
+@Immutable
 data class BoardAnim(val id: Int, val slides: List<Slide>)
+@Immutable
 data class Badge(val sq: Int, val text: String, val color: Color)
 
 private val animCounter = AtomicInteger(0)
