@@ -1,3 +1,17 @@
+## ChessDuck 2.2.0 — refonte interne : plus rapide, plus sobre, mieux testée
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+Aucune fonctionnalité ni règle n'est modifiée : progression, historique, réglages et préférences d'export sont conservés.
+
+- Démarrage plus léger : le moteur Stockfish et le catalogue des problèmes ne sont chargés qu'à la première ouverture de leur onglet ; chaque onglet garde son état.
+- Problèmes : tirage, compteurs du catalogue et recherche interrogent une base indexée (nouvelle colonne « thème principal ») au lieu de charger 150 000 problèmes en mémoire ; mise à jour de la base en SQL natif.
+- Échiquier : animations et secousses dessinées sans recomposer l'écran ; images des pièces et textes mis en cache.
+- Export d'images : rendu, compression et enregistrement hors du fil principal, aperçus réutilisés, cache de partage purgé.
+- Moteur : resynchronisation fiable après une recherche annulée, coups vérifiés ; aucune réponse d'une partie précédente ne peut s'afficher dans la nouvelle.
+- Leçons précompilées (plus d'analyse de notation au démarrage) ; catalogues et historique en listes paresseuses.
+- Pseudo enregistré après une courte pause de frappe (et toujours à la validation ou à la fermeture).
+- Architecture : dépôts et injection de dépendances légère, ViewModels testés en isolation (34 tests automatisés).
+
 ## ChessDuck 2.1.2 — pièces bien visibles dans les images de solution
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
