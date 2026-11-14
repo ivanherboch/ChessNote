@@ -1,3 +1,20 @@
+## ChessDuck 2.0.3 — images de partage repensées
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+### Image du problème
+- Énoncé-défi en titre, à la manière des recueils : « Les Blancs jouent et font mat en 2 », « Les Noirs jouent et gagnent ».
+- Sous-titre qui invite à chercher (« Le mat est forcé. Saurez-vous le trouver ? ») et pastille d'objectif (« 2 coups à trouver »).
+- Difficulté lisible d'un coup d'œil : tranche, classement et jauge de 4 points dorés.
+- Échiquier mis en valeur : coins arrondis, ombre portée, dernier coup adverse surligné.
+- Indice présenté dans une carte discrète, à lire seulement si besoin.
+- Marque réduite à un pied de page sobre (mascotte, nom, référence Lichess) : aucune URL, aucun appel à installer.
+
+### Image de la solution
+- Même en-tête que l'énoncé : les deux images forment une paire.
+- Une carte numérotée par coup : flèches, description, réponse adverse et pièce prise.
+- Conclusion explicite (« Échec et mat ! » ou « Avantage décisif ») et roi maté mis en lumière.
+
 ## ChessDuck 2.0.2 — textes au-dessus de l'échiquier toujours complets
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

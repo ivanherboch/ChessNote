@@ -103,8 +103,13 @@ class AppRobolectricTest {
         val dir = File(System.getenv("SHOT_DIR") ?: "build/screenshots").apply { mkdirs() }
         File(dir, "6_partage.png").outputStream().use { bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
         val ctx: android.content.Context = ApplicationProvider.getApplicationContext()
-        for ((name, id) in listOf("7_solution_courte" to "0000D", "8_solution_longue" to "005f3")) {
-            val pz = db.puzzles().byId(id)!!
+        db.puzzles().byId("00WqT")?.let { pz ->
+            val l = com.ivanherboch.chessduck.chess.Line.fromUci(pz.fen, pz.moves)
+            val img = com.ivanherboch.chessduck.feature.ShareCard.render(ctx, pz, l.positions[1], l.positions[1].whiteToMove, l.moves[0])
+            File(dir, "6b_partage_mat.png").outputStream().use { img.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        }
+        for ((name, id) in listOf("7_solution_courte" to "0000D", "8_solution_longue" to "005f3", "8b_solution_mat" to "00WqT")) {
+            val pz = db.puzzles().byId(id) ?: continue
             val sol = com.ivanherboch.chessduck.feature.ShareCard.renderSolution(ctx, pz)
             File(dir, "$name.png").outputStream().use { sol.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
         }
@@ -229,7 +234,7 @@ class AppRobolectricTest {
         shot("3h_theme_masque")
         val mates = com.ivanherboch.chessduck.content.PuzzleThemes.all.filter { it.group == com.ivanherboch.chessduck.content.PuzzleThemes.G_MATE }.map { it.name }
         val seen = HashSet<String>()
-        repeat(8) {
+        repeat(16) {
             rule.onNodeWithText("Révéler le thème").performClick(); settle(600)
             val shown = mates.filter { name -> rule.onAllNodesWithText("Type de problème : $name").fetchSemanticsNodes().isNotEmpty() }
             assertEquals(1, shown.size)
