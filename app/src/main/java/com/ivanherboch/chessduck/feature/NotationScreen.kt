@@ -194,10 +194,11 @@ fun NotationScreen(vm: NotationViewModel) {
             val type: (String) -> Unit = { k -> if (!vm.type(k)) fb?.error() }
             val on = !s.solved
             Column(Modifier.padding(top = 6.dp, bottom = 6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(Modifier.fillMaxWidth().height(48.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Touches de pièces : lettre FIDE, nom anglais, puis nom français.
+                Row(Modifier.fillMaxWidth().height(60.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     for ((pt, sub) in listOf(KING to "King", QUEEN to "Queen", ROOK to "Rook", BISHOP to "Bishop", KNIGHT to "Knight")) {
                         val k = pieceLetter(pt).toString()
-                        Key(k, sub, Modifier.weight(1f), on, "$k, ${sub}, ${PIECE_NAMES_FR[pt]}") { type(k) }
+                        Key(k, sub, Modifier.weight(1f), on, "$k, ${sub}, ${PIECE_NAMES_FR[pt]}", sub2 = PIECE_NAMES_FR[pt]) { type(k) }
                     }
                 }
                 Row(Modifier.fillMaxWidth().height(46.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -260,7 +261,7 @@ private fun BackspaceKey(enabled: Boolean, onTap: () -> Unit, onLong: () -> Unit
 }
 
 @Composable
-private fun Key(label: String, sub: String?, modifier: Modifier, enabled: Boolean, description: String, onClick: () -> Unit) {
+private fun Key(label: String, sub: String?, modifier: Modifier, enabled: Boolean, description: String, sub2: String? = null, onClick: () -> Unit) {
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     Column(
@@ -271,5 +272,6 @@ private fun Key(label: String, sub: String?, modifier: Modifier, enabled: Boolea
     ) {
         Text(label, color = if (enabled) c.text else c.muted, style = MaterialTheme.typography.titleMedium, maxLines = 1)
         if (sub != null) Text(sub, color = c.muted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        if (sub2 != null) Text(sub2, color = if (enabled) c.text else c.muted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }

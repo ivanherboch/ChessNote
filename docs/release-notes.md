@@ -1,3 +1,9 @@
+## ChessDuck 2.2.1 — noms des pièces en français dans le clavier de Notation
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Notation : les touches K, Q, R, B, N affichent sous le nom anglais le nom français de la pièce (Roi, Dame, Tour, Fou, Cavalier).
+
 ## ChessDuck 2.2.0 — refonte interne : plus rapide, plus sobre, mieux testée
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
