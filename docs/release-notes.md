@@ -1,3 +1,9 @@
+## ChessDuck 2.2.6 — correctif des problèmes récents
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Problèmes récents : un problème joué avec un thème précis sélectionné (ex. « Mat en 1 ») ou dont le thème a été révélé affiche désormais son thème, au lieu de « thème masqué ». Les problèmes jamais résolus ni révélés restent masqués (anti-spoiler).
+
 ## ChessDuck 2.2.5 — nouvelle mascotte partout dans l'application
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

@@ -228,6 +228,9 @@ class PuzzlesViewModel(
     /** Les 5 derniers problèmes joués avant le problème courant (persistés via DataStore). */
     private val _recents = MutableStateFlow<List<Puzzle>>(emptyList())
     val recents: StateFlow<List<Puzzle>> = _recents.asStateFlow()
+    /** Problèmes récents dont le thème était visible quand ils ont été joués : il reste affiché dans « Récents ». */
+    val knownThemes: StateFlow<Set<String>> = prefs.settings.map { it.knownThemePuzzles }.distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
     private var job: Job? = null
     /** Chargement de problème en cours (tirage, ouverture par identifiant ou suggestion) : un seul à la fois. */
     private var loadJob: Job? = null
@@ -307,6 +310,8 @@ class PuzzlesViewModel(
         }
         job = viewModelScope.launch {
             prefs.pushRecentPuzzle(p.id)
+            // Thème déjà affiché (filtre sur un thème précis) : il le restera dans la liste des récents.
+            if (state.value.themeVisible) prefs.markThemeKnown(p.id)
             delay(600)
             _state.update { it.copy(progress = 1, cursor = 1, anim = moveAnim(line.positions[0], line.moves[0])) }
         }
@@ -346,7 +351,10 @@ class PuzzlesViewModel(
     }
 
     /** Révèle le thème (et son conseil) avant la résolution. */
-    fun revealTheme() = _state.update { it.copy(themeRevealed = true) }
+    fun revealTheme() {
+        _state.update { it.copy(themeRevealed = true) }
+        state.value.puzzle?.id?.let { id -> viewModelScope.launch { prefs.markThemeKnown(id) } }
+    }
 
     /** Change la difficulté sans tirer de problème : le filtre s'applique au prochain tirage aléatoire. */
     fun setBand(band: Int) {

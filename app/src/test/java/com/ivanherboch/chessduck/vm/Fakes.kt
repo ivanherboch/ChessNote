@@ -33,8 +33,11 @@ class FakeSettings(initial: Settings = Settings()) : SettingsRepository {
     override suspend fun setGameSettings(twoPlayers: Boolean, color: Int, aiElo: Int) =
         flow.update { it.copy(twoPlayers = twoPlayers, colorChoice = color, aiElo = aiElo) }
     override suspend fun setPuzzleFilter(band: Int, theme: String) = flow.update { it.copy(puzzleBand = band, puzzleTheme = theme) }
-    override suspend fun pushRecentPuzzle(id: String) =
-        flow.update { it.copy(recentPuzzles = (listOf(id) + it.recentPuzzles.filter { r -> r != id }).take(6), puzzleId = id) }
+    override suspend fun pushRecentPuzzle(id: String) = flow.update {
+        val recent = (listOf(id) + it.recentPuzzles.filter { r -> r != id }).take(6)
+        it.copy(recentPuzzles = recent, puzzleId = id, knownThemePuzzles = it.knownThemePuzzles.filter { k -> k in recent }.toSet())
+    }
+    override suspend fun markThemeKnown(id: String) = flow.update { it.copy(knownThemePuzzles = it.knownThemePuzzles + id) }
 }
 
 /** Catalogue de problèmes en mémoire (mêmes règles de filtre que la base). */

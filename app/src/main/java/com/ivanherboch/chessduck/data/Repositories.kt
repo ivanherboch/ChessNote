@@ -15,6 +15,8 @@ interface SettingsRepository {
     suspend fun setPuzzleFilter(band: Int, theme: String)
     /** Place un problème en tête de l'historique des problèmes joués (et le mémorise comme problème courant). */
     suspend fun pushRecentPuzzle(id: String)
+    /** Mémorise que le thème de ce problème récent était visible quand il a été joué (anti-spoiler levé). */
+    suspend fun markThemeKnown(id: String)
 }
 
 /** Catalogue des problèmes embarqués et progression du joueur. */

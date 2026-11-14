@@ -181,6 +181,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
     val exportScope = rememberCoroutineScope()
     var recentSheet by remember { mutableStateOf(false) }
     val recents by vm.recents.collectAsStateWithLifecycle()
+    val knownThemes by vm.knownThemes.collectAsStateWithLifecycle()
     val line = s.line
     val p = s.puzzle
 
@@ -286,14 +287,16 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         DuckSheet("Derniers problèmes joués", { recentSheet = false }) {
             for (r in recents) {
                 val done = r.id in solved
+                // Thème visible si le problème est résolu, ou s'il était déjà affiché quand il a été joué.
+                val themeShown = done || r.id in knownThemes
                 Row(
                     Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(12.dp)).background(c.surface)
                         .clickable(role = Role.Button) { recentSheet = false; vm.openPuzzle(r) }.padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        // Le thème d'un problème non résolu reste masqué (anti-spoiler).
-                        Text("#${r.id} · ${if (done) PuzzleThemes.primary(r.themes).name else "thème masqué"}", color = c.text, style = MaterialTheme.typography.titleSmall)
+                        // Le thème d'un problème non résolu et jamais révélé reste masqué (anti-spoiler).
+                        Text("#${r.id} · ${if (themeShown) PuzzleThemes.primary(r.themes).name else "thème masqué"}", color = c.text, style = MaterialTheme.typography.titleSmall)
                         Text("${PuzzleThemes.BANDS[PuzzleThemes.bandOf(r.rating)]} · ${r.rating}", color = c.muted, style = MaterialTheme.typography.bodySmall)
                     }
                     if (done) Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = c.greenText, modifier = Modifier.padding(end = 4.dp).size(18.dp))

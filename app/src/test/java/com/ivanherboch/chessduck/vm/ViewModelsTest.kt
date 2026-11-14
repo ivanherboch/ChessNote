@@ -117,6 +117,25 @@ class ViewModelsTest {
     }
 
     @Test
+    fun recentKeepsThemeWhenItWasVisible() = test {
+        // Filtre sur un thème précis (ici celui du problème) : le thème était affiché, il le reste dans « Récents ».
+        val theme = PUZZLE_0000D.primaryTheme
+        val settings = FakeSettings(Settings(puzzleTheme = theme))
+        val vm = PuzzlesViewModel(settings, FakePuzzles(listOf(PUZZLE_0000D)), FakeEngine())
+        runCurrent()
+        assertTrue(vm.state.value.themeVisible)
+        assertTrue("0000D" in settings.flow.value.knownThemePuzzles)
+        // Sans filtre : thème masqué jusqu'à ce qu'il soit révélé.
+        val settings2 = FakeSettings()
+        val vm2 = PuzzlesViewModel(settings2, FakePuzzles(listOf(PUZZLE_0000D)), FakeEngine())
+        runCurrent()
+        assertFalse(vm2.state.value.themeVisible)
+        assertFalse("0000D" in settings2.flow.value.knownThemePuzzles)
+        vm2.revealTheme(); runCurrent()
+        assertTrue("0000D" in settings2.flow.value.knownThemePuzzles)
+    }
+
+    @Test
     fun notationExerciseFromFallbackAndValidation() = test {
         val settings = FakeSettings()
         val vm = NotationViewModel(settings, FakePuzzles(emptyList()))
