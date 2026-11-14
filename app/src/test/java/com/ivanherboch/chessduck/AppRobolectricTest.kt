@@ -113,6 +113,20 @@ class AppRobolectricTest {
             val sol = com.ivanherboch.chessduck.feature.ShareCard.renderSolution(ctx, pz)
             File(dir, "$name.png").outputStream().use { sol.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
         }
+        // Toutes les variantes : portrait / carré, sombre / clair.
+        for (fmt in com.ivanherboch.chessduck.feature.ShareFormat.values()) for (light in listOf(false, true)) {
+            val st = com.ivanherboch.chessduck.feature.ShareStyle(fmt, light)
+            val tag = fmt.name.lowercase() + if (light) "_clair" else "_sombre"
+            for (id in listOf("00WqT", "005f3", "0000D")) {
+                val pz = db.puzzles().byId(id) ?: continue
+                val l = com.ivanherboch.chessduck.chess.Line.fromUci(pz.fen, pz.moves)
+                val a = com.ivanherboch.chessduck.feature.ShareCard.render(ctx, pz, l.positions[1], l.positions[1].whiteToMove, l.moves[0], st)
+                val b = com.ivanherboch.chessduck.feature.ShareCard.renderSolution(ctx, pz, st)
+                assertEquals(fmt.height, a.height); assertEquals(fmt.height, b.height)
+                File(dir, "share_${tag}_${id}_pb.png").outputStream().use { a.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+                File(dir, "share_${tag}_${id}_sol.png").outputStream().use { b.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+            }
+        }
         assertNotNull(db.puzzles().byIdIgnoreCase("0000d"))
         db.close()
     }

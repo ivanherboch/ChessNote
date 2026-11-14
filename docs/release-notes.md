@@ -1,3 +1,14 @@
+## ChessDuck 2.1.0 — images de partage : formats, fond clair, prêtes pour WhatsApp
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Deux formats au choix : **Portrait 4:5** (1080 × 1350, idéal WhatsApp et messageries) et **Carré 1:1** (1080 × 1080, publication Instagram).
+- Dimensions taillées pour WhatsApp : l'image s'affiche en entier dans la conversation, sans recadrage ni réduction ; textes assez grands pour rester nets après compression.
+- Fond **Sombre** ou **Clair**, décliné des thèmes Nuit et Jour de l'application.
+- La solution tient toujours sur une seule image : grandes grilles et phrases complètes pour 1–2 coups, grille compacte (notation seule) au-delà.
+- Aperçu en direct de chaque image dans « Exporter en image » ; réglages mémorisés.
+- Anti-spoiler : l'aperçu de la solution reste masqué tant que le problème n'est pas résolu (« Toucher pour voir »).
+
 ## ChessDuck 2.0.3 — images de partage repensées
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

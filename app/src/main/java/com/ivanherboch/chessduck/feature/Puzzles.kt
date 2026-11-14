@@ -1,5 +1,16 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.runtime.produceState
 import android.app.Application
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -688,15 +699,33 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
     if (shareChoice) {
         var status by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
         DuckSheet("Exporter en image", { shareChoice = false }) {
+            var style by remember { mutableStateOf(ShareStyle.load(context)) }
+            val setStyle = { v: ShareStyle -> style = v; ShareStyle.save(context, v) }
+            // Aperçus calculés hors du fil principal, recalculés à chaque changement de réglage.
+            val problemPreview by produceState<ImageBitmap?>(null, style, p.id) {
+                value = withContext(Dispatchers.Default) { ShareCard.render(context, p, line.positions[1], s.playerWhite, line.moves[0], style).asImageBitmap() }
+            }
+            val solutionPreview by produceState<ImageBitmap?>(null, style, p.id) {
+                value = withContext(Dispatchers.Default) { ShareCard.renderSolution(context, p, style).asImageBitmap() }
+            }
+            ExportOption("Format", listOf("Portrait 4:5" to (style.format == ShareFormat.PORTRAIT), "Carré 1:1" to (style.format == ShareFormat.SQUARE))) { i ->
+                setStyle(style.copy(format = if (i == 0) ShareFormat.PORTRAIT else ShareFormat.SQUARE))
+            }
+            Text(
+                if (style.format == ShareFormat.PORTRAIT) "Idéal pour WhatsApp et les messageries : affiché en entier, sans recadrage."
+                else "Idéal pour une publication Instagram ou un aperçu compact.",
+                color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 6.dp),
+            )
+            ExportOption("Fond", listOf("Sombre" to !style.light, "Clair" to style.light)) { i -> setStyle(style.copy(light = i == 1)) }
             ExportCard(
-                "Le problème", "L'énoncé seul : échiquier, trait, difficulté, type et conseil — sans la solution.", c.blue, Icons.Rounded.Extension,
-                onShare = { shareChoice = false; ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0]) },
-                onSave = { status = ShareCard.saveProblem(context, p, line.positions[1], s.playerWhite, line.moves[0])?.let { true to it } ?: (false to "L'image n'a pas pu être enregistrée.") },
+                "Le problème", "L'énoncé seul : le défi, l'échiquier, la difficulté et un indice — sans la solution.", c.blue, Icons.Rounded.Extension, problemPreview,
+                onShare = { shareChoice = false; ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0], style) },
+                onSave = { status = ShareCard.saveProblem(context, p, line.positions[1], s.playerWhite, line.moves[0], style)?.let { true to it } ?: (false to "L'image n'a pas pu être enregistrée.") },
             )
             ExportCard(
-                "La solution", "Une grille par coup : flèches des déplacements, symboles ✕ + # et pièces capturées.", c.green, Icons.Rounded.CheckCircle,
-                onShare = { shareChoice = false; ShareCard.shareSolution(context, p) },
-                onSave = { status = ShareCard.saveSolution(context, p)?.let { true to it } ?: (false to "L'image n'a pas pu être enregistrée.") },
+                "La solution", "Une carte par coup : flèches, échecs (+), mat (#), pièces prises et conclusion.", c.green, Icons.Rounded.CheckCircle, solutionPreview, masked = !s.solved,
+                onShare = { shareChoice = false; ShareCard.shareSolution(context, p, style) },
+                onSave = { status = ShareCard.saveSolution(context, p, style)?.let { true to it } ?: (false to "L'image n'a pas pu être enregistrée.") },
             )
             status?.let { (ok, msg) ->
                 Row(Modifier.padding(top = 4.dp, bottom = 6.dp).semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }, verticalAlignment = Alignment.CenterVertically) {
@@ -724,17 +753,63 @@ private fun RefuteCountdown(until: Long, hold: Long) {
     )
 }
 
-/** Une image exportable : son titre, sa description et deux actions, partager ou enregistrer. */
+/** Choix segmenté d'un réglage d'export (format, fond). */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ExportCard(title: String, description: String, accent: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, onShare: () -> Unit, onSave: () -> Unit) {
+private fun ExportOption(label: String, options: List<Pair<String, Boolean>>, onSelect: (Int) -> Unit) {
     val c = LocalDuck.current
-    Column(Modifier.fillMaxWidth().padding(vertical = 5.dp).clip(RoundedCornerShape(14.dp)).background(c.surface).padding(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = c.role(accent).text, modifier = Modifier.size(20.dp))
-            Text(title, color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 8.dp))
+    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.width(72.dp))
+        SingleChoiceSegmentedButtonRow(Modifier.weight(1f)) {
+            options.forEachIndexed { i, (text, selected) ->
+                SegmentedButton(
+                    selected = selected, onClick = { onSelect(i) },
+                    shape = SegmentedButtonDefaults.itemShape(i, options.size),
+                    colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = c.goldRole.fill, activeContentColor = c.goldRole.onFill, activeBorderColor = c.outlineStrong,
+                        inactiveContainerColor = c.surface, inactiveContentColor = c.text, inactiveBorderColor = c.outlineStrong,
+                    ),
+                ) { Text(text, style = MaterialTheme.typography.labelLarge, maxLines = 1) }
+            }
         }
-        Text(description, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp, bottom = 10.dp))
-        EqualRow(gap = 8.dp) {
+    }
+}
+
+/** Une image exportable : aperçu, titre, description et deux actions, partager ou enregistrer. */
+@Composable
+private fun ExportCard(
+    title: String, description: String, accent: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, preview: ImageBitmap?,
+    masked: Boolean = false, onShare: () -> Unit, onSave: () -> Unit,
+) {
+    val c = LocalDuck.current
+    // Anti-spoiler : l'aperçu de la solution reste caché tant que le problème n'est pas résolu.
+    var reveal by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxWidth().padding(vertical = 5.dp).clip(RoundedCornerShape(14.dp)).background(c.surface).padding(12.dp)) {
+        Row(verticalAlignment = Alignment.Top) {
+            Box(Modifier.width(96.dp).height(120.dp).clip(RoundedCornerShape(8.dp)).background(c.surfaceHi), contentAlignment = Alignment.Center) {
+                if (masked && !reveal) {
+                    Column(
+                        Modifier.fillMaxSize().clickable(onClickLabel = "Afficher l'aperçu de la solution") { reveal = true },
+                        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                    ) {
+                        Icon(Icons.Rounded.VisibilityOff, contentDescription = null, tint = c.muted, modifier = Modifier.size(24.dp))
+                        Text("Toucher pour voir", color = c.muted, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 4.dp, start = 4.dp, end = 4.dp))
+                    }
+                } else if (preview != null) {
+                    androidx.compose.foundation.Image(preview, contentDescription = "Aperçu : $title", contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize())
+                } else {
+                    CircularProgressIndicator(Modifier.size(22.dp), color = c.role(accent).fill, strokeWidth = 2.dp)
+                }
+            }
+            Column(Modifier.padding(start = 12.dp).weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(icon, contentDescription = null, tint = c.role(accent).text, modifier = Modifier.size(20.dp))
+                    Text(title, color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 8.dp))
+                }
+                Text(description, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp))
+            }
+        }
+        EqualRow(gap = 8.dp, modifier = Modifier.padding(top = 10.dp)) {
             DuckButton("Partager", onShare, Modifier.weight(1f), accent = accent, filled = true, icon = Icons.Rounded.Share, contentDescription = "Partager : $title")
             DuckButton("Enregistrer", onSave, Modifier.weight(1f), accent = accent, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Download, contentDescription = "Enregistrer dans la galerie : $title")
         }
