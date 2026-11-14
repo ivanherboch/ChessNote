@@ -594,7 +594,8 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                 DuckIconButton(Icons.Rounded.History, "Problèmes récents", { recentSheet = true }, enabled = recents.isNotEmpty())
                 DuckIconButton(Icons.Rounded.IosShare, "Exporter en image", { shareChoice = true })
             }
-            Row(Modifier.fillMaxWidth().height(32.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Ligne d'information toujours lisible en entier : elle passe à la ligne au lieu de se couper.
+            Row(Modifier.fillMaxWidth().heightIn(min = 32.dp).padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                 SideDot(s.playerWhite)
                 Text(
                     if (s.playerWhite) "Trait aux Blancs" else "Trait aux Noirs", color = c.text, style = MaterialTheme.typography.titleSmall,
@@ -602,7 +603,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                 )
                 Text(
                     (if (visible) type.name else "Thème masqué") + " · ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} ${p.rating} · #${p.id}",
-                    color = c.muted, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    color = c.muted, style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(start = 10.dp).weight(1f),
                 )
             }

@@ -345,7 +345,7 @@ private fun KidGame(vm: KidViewModel, onQuit: () -> Unit) {
                     val bubble = RoundedCornerShape(32.dp)
                     Row(
                         Modifier.weight(1f).padding(start = 4.dp).shadow(8.dp, bubble).clip(bubble)
-                            .background(Color.White).border(4.dp, accent, bubble).height(54.dp).padding(horizontal = 14.dp)
+                            .background(Color.White).border(4.dp, accent, bubble).heightIn(min = 54.dp).padding(horizontal = 14.dp)
                             .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center,
                     ) {
@@ -356,7 +356,7 @@ private fun KidGame(vm: KidViewModel, onQuit: () -> Unit) {
                             )
                         }
                         val text = s.result ?: blocked ?: ((if (pos.inCheck) "Échec ! " else "") + if (whiteTurn) "Aux Blancs de jouer" else "Aux Noirs de jouer")
-                        AutoText(text, color = c.text, maxSize = 22.sp, minSize = 13.sp, weight = FontWeight.Bold, align = TextAlign.Center, maxLines = if (text.length > 22) 2 else 1, modifier = Modifier.padding(start = 10.dp))
+                        AutoText(text, color = c.text, maxSize = 22.sp, minSize = 13.sp, weight = FontWeight.Bold, align = TextAlign.Center, maxLines = if (text.length > 22) 3 else 1, modifier = Modifier.padding(start = 10.dp, top = 4.dp, bottom = 4.dp))
                     }
                     // Sortie discrète, loin de la zone du pouce ; une confirmation est demandée.
                     QuitPill(onQuit, Modifier.padding(start = 8.dp, end = 4.dp))
@@ -527,11 +527,11 @@ private fun KidDemo(piece: KidPiece, onClose: () -> Unit) {
             val bubble = RoundedCornerShape(32.dp)
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 10.dp).shadow(8.dp, bubble).clip(bubble)
-                    .background(Color.White).border(4.dp, piece.edge, bubble).height(54.dp).padding(horizontal = 18.dp),
+                    .background(Color.White).border(4.dp, piece.edge, bubble).heightIn(min = 54.dp).padding(horizontal = 18.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center,
             ) {
                 Image(painterResource(KID_PIECE_RES.getValue(piece.type)), null, Modifier.size(38.dp))
-                AutoText("Comment bouge ${piece.article.replaceFirstChar { it.lowercase() }} ?", color = piece.ink, maxSize = 22.sp, weight = FontWeight.Bold, align = TextAlign.Center, modifier = Modifier.padding(start = 8.dp))
+                AutoText("Comment bouge ${piece.article.replaceFirstChar { it.lowercase() }} ?", color = piece.ink, maxSize = 22.sp, minSize = 13.sp, weight = FontWeight.Bold, align = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 4.dp))
             }
         },
         board = {

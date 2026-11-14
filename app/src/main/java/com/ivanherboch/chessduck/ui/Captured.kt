@@ -23,6 +23,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -206,12 +207,12 @@ fun PlayerBar(
         if (lead > 0) append(". Avantage +$lead")
     }
     Row(
-        modifier.fillMaxWidth().height(34.dp).clearAndSetSemantics { contentDescription = desc },
+        modifier.fillMaxWidth().heightIn(min = 34.dp).clearAndSetSemantics { contentDescription = desc },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SideDot(white)
         Text(
-            name, color = c.text, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            name, color = c.text, style = MaterialTheme.typography.labelLarge, maxLines = 2,
             modifier = Modifier.padding(start = 6.dp).widthIn(max = 150.dp),
         )
         if (detail != null) Text(" $detail", color = c.muted, style = MaterialTheme.typography.labelMedium, maxLines = 1)

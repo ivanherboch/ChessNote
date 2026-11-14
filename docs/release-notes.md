@@ -1,3 +1,13 @@
+## ChessDuck 2.0.2 — textes au-dessus de l'échiquier toujours complets
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Académie : le titre de la leçon s'affiche en entier (retour à la ligne au lieu de « … »).
+- Problèmes : la ligne « Trait aux Blancs/Noirs · thème · niveau · #id » passe à la ligne au lieu d'être coupée.
+- Jeu Libre et Revue : intitulé de la partie, bilan, date et résultat affichés en entier.
+- Barres des joueurs et bulles du mode Enfant : le texte passe à la ligne au lieu d'être tronqué.
+- L'échiquier s'ajuste automatiquement à la hauteur de ces textes.
+
 ## ChessDuck 2.0.0 — refonte de l'interface
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

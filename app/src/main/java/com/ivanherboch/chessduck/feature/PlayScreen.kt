@@ -148,14 +148,14 @@ private fun LiveGame(vm: PlayViewModel) {
                 Column(Modifier.padding(start = 8.dp).weight(1f)) {
                     Text(
                         if (s.twoPlayers) "Partie à 2 joueurs" else "Ordinateur · ${s.aiElo}",
-                        color = c.text, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        color = c.text, style = MaterialTheme.typography.titleSmall,
                     )
                     val w = tally.firstOrNull { it.outcome == 1 }?.n ?: 0
                     val d = tally.firstOrNull { it.outcome == 0 }?.n ?: 0
                     val l = tally.firstOrNull { it.outcome == -1 }?.n ?: 0
                     Text(
                         if (s.twoPlayers) "Hors classement ELO" else "Bilan $w V · $d N · $l D",
-                        color = c.muted, style = MaterialTheme.typography.labelMedium, maxLines = 1,
+                        color = c.muted, style = MaterialTheme.typography.labelMedium,
                     )
                 }
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
@@ -305,9 +305,9 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
                 Column(Modifier.padding(start = 4.dp).weight(1f)) {
                     Text(
                         "Revue : " + if (g.whiteName.isEmpty()) g.opponent.replace("Stockfish", "Ordinateur") else "${g.whiteName} – ${g.blackName}",
-                        color = c.text, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        color = c.text, style = MaterialTheme.typography.titleSmall,
                     )
-                    Text("${formatDate(g.date)} · ${g.result} (${g.reason})", color = c.muted, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("${formatDate(g.date)} · ${g.result} (${g.reason})", color = c.muted, style = MaterialTheme.typography.labelMedium)
                 }
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
                 DuckIconButton(Icons.Rounded.Insights, "Jauge d'évaluation", vm::toggleEval, accent = c.blue, selected = r.evalOn)

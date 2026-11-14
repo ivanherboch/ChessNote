@@ -327,8 +327,8 @@ fun AcademyScreen(vm: AcademyViewModel) {
                         Icon(Icons.Rounded.ExpandMore, contentDescription = null, tint = c.muted, modifier = Modifier.size(20.dp))
                     }
                     Text(
-                        "${l.id}. ${l.title}", color = c.text, style = MaterialTheme.typography.titleMedium, maxLines = 1,
-                        overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp),
+                        "${l.id}. ${l.title}", color = c.text, style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(top = 2.dp),
                     )
                 }
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Leçon suivante", vm::nextLesson)
