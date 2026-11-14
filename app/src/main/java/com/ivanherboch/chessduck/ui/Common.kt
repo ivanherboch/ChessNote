@@ -1,5 +1,13 @@
 package com.ivanherboch.chessduck.ui
 
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.getValue
@@ -457,6 +465,83 @@ fun FeedbackCard(
 
 /** Taille plancher du texte des cartes sous l'échiquier. */
 private val FEEDBACK_MIN = 12.sp
+
+/** Couleurs des champs de saisie ChessDuck (bordure et curseur dorés, libellés atténués). */
+@Composable
+fun duckTextFieldColors(): TextFieldColors {
+    val c = LocalDuck.current
+    return OutlinedTextFieldDefaults.colors(
+        focusedTextColor = c.text, unfocusedTextColor = c.text, errorTextColor = c.text,
+        focusedBorderColor = c.goldText, unfocusedBorderColor = c.outlineStrong,
+        cursorColor = c.goldText, focusedLabelColor = c.goldText, unfocusedLabelColor = c.muted,
+        focusedLeadingIconColor = c.muted, unfocusedLeadingIconColor = c.muted,
+        focusedSupportingTextColor = c.muted, unfocusedSupportingTextColor = c.muted,
+    )
+}
+
+/** Champ de saisie M3 sur une ligne, au style ChessDuck (recherche, pseudo…). */
+@Composable
+fun DuckTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    placeholder: String? = null,
+    leadingIcon: ImageVector? = null,
+    trailingIcon: (@Composable () -> Unit)? = null,
+    supportingText: (@Composable () -> Unit)? = null,
+    isError: Boolean = false,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+) {
+    OutlinedTextField(
+        value = value, onValueChange = onValueChange, singleLine = true,
+        label = { Text(label) },
+        placeholder = placeholder?.let { { Text(it) } },
+        leadingIcon = leadingIcon?.let { { Icon(it, contentDescription = null) } },
+        trailingIcon = trailingIcon,
+        supportingText = supportingText,
+        isError = isError,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        modifier = modifier,
+        colors = duckTextFieldColors(),
+    )
+}
+
+/**
+ * Boutons segmentés M3 au style ChessDuck (segment actif doré) : un choix unique parmi [options].
+ * [icons] remplace la coche par défaut par une icône propre à chaque segment.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DuckSegmentedRow(
+    options: List<String>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    icons: List<ImageVector>? = null,
+) {
+    val c = LocalDuck.current
+    SingleChoiceSegmentedButtonRow(modifier) {
+        options.forEachIndexed { i, label ->
+            val icon = icons?.getOrNull(i)
+            SegmentedButton(
+                selected = selectedIndex == i, onClick = { onSelect(i) },
+                shape = SegmentedButtonDefaults.itemShape(i, options.size),
+                icon = if (icon != null) {
+                    { Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                } else {
+                    { SegmentedButtonDefaults.Icon(selectedIndex == i) }
+                },
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = c.goldRole.fill, activeContentColor = c.goldRole.onFill, activeBorderColor = c.outlineStrong,
+                    inactiveContainerColor = c.surface, inactiveContentColor = c.text, inactiveBorderColor = c.outlineStrong,
+                ),
+            ) { Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1) }
+        }
+    }
+}
 
 /** État vide : icône, message clair et action directe. */
 @Composable

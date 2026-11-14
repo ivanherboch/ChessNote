@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck.feature
 
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import com.ivanherboch.chessduck.ui.DuckSegmentedRow
+import com.ivanherboch.chessduck.ui.DuckTextField
 import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -116,9 +120,10 @@ data class AcademyState(
 
 class AcademyViewModel(app: Application) : AndroidViewModel(app) {
     private val duck = app as ChessDuckApp
-    val state = MutableStateFlow(AcademyState())
+    private val _state = MutableStateFlow(AcademyState())
+    val state: StateFlow<AcademyState> = _state.asStateFlow()
     val mastered = duck.db.user().masteredLessons().map { it.toSet() }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
     private var job: Job? = null
 
     val lesson: Lesson get() = Lessons.byId(state.value.lessonId)
@@ -134,27 +139,27 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
         job?.cancel()
         val l = Lessons.byId(id)
         val challenge = state.value.challenge
-        state.update {
+        _state.update {
             it.copy(
                 lessonId = l.id, cursor = 0, playing = false, flipped = !l.heroWhite, anim = null, hintStage = 0, done = false,
                 filter = if (it.filter != null && it.filter != l.category) l.category else it.filter,
             )
         }
         if (save) viewModelScope.launch { duck.prefs.setLesson(l.id) }
-        if (challenge) startChallenge() else state.update { it.copy(message = "", tone = Tone.INFO) }
+        if (challenge) startChallenge() else _state.update { it.copy(message = "", tone = Tone.INFO) }
     }
 
     fun setFilter(cat: LessonCategory?) {
-        state.update { it.copy(filter = cat) }
+        _state.update { it.copy(filter = cat) }
         if (cat != null && lesson.category != cat) open(Lessons.all.first { it.category == cat }.id)
     }
 
-    fun flip() = state.update { it.copy(flipped = !it.flipped) }
+    fun flip() = _state.update { it.copy(flipped = !it.flipped) }
 
     fun setChallenge(on: Boolean) {
         if (state.value.challenge == on) return
         job?.cancel()
-        state.update { it.copy(challenge = on, cursor = 0, playing = false, anim = null, hintStage = 0, done = false, message = "", tone = Tone.INFO) }
+        _state.update { it.copy(challenge = on, cursor = 0, playing = false, anim = null, hintStage = 0, done = false, message = "", tone = Tone.INFO) }
         if (on) startChallenge()
     }
 
@@ -169,7 +174,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
             s.cursor - 1 -> undoAnim(l.line.positions[t], l.line.moves[t])
             else -> null
         }
-        state.update { it.copy(cursor = t, anim = anim) }
+        _state.update { it.copy(cursor = t, anim = anim) }
     }
 
     fun step(delta: Int) { pause(); goTo(state.value.cursor + delta) }
@@ -177,20 +182,20 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
 
     fun pause() {
         job?.cancel()
-        state.update { it.copy(playing = false) }
+        _state.update { it.copy(playing = false) }
     }
 
     fun togglePlay() {
         if (state.value.playing) return pause()
         job?.cancel()
         if (state.value.cursor >= lesson.line.size) goTo(0)
-        state.update { it.copy(playing = true) }
+        _state.update { it.copy(playing = true) }
         job = viewModelScope.launch {
             while (state.value.cursor < lesson.line.size) {
                 delay(if (state.value.cursor == 0) 700 else 2600)
                 goTo(state.value.cursor + 1)
             }
-            state.update { it.copy(playing = false) }
+            _state.update { it.copy(playing = false) }
         }
     }
 
@@ -199,7 +204,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun startChallenge() {
         val l = lesson
-        state.update {
+        _state.update {
             it.copy(
                 cursor = 0, anim = null, hintStage = 0, done = false, tone = Tone.INFO, flipped = !l.heroWhite,
                 message = "À vous de jouer les coups des ${sideName(l)} sur l'échiquier. ${l.summary}",
@@ -226,11 +231,11 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
             while (state.value.cursor < l.line.size && !heroToMove(state.value.cursor)) {
                 delay(650)
                 val cur = state.value.cursor
-                state.update { it.copy(cursor = cur + 1, anim = moveAnim(l.line.positions[cur], l.line.moves[cur]), hintStage = 0) }
+                _state.update { it.copy(cursor = cur + 1, anim = moveAnim(l.line.positions[cur], l.line.moves[cur]), hintStage = 0) }
             }
             if (state.value.cursor >= l.line.size) {
                 duck.db.user().markLesson(LessonProgress(l.id, System.currentTimeMillis()))
-                state.update {
+                _state.update {
                     it.copy(done = true, tone = Tone.GOOD, message = "Leçon maîtrisée ! Vous avez joué tous les coups clés de « ${l.title} ».")
                 }
             }
@@ -244,7 +249,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
         if (!s.challenge || s.done || !heroToMove(s.cursor)) return false
         val expected = l.line.moves[s.cursor]
         if (m == expected) {
-            state.update {
+            _state.update {
                 it.copy(
                     cursor = s.cursor + 1, anim = moveAnim(l.line.positions[s.cursor], m), hintStage = 0, tone = Tone.GOOD,
                     message = "${l.line.sans[s.cursor]} — ${l.texts[s.cursor]}",
@@ -254,7 +259,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
             return true
         }
         val played = l.line.positions[s.cursor].san(m)
-        state.update {
+        _state.update {
             it.copy(tone = Tone.BAD, message = "$played n'est pas le coup de la leçon. Réfléchissez à l'idée du thème, ou demandez un indice.")
         }
         return false
@@ -264,7 +269,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
         val s = state.value
         if (!s.challenge || s.done || !heroToMove(s.cursor)) return
         val stage = (s.hintStage + 1).coerceAtMost(2)
-        state.update {
+        _state.update {
             it.copy(
                 hintStage = stage, tone = Tone.GOLD,
                 message = if (stage == 1) "Indice 1/2 : la pièce à jouer est surlignée en vert." else "Indice 2/2 : suivez la flèche.",
@@ -334,19 +339,10 @@ fun AcademyScreen(vm: AcademyViewModel) {
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Leçon suivante", vm::nextLesson)
             }
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                SingleChoiceSegmentedButtonRow(Modifier.weight(1f)) {
-                    listOf("Guidé (démo)" to false, "Défi (pratique)" to true).forEachIndexed { i, (label, challenge) ->
-                        SegmentedButton(
-                            selected = s.challenge == challenge, onClick = { vm.setChallenge(challenge) },
-                            shape = SegmentedButtonDefaults.itemShape(i, 2),
-                            icon = { Icon(if (challenge) Icons.Rounded.SportsScore else Icons.Rounded.Visibility, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                            colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = c.goldRole.fill, activeContentColor = c.goldRole.onFill, activeBorderColor = c.outlineStrong,
-                                inactiveContainerColor = c.surface, inactiveContentColor = c.text, inactiveBorderColor = c.outlineStrong,
-                            ),
-                        ) { Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1) }
-                    }
-                }
+                DuckSegmentedRow(
+                    listOf("Guidé (démo)", "Défi (pratique)"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) },
+                    Modifier.weight(1f), icons = listOf(Icons.Rounded.Visibility, Icons.Rounded.SportsScore),
+                )
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
             }
         },
@@ -424,18 +420,13 @@ private fun LessonCatalog(vm: AcademyViewModel, s: AcademyState, mastered: Set<I
             (q.isEmpty() || norm(l.title).contains(q) || norm(l.summary).contains(q) || l.id.toString() == q)
     }
     DuckSheet("Leçons — ${mastered.size} / $total maîtrisées", onClose) {
-        OutlinedTextField(
-            value = query, onValueChange = { query = it }, singleLine = true,
-            label = { Text("Rechercher une leçon") },
-            placeholder = { Text("ex. fourchette, Lucena, sicilienne…") },
-            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+        DuckTextField(
+            value = query, onValueChange = { query = it },
+            label = "Rechercher une leçon",
+            placeholder = "ex. fourchette, Lucena, sicilienne…",
+            leadingIcon = Icons.Rounded.Search,
             trailingIcon = { if (query.isNotEmpty()) DuckIconButton(Icons.Rounded.Close, "Effacer la recherche", { query = "" }) },
             modifier = Modifier.fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = c.text, unfocusedTextColor = c.text, focusedBorderColor = c.goldText, unfocusedBorderColor = c.outlineStrong,
-                cursorColor = c.goldText, focusedLabelColor = c.goldText, unfocusedLabelColor = c.muted,
-                focusedLeadingIconColor = c.muted, unfocusedLeadingIconColor = c.muted,
-            ),
         )
         SectionTitle("Statut")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

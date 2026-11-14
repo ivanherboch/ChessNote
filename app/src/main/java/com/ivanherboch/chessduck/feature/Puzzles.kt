@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck.feature
 
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import com.ivanherboch.chessduck.ui.DuckSegmentedRow
+import com.ivanherboch.chessduck.ui.DuckTextField
 import android.graphics.Bitmap
 import androidx.compose.runtime.rememberCoroutineScope
 import com.ivanherboch.chessduck.util.runCatchingSuspend
@@ -195,14 +199,21 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     private val duck = app as ChessDuckApp
     private val dao = duck.db.puzzles()
     private val rnd = kotlin.random.Random(System.nanoTime())
-    val state = MutableStateFlow(PuzzleState())
+    private val _state = MutableStateFlow(PuzzleState())
+    val state: StateFlow<PuzzleState> = _state.asStateFlow()
     val solvedIds = dao.solvedIds().map { it.toHashSet() as Set<String> }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
-    val counts = MutableStateFlow<Map<String, ThemeCount>>(emptyMap())
-    val suggestions = MutableStateFlow(Suggestions())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+    private val _counts = MutableStateFlow<Map<String, ThemeCount>>(emptyMap())
+    val counts: StateFlow<Map<String, ThemeCount>> = _counts.asStateFlow()
+    private val _suggestions = MutableStateFlow(Suggestions())
+    val suggestions: StateFlow<Suggestions> = _suggestions.asStateFlow()
     /** Les 5 derniers problèmes joués avant le problème courant (persistés via DataStore). */
-    val recents = MutableStateFlow<List<Puzzle>>(emptyList())
+    private val _recents = MutableStateFlow<List<Puzzle>>(emptyList())
+    val recents: StateFlow<List<Puzzle>> = _recents.asStateFlow()
     private var job: Job? = null
+    /** Chargement de problème en cours (tirage, ouverture par identifiant ou suggestion) : un seul à la fois. */
+    private var loadJob: Job? = null
+    private var countsJob: Job? = null
     private var searchJob: Job? = null
     private val metaLock = Mutex()
 
@@ -216,7 +227,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch {
             val st = duck.prefs.settings.first()
-            state.update { it.copy(band = st.puzzleBand, theme = st.puzzleTheme) }
+            _state.update { it.copy(band = st.puzzleBand, theme = st.puzzleTheme) }
             val saved = if (st.puzzleId.isNotEmpty()) runCatchingSuspend { dao.byId(st.puzzleId) }.getOrNull() else null
             if (saved != null) show(saved) else random()
         }
@@ -224,7 +235,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             duck.prefs.settings.map { it.recentPuzzles }.distinctUntilChanged().collect { ids ->
                 val others = ids.drop(1).take(5)
                 val found = if (others.isEmpty()) emptyList() else runCatchingSuspend { dao.byIds(others) }.getOrDefault(emptyList())
-                recents.value = others.mapNotNull { id -> found.firstOrNull { it.id == id } }
+                _recents.value = others.mapNotNull { id -> found.firstOrNull { it.id == id } }
             }
         }
         // L'index mémoire est préparé dès le lancement : la recherche répond ensuite instantanément.
@@ -234,6 +245,9 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             ensureMeta()
         }
     }
+
+    /** Problèmes résolus, lus directement en base : exact même si aucun écran n'observe [solvedIds]. */
+    private suspend fun solvedNow(): Set<String> = dao.solvedIds().first().toHashSet()
 
     private suspend fun ensureMeta() = metaLock.withLock {
         if (metaIds.isNotEmpty()) return@withLock
@@ -251,7 +265,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     fun search(raw: String) {
         searchJob?.cancel()
         val q = raw.trim().removePrefix("#").lowercase()
-        if (q.isEmpty()) { suggestions.value = Suggestions(); return }
+        if (q.isEmpty()) { _suggestions.value = Suggestions(); return }
         searchJob = viewModelScope.launch(Dispatchers.Default) {
             ensureMeta()
             val exact = ArrayList<Int>()
@@ -271,7 +285,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
                 if (i and 0x3FF == 0) ensureActive()
             }
             val top = (exact + prefix + inside).take(5)
-            suggestions.value = Suggestions(
+            _suggestions.value = Suggestions(
                 raw.trim().removePrefix("#"),
                 top.map { Suggestion(metaIds[it], PuzzleThemes.all[metaCat[it].toInt()].name, metaRatings[it]) },
                 total > top.size,
@@ -281,13 +295,17 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
 
     fun clearSearch() {
         searchJob?.cancel()
-        suggestions.value = Suggestions()
+        _suggestions.value = Suggestions()
     }
 
-    fun openPuzzle(p: Puzzle) = show(p)
+    fun openPuzzle(p: Puzzle) {
+        loadJob?.cancel()
+        show(p)
+    }
 
     fun openSuggestion(id: String, onDone: () -> Unit) {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             runCatchingSuspend { dao.byId(id) }.getOrNull()?.let { show(it) }
             onDone()
         }
@@ -300,7 +318,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         job?.cancel()
         val line = runCatching { Line.fromUci(p.fen, p.moves) }.getOrNull() ?: return
         val white = line.positions[1].whiteToMove
-        state.update {
+        _state.update {
             it.copy(
                 puzzle = p, line = line, progress = 0, cursor = 0, solved = false, anim = null, hintStage = 0, refute = null, empty = false,
                 themeRevealed = false, message = "${turnLabel(white)} : trouvez la meilleure suite.", tone = Tone.INFO,
@@ -309,13 +327,14 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         job = viewModelScope.launch {
             duck.prefs.pushRecentPuzzle(p.id)
             delay(600)
-            state.update { it.copy(progress = 1, cursor = 1, anim = moveAnim(line.positions[0], line.moves[0])) }
+            _state.update { it.copy(progress = 1, cursor = 1, anim = moveAnim(line.positions[0], line.moves[0])) }
         }
     }
 
     /** Tire un problème non résolu correspondant aux filtres actifs. */
     fun random() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             val s = state.value
             val r = PuzzleThemes.bandRange(s.band)
             val cur = s.puzzle?.id ?: ""
@@ -327,7 +346,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
                 val allowed = BooleanArray(PuzzleThemes.all.size) { i ->
                     if (group != null) PuzzleThemes.all[i].group == group else s.theme.isEmpty() || PuzzleThemes.all[i].key == s.theme
                 }
-                val solved = solvedIds.value
+                val solved = solvedNow()
                 var fresh = -1
                 var freshCount = 0
                 var any = -1
@@ -346,14 +365,15 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             }
             val p = id?.let { runCatchingSuspend { dao.byId(it) }.getOrNull() }
             if (p != null) show(p)
-            else state.update { it.copy(empty = true, tone = Tone.BAD, message = "Aucun problème ne correspond à ces filtres. Élargissez la sélection dans le catalogue.") }
+            else _state.update { it.copy(empty = true, tone = Tone.BAD, message = "Aucun problème ne correspond à ces filtres. Élargissez la sélection dans le catalogue.") }
         }
     }
 
     /** Ouvre un problème par son identifiant Lichess (ex. « 00sHx ») ; renvoie faux s'il n'est pas embarqué. */
     fun openById(raw: String, onResult: (Boolean) -> Unit) {
         val id = raw.trim().removePrefix("#").substringAfterLast('/').trim()
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             val p = if (id.isEmpty()) null else runCatchingSuspend { dao.byId(id) ?: dao.byIdIgnoreCase(id) }.getOrNull()
             if (p != null) show(p)
             onResult(p != null)
@@ -361,26 +381,27 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Révèle le thème (et son conseil) avant la résolution. */
-    fun revealTheme() = state.update { it.copy(themeRevealed = true) }
+    fun revealTheme() = _state.update { it.copy(themeRevealed = true) }
 
     /** Change la difficulté sans tirer de problème : le filtre s'applique au prochain tirage aléatoire. */
     fun setBand(band: Int) {
-        state.update { it.copy(band = band) }
+        _state.update { it.copy(band = band) }
         viewModelScope.launch { duck.prefs.setPuzzleFilter(band, state.value.theme) }
     }
 
     fun setFilter(band: Int, theme: String) {
-        state.update { it.copy(band = band, theme = theme) }
+        _state.update { it.copy(band = band, theme = theme) }
         viewModelScope.launch { duck.prefs.setPuzzleFilter(band, theme) }
         random()
     }
 
     /** Calcule, pour une difficulté, le nombre de problèmes (et de résolus) par thème. */
     fun loadCounts(band: Int) {
-        viewModelScope.launch {
+        countsJob?.cancel()
+        countsJob = viewModelScope.launch {
             val res = withContext(Dispatchers.Default) {
                 ensureMeta()
-                val solved = solvedIds.value
+                val solved = solvedNow()
                 val range = PuzzleThemes.bandRange(band)
                 val n = PuzzleThemes.all.size
                 val total = IntArray(n + 1)
@@ -403,7 +424,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 map
             }
-            counts.value = res
+            _counts.value = res
         }
     }
 
@@ -412,14 +433,14 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         val line = s.line ?: return
         if (s.refute != null || s.cursor <= 0) return
         val t = s.cursor - 1
-        state.update { it.copy(cursor = t, anim = undoAnim(line.positions[t], line.moves[t]), hintStage = 0) }
+        _state.update { it.copy(cursor = t, anim = undoAnim(line.positions[t], line.moves[t]), hintStage = 0) }
     }
 
     fun forward() {
         val s = state.value
         val line = s.line ?: return
         if (s.refute != null || s.cursor >= s.progress) return
-        state.update { it.copy(cursor = s.cursor + 1, anim = moveAnim(line.positions[s.cursor], line.moves[s.cursor]), hintStage = 0) }
+        _state.update { it.copy(cursor = s.cursor + 1, anim = moveAnim(line.positions[s.cursor], line.moves[s.cursor]), hintStage = 0) }
     }
 
     fun canPlay(s: PuzzleState): Boolean {
@@ -432,7 +453,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         val s = state.value
         if (!canPlay(s)) return
         val stage = (s.hintStage + 1).coerceAtMost(2)
-        state.update {
+        _state.update {
             it.copy(
                 hintStage = stage, tone = Tone.GOLD,
                 message = if (stage == 1) "Indice 1/2 : la pièce à jouer est surlignée en vert." else "Indice 2/2 : la flèche montre le coup à jouer.",
@@ -455,7 +476,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             // Comme sur Lichess, tout mat immédiat est accepté.
             val newLine = if (m == expected) line else Line(line.startFen, line.moves.take(cur) + m)
             val finished = cur + 1 >= newLine.size
-            state.update {
+            _state.update {
                 it.copy(
                     line = newLine, cursor = cur + 1, progress = cur + 1, anim = moveAnim(pos, m), hintStage = 0,
                     solved = it.solved || finished, tone = Tone.GOOD,
@@ -469,7 +490,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             job = viewModelScope.launch {
                 delay(600)
                 val reply = newLine.moves[cur + 1]
-                state.update {
+                _state.update {
                     it.copy(
                         cursor = cur + 2, progress = cur + 2, anim = moveAnim(newLine.positions[cur + 1], reply),
                         message = "Bien vu. L'adversaire répond ${newLine.sans[cur + 1]} : à vous de continuer.",
@@ -496,7 +517,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     private fun refute(pos: Position, m: Move, after: Position, cur: Int) {
         val san = pos.san(m)
         val oppName = if (pos.whiteToMove) "Noirs" else "Blancs"
-        state.update {
+        _state.update {
             it.copy(
                 progress = minOf(it.progress, cur).coerceAtLeast(cur), cursor = cur, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m),
                 refute = Refutation(after, m, null), refuteUntil = 0L, refuteHold = 0L,
@@ -506,7 +527,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         job = viewModelScope.launch {
             val t0 = System.currentTimeMillis()
             if (after.legalMoves.isEmpty()) {
-                state.update { it.copy(message = "$san met l'adversaire pat : la partie serait nulle alors que vous aviez bien mieux !", refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD) }
+                _state.update { it.copy(message = "$san met l'adversaire pat : la partie serait nulle alors que vous aviez bien mieux !", refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD) }
                 delay(REFUTE_HOLD)
                 retry()
                 return@launch
@@ -529,7 +550,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
                 score != null && score > -80 -> " et égalisent : votre avantage s'est envolé."
                 else -> " et se défendent : il existait un coup bien plus fort."
             }
-            state.update {
+            _state.update {
                 it.copy(
                     anim = moveAnim(after, reply),
                     refute = Refutation(after2, reply, Arrow(reply.from, reply.to, androidx.compose.ui.graphics.Color(0xFFEF4444))),
@@ -546,7 +567,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     fun retry() {
         if (state.value.refute == null) return
         job?.cancel()
-        state.update {
+        _state.update {
             it.copy(refute = null, anim = null, tone = Tone.INFO, refuteUntil = 0L, message = "Position rétablie : à vous de rejouer.")
         }
     }
@@ -777,18 +798,7 @@ private fun ExportOption(label: String, options: List<Pair<String, Boolean>>, on
     val c = LocalDuck.current
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.width(72.dp))
-        SingleChoiceSegmentedButtonRow(Modifier.weight(1f)) {
-            options.forEachIndexed { i, (text, selected) ->
-                SegmentedButton(
-                    selected = selected, onClick = { onSelect(i) },
-                    shape = SegmentedButtonDefaults.itemShape(i, options.size),
-                    colors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = c.goldRole.fill, activeContentColor = c.goldRole.onFill, activeBorderColor = c.outlineStrong,
-                        inactiveContainerColor = c.surface, inactiveContentColor = c.text, inactiveBorderColor = c.outlineStrong,
-                    ),
-                ) { Text(text, style = MaterialTheme.typography.labelLarge, maxLines = 1) }
-            }
-        }
+        DuckSegmentedRow(options.map { it.first }, options.indexOfFirst { it.second }, onSelect, Modifier.weight(1f))
     }
 }
 
@@ -853,20 +863,15 @@ private fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> U
     val themeMatches = if (q.length >= 2) PuzzleThemes.all.filter { norm(it.name).contains(q) || norm(it.goal).contains(q) } else emptyList()
     DuckSheet("Catalogue des problèmes", onClose) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                value = query, onValueChange = { query = it.take(24); notFound = false; vm.search(query) }, singleLine = true,
-                label = { Text("Identifiant Lichess ou thème") },
-                placeholder = { Text("ex. 00sHx, fourchette…") },
-                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+            DuckTextField(
+                value = query, onValueChange = { query = it.take(24); notFound = false; vm.search(query) },
+                label = "Identifiant Lichess ou thème",
+                placeholder = "ex. 00sHx, fourchette…",
+                leadingIcon = Icons.Rounded.Search,
                 isError = notFound,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search, autoCorrectEnabled = false),
                 keyboardActions = KeyboardActions(onSearch = { open() }),
                 modifier = Modifier.weight(1f),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = c.text, unfocusedTextColor = c.text, focusedBorderColor = c.goldText, unfocusedBorderColor = c.outlineStrong,
-                    cursorColor = c.goldText, errorTextColor = c.text, focusedLabelColor = c.goldText, unfocusedLabelColor = c.muted,
-                    focusedLeadingIconColor = c.muted, unfocusedLeadingIconColor = c.muted,
-                ),
             )
             DuckButton("Ouvrir", { open() }, enabled = query.isNotBlank(), accent = c.gold, filled = true, height = 56.dp, contentDescription = "Ouvrir le problème « ${query.trim()} »")
         }

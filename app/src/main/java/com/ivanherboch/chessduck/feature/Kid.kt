@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -146,9 +148,10 @@ data class KidState(
  * sans évaluation et sans enregistrement dans l'historique.
  */
 class KidViewModel : ViewModel() {
-    val state = MutableStateFlow(KidState())
+    private val _state = MutableStateFlow(KidState())
+    val state: StateFlow<KidState> = _state.asStateFlow()
 
-    fun reset() = state.update { KidState() }
+    fun reset() = _state.update { KidState() }
 
     fun move(m: Move) {
         val s = state.value
@@ -161,20 +164,20 @@ class KidViewModel : ViewModel() {
             GameEnd.NONE -> null
             else -> "🤝 Partie nulle : personne n'a perdu !"
         }
-        state.update { it.copy(line = nl, cursor = nl.size, anim = moveAnim(s.position, m), result = result) }
+        _state.update { it.copy(line = nl, cursor = nl.size, anim = moveAnim(s.position, m), result = result) }
     }
 
     fun back() {
         val s = state.value
         if (s.cursor <= 0) return
         val t = s.cursor - 1
-        state.update { it.copy(cursor = t, anim = undoAnim(s.line.positions[t], s.line.moves[t]), result = null) }
+        _state.update { it.copy(cursor = t, anim = undoAnim(s.line.positions[t], s.line.moves[t]), result = null) }
     }
 
     fun forward() {
         val s = state.value
         if (s.cursor >= s.line.size) return
-        state.update { it.copy(cursor = s.cursor + 1, anim = moveAnim(s.position, s.line.moves[s.cursor])) }
+        _state.update { it.copy(cursor = s.cursor + 1, anim = moveAnim(s.position, s.line.moves[s.cursor])) }
     }
 
     fun resign() {
@@ -182,7 +185,7 @@ class KidViewModel : ViewModel() {
         if (s.result != null) return
         val loser = if (s.position.whiteToMove) "Blancs" else "Noirs"
         val winner = if (s.position.whiteToMove) "Noirs" else "Blancs"
-        state.update { it.copy(result = "🏳️ Les $loser abandonnent : bravo aux $winner !") }
+        _state.update { it.copy(result = "🏳️ Les $loser abandonnent : bravo aux $winner !") }
     }
 }
 

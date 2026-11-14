@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck
 
+import com.ivanherboch.chessduck.feature.SettingsSheet
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import android.content.pm.ActivityInfo
 import android.graphics.Color as AColor
 import android.os.Build
@@ -115,6 +119,16 @@ import com.ivanherboch.chessduck.ui.LocalShowCoords
 import com.ivanherboch.chessduck.ui.SectionTitle
 import kotlinx.coroutines.launch
 
+/** Réglages qui habillent toute l'application (thème, retours, mode enfant). */
+data class AppChrome(
+    val themeMode: Int,
+    val dynamicColor: Boolean,
+    val coords: Boolean,
+    val haptics: Boolean,
+    val sound: Boolean,
+    val kidMode: Boolean,
+)
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -123,9 +137,13 @@ class MainActivity : ComponentActivity() {
         // Téléphone : portrait. Tablette (plus petite largeur >= 600 dp) : paysage, en deux colonnes.
         val tablet = resources.getBoolean(R.bool.is_tablet)
         requestedOrientation = if (tablet) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        // Seuls les réglages d'habillage sont observés ici : les changements de problème, de leçon,
+        // d'ELO ou de série ne recomposent plus tout l'arbre de l'application.
+        val chromeFlow = app.prefs.settings.map { AppChrome(it.themeMode, it.dynamicColor, it.coords, it.haptics, it.sound, it.kidMode) }
+            .distinctUntilChanged()
         setContent {
-            val settings by app.prefs.settings.collectAsStateWithLifecycle(initialValue = null)
-            val st = settings ?: return@setContent
+            val chrome by chromeFlow.collectAsStateWithLifecycle(initialValue = null)
+            val st = chrome ?: return@setContent
             val systemDark = isSystemInDarkTheme()
             // Le mode enfant impose un écran clair et épuré.
             val dark = !st.kidMode && when (st.themeMode) {
@@ -138,8 +156,10 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
                 onDispose {}
             }
-            app.feedback.hapticsEnabled = st.haptics
-            app.feedback.soundEnabled = st.sound
+            LaunchedEffect(st.haptics, st.sound) {
+                app.feedback.hapticsEnabled = st.haptics
+                app.feedback.soundEnabled = st.sound
+            }
             ChessDuckTheme(dark = dark, kid = st.kidMode, dynamic = st.dynamicColor) {
                 CompositionLocalProvider(LocalFeedback provides app.feedback, LocalShowCoords provides st.coords) {
                     MainScreen(st, app)
@@ -159,29 +179,32 @@ private val TABS = listOf(
 )
 
 @Composable
-fun MainScreen(st: Settings, app: ChessDuckApp) {
+fun MainScreen(st: AppChrome, app: ChessDuckApp) {
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var showSettings by remember { mutableStateOf(false) }
     var showMemo by remember { mutableStateOf(false) }
     // Les ViewModels vivent au niveau de l'activité : l'état de chaque module est conservé d'un onglet à l'autre.
-    val notation: NotationViewModel = viewModel()
-    val academy: AcademyViewModel = viewModel()
-    val puzzles: PuzzlesViewModel = viewModel()
-    val play: PlayViewModel = viewModel()
-    val kid: KidViewModel = viewModel()
+    // Ils ne sont créés qu'à la première visite de leur onglet (Stockfish et l'index des 150 000 problèmes
+    // ne sont donc chargés que si l'utilisateur ouvre le Jeu Libre ou les Problèmes).
+    val holder = rememberSaveableStateHolder()
+    var kidUsed by rememberSaveable { mutableStateOf(st.kidMode) }
+    val kid: KidViewModel? = if (st.kidMode || kidUsed) viewModel() else null
 
     // En quittant le mode enfant, sa partie est effacée ; la partie du Jeu Libre, elle, est retrouvée telle quelle.
     var wasKid by remember { mutableStateOf(st.kidMode) }
     LaunchedEffect(st.kidMode) {
-        if (wasKid && !st.kidMode) kid.reset()
+        if (st.kidMode) kidUsed = true
+        if (wasKid && !st.kidMode) kid?.reset()
         wasKid = st.kidMode
     }
-    if (st.kidMode) {
-        Box(Modifier.fillMaxSize().background(c.bg)) {
-            Box(Modifier.fillMaxSize().safeDrawingPadding()) {
-                KidScreen(kid) { app.scope.launch { app.prefs.setKidMode(false) } }
+    if (st.kidMode && kid != null) {
+        holder.SaveableStateProvider("kid") {
+            Box(Modifier.fillMaxSize().background(c.bg)) {
+                Box(Modifier.fillMaxSize().safeDrawingPadding()) {
+                    KidScreen(kid) { app.scope.launch { app.prefs.setKidMode(false) } }
+                }
             }
         }
         return
@@ -207,11 +230,14 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
             targetState = tab, modifier = m, label = "onglet",
             transitionSpec = { fadeIn(tween(200)) togetherWith fadeOut(tween(120)) },
         ) { t ->
-            when (t) {
-                0 -> NotationScreen(notation)
-                1 -> AcademyScreen(academy)
-                2 -> PuzzlesScreen(puzzles)
-                else -> PlayScreen(play)
+            // Chaque onglet garde son état d'interface (défilements, tiroirs, champs) quand on en change.
+            holder.SaveableStateProvider(t) {
+                when (t) {
+                    0 -> NotationScreen(viewModel<NotationViewModel>())
+                    1 -> AcademyScreen(viewModel<AcademyViewModel>())
+                    2 -> PuzzlesScreen(viewModel<PuzzlesViewModel>())
+                    else -> PlayScreen(viewModel<PlayViewModel>())
+                }
             }
         }
     }
@@ -265,126 +291,5 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
     }
 
     if (showMemo) MemoSheet { showMemo = false }
-    if (showSettings) SettingsSheet(st, app) { showSettings = false }
-}
-
-/** Ligne de réglage M3 : titre, description et interrupteur. */
-@Composable
-private fun SwitchRow(title: String, description: String?, checked: Boolean, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
-    val c = LocalDuck.current
-    ListItem(
-        headlineContent = { Text(title, style = MaterialTheme.typography.titleSmall) },
-        supportingContent = description?.let { { Text(it, style = MaterialTheme.typography.bodySmall) } },
-        trailingContent = {
-            Switch(
-                checked = checked, onCheckedChange = null, enabled = enabled,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = c.goldRole.onFill, checkedTrackColor = c.goldRole.fill,
-                    uncheckedThumbColor = c.outlineStrong, uncheckedTrackColor = c.surfaceHi, uncheckedBorderColor = c.outlineStrong,
-                ),
-            )
-        },
-        colors = ListItemDefaults.colors(containerColor = c.surface, headlineColor = c.text, supportingColor = c.muted),
-        // Toute la ligne bascule le réglage (cible large, annoncée comme un interrupteur par TalkBack).
-        modifier = Modifier.padding(vertical = 2.dp).toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onChange),
-    )
-}
-
-/** Champ de pseudo : libellé flottant, compteur, validation par la touche « OK » du clavier. */
-@Composable
-private fun PseudoField(label: String, initial: String, fallback: String, onSave: (String) -> Unit) {
-    val c = LocalDuck.current
-    val focus = LocalFocusManager.current
-    var value by remember { mutableStateOf(initial) }
-    OutlinedTextField(
-        value = value,
-        onValueChange = { v -> value = v.take(16); onSave(value.trim().ifEmpty { fallback }) },
-        label = { Text(label) },
-        supportingText = { Text("${value.length}/16", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End) },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
-        modifier = Modifier.fillMaxWidth(),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = c.text, unfocusedTextColor = c.text, focusedBorderColor = c.goldText, unfocusedBorderColor = c.outlineStrong,
-            cursorColor = c.goldText, focusedLabelColor = c.goldText, unfocusedLabelColor = c.muted,
-            focusedSupportingTextColor = c.muted, unfocusedSupportingTextColor = c.muted,
-        ),
-    )
-}
-
-/** Paramètres globaux (persistés via DataStore). */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SettingsSheet(st: Settings, app: ChessDuckApp, onClose: () -> Unit) {
-    val c = LocalDuck.current
-    // Les réglages sont écrits dans la portée de l'application : fermer le tiroir n'annule jamais l'écriture.
-    val scope = app.scope
-    DuckSheet("Paramètres", onClose) {
-        SectionTitle("Apparence")
-        val modes = listOf("Système", "Jour", "Nuit")
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            modes.forEachIndexed { i, label ->
-                SegmentedButton(
-                    selected = st.themeMode == i, onClick = { scope.launch { app.prefs.setThemeMode(i) } },
-                    shape = SegmentedButtonDefaults.itemShape(i, modes.size),
-                    colors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = c.goldRole.fill, activeContentColor = c.goldRole.onFill, activeBorderColor = c.outlineStrong,
-                        inactiveContainerColor = c.surface, inactiveContentColor = c.text, inactiveBorderColor = c.outlineStrong,
-                    ),
-                ) { Text(label, style = MaterialTheme.typography.labelLarge) }
-            }
-        }
-        val dynamicAvailable = Build.VERSION.SDK_INT >= 31
-        SwitchRow(
-            "Couleurs dynamiques (Material You)",
-            if (dynamicAvailable) "Reprend les couleurs de votre fond d'écran. Désactivé : charte ChessDuck." else "Disponible à partir d'Android 12.",
-            st.dynamicColor, enabled = dynamicAvailable,
-        ) { v -> scope.launch { app.prefs.setDynamicColor(v) } }
-
-        SectionTitle("Échiquier et parties")
-        SwitchRow("Afficher les coordonnées", "Lettres a–h et chiffres 1–8 sur l'échiquier. Masquez-les pour vous entraîner à la notation.", st.coords) { v ->
-            scope.launch { app.prefs.setCoords(v) }
-        }
-        SwitchRow("Confirmer l'abandon et la nouvelle partie", "Demande une confirmation quand une partie est en cours.", st.confirmActions) { v ->
-            scope.launch { app.prefs.setConfirmActions(v) }
-        }
-
-        SectionTitle("Sons et vibrations")
-        SwitchRow("Bruit des pièces", "Petit bruit de bois quand une pièce se pose.", st.sound) { v -> scope.launch { app.prefs.setSound(v) } }
-        SwitchRow("Vibrations", "Retour haptique au toucher, aux erreurs et aux réussites.", st.haptics) { v -> scope.launch { app.prefs.setHaptics(v) } }
-
-        SectionTitle("Joueurs")
-        PseudoField("Pseudo du joueur", st.pseudo, "Joueur") { v -> scope.launch { app.prefs.setPseudo(v) } }
-        PseudoField("Pseudo du joueur 2 (mode 2 joueurs)", st.pseudo2, "Joueur 2") { v -> scope.launch { app.prefs.setPseudo2(v) } }
-        Text(
-            "Classement actuel : ${st.elo} ELO (formule FIDE, K = 32). Les parties à 2 joueurs ne comptent pas.",
-            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp),
-        )
-
-        SectionTitle("Mode enfant")
-        DuckButton(
-            "Activer le mode enfant", { onClose(); scope.launch { app.prefs.setKidMode(true) } }, Modifier.fillMaxWidth(),
-            accent = c.green, filled = true, icon = Icons.Rounded.ChildCare,
-        )
-        Text(
-            "Un écran joyeux et coloré pour jouer à deux avec un enfant : grand échiquier, cavalier en forme de girafe, " +
-                "animations qui montrent comment chaque pièce bouge, sans ordinateur ni historique.",
-            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp),
-        )
-
-        SectionTitle("À propos")
-        Text(
-            "ChessDuck fonctionne 100 % hors-ligne. Moteur : Stockfish 11 (GPLv3). Problèmes : base ouverte Lichess (CC0). " +
-                "Pièces : série classique de Cburnett et pièce féerique Girafe, Wikimedia Commons (CC BY-SA 3.0). " +
-                "Icônes : Material Icons (Apache 2.0). Police du mode enfant : Fredoka (OFL).",
-            color = c.muted, style = MaterialTheme.typography.bodySmall,
-        )
-        val context = LocalContext.current
-        val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "" }
-        Text(
-            "© Ivan Herboch, 2026 · v$version", color = c.muted, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
-        )
-    }
+    if (showSettings) SettingsSheet(app) { showSettings = false }
 }

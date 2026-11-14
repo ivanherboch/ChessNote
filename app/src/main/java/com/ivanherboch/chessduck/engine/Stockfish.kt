@@ -10,6 +10,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.BufferedWriter
+import java.io.Closeable
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.math.exp
@@ -32,15 +33,25 @@ fun winPercent(cp: Int): Double {
     return 50.0 + 50.0 * (2.0 / (1.0 + exp(-0.00368208 * cp)) - 1.0)
 }
 
+/** Forme d'un coup UCI valide : case de départ, case d'arrivée et promotion éventuelle (ex. e2e4, e7e8q). */
+private val UCI_MOVE = Regex("^[a-h][1-8][a-h][1-8][qrbn]?$")
+
 /**
  * Stockfish embarqué (exécutable natif dans nativeLibraryDir), piloté en UCI, 100 % hors-ligne.
- * Toutes les recherches sont sérialisées et annulables sans bloquer le thread UI.
+ * Toutes les recherches sont sérialisées et annulables sans bloquer le thread UI. Après une annulation,
+ * le moteur est resynchronisé (stop puis isready/readyok) ; s'il ne répond plus, il est relancé, afin
+ * qu'aucun « bestmove » orphelin ne soit lu par la recherche suivante.
  */
-class Stockfish(private val context: Context) {
+class Stockfish(private val context: Context) : Closeable {
     private val mutex = Mutex()
     private var process: Process? = null
     private var out: BufferedWriter? = null
     private var lines = Channel<String>(Channel.UNLIMITED)
+
+    // Dernières options envoyées au processus actif : on ne les renvoie que si elles changent.
+    private var sentLimit: Boolean? = null
+    private var sentElo: Int? = null
+    private var sentMultiPv: Int? = null
 
     private fun send(cmd: String) {
         out?.apply { write(cmd); write("\n"); flush() }
@@ -48,6 +59,7 @@ class Stockfish(private val context: Context) {
 
     private suspend fun ensureStarted() {
         if (process?.isAlive == true) return
+        shutdown()
         val exe = File(context.applicationInfo.nativeLibraryDir, "libstockfish.so")
         val p = ProcessBuilder(exe.absolutePath).redirectErrorStream(true).start()
         val ch = Channel<String>(Channel.UNLIMITED)
@@ -69,10 +81,41 @@ class Stockfish(private val context: Context) {
         waitFor("readyok")
     }
 
-    private suspend fun waitFor(token: String) {
-        withTimeoutOrNull(5000) {
-            for (l in lines) if (l.startsWith(token)) break
+    /** Attend une ligne commençant par [token] ; renvoie faux en cas de délai dépassé ou de flux fermé. */
+    private suspend fun waitFor(token: String, timeoutMs: Long = 5000): Boolean =
+        withTimeoutOrNull(timeoutMs) {
+            for (l in lines) if (l.startsWith(token)) return@withTimeoutOrNull true
+            false
+        } ?: false
+
+    /** Ferme les flux et arrête le processus ; les options mémorisées sont oubliées. */
+    private fun shutdown(force: Boolean = false) {
+        runCatching { out?.close() }
+        runCatching { process?.inputStream?.close() }
+        runCatching { if (force) process?.destroyForcibly() else process?.destroy() }
+        lines.close()
+        out = null
+        process = null
+        sentLimit = null; sentElo = null; sentMultiPv = null
+    }
+
+    /** Libère le moteur (fermeture propre des flux et du processus natif). */
+    override fun close() {
+        if (mutex.tryLock()) {
+            try { shutdown() } finally { mutex.unlock() }
+        } else {
+            shutdown(force = true)
         }
+    }
+
+    private fun setOptions(elo: Int?, multiPv: Int) {
+        val limit = elo != null
+        if (sentLimit != limit) { send("setoption name UCI_LimitStrength value $limit"); sentLimit = limit }
+        if (elo != null) {
+            val e = elo.coerceIn(1350, 2850)
+            if (sentElo != e) { send("setoption name UCI_Elo value $e"); sentElo = e }
+        }
+        if (sentMultiPv != multiPv) { send("setoption name MultiPV value $multiPv"); sentMultiPv = multiPv }
     }
 
     /**
@@ -89,9 +132,7 @@ class Stockfish(private val context: Context) {
         withContext(Dispatchers.IO) {
             try {
                 ensureStarted()
-                send("setoption name UCI_LimitStrength value ${elo != null}")
-                if (elo != null) send("setoption name UCI_Elo value ${elo.coerceIn(1350, 2850)}")
-                send("setoption name MultiPV value $multiPv")
+                setOptions(elo, multiPv)
                 send("position fen $fen")
                 send(if (depth != null) "go depth $depth movetime $movetimeMs" else "go movetime $movetimeMs")
                 val pvs = HashMap<Int, PvLine>()
@@ -103,24 +144,27 @@ class Stockfish(private val context: Context) {
                             parseInfo(l)?.let { (idx, pv) -> pvs[idx] = pv }
                         } else if (l.startsWith("bestmove")) {
                             val tok = l.split(' ').getOrNull(1)
-                            best = if (tok == null || tok == "(none)") null else Move.fromUci(tok)
+                            best = if (tok != null && UCI_MOVE.matches(tok)) Move.fromUci(tok) else null
                             done = true
                             break
                         }
                     }
                 } finally {
                     if (!done) withContext(NonCancellable) {
-                        // Annulation : on arrête proprement la recherche en cours.
+                        // Annulation : on arrête la recherche, on consomme son « bestmove », puis on vérifie
+                        // que le moteur est de nouveau prêt. Sinon il est relancé à la prochaine recherche.
                         runCatching { send("stop") }
-                        withTimeoutOrNull(1500) { for (l in lines) if (l.startsWith("bestmove")) break }
+                        val stopped = waitFor("bestmove", 1500)
+                        runCatching { send("isready") }
+                        val ready = stopped && waitFor("readyok", 1000)
+                        if (!ready) shutdown(force = true)
                     }
                 }
                 SearchResult(best, pvs.toSortedMap().values.toList())
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                runCatching { process?.destroy() }
-                process = null
+                shutdown(force = true)
                 SearchResult(null, emptyList())
             }
         }
@@ -139,7 +183,7 @@ class Stockfish(private val context: Context) {
                     val v = t.getOrNull(i + 2)?.toIntOrNull() ?: 0
                     score = if (t.getOrNull(i + 1) == "mate") (if (v > 0) MATE - (2 * v - 1) else -MATE - 2 * v) else v
                 }
-                "pv" -> { move = t.getOrNull(i + 1)?.let { runCatching { Move.fromUci(it) }.getOrNull() }; i = t.size }
+                "pv" -> { move = t.getOrNull(i + 1)?.takeIf { UCI_MOVE.matches(it) }?.let { Move.fromUci(it) }; i = t.size }
             }
             i++
         }

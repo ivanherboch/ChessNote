@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -167,10 +169,15 @@ data class PlayState(
 class PlayViewModel(app: Application) : AndroidViewModel(app) {
     private val duck = app as ChessDuckApp
     private val rnd = Random(System.nanoTime())
-    val state = MutableStateFlow(PlayState())
-    val settings = duck.prefs.settings.stateIn(viewModelScope, SharingStarted.Eagerly, Settings())
-    val games = duck.db.user().games().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-    val tally = duck.db.user().tally().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    private val _state = MutableStateFlow(PlayState())
+    val state: StateFlow<PlayState> = _state.asStateFlow()
+    // Flux partagés seulement tant que l'écran les observe (5 s de grâce pour une rotation ou un changement d'onglet).
+    val settings = duck.prefs.settings.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Settings())
+    val games = duck.db.user().games().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val tally = duck.db.user().tally().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    /** Jeton de partie : incrémenté à chaque nouvelle partie, il invalide les résultats asynchrones d'une partie précédente. */
+    private var gameGeneration = 0L
+    private var applyJob: Job? = null
     private var aiJob: Job? = null
     private var analysisJob: Job? = null
     private var reviewJob: Job? = null
@@ -184,15 +191,21 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun applySettings(twoPlayers: Boolean, color: Int, aiElo: Int) {
-        viewModelScope.launch {
+        applyJob?.cancel()
+        applyJob = viewModelScope.launch {
             duck.prefs.setGameSettings(twoPlayers, color, aiElo)
             newGame(duck.prefs.settings.first())
         }
     }
 
-    fun newGame() = newGame(settings.value)
+    /** Nouvelle partie avec les réglages enregistrés (lus dans DataStore, même si l'écran n'est pas abonné). */
+    fun newGame() {
+        applyJob?.cancel()
+        applyJob = viewModelScope.launch { newGame(duck.prefs.settings.first()) }
+    }
 
     private fun newGame(st: Settings) {
+        gameGeneration++
         aiJob?.cancel(); analysisJob?.cancel()
         val white = when (st.colorChoice) {
             0 -> true
@@ -200,7 +213,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
             else -> rnd.nextBoolean()
         }
         val playerWhite = st.twoPlayers || white
-        state.update {
+        _state.update {
             PlayState(
                 playerWhite = playerWhite, twoPlayers = st.twoPlayers, aiElo = st.aiElo, flipped = !playerWhite,
                 evalOn = it.evalOn, review = it.review,
@@ -209,10 +222,10 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
         if (!st.twoPlayers && !playerWhite) aiMove() else precompute()
     }
 
-    fun flip() = state.update { s -> s.review?.let { s.copy(review = it.copy(flipped = !it.flipped)) } ?: s.copy(flipped = !s.flipped) }
+    fun flip() = _state.update { s -> s.review?.let { s.copy(review = it.copy(flipped = !it.flipped)) } ?: s.copy(flipped = !s.flipped) }
 
     fun toggleEval() {
-        state.update { s -> s.review?.let { s.copy(review = it.copy(evalOn = !it.evalOn)) } ?: s.copy(evalOn = !s.evalOn) }
+        _state.update { s -> s.review?.let { s.copy(review = it.copy(evalOn = !it.evalOn)) } ?: s.copy(evalOn = !s.evalOn) }
         if (state.value.review == null) precompute()
     }
 
@@ -220,7 +233,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
     fun hint() {
         val s = state.value
         if (!s.canPlay) return
-        state.update { it.copy(hintStage = (it.hintStage + 1).coerceAtMost(2)) }
+        _state.update { it.copy(hintStage = (it.hintStage + 1).coerceAtMost(2)) }
     }
 
     fun playerMove(m: Move) {
@@ -230,7 +243,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
         val cur = s.cursor
         val nl = s.line.copy(cur)
         nl.push(m)
-        state.update {
+        _state.update {
             it.copy(line = nl, cursor = nl.size, anim = moveAnim(s.position, m), hintStage = 0, analysis = it.analysis.filterKeys { k -> k <= cur })
         }
         afterMove()
@@ -249,7 +262,8 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
     private fun aiMove() {
         analysisJob?.cancel()
         aiJob?.cancel()
-        state.update { it.copy(thinking = true) }
+        _state.update { it.copy(thinking = true) }
+        val gen = gameGeneration
         aiJob = viewModelScope.launch {
             val t0 = System.currentTimeMillis()
             val s = state.value
@@ -271,9 +285,11 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
             if (move == null) move = duck.engine.search(pos.toFen(), 220 + elo / 10, elo = elo.coerceAtLeast(1350)).best
             if (move == null || !pos.isLegal(move)) move = pos.legalMoves.random(rnd)
             delay((550 - (System.currentTimeMillis() - t0)).coerceAtLeast(0))
+            // La partie a changé pendant la réflexion (nouvelle partie, réglages) : ce coup ne la concerne plus.
+            if (gen != gameGeneration || state.value.line !== s.line) return@launch
             val nl = s.line.copy()
             nl.push(move)
-            state.update { it.copy(line = nl, cursor = nl.size, anim = moveAnim(pos, move), thinking = false, hintStage = 0) }
+            _state.update { it.copy(line = nl, cursor = nl.size, anim = moveAnim(pos, move), thinking = false, hintStage = 0) }
             val end = nl.end()
             if (end != GameEnd.NONE) finish(end, null) else precompute()
         }
@@ -296,7 +312,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
         val line = s.line
         analysisJob = viewModelScope.launch {
             val a = analyse(line.positions[ply], 450) ?: return@launch
-            state.update { if (it.line === line) it.copy(analysis = it.analysis + (ply to a)) else it }
+            _state.update { if (it.line === line) it.copy(analysis = it.analysis + (ply to a)) else it }
         }
     }
 
@@ -336,7 +352,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
         val t = (s.cursor + delta).coerceIn(0, s.line.size)
         if (t == s.cursor) return
         val anim = if (delta > 0) moveAnim(s.line.positions[s.cursor], s.line.moves[s.cursor]) else undoAnim(s.line.positions[t], s.line.moves[t])
-        state.update { it.copy(cursor = t, anim = anim, hintStage = 0) }
+        _state.update { it.copy(cursor = t, anim = anim, hintStage = 0) }
         precompute()
     }
 
@@ -344,7 +360,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
         val s = state.value
         if (s.result != null || s.review != null) return
         aiJob?.cancel()
-        state.update { it.copy(thinking = false) }
+        _state.update { it.copy(thinking = false) }
         finish(GameEnd.NONE, if (s.twoPlayers) s.line.last.whiteToMove else s.playerWhite)
     }
 
@@ -361,10 +377,14 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
         val reason = if (resignedWhite != null) "abandon" else GameLogic.endText(end)
         val resultStr = when (whiteResult) { 1 -> "1-0"; -1 -> "0-1"; else -> "1/2-1/2" }
         if (line.size < 2) {
-            state.update { it.copy(result = GameResult("Partie interrompue avant le premier échange : rien n'est enregistré.", Tone.NEUTRAL)) }
+            _state.update { it.copy(result = GameResult("Partie interrompue avant le premier échange : rien n'est enregistré.", Tone.NEUTRAL)) }
             return
         }
-        viewModelScope.launch {
+        val gen = gameGeneration
+        // Mise à jour de l'écran seulement si la partie affichée est toujours celle qui vient de se terminer.
+        fun show(f: (PlayState) -> PlayState) = _state.update { if (gen == gameGeneration) f(it) else it }
+        // La partie est réellement terminée : son enregistrement et l'ELO ne sont jamais annulés.
+        viewModelScope.launch(NonCancellable) {
             val st = duck.prefs.settings.first()
             val analysis = Analysis.encodeAll(List(line.size + 1) { s.analysis[it] })
             if (s.twoPlayers) {
@@ -373,14 +393,14 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
                     -1 -> "Victoire de ${st.pseudo2} (Noirs) par $reason."
                     else -> "Partie nulle ($reason)."
                 } + " Partie à 2 joueurs : l'ELO ne change pas."
-                state.update { it.copy(result = GameResult(text, Tone.GOLD), thinking = false) }
+                show { it.copy(result = GameResult(text, Tone.GOLD), thinking = false) }
                 var record = GameRecord(
                         date = System.currentTimeMillis(), opponent = "2 joueurs", vsComputer = false, playerWhite = true, result = resultStr,
                         outcome = whiteResult, reason = reason, eloBefore = st.elo, eloAfter = st.elo, moves = line.uciMoves(), analysis = analysis,
                         whiteName = st.pseudo, blackName = st.pseudo2,
                     )
                 record = record.copy(id = duck.db.user().insertGame(record))
-                state.update { it.copy(lastRecord = record) }
+                show { it.copy(lastRecord = record) }
                 startAnalysis(record, line)
             } else {
                 val outcome = if (s.playerWhite) whiteResult else -whiteResult
@@ -392,7 +412,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
                     -1 -> "Défaite par $reason."
                     else -> "Partie nulle ($reason)."
                 }
-                state.update {
+                show {
                     it.copy(
                         thinking = false,
                         result = GameResult("$head ELO ${st.elo} → $newElo ($delta).", if (outcome == 1) Tone.GOOD else if (outcome == 0) Tone.GOLD else Tone.BAD),
@@ -405,7 +425,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
                         whiteName = if (s.playerWhite) st.pseudo else COMPUTER, blackName = if (s.playerWhite) COMPUTER else st.pseudo, opponentElo = s.aiElo,
                     )
                 record = record.copy(id = duck.db.user().insertGame(record))
-                state.update { it.copy(lastRecord = record) }
+                show { it.copy(lastRecord = record) }
                 startAnalysis(record, line)
             }
         }
@@ -438,7 +458,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
                     changed = true
                     val snapshot = list.toList()
                     analysisCache[g.id] = snapshot
-                    state.update { s ->
+                    _state.update { s ->
                         val r = s.review
                         if (r == null || r.record.id != g.id) s else s.copy(review = r.copy(analysis = snapshot))
                     }
@@ -455,7 +475,7 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
         reviewJob?.cancel()
         val line = runCatching { Line.fromUci(START_FEN, g.moves) }.getOrNull() ?: return
         val analysis = analysisCache[g.id] ?: Analysis.decodeAll(g.analysis, line.size + 1)
-        state.update { it.copy(review = Review(g, line, 0, true, analysis, flipped = g.vsComputer && !g.playerWhite)) }
+        _state.update { it.copy(review = Review(g, line, 0, true, analysis, flipped = g.vsComputer && !g.playerWhite)) }
         autoplay()
         startAnalysis(g, line)
     }
@@ -469,12 +489,12 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
                 if (r.cursor >= r.line.size) break
                 reviewGo(r.cursor + 1)
             }
-            state.update { s -> s.review?.let { s.copy(review = it.copy(playing = false)) } ?: s }
+            _state.update { s -> s.review?.let { s.copy(review = it.copy(playing = false)) } ?: s }
         }
     }
 
     private fun reviewGo(target: Int) {
-        state.update { s ->
+        _state.update { s ->
             val r = s.review ?: return@update s
             val t = target.coerceIn(0, r.line.size)
             if (t == r.cursor) return@update s
@@ -489,14 +509,14 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
 
     fun reviewPause() {
         reviewJob?.cancel()
-        state.update { s -> s.review?.let { s.copy(review = it.copy(playing = false)) } ?: s }
+        _state.update { s -> s.review?.let { s.copy(review = it.copy(playing = false)) } ?: s }
     }
 
     fun reviewToggle() {
         val r = state.value.review ?: return
         if (r.playing) return reviewPause()
         if (r.cursor >= r.line.size) reviewGo(0)
-        state.update { s -> s.review?.let { s.copy(review = it.copy(playing = true)) } ?: s }
+        _state.update { s -> s.review?.let { s.copy(review = it.copy(playing = true)) } ?: s }
         autoplay()
     }
 
@@ -510,6 +530,6 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
     fun closeReview() {
         // L'analyse continue en arrière-plan : elle sera prête à la prochaine ouverture.
         reviewJob?.cancel()
-        state.update { it.copy(review = null) }
+        _state.update { it.copy(review = null) }
     }
 }

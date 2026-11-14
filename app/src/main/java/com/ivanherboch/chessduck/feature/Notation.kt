@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import com.ivanherboch.chessduck.chess.BISHOP
 import com.ivanherboch.chessduck.chess.ROOK
 import com.ivanherboch.chessduck.chess.QUEEN
@@ -255,28 +257,32 @@ object NotationLogic {
 class NotationViewModel(app: Application) : AndroidViewModel(app) {
     private val duck = app as ChessDuckApp
     private val rnd = Random(System.nanoTime())
-    val state = MutableStateFlow(NotationState())
+    private val _state = MutableStateFlow(NotationState())
+    val state: StateFlow<NotationState> = _state.asStateFlow()
     private var showJob: Job? = null
+    /** Génération d'exercice en cours : annulée si l'on change de niveau ou redemande un exercice. */
+    private var nextJob: Job? = null
 
     init {
         viewModelScope.launch {
             val st = duck.prefs.settings.first()
-            state.update { it.copy(level = st.notationLevel, best = st.notationBest) }
+            _state.update { it.copy(level = st.notationLevel, best = st.notationBest) }
             next()
         }
     }
 
     fun setLevel(level: Int) {
-        state.update { it.copy(level = level) }
+        _state.update { it.copy(level = level) }
         viewModelScope.launch { duck.prefs.setNotationLevel(level) }
         next()
     }
 
     fun next() {
-        viewModelScope.launch {
+        nextJob?.cancel()
+        nextJob = viewModelScope.launch {
             val level = state.value.level
             val ex = withContext(Dispatchers.Default) { generate(level) }
-            state.update {
+            _state.update {
                 it.copy(
                     exercise = ex, shown = false, anim = null, flipped = !ex.before.whiteToMove, input = "", solved = false, hintStage = 0,
                     message = "Quel coup vient d'être joué ? Écrivez-le en notation anglaise FIDE.", tone = Tone.INFO,
@@ -319,17 +325,17 @@ class NotationViewModel(app: Application) : AndroidViewModel(app) {
         showJob = viewModelScope.launch {
             delay(delayMs)
             val ex = state.value.exercise ?: return@launch
-            state.update { it.copy(shown = true, anim = moveAnim(ex.before, ex.move)) }
+            _state.update { it.copy(shown = true, anim = moveAnim(ex.before, ex.move)) }
         }
     }
 
     /** Rejoue l'animation une seule fois, à la demande. */
     fun replay() {
-        state.update { it.copy(shown = false, anim = null) }
+        _state.update { it.copy(shown = false, anim = null) }
         play(350)
     }
 
-    fun flip() = state.update { it.copy(flipped = !it.flipped) }
+    fun flip() = _state.update { it.copy(flipped = !it.flipped) }
 
     /** Ajoute [key] à la saisie ; renvoie faux (et explique pourquoi) si la touche est refusée. */
     fun type(key: String): Boolean {
@@ -338,30 +344,30 @@ class NotationViewModel(app: Application) : AndroidViewModel(app) {
         if (key.startsWith("O-O")) {
             // Le roque s'écrit seul : il ne doit jamais écraser en silence une saisie commencée.
             if (s.input.isNotEmpty() && !s.input.startsWith("O-O")) {
-                state.update { it.copy(tone = Tone.GOLD, message = "Le roque s'écrit seul (O-O ou O-O-O). Effacez d'abord la saisie : touche « Tout effacer » ou appui long sur ⌫.") }
+                _state.update { it.copy(tone = Tone.GOLD, message = "Le roque s'écrit seul (O-O ou O-O-O). Effacez d'abord la saisie : touche « Tout effacer » ou appui long sur ⌫.") }
                 return false
             }
-            state.update { it.copy(input = key) }
+            _state.update { it.copy(input = key) }
             return true
         }
         if (s.input.startsWith("O-O") && key != "+" && key != "#") {
-            state.update { it.copy(tone = Tone.GOLD, message = "Après un roque, seuls « + » (échec) ou « # » (mat) peuvent suivre.") }
+            _state.update { it.copy(tone = Tone.GOLD, message = "Après un roque, seuls « + » (échec) ou « # » (mat) peuvent suivre.") }
             return false
         }
         if (s.input.length + key.length > 9) return false
-        state.update { it.copy(input = it.input + key) }
+        _state.update { it.copy(input = it.input + key) }
         return true
     }
 
-    fun backspace() = state.update { if (it.solved) it else it.copy(input = it.input.dropLast(1)) }
-    fun clear() = state.update { if (it.solved) it else it.copy(input = "") }
+    fun backspace() = _state.update { if (it.solved) it else it.copy(input = it.input.dropLast(1)) }
+    fun clear() = _state.update { if (it.solved) it else it.copy(input = "") }
 
     fun hint() {
         val s = state.value
         val ex = s.exercise ?: return
         if (s.solved) return
         val stage = (s.hintStage + 1).coerceAtMost(2)
-        state.update { it.copy(hintStage = stage, message = NotationLogic.hint(ex, stage), tone = Tone.GOLD) }
+        _state.update { it.copy(hintStage = stage, message = NotationLogic.hint(ex, stage), tone = Tone.GOLD) }
     }
 
     /** Valide la saisie ; renvoie vrai si la réponse est exacte. */
@@ -370,7 +376,7 @@ class NotationViewModel(app: Application) : AndroidViewModel(app) {
         val ex = s.exercise ?: return false
         if (s.input == ex.san) {
             val streak = s.streak + 1
-            state.update {
+            _state.update {
                 it.copy(
                     solved = true, tone = Tone.GOOD, streak = streak, best = maxOf(it.best, streak),
                     message = "Exact : ${ex.san}. " + explain(ex),
@@ -379,7 +385,7 @@ class NotationViewModel(app: Application) : AndroidViewModel(app) {
             if (streak > s.best) viewModelScope.launch { duck.prefs.setNotationBest(streak) }
             return true
         }
-        state.update { it.copy(tone = Tone.BAD, streak = 0, message = NotationLogic.diagnose(s.input, ex)) }
+        _state.update { it.copy(tone = Tone.BAD, streak = 0, message = NotationLogic.diagnose(s.input, ex)) }
         return false
     }
 
