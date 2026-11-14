@@ -5,6 +5,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -16,6 +18,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToString
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -58,11 +61,27 @@ class AppRobolectricTest {
         )
     }
 
+    /**
+     * Laisse l'application se stabiliser sans attente fixe : le temps virtuel avance de [ms] (animations,
+     * délais du fil principal), puis on attend la condition « interface stable » — arbre sémantique inchangé
+     * pendant [STABLE_WINDOW_MS], aucun indicateur de chargement et fil principal au repos — le temps que les travaux en arrière-plan
+     * (base de données, DataStore, rendus) aient publié leurs résultats.
+     */
     private fun settle(ms: Long = 1500) {
-        repeat(6) {
-            Thread.sleep(ms / 6)
-            shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ms / 6))
-            rule.waitForIdle()
+        val looper = shadowOf(Looper.getMainLooper())
+        looper.idleFor(Duration.ofMillis(ms))
+        rule.mainClock.advanceTimeBy(ms)
+        rule.waitForIdle()
+        var last = ""
+        var since = System.nanoTime()
+        rule.waitUntil(timeoutMillis = 15_000) {
+            looper.idle()
+            val tree = runCatching { rule.onRoot(useUnmergedTree = true).printToString(maxDepth = Int.MAX_VALUE) }.getOrDefault("")
+            if (tree != last) { last = tree; since = System.nanoTime() }
+            // Aucun indicateur de progression indéterminé (chargement, réflexion, rendu d'aperçu) à l'écran.
+            val busy = rule.onAllNodes(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate), useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+            !busy && looper.isIdle && (System.nanoTime() - since) / 1_000_000 >= STABLE_WINDOW_MS
         }
     }
 
@@ -279,6 +298,7 @@ class AppRobolectricTest {
         val mates = com.ivanherboch.chessduck.content.PuzzleThemes.all.filter { it.group == com.ivanherboch.chessduck.content.PuzzleThemes.G_MATE }.map { it.name }
         val seen = HashSet<String>()
         repeat(16) {
+            rule.waitUntil(10_000) { rule.onAllNodesWithText("Révéler le thème").fetchSemanticsNodes().isNotEmpty() }
             rule.onNodeWithText("Révéler le thème").performClick(); settle(600)
             val shown = mates.filter { name -> rule.onAllNodesWithText("Type de problème : $name").fetchSemanticsNodes().isNotEmpty() }
             assertEquals(1, shown.size)
@@ -312,3 +332,6 @@ class AppRobolectricTest {
         )
     }
 }
+
+/** Durée pendant laquelle l'interface doit rester identique pour être considérée comme stable. */
+private const val STABLE_WINDOW_MS = 250L

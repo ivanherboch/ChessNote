@@ -1,9 +1,12 @@
 package com.ivanherboch.chessduck
 
 import android.os.Looper
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -41,11 +44,27 @@ class TabletRobolectricTest {
         )
     }
 
+    /**
+     * Laisse l'application se stabiliser sans attente fixe : le temps virtuel avance de [ms] (animations,
+     * délais du fil principal), puis on attend la condition « interface stable » — arbre sémantique inchangé
+     * pendant [STABLE_WINDOW_MS], aucun indicateur de chargement et fil principal au repos — le temps que les travaux en arrière-plan
+     * (base de données, DataStore, rendus) aient publié leurs résultats.
+     */
     private fun settle(ms: Long = 1500) {
-        repeat(6) {
-            Thread.sleep(ms / 6)
-            shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ms / 6))
-            rule.waitForIdle()
+        val looper = shadowOf(Looper.getMainLooper())
+        looper.idleFor(Duration.ofMillis(ms))
+        rule.mainClock.advanceTimeBy(ms)
+        rule.waitForIdle()
+        var last = ""
+        var since = System.nanoTime()
+        rule.waitUntil(timeoutMillis = 15_000) {
+            looper.idle()
+            val tree = runCatching { rule.onRoot(useUnmergedTree = true).printToString(maxDepth = Int.MAX_VALUE) }.getOrDefault("")
+            if (tree != last) { last = tree; since = System.nanoTime() }
+            // Aucun indicateur de progression indéterminé (chargement, réflexion, rendu d'aperçu) à l'écran.
+            val busy = rule.onAllNodes(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate), useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+            !busy && looper.isIdle && (System.nanoTime() - since) / 1_000_000 >= STABLE_WINDOW_MS
         }
     }
 
@@ -71,3 +90,6 @@ class TabletRobolectricTest {
         rule.onNodeWithContentDescription("Dame :", substring = true).performClick(); settle(1200); shot("t6_lecon")
     }
 }
+
+/** Durée pendant laquelle l'interface doit rester identique pour être considérée comme stable. */
+private const val STABLE_WINDOW_MS = 250L
