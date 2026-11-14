@@ -1,3 +1,9 @@
+## ChessDuck 2.2.5 — nouvelle mascotte partout dans l'application
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Le nouveau canard-cavalier de l'icône remplace l'ancienne mascotte dans l'en-tête de l'application, l'écran de sortie du mode enfant et le pied de page des images partagées.
+
 ## ChessDuck 2.2.4 — nouvelle icône
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

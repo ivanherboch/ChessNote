@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Génère l'icône adaptative Android (fond, premier plan, monochrome 432 × 432) à partir de art/icon_reference.jpg.
+"""Génère l'icône adaptative Android (fond, premier plan, monochrome 432 × 432) et la mascotte de l'application
+(drawable-nodpi/mascot.png : en-tête, mode enfant, images partagées) à partir de art/icon_reference.jpg.
 
 Le canard-cavalier est détouré de l'image de référence (rouge nettement supérieur au bleu, trous de l'œil comblés),
 agrandi pour occuper ≈ 80 % de la zone visible (72 dp sur 108) avec une ombre douce ; le fond est un damier
@@ -65,3 +66,11 @@ fg=Image.alpha_composite(fg,sh)
 fg.alpha_composite(d,(ox,oy))
 fg.save(os.path.join(OUT, 'ic_launcher_foreground.png'))
 mono=Image.new('RGBA',(S,S),(0,0,0,0)); white=Image.new('RGBA',d.size,(255,255,255,255)); white.putalpha(d.split()[3]); mono.alpha_composite(white,(ox,oy)); mono.save(os.path.join(OUT, 'ic_launcher_monochrome.png'))
+
+# Mascotte de l'application : le même canard détouré, sur fond transparent, centré dans un carré de 384 px.
+M=384
+mascot=Image.new('RGBA',(M,M),(0,0,0,0))
+ms=(M*0.94)/max(duck.width,duck.height)
+md=duck.resize((int(duck.width*ms),int(duck.height*ms)),Image.LANCZOS).filter(ImageFilter.UnsharpMask(radius=1.2,percent=60,threshold=2))
+mascot.alpha_composite(md,((M-md.width)//2,(M-md.height)//2))
+mascot.save(os.path.join(ROOT,'app','src','main','res','drawable-nodpi','mascot.png'))
