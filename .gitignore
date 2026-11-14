@@ -7,3 +7,7 @@ local.properties
 captures/
 .cxx/
 dist/
+
+# Python
+__pycache__/
+*.pyc
