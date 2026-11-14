@@ -1,5 +1,38 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.Backspace
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.LocalFireDepartment
+import androidx.compose.material.icons.rounded.Lightbulb
+import androidx.compose.material.icons.rounded.Replay
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SwapVert
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.semantics
+import com.ivanherboch.chessduck.ui.DuckIconButton
+import com.ivanherboch.chessduck.ui.InfoPill
+import com.ivanherboch.chessduck.ui.LoadingState
 import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,7 +87,6 @@ import com.ivanherboch.chessduck.ui.LocalFeedback
 import com.ivanherboch.chessduck.ui.ModuleLayout
 import com.ivanherboch.chessduck.ui.SectionTitle
 import com.ivanherboch.chessduck.ui.Tone
-import com.ivanherboch.chessduck.ui.captureBadge
 import com.ivanherboch.chessduck.ui.moveAnim
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -81,6 +113,8 @@ data class NotationState(
     val solved: Boolean = false,
     val hintStage: Int = 0,
     val streak: Int = 0,
+    /** Meilleure série de bonnes réponses (persistée). */
+    val best: Int = 0,
 )
 
 object NotationLogic {
@@ -222,8 +256,8 @@ class NotationViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         viewModelScope.launch {
-            val lv = duck.prefs.settings.first().notationLevel
-            state.update { it.copy(level = lv) }
+            val st = duck.prefs.settings.first()
+            state.update { it.copy(level = st.notationLevel, best = st.notationBest) }
             next()
         }
     }
@@ -293,11 +327,26 @@ class NotationViewModel(app: Application) : AndroidViewModel(app) {
 
     fun flip() = state.update { it.copy(flipped = !it.flipped) }
 
-    fun type(key: String) {
+    /** Ajoute [key] à la saisie ; renvoie faux (et explique pourquoi) si la touche est refusée. */
+    fun type(key: String): Boolean {
         val s = state.value
-        if (s.solved) return
-        if (s.input.length + key.length > 9) return
-        state.update { it.copy(input = if (key.startsWith("O-O")) key else it.input + key) }
+        if (s.solved) return false
+        if (key.startsWith("O-O")) {
+            // Le roque s'écrit seul : il ne doit jamais écraser en silence une saisie commencée.
+            if (s.input.isNotEmpty() && !s.input.startsWith("O-O")) {
+                state.update { it.copy(tone = Tone.GOLD, message = "Le roque s'écrit seul (O-O ou O-O-O). Effacez d'abord la saisie : touche « Tout effacer » ou appui long sur ⌫.") }
+                return false
+            }
+            state.update { it.copy(input = key) }
+            return true
+        }
+        if (s.input.startsWith("O-O") && key != "+" && key != "#") {
+            state.update { it.copy(tone = Tone.GOLD, message = "Après un roque, seuls « + » (échec) ou « # » (mat) peuvent suivre.") }
+            return false
+        }
+        if (s.input.length + key.length > 9) return false
+        state.update { it.copy(input = it.input + key) }
+        return true
     }
 
     fun backspace() = state.update { if (it.solved) it else it.copy(input = it.input.dropLast(1)) }
@@ -316,15 +365,17 @@ class NotationViewModel(app: Application) : AndroidViewModel(app) {
         val s = state.value
         val ex = s.exercise ?: return false
         if (s.input == ex.san) {
+            val streak = s.streak + 1
             state.update {
                 it.copy(
-                    solved = true, tone = Tone.GOOD, streak = it.streak + 1,
-                    message = "✅ Exact : ${ex.san}. " + explain(ex),
+                    solved = true, tone = Tone.GOOD, streak = streak, best = maxOf(it.best, streak),
+                    message = "Exact : ${ex.san}. " + explain(ex),
                 )
             }
+            if (streak > s.best) viewModelScope.launch { duck.prefs.setNotationBest(streak) }
             return true
         }
-        state.update { it.copy(tone = Tone.BAD, streak = 0, message = "❌ " + NotationLogic.diagnose(s.input, ex)) }
+        state.update { it.copy(tone = Tone.BAD, streak = 0, message = NotationLogic.diagnose(s.input, ex)) }
         return false
     }
 
@@ -341,93 +392,167 @@ class NotationViewModel(app: Application) : AndroidViewModel(app) {
     }
 }
 
+private val LEVEL_SHORT = listOf("Tous", "Bases", "Prises", "Roques")
+
 @Composable
 fun NotationScreen(vm: NotationViewModel) {
     val s by vm.state.collectAsStateWithLifecycle()
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     val ex = s.exercise
+    if (ex == null) {
+        LoadingState("Préparation de l'exercice…")
+        return
+    }
     ModuleLayout(
-        bottomMin = 262.dp,
+        bottomMin = 320.dp,
         top = {
-            EqualRow(Modifier.padding(top = 4.dp)) {
-                DuckButton("⇅ Retourner", vm::flip, Modifier.weight(1f), height = 36.dp)
-                DuckButton("🔄 Revoir le coup", vm::replay, Modifier.weight(1.25f), height = 36.dp)
-                DuckButton("💡 Indice", vm::hint, Modifier.weight(1f), height = 36.dp, accent = c.green)
-                DuckButton("🎲 Nouveau", vm::next, Modifier.weight(1f), height = 36.dp, accent = c.gold)
-            }
-            Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                NotationLogic.LEVELS.forEachIndexed { i, label ->
-                    DuckChip(label, s.level == i, { vm.setLevel(i) }, Modifier.weight(if (i == 0) 0.6f else if (i == 1) 0.8f else 1.3f), accent = c.blue)
-                }
+            Row(Modifier.fillMaxWidth().height(52.dp), verticalAlignment = Alignment.CenterVertically) {
+                LevelMenu(s.level, vm::setLevel, Modifier.weight(1f))
+                DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
+                DuckIconButton(Icons.Rounded.Replay, "Revoir le coup", vm::replay)
+                DuckIconButton(
+                    Icons.Rounded.Lightbulb, "Indice", vm::hint, enabled = !s.solved, accent = c.green,
+                    badge = if (s.hintStage > 0) "${s.hintStage}/2" else null,
+                )
+                DuckIconButton(Icons.Rounded.SkipNext, "Exercice suivant", vm::next, accent = c.gold, filled = s.solved)
             }
         },
         board = {
-            if (ex != null) {
-                val pos = if (s.shown) ex.before.play(ex.move) else ex.before
-                ChessBoard(
-                    position = pos,
-                    modifier = Modifier.fillMaxSize(),
-                    flipped = s.flipped,
-                    lastMove = if (s.shown) ex.move else null,
-                    anim = s.anim,
-                    arrows = if (s.shown) listOf(Arrow(ex.move.from, ex.move.to, c.blue)) else emptyList(),
-                    badges = if (s.shown) listOfNotNull(captureBadge(ex.before, ex.move)) else emptyList(),
+            val pos = if (s.shown) ex.before.play(ex.move) else ex.before
+            ChessBoard(
+                position = pos,
+                modifier = Modifier.fillMaxSize(),
+                flipped = s.flipped,
+                lastMove = if (s.shown) ex.move else null,
+                anim = s.anim,
+                arrows = if (s.shown) listOf(Arrow(ex.move.from, ex.move.to, c.blue)) else emptyList(),
+            )
+        },
+        underBoard = {
+            // Orientation de l'échiquier et série en cours : toujours présents, la mise en page ne saute pas.
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                InfoPill(
+                    if (s.flipped) "Vue Noirs" else "Vue Blancs",
+                    icon = Icons.Rounded.SwapVert,
+                    description = if (s.flipped) "Échiquier vu du côté des Noirs : les colonnes vont de h à a" else "Échiquier vu du côté des Blancs",
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                Spacer(Modifier.weight(0.01f))
+                InfoPill(
+                    "Série ${s.streak} · record ${s.best}", icon = Icons.Rounded.LocalFireDepartment, accent = if (s.streak > 0) c.gold else null,
+                    description = "Série en cours : ${s.streak} bonne${if (s.streak > 1) "s" else ""} réponse${if (s.streak > 1) "s" else ""}. Record : ${s.best}",
                 )
             }
         },
         bottom = {
-            FeedbackCard(s.message, s.tone, Modifier.padding(top = 5.dp).weight(1f), maxSize = 13.sp)
-            // Barre de saisie
-            Row(Modifier.fillMaxWidth().padding(top = 5.dp).height(42.dp), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                Box(
-                    Modifier.weight(1.5f).fillMaxHeight().clip(RoundedCornerShape(10.dp)).background(c.surface).padding(horizontal = 10.dp),
-                    contentAlignment = Alignment.CenterStart,
+            FeedbackCard(s.message, s.tone, Modifier.padding(top = 6.dp).weight(1f))
+            // Barre de saisie : « Tout effacer » à gauche, ⌫ (appui long = tout effacer) et Valider à droite.
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp).height(52.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(12.dp)).background(c.surface)
+                        .border(1.dp, if (s.solved) c.greenText else c.outlineStrong, RoundedCornerShape(12.dp))
+                        .semantics(mergeDescendants = true) {
+                            contentDescription = if (s.input.isEmpty()) "Votre réponse : vide" else "Votre réponse : ${s.input.toList().joinToString(" ")}"
+                        },
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    AutoText(
+                    if (s.input.isNotEmpty() && !s.solved) {
+                        DuckIconButton(Icons.Rounded.Close, "Tout effacer", vm::clear)
+                    } else {
+                        Spacer(Modifier.width(12.dp))
+                    }
+                    Text(
                         s.input.ifEmpty { "Votre réponse…" },
-                        color = if (s.input.isEmpty()) c.muted else if (s.solved) c.green else c.text,
-                        maxSize = if (s.input.isEmpty()) 14.sp else 22.sp, weight = FontWeight.Bold,
+                        color = if (s.input.isEmpty()) c.muted else if (s.solved) c.greenText else c.text,
+                        style = if (s.input.isEmpty()) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.headlineSmall,
+                        maxLines = 1,
                     )
                 }
-                DuckButton("⌫", vm::backspace, Modifier.weight(0.5f), height = 42.dp, maxSize = 18.sp)
-                DuckButton("✕", vm::clear, Modifier.weight(0.5f), height = 42.dp, maxSize = 16.sp)
-                if (s.solved) DuckButton("Suivant →", vm::next, Modifier.weight(1.1f), accent = c.green, filled = true, height = 42.dp, maxSize = 15.sp)
-                else DuckButton("Valider", { if (vm.validate()) fb?.success() else fb?.error() }, Modifier.weight(1.1f), accent = c.gold, filled = true, height = 42.dp, maxSize = 15.sp)
+                BackspaceKey(enabled = !s.solved && s.input.isNotEmpty(), onTap = vm::backspace, onLong = vm::clear)
+                if (s.solved) DuckButton("Suivant", vm::next, Modifier.width(112.dp), accent = c.green, filled = true, height = 52.dp, icon = Icons.AutoMirrored.Rounded.ArrowForward)
+                else DuckButton("Valider", { if (vm.validate()) fb?.success() else fb?.error() }, Modifier.width(112.dp), enabled = s.input.isNotEmpty(), accent = c.gold, filled = true, height = 52.dp, icon = Icons.Rounded.Check)
             }
-            // Clavier virtuel FIDE (aucun clavier système)
-            Column(Modifier.padding(top = 5.dp, bottom = 5.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(Modifier.fillMaxWidth().height(44.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            // Clavier virtuel FIDE (aucun clavier système), désactivé une fois la réponse validée.
+            val type: (String) -> Unit = { k -> if (!vm.type(k)) fb?.error() }
+            val on = !s.solved
+            Column(Modifier.padding(top = 6.dp, bottom = 6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(Modifier.fillMaxWidth().height(48.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     for ((k, sub) in listOf("K" to "King", "Q" to "Queen", "R" to "Rook", "B" to "Bishop", "N" to "Knight")) {
-                        Key(k, sub, Modifier.weight(1f)) { vm.type(k) }
+                        Key(k, sub, Modifier.weight(1f), on, "$k, ${sub}, ${PIECE_NAMES_FR[" PNBRQK".indexOf(k)]}") { type(k) }
                     }
                 }
-                Row(Modifier.fillMaxWidth().height(38.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                    for (ch in 'a'..'h') Key(ch.toString(), null, Modifier.weight(1f)) { vm.type(ch.toString()) }
+                Row(Modifier.fillMaxWidth().height(46.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    for (ch in 'a'..'h') Key(ch.toString(), null, Modifier.weight(1f), on, "colonne $ch") { type(ch.toString()) }
                 }
-                Row(Modifier.fillMaxWidth().height(38.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                    for (ch in '1'..'8') Key(ch.toString(), null, Modifier.weight(1f)) { vm.type(ch.toString()) }
+                Row(Modifier.fillMaxWidth().height(46.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    for (ch in '1'..'8') Key(ch.toString(), null, Modifier.weight(1f), on, "rangée $ch") { type(ch.toString()) }
                 }
-                Row(Modifier.fillMaxWidth().height(38.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    for (k in listOf("x", "+", "#", "=")) Key(k, null, Modifier.weight(1f)) { vm.type(k) }
-                    Key("O-O", null, Modifier.weight(1.4f)) { vm.type("O-O") }
-                    Key("O-O-O", null, Modifier.weight(1.8f)) { vm.type("O-O-O") }
+                Row(Modifier.fillMaxWidth().height(46.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    for ((k, d) in listOf("x" to "x, prise", "+" to "plus, échec", "#" to "dièse, échec et mat", "=" to "égal, promotion")) {
+                        Key(k, null, Modifier.weight(1f), on, d) { type(k) }
+                    }
+                    Key("O-O", null, Modifier.weight(1.4f), on, "petit roque") { type("O-O") }
+                    Key("O-O-O", null, Modifier.weight(1.8f), on, "grand roque") { type("O-O-O") }
                 }
             }
         },
     )
 }
 
+/** Sélecteur de niveau compact (menu déroulant). */
 @Composable
-private fun Key(label: String, sub: String?, modifier: Modifier, onClick: () -> Unit) {
+private fun LevelMenu(level: Int, onSelect: (Int) -> Unit, modifier: Modifier) {
+    val c = LocalDuck.current
+    var open by remember { mutableStateOf(false) }
+    Box(modifier) {
+        DuckButton(
+            "Niveau : ${LEVEL_SHORT[level]}", { open = true }, Modifier.widthIn(max = 180.dp), icon = Icons.Rounded.Tune,
+            contentDescription = "Niveau d'exercice : ${NotationLogic.LEVELS[level]}. Toucher pour changer",
+        )
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }, containerColor = c.surface) {
+            NotationLogic.LEVELS.forEachIndexed { i, label ->
+                DropdownMenuItem(
+                    text = { Text(if (i == 0) "Tous les niveaux" else label, style = MaterialTheme.typography.bodyMedium, color = c.text) },
+                    onClick = { open = false; onSelect(i) },
+                    leadingIcon = { if (i == level) Icon(Icons.Rounded.Check, contentDescription = "sélectionné", tint = c.goldText) else Spacer(Modifier.size(24.dp)) },
+                )
+            }
+        }
+    }
+}
+
+/** Touche ⌫ : un appui efface un caractère, un appui long efface toute la saisie. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun BackspaceKey(enabled: Boolean, onTap: () -> Unit, onLong: () -> Unit) {
+    val c = LocalDuck.current
+    val fb = LocalFeedback.current
+    Box(
+        Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)).background(if (enabled) c.surfaceHi else c.surfaceSubtle)
+            .combinedClickable(
+                enabled = enabled, role = Role.Button, onClickLabel = "Effacer un caractère", onLongClickLabel = "Tout effacer",
+                onLongClick = { fb?.error(); onLong() },
+            ) { fb?.key(); onTap() }
+            .semantics { contentDescription = "Effacer" },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Icons.AutoMirrored.Rounded.Backspace, contentDescription = null, tint = if (enabled) c.text else c.muted)
+    }
+}
+
+@Composable
+private fun Key(label: String, sub: String?, modifier: Modifier, enabled: Boolean, description: String, onClick: () -> Unit) {
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     Column(
-        modifier.fillMaxHeight().clip(RoundedCornerShape(8.dp)).background(c.surfaceHi).clickable { fb?.key(); onClick() },
+        modifier.fillMaxHeight().clip(RoundedCornerShape(10.dp)).background(if (enabled) c.surfaceHi else c.surfaceSubtle)
+            .clickable(enabled = enabled, role = Role.Button) { fb?.key(); onClick() }
+            .clearAndSetSemantics { contentDescription = description; if (!enabled) disabled() },
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        AutoText(label, maxSize = if (sub != null) 18.sp else 17.sp, weight = FontWeight.Bold, align = TextAlign.Center)
-        if (sub != null) AutoText(sub, color = c.muted, maxSize = 10.sp, align = TextAlign.Center)
+        Text(label, color = if (enabled) c.text else c.muted, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+        if (sub != null) Text(sub, color = c.muted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
 
@@ -435,21 +560,21 @@ private fun Key(label: String, sub: String?, modifier: Modifier, onClick: () -> 
 @Composable
 fun MemoSheet(onClose: () -> Unit) {
     val c = LocalDuck.current
-    DuckSheet("📖 Mémo Anglais — notation FIDE", onClose) {
-        SectionTitle("LES PIÈCES")
+    DuckSheet("Mémo anglais — notation FIDE", onClose) {
+        SectionTitle("Les pièces")
         val pieces = listOf(
             Triple("K", "King", "Roi"), Triple("Q", "Queen", "Dame"), Triple("R", "Rook", "Tour"),
             Triple("B", "Bishop", "Fou"), Triple("N", "Knight", "Cavalier"), Triple("—", "Pawn", "Pion : aucune lettre"),
         )
         for ((l, en, fr) in pieces) MemoRow(l, "$en  →  $fr")
-        SectionTitle("LES SYMBOLES")
+        SectionTitle("Les symboles")
         MemoRow("x", "Prise (capture) : Bxf7, exd5")
         MemoRow("+", "Échec au roi : Qh5+")
         MemoRow("#", "Échec et mat : Qxf7#")
         MemoRow("=", "Promotion du pion : e8=Q")
         MemoRow("O-O", "Petit roque (côté roi)")
         MemoRow("O-O-O", "Grand roque (côté dame)")
-        SectionTitle("LES RÈGLES D'OR")
+        SectionTitle("Les règles d'or")
         for (t in listOf(
             "Un coup = lettre de la pièce + case d'arrivée : Nf3.",
             "Un pion ne prend jamais de lettre : e4. S'il capture, on indique sa colonne de départ : exd5.",
@@ -458,8 +583,8 @@ fun MemoSheet(onClose: () -> Unit) {
             "L'ordre est toujours : pièce, départ éventuel, x, case d'arrivée, =promotion, + ou #.",
         )) {
             Row(Modifier.padding(vertical = 3.dp)) {
-                AutoText("•  ", color = c.gold, maxSize = 14.sp, weight = FontWeight.Bold)
-                AutoText(t, maxSize = 14.sp, maxLines = 4, modifier = Modifier.weight(1f))
+                Text("•  ", color = c.goldText, style = MaterialTheme.typography.bodyMedium)
+                Text(t, color = c.text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
             }
         }
         Spacer(Modifier.height(8.dp))
@@ -470,9 +595,9 @@ fun MemoSheet(onClose: () -> Unit) {
 private fun MemoRow(key: String, text: String) {
     val c = LocalDuck.current
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.height(34.dp).fillMaxWidth(0.22f).clip(RoundedCornerShape(8.dp)).background(c.surfaceHi), contentAlignment = Alignment.Center) {
-            AutoText(key, color = c.gold, maxSize = 17.sp, weight = FontWeight.Bold, align = TextAlign.Center)
+        Box(Modifier.height(36.dp).fillMaxWidth(0.22f).clip(RoundedCornerShape(8.dp)).background(c.surfaceHi), contentAlignment = Alignment.Center) {
+            Text(key, color = c.goldText, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
         }
-        AutoText(text, maxSize = 14.sp, maxLines = 2, modifier = Modifier.padding(start = 10.dp).weight(1f))
+        Text(text, color = c.text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 10.dp).weight(1f))
     }
 }

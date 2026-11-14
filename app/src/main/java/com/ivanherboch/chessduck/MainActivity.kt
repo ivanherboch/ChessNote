@@ -1,40 +1,78 @@
 package com.ivanherboch.chessduck
 
+import android.content.pm.ActivityInfo
 import android.graphics.Color as AColor
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.BoxWithConstraints
-import android.content.pm.ActivityInfo
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.Keyboard
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.rounded.ChildCare
+import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.Keyboard
+import androidx.compose.material.icons.rounded.School
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -43,25 +81,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ivanherboch.chessduck.data.Settings
 import com.ivanherboch.chessduck.feature.AcademyScreen
 import com.ivanherboch.chessduck.feature.AcademyViewModel
 import com.ivanherboch.chessduck.feature.KidScreen
-import com.ivanherboch.chessduck.feature.KidTheme
 import com.ivanherboch.chessduck.feature.KidViewModel
 import com.ivanherboch.chessduck.feature.MemoSheet
 import com.ivanherboch.chessduck.feature.NotationScreen
@@ -70,13 +105,13 @@ import com.ivanherboch.chessduck.feature.PlayScreen
 import com.ivanherboch.chessduck.feature.PlayViewModel
 import com.ivanherboch.chessduck.feature.PuzzlesScreen
 import com.ivanherboch.chessduck.feature.PuzzlesViewModel
-import com.ivanherboch.chessduck.ui.AutoText
 import com.ivanherboch.chessduck.ui.ChessDuckTheme
 import com.ivanherboch.chessduck.ui.DuckButton
-import com.ivanherboch.chessduck.ui.DuckChip
+import com.ivanherboch.chessduck.ui.DuckIconButton
 import com.ivanherboch.chessduck.ui.DuckSheet
 import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.LocalFeedback
+import com.ivanherboch.chessduck.ui.LocalShowCoords
 import com.ivanherboch.chessduck.ui.SectionTitle
 import kotlinx.coroutines.launch
 
@@ -85,26 +120,28 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         val app = application as ChessDuckApp
-        // Téléphone : portrait. Tablette (plus petite largeur >= 600 dp) : paysage.
+        // Téléphone : portrait. Tablette (plus petite largeur >= 600 dp) : paysage, en deux colonnes.
         val tablet = resources.getBoolean(R.bool.is_tablet)
         requestedOrientation = if (tablet) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setContent {
             val settings by app.prefs.settings.collectAsStateWithLifecycle(initialValue = null)
             val st = settings ?: return@setContent
-            DisposableEffect(st.dark, st.kidMode) {
-                val style = if (st.dark && !st.kidMode) SystemBarStyle.dark(AColor.TRANSPARENT) else SystemBarStyle.light(AColor.TRANSPARENT, AColor.TRANSPARENT)
+            val systemDark = isSystemInDarkTheme()
+            // Le mode enfant impose un écran clair et épuré.
+            val dark = !st.kidMode && when (st.themeMode) {
+                0 -> systemDark
+                1 -> false
+                else -> true
+            }
+            DisposableEffect(dark) {
+                val style = if (dark) SystemBarStyle.dark(AColor.TRANSPARENT) else SystemBarStyle.light(AColor.TRANSPARENT, AColor.TRANSPARENT)
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
                 onDispose {}
             }
             app.feedback.hapticsEnabled = st.haptics
             app.feedback.soundEnabled = st.sound
-            // Le mode enfant impose un écran clair et épuré.
-            val dark = st.dark && !st.kidMode
-            // Sur tablette, toute l'interface est agrandie pour garder des textes et des boutons confortables.
-            val base = LocalDensity.current
-            val factor = if (!tablet) 1f else if (LocalConfiguration.current.smallestScreenWidthDp >= 720) 1.3f else 1.15f
-            ChessDuckTheme(dark) {
-                CompositionLocalProvider(LocalFeedback provides app.feedback, LocalDensity provides Density(base.density * factor, base.fontScale)) {
+            ChessDuckTheme(dark = dark, kid = st.kidMode, dynamic = st.dynamicColor) {
+                CompositionLocalProvider(LocalFeedback provides app.feedback, LocalShowCoords provides st.coords) {
                     MainScreen(st, app)
                 }
             }
@@ -112,7 +149,14 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private val TABS = listOf("⌨️" to "Notation", "🎓" to "Académie", "🧩" to "Problèmes", "⚔️" to "Jeu Libre")
+private class TabSpec(val label: String, val description: String, val icon: @Composable () -> Painter, val selectedIcon: @Composable () -> Painter)
+
+private val TABS = listOf(
+    TabSpec("Notation", "Notation : apprendre la notation anglaise", { rememberVectorPainter(Icons.Outlined.Keyboard) }, { rememberVectorPainter(Icons.Rounded.Keyboard) }),
+    TabSpec("Académie", "Académie : leçons interactives", { rememberVectorPainter(Icons.Outlined.School) }, { rememberVectorPainter(Icons.Rounded.School) }),
+    TabSpec("Problèmes", "Problèmes Lichess", { rememberVectorPainter(Icons.Outlined.Extension) }, { rememberVectorPainter(Icons.Rounded.Extension) }),
+    TabSpec("Jeu Libre", "Jeu libre contre l'ordinateur ou à deux", { painterResource(R.drawable.ic_knight) }, { painterResource(R.drawable.ic_knight) }),
+)
 
 @Composable
 fun MainScreen(st: Settings, app: ChessDuckApp) {
@@ -121,7 +165,7 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var showSettings by remember { mutableStateOf(false) }
     var showMemo by remember { mutableStateOf(false) }
-    // Les quatre ViewModels vivent au niveau de l'activité : l'état de chaque module est conservé d'un onglet à l'autre.
+    // Les ViewModels vivent au niveau de l'activité : l'état de chaque module est conservé d'un onglet à l'autre.
     val notation: NotationViewModel = viewModel()
     val academy: AcademyViewModel = viewModel()
     val puzzles: PuzzlesViewModel = viewModel()
@@ -135,58 +179,86 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
         wasKid = st.kidMode
     }
     if (st.kidMode) {
-        KidTheme {
-            Box(Modifier.fillMaxSize().background(LocalDuck.current.bg).safeDrawingPadding()) {
+        Box(Modifier.fillMaxSize().background(c.bg)) {
+            Box(Modifier.fillMaxSize().safeDrawingPadding()) {
                 KidScreen(kid) { app.scope.launch { app.prefs.setKidMode(false) } }
             }
         }
         return
     }
 
-    val header: @Composable () -> Unit = {
-        // En-tête global compact
-        Row(Modifier.fillMaxWidth().height(46.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                Image(painterResource(R.drawable.mascot), "Mascotte Cavalier-Canard", Modifier.size(40.dp))
-                Column(Modifier.padding(start = 6.dp).weight(1f, fill = false)) {
-                    AutoText("ChessDuck", maxSize = 19.sp, weight = FontWeight.Black)
-                    if (tab != 0) AutoText("© Ivan Herboch, 2026", color = c.muted.copy(alpha = 0.7f), maxSize = 8.sp)
-                }
-                Box(Modifier.padding(start = 6.dp, end = 6.dp).clip(RoundedCornerShape(8.dp)).background(c.gold).padding(horizontal = 6.dp, vertical = 3.dp)) {
-                    AutoText("ELO ${st.elo}", color = c.onAccent, maxSize = 13.sp, weight = FontWeight.Bold)
-                }
+    // Retour Android : depuis un onglet secondaire, on revient à la Notation avant de quitter l'application.
+    BackHandler(enabled = tab != 0) { tab = 0 }
+    val select: (Int) -> Unit = { if (it != tab) { fb?.key(); tab = it } }
+
+    val header: @Composable (Modifier) -> Unit = { m ->
+        Row(m.fillMaxWidth().height(50.dp).padding(start = 12.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Image(painterResource(R.drawable.mascot), contentDescription = null, modifier = Modifier.size(34.dp))
+            Text(
+                "ChessDuck", style = MaterialTheme.typography.titleLarge, color = c.text,
+                modifier = Modifier.padding(start = 8.dp).weight(1f).semantics { heading() },
+            )
+            if (tab == 0) DuckButton("Mémo", { showMemo = true }, icon = Icons.AutoMirrored.Rounded.MenuBook, accent = c.blue, contentDescription = "Mémo anglais : lettres et symboles FIDE")
+            DuckIconButton(Icons.Rounded.Settings, "Paramètres", { showSettings = true })
+        }
+    }
+    val content: @Composable (Modifier) -> Unit = { m ->
+        AnimatedContent(
+            targetState = tab, modifier = m, label = "onglet",
+            transitionSpec = { fadeIn(tween(200)) togetherWith fadeOut(tween(120)) },
+        ) { t ->
+            when (t) {
+                0 -> NotationScreen(notation)
+                1 -> AcademyScreen(academy)
+                2 -> PuzzlesScreen(puzzles)
+                else -> PlayScreen(play)
             }
-            if (tab == 0) DuckButton("📖 Mémo Anglais", { showMemo = true }, Modifier.padding(end = 6.dp).width(106.dp), accent = c.blue, height = 36.dp)
-            DuckButton("⚙️", { showSettings = true }, Modifier.size(width = 44.dp, height = 36.dp), maxSize = 18.sp)
         }
     }
-    val content: @Composable () -> Unit = {
-        when (tab) {
-            0 -> NotationScreen(notation)
-            1 -> AcademyScreen(academy)
-            2 -> PuzzlesScreen(puzzles)
-            else -> PlayScreen(play)
-        }
-    }
-    BoxWithConstraints(Modifier.fillMaxSize().background(c.bg).safeDrawingPadding()) {
+
+    BoxWithConstraints(Modifier.fillMaxSize().background(c.bg)) {
         if (maxWidth > maxHeight) {
-            // Paysage (tablette) : rail de navigation à gauche pour laisser toute la hauteur à l'échiquier.
+            // Paysage (tablette) : rail de navigation à gauche, l'échiquier garde toute la hauteur.
             Row(Modifier.fillMaxSize()) {
-                Column(Modifier.width(84.dp).fillMaxHeight().background(c.surface)) {
-                    TABS.forEachIndexed { i, (emoji, label) -> TabItem(emoji, label, tab == i, Modifier.weight(1f).fillMaxWidth()) { fb?.key(); tab = i } }
+                NavigationRail(containerColor = c.surface, contentColor = c.text) {
+                    Spacer(Modifier.weight(1f))
+                    TABS.forEachIndexed { i, t ->
+                        NavigationRailItem(
+                            selected = tab == i, onClick = { select(i) },
+                            icon = { Icon(if (tab == i) t.selectedIcon() else t.icon(), contentDescription = null) },
+                            label = { Text(t.label, style = MaterialTheme.typography.labelMedium) },
+                            colors = NavigationRailItemDefaults.colors(
+                                selectedIconColor = c.goldRole.onFill, indicatorColor = c.goldRole.fill, selectedTextColor = c.text,
+                                unselectedIconColor = c.muted, unselectedTextColor = c.muted,
+                            ),
+                            modifier = Modifier.padding(vertical = 6.dp),
+                        )
+                    }
+                    Spacer(Modifier.weight(1f))
                 }
-                Column(Modifier.weight(1f).fillMaxHeight().padding(start = 6.dp)) {
-                    header()
-                    Box(Modifier.fillMaxWidth().weight(1f)) { content() }
+                Column(Modifier.weight(1f).fillMaxHeight().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.End + WindowInsetsSides.Bottom))) {
+                    header(Modifier)
+                    content(Modifier.fillMaxWidth().weight(1f))
                 }
             }
         } else {
             Column(Modifier.fillMaxSize()) {
-                header()
-                Box(Modifier.fillMaxWidth().weight(1f)) { content() }
-                // Barre de navigation inférieure fixe à 4 modules
-                Row(Modifier.fillMaxWidth().height(56.dp).background(c.surface)) {
-                    TABS.forEachIndexed { i, (emoji, label) -> TabItem(emoji, label, tab == i, Modifier.weight(1f).fillMaxHeight()) { fb?.key(); tab = i } }
+                header(Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)))
+                content(Modifier.fillMaxWidth().weight(1f).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)))
+                // Barre de navigation M3 compacte ; sa surface s'étend sous la barre système.
+                val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                NavigationBar(containerColor = c.surface, contentColor = c.text, tonalElevation = 0.dp, modifier = Modifier.height(64.dp + navInset)) {
+                    TABS.forEachIndexed { i, t ->
+                        NavigationBarItem(
+                            selected = tab == i, onClick = { select(i) },
+                            icon = { Icon(if (tab == i) t.selectedIcon() else t.icon(), contentDescription = null) },
+                            label = { Text(t.label, style = MaterialTheme.typography.labelMedium, maxLines = 1) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = c.goldRole.onFill, indicatorColor = c.goldRole.fill, selectedTextColor = c.text,
+                                unselectedIconColor = c.muted, unselectedTextColor = c.muted,
+                            ),
+                        )
+                    }
                 }
             }
         }
@@ -196,100 +268,123 @@ fun MainScreen(st: Settings, app: ChessDuckApp) {
     if (showSettings) SettingsSheet(st, app) { showSettings = false }
 }
 
-/**
- * Onglet de navigation. L'onglet actif occupe tout son quart de bandeau avec un relief « enfoncé » :
- * fond plus sombre teinté d'or, ombre intérieure en haut, liseré doré en bas, contenu légèrement abaissé.
- */
+/** Ligne de réglage M3 : titre, description et interrupteur. */
 @Composable
-private fun TabItem(emoji: String, label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+private fun SwitchRow(title: String, description: String?, checked: Boolean, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
     val c = LocalDuck.current
-    val shape = RoundedCornerShape(14.dp)
-    val well = if (c.dark) Color(0xFF0B1220) else Color(0xFFC3CEDC)
-    Column(
-        modifier.padding(horizontal = 4.dp, vertical = 4.dp).clip(shape)
-            .then(
-                if (selected) Modifier.background(well).drawBehind {
-                    // Ombre intérieure haute : le bouton paraît creusé dans le bandeau.
-                    drawRect(Brush.verticalGradient(listOf(Color.Black.copy(alpha = if (c.dark) 0.55f else 0.22f), Color.Transparent), endY = size.height * 0.45f))
-                    drawRect(c.gold.copy(alpha = if (c.dark) 0.14f else 0.22f))
-                    drawRect(c.gold, topLeft = Offset(size.width * 0.2f, size.height - 3.dp.toPx()), size = Size(size.width * 0.6f, 3.dp.toPx()))
-                }.border(1.dp, Color.Black.copy(alpha = if (c.dark) 0.5f else 0.14f), shape)
-                else Modifier,
+    ListItem(
+        headlineContent = { Text(title, style = MaterialTheme.typography.titleSmall) },
+        supportingContent = description?.let { { Text(it, style = MaterialTheme.typography.bodySmall) } },
+        trailingContent = {
+            Switch(
+                checked = checked, onCheckedChange = null, enabled = enabled,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = c.goldRole.onFill, checkedTrackColor = c.goldRole.fill,
+                    uncheckedThumbColor = c.outlineStrong, uncheckedTrackColor = c.surfaceHi, uncheckedBorderColor = c.outlineStrong,
+                ),
             )
-            .clickable { onClick() }
-            .padding(top = if (selected) 2.dp else 0.dp),
-        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-    ) {
-        AutoText(emoji, maxSize = 19.sp, align = TextAlign.Center)
-        AutoText(label, color = if (selected) (if (c.dark) c.gold else Color(0xFF8A5A00)) else c.muted, maxSize = 12.sp, weight = if (selected) FontWeight.Bold else FontWeight.Medium, align = TextAlign.Center)
-    }
+        },
+        colors = ListItemDefaults.colors(containerColor = c.surface, headlineColor = c.text, supportingColor = c.muted),
+        // Toute la ligne bascule le réglage (cible large, annoncée comme un interrupteur par TalkBack).
+        modifier = Modifier.padding(vertical = 2.dp).toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onChange),
+    )
 }
 
-/** Paramètres globaux : thème Jour/Nuit et pseudo (persistés via DataStore). */
+/** Champ de pseudo : libellé flottant, compteur, validation par la touche « OK » du clavier. */
+@Composable
+private fun PseudoField(label: String, initial: String, fallback: String, onSave: (String) -> Unit) {
+    val c = LocalDuck.current
+    val focus = LocalFocusManager.current
+    var value by remember { mutableStateOf(initial) }
+    OutlinedTextField(
+        value = value,
+        onValueChange = { v -> value = v.take(16); onSave(value.trim().ifEmpty { fallback }) },
+        label = { Text(label) },
+        supportingText = { Text("${value.length}/16", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
+        modifier = Modifier.fillMaxWidth(),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = c.text, unfocusedTextColor = c.text, focusedBorderColor = c.goldText, unfocusedBorderColor = c.outlineStrong,
+            cursorColor = c.goldText, focusedLabelColor = c.goldText, unfocusedLabelColor = c.muted,
+            focusedSupportingTextColor = c.muted, unfocusedSupportingTextColor = c.muted,
+        ),
+    )
+}
+
+/** Paramètres globaux (persistés via DataStore). */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsSheet(st: Settings, app: ChessDuckApp, onClose: () -> Unit) {
     val c = LocalDuck.current
     // Les réglages sont écrits dans la portée de l'application : fermer le tiroir n'annule jamais l'écriture.
     val scope = app.scope
-    var pseudo by remember { mutableStateOf(st.pseudo) }
-    var pseudo2 by remember { mutableStateOf(st.pseudo2) }
-    DuckSheet("⚙️ Paramètres", onClose) {
-        SectionTitle("APPARENCE")
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            DuckChip("🌙 Mode Nuit (sombre)", st.dark, { scope.launch { app.prefs.setDark(true) } }, Modifier.weight(1f))
-            DuckChip("☀️ Mode Jour (clair)", !st.dark, { scope.launch { app.prefs.setDark(false) } }, Modifier.weight(1f))
+    DuckSheet("Paramètres", onClose) {
+        SectionTitle("Apparence")
+        val modes = listOf("Système", "Jour", "Nuit")
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            modes.forEachIndexed { i, label ->
+                SegmentedButton(
+                    selected = st.themeMode == i, onClick = { scope.launch { app.prefs.setThemeMode(i) } },
+                    shape = SegmentedButtonDefaults.itemShape(i, modes.size),
+                    colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = c.goldRole.fill, activeContentColor = c.goldRole.onFill, activeBorderColor = c.outlineStrong,
+                        inactiveContainerColor = c.surface, inactiveContentColor = c.text, inactiveBorderColor = c.outlineStrong,
+                    ),
+                ) { Text(label, style = MaterialTheme.typography.labelLarge) }
+            }
         }
-        SectionTitle("BRUIT DES PIÈCES")
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            DuckChip("🔉 Son activé", st.sound, { scope.launch { app.prefs.setSound(true) } }, Modifier.weight(1f))
-            DuckChip("🔇 Son désactivé", !st.sound, { scope.launch { app.prefs.setSound(false) } }, Modifier.weight(1f))
+        val dynamicAvailable = Build.VERSION.SDK_INT >= 31
+        SwitchRow(
+            "Couleurs dynamiques (Material You)",
+            if (dynamicAvailable) "Reprend les couleurs de votre fond d'écran. Désactivé : charte ChessDuck." else "Disponible à partir d'Android 12.",
+            st.dynamicColor, enabled = dynamicAvailable,
+        ) { v -> scope.launch { app.prefs.setDynamicColor(v) } }
+
+        SectionTitle("Échiquier et parties")
+        SwitchRow("Afficher les coordonnées", "Lettres a–h et chiffres 1–8 sur l'échiquier. Masquez-les pour vous entraîner à la notation.", st.coords) { v ->
+            scope.launch { app.prefs.setCoords(v) }
         }
-        SectionTitle("RETOUR HAPTIQUE")
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            DuckChip("📳 Vibration activée", st.haptics, { scope.launch { app.prefs.setHaptics(true) } }, Modifier.weight(1f))
-            DuckChip("🔕 Vibration désactivée", !st.haptics, { scope.launch { app.prefs.setHaptics(false) } }, Modifier.weight(1f))
+        SwitchRow("Confirmer l'abandon et la nouvelle partie", "Demande une confirmation quand une partie est en cours.", st.confirmActions) { v ->
+            scope.launch { app.prefs.setConfirmActions(v) }
         }
-        SectionTitle("MODE ENFANT")
-        DuckButton("🧒 Activer le mode enfant", { onClose(); scope.launch { app.prefs.setKidMode(true) } }, Modifier.fillMaxWidth(), accent = c.green, filled = true, height = 44.dp, maxSize = 15.sp)
-        AutoText(
-            "Un écran joyeux et coloré pour jouer à deux avec un enfant : grand échiquier, cavalier en forme de girafe, animations qui montrent comment chaque pièce bouge, sans ordinateur ni historique.",
-            color = c.muted, maxSize = 12.sp, maxLines = 4, modifier = Modifier.padding(top = 6.dp),
+
+        SectionTitle("Sons et vibrations")
+        SwitchRow("Bruit des pièces", "Petit bruit de bois quand une pièce se pose.", st.sound) { v -> scope.launch { app.prefs.setSound(v) } }
+        SwitchRow("Vibrations", "Retour haptique au toucher, aux erreurs et aux réussites.", st.haptics) { v -> scope.launch { app.prefs.setHaptics(v) } }
+
+        SectionTitle("Joueurs")
+        PseudoField("Pseudo du joueur", st.pseudo, "Joueur") { v -> scope.launch { app.prefs.setPseudo(v) } }
+        PseudoField("Pseudo du joueur 2 (mode 2 joueurs)", st.pseudo2, "Joueur 2") { v -> scope.launch { app.prefs.setPseudo2(v) } }
+        Text(
+            "Classement actuel : ${st.elo} ELO (formule FIDE, K = 32). Les parties à 2 joueurs ne comptent pas.",
+            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp),
         )
-        SectionTitle("PSEUDO DU JOUEUR")
-        OutlinedTextField(
-            value = pseudo,
-            onValueChange = { v ->
-                pseudo = v.take(16)
-                scope.launch { app.prefs.setPseudo(pseudo.trim().ifEmpty { "Joueur" }) }
-            },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = c.text, unfocusedTextColor = c.text, focusedBorderColor = c.gold, unfocusedBorderColor = c.outline, cursorColor = c.gold,
-            ),
+
+        SectionTitle("Mode enfant")
+        DuckButton(
+            "Activer le mode enfant", { onClose(); scope.launch { app.prefs.setKidMode(true) } }, Modifier.fillMaxWidth(),
+            accent = c.green, filled = true, icon = Icons.Rounded.ChildCare,
         )
-        SectionTitle("PSEUDO DU JOUEUR 2 (MODE 2 JOUEURS)")
-        OutlinedTextField(
-            value = pseudo2,
-            onValueChange = { v ->
-                pseudo2 = v.take(16)
-                scope.launch { app.prefs.setPseudo2(pseudo2.trim().ifEmpty { "Joueur 2" }) }
-            },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = c.text, unfocusedTextColor = c.text, focusedBorderColor = c.gold, unfocusedBorderColor = c.outline, cursorColor = c.gold,
-            ),
+        Text(
+            "Un écran joyeux et coloré pour jouer à deux avec un enfant : grand échiquier, cavalier en forme de girafe, " +
+                "animations qui montrent comment chaque pièce bouge, sans ordinateur ni historique.",
+            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp),
         )
-        AutoText("Votre classement actuel : ${st.elo} ELO (formule FIDE, K = 32). Les parties à 2 joueurs ne comptent pas.", color = c.muted, maxSize = 13.sp, maxLines = 2, modifier = Modifier.padding(top = 8.dp))
-        SectionTitle("À PROPOS")
-        AutoText(
+
+        SectionTitle("À propos")
+        Text(
             "ChessDuck fonctionne 100 % hors-ligne. Moteur : Stockfish 11 (GPLv3). Problèmes : base ouverte Lichess (CC0). " +
-                "Pièces : série classique de Cburnett et pièce féerique Girafe, Wikimedia Commons (CC BY-SA 3.0). Police du mode enfant : Fredoka (OFL).",
-            color = c.muted, maxSize = 12.sp, maxLines = 6,
+                "Pièces : série classique de Cburnett et pièce féerique Girafe, Wikimedia Commons (CC BY-SA 3.0). " +
+                "Icônes : Material Icons (Apache 2.0). Police du mode enfant : Fredoka (OFL).",
+            color = c.muted, style = MaterialTheme.typography.bodySmall,
         )
         val context = LocalContext.current
         val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "" }
-        AutoText("© Ivan Herboch, 2026 · v$version", color = c.muted, maxSize = 12.sp, align = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp))
+        Text(
+            "© Ivan Herboch, 2026 · v$version", color = c.muted, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
+        )
     }
 }

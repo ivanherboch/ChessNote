@@ -2,13 +2,57 @@ package com.ivanherboch.chessduck.feature
 
 import android.app.Application
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Lightbulb
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.RestartAlt
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SearchOff
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.SportsScore
+import androidx.compose.material.icons.rounded.SwapVert
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Text
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextOverflow
+import com.ivanherboch.chessduck.ui.DuckIconButton
+import com.ivanherboch.chessduck.ui.EmptyState
+import com.ivanherboch.chessduck.ui.InfoPill
+import com.ivanherboch.chessduck.ui.MoveStrip
+import java.text.Normalizer
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,10 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -34,7 +75,6 @@ import com.ivanherboch.chessduck.content.LessonCategory
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.data.LessonProgress
 import com.ivanherboch.chessduck.ui.Arrow
-import com.ivanherboch.chessduck.ui.AutoText
 import com.ivanherboch.chessduck.ui.BoardAnim
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.DuckButton
@@ -47,7 +87,6 @@ import com.ivanherboch.chessduck.ui.LocalFeedback
 import com.ivanherboch.chessduck.ui.ModuleLayout
 import com.ivanherboch.chessduck.ui.SectionTitle
 import com.ivanherboch.chessduck.ui.Tone
-import com.ivanherboch.chessduck.ui.captureBadge
 import com.ivanherboch.chessduck.ui.moveAnim
 import com.ivanherboch.chessduck.ui.undoAnim
 import kotlinx.coroutines.Job
@@ -163,7 +202,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
         state.update {
             it.copy(
                 cursor = 0, anim = null, hintStage = 0, done = false, tone = Tone.INFO, flipped = !l.heroWhite,
-                message = "🎯 À vous de jouer les coups des ${sideName(l)} sur l'échiquier. ${l.summary}",
+                message = "À vous de jouer les coups des ${sideName(l)} sur l'échiquier. ${l.summary}",
             )
         }
         advanceOpponent()
@@ -192,7 +231,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
             if (state.value.cursor >= l.line.size) {
                 duck.db.user().markLesson(LessonProgress(l.id, System.currentTimeMillis()))
                 state.update {
-                    it.copy(done = true, tone = Tone.GOOD, message = "✅ Maîtrisée ! Vous avez joué tous les coups clés de « ${l.title} ».")
+                    it.copy(done = true, tone = Tone.GOOD, message = "Leçon maîtrisée ! Vous avez joué tous les coups clés de « ${l.title} ».")
                 }
             }
         }
@@ -208,7 +247,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
             state.update {
                 it.copy(
                     cursor = s.cursor + 1, anim = moveAnim(l.line.positions[s.cursor], m), hintStage = 0, tone = Tone.GOOD,
-                    message = "✅ ${l.line.sans[s.cursor]} — ${l.texts[s.cursor]}",
+                    message = "${l.line.sans[s.cursor]} — ${l.texts[s.cursor]}",
                 )
             }
             advanceOpponent()
@@ -216,7 +255,7 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
         }
         val played = l.line.positions[s.cursor].san(m)
         state.update {
-            it.copy(tone = Tone.BAD, message = "❌ $played n'est pas le coup de la leçon. Réfléchissez à l'idée du thème, ou demandez un 💡 indice.")
+            it.copy(tone = Tone.BAD, message = "$played n'est pas le coup de la leçon. Réfléchissez à l'idée du thème, ou demandez un indice.")
         }
         return false
     }
@@ -228,20 +267,29 @@ class AcademyViewModel(app: Application) : AndroidViewModel(app) {
         state.update {
             it.copy(
                 hintStage = stage, tone = Tone.GOLD,
-                message = if (stage == 1) "💡 Indice 1/2 : la pièce à jouer est surlignée en vert." else "💡 Indice 2/2 : suivez la flèche.",
+                message = if (stage == 1) "Indice 1/2 : la pièce à jouer est surlignée en vert." else "Indice 2/2 : suivez la flèche.",
             )
         }
     }
 
-    fun nextLesson() {
+    fun nextLesson() = shiftLesson(1)
+    fun prevLesson() = shiftLesson(-1)
+
+    /** Leçon voisine dans l'ordre du catalogue (limité à la catégorie filtrée s'il y en a une). */
+    private fun shiftLesson(delta: Int) {
         val all = Lessons.all
         val s = state.value
         val pool = if (s.filter != null) all.filter { it.category == s.filter } else all
-        val idx = pool.indexOfFirst { it.id == s.lessonId }
-        open(pool[(idx + 1) % pool.size].id)
+        val idx = pool.indexOfFirst { it.id == s.lessonId }.coerceAtLeast(0)
+        open(pool[(idx + delta + pool.size) % pool.size].id)
     }
+
+    /** Dans le mode Guidé, saute directement au coup [n] (nombre de demi-coups joués). */
+    fun jump(n: Int) { pause(); goTo(n) }
+    fun last() { pause(); goTo(lesson.line.size) }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AcademyScreen(vm: AcademyViewModel) {
     val s by vm.state.collectAsStateWithLifecycle()
@@ -252,34 +300,57 @@ fun AcademyScreen(vm: AcademyViewModel) {
     val line = l.line
     var catalog by remember { mutableStateOf(false) }
     val total = Lessons.all.size
+    val cur = s.cursor.coerceIn(0, line.size)
 
     ModuleLayout(
-        bottomMin = 150.dp,
+        bottomMin = 190.dp,
         top = {
-            Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                DuckChip("Tous", s.filter == null, { vm.setFilter(null) }, Modifier.weight(0.7f), accent = c.blue)
-                DuckChip("Ouvertures", s.filter == LessonCategory.OPENING, { vm.setFilter(LessonCategory.OPENING) }, Modifier.weight(1.1f), accent = c.blue)
-                DuckChip("Milieu de partie", s.filter == LessonCategory.MIDDLEGAME, { vm.setFilter(LessonCategory.MIDDLEGAME) }, Modifier.weight(1.4f), accent = c.blue)
-                DuckChip("Finales", s.filter == LessonCategory.ENDGAME, { vm.setFilter(LessonCategory.ENDGAME) }, Modifier.weight(0.9f), accent = c.blue)
+            // Sélecteur de leçon : précédente / leçon courante (ouvre le catalogue) / suivante.
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Leçon précédente", vm::prevLesson)
+                Column(
+                    Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(c.surface)
+                        .clickable(role = Role.Button, onClickLabel = "Ouvrir le catalogue des leçons") { catalog = true }
+                        .clearAndSetSemantics {
+                            role = Role.Button
+                            contentDescription = "Leçon ${l.id} : ${l.title}, ${l.category.label}" + (if (l.id in mastered) ", maîtrisée" else "") +
+                                ". ${mastered.size} leçons maîtrisées sur $total. Ouvrir le catalogue des leçons"
+                            onClick { catalog = true; true }
+                        }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        InfoPill(l.category.label, accent = c.blue)
+                        if (l.id in mastered) Icon(Icons.Rounded.CheckCircle, "Maîtrisée", tint = c.greenText, modifier = Modifier.padding(start = 6.dp).size(18.dp))
+                        Spacer(Modifier.weight(1f))
+                        Text("${mastered.size}/$total", color = c.goldText, style = MaterialTheme.typography.labelLarge)
+                        Icon(Icons.Rounded.ExpandMore, contentDescription = null, tint = c.muted, modifier = Modifier.size(20.dp))
+                    }
+                    Text(
+                        "${l.id}. ${l.title}", color = c.text, style = MaterialTheme.typography.titleMedium, maxLines = 1,
+                        overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
+                DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Leçon suivante", vm::nextLesson)
             }
-            Row(
-                Modifier.fillMaxWidth().padding(vertical = 5.dp).height(40.dp).clip(RoundedCornerShape(10.dp)).background(c.surface)
-                    .clickable { catalog = true }.padding(horizontal = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                AutoText(
-                    "${if (l.id in mastered) "✅" else l.category.emoji} ${l.id}. ${l.title}",
-                    maxSize = 15.sp, weight = FontWeight.Bold, modifier = Modifier.weight(1f),
-                )
-                AutoText("📚 ${mastered.size} / $total ▾", color = c.gold, maxSize = 13.sp, weight = FontWeight.Bold, modifier = Modifier.padding(start = 8.dp))
-            }
-            EqualRow(Modifier.padding(bottom = 5.dp)) {
-                DuckButton("👁️ Mode Guidé (Démo)", { vm.setChallenge(false) }, Modifier.weight(1f), accent = c.blue, filled = !s.challenge, height = 34.dp)
-                DuckButton("🎯 Mode Défi (Pratique)", { vm.setChallenge(true) }, Modifier.weight(1f), accent = c.gold, filled = s.challenge, height = 34.dp)
+            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                SingleChoiceSegmentedButtonRow(Modifier.weight(1f)) {
+                    listOf("Guidé (démo)" to false, "Défi (pratique)" to true).forEachIndexed { i, (label, challenge) ->
+                        SegmentedButton(
+                            selected = s.challenge == challenge, onClick = { vm.setChallenge(challenge) },
+                            shape = SegmentedButtonDefaults.itemShape(i, 2),
+                            icon = { Icon(if (challenge) Icons.Rounded.SportsScore else Icons.Rounded.Visibility, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                            colors = SegmentedButtonDefaults.colors(
+                                activeContainerColor = c.goldRole.fill, activeContentColor = c.goldRole.onFill, activeBorderColor = c.outlineStrong,
+                                inactiveContainerColor = c.surface, inactiveContentColor = c.text, inactiveBorderColor = c.outlineStrong,
+                            ),
+                        ) { Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1) }
+                    }
+                }
+                DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
             }
         },
         board = {
-            val cur = s.cursor.coerceIn(0, line.size)
             val pos = line.positions[cur]
             val last = if (cur > 0) line.moves[cur - 1] else null
             val heroTurn = s.challenge && !s.done && cur < line.size && pos.whiteToMove == l.heroWhite
@@ -297,62 +368,115 @@ fun AcademyScreen(vm: AcademyViewModel) {
                     else -> emptyList()
                 },
                 marks = if (heroTurn && s.hintStage >= 1 && next != null) listOf(next.from to c.green) else emptyList(),
-                badges = if (last != null) listOfNotNull(captureBadge(line.positions[cur - 1], last)) else emptyList(),
                 onMove = { m -> if (vm.challengeMove(m)) fb?.success() else fb?.error() },
             )
         },
         bottom = {
+            // Progression dans la leçon : chaque coup est cliquable en mode Guidé.
+            MoveStrip(
+                line, cur, Modifier.padding(top = 4.dp),
+                onSelect = if (!s.challenge) vm::jump else null,
+                onPrev = if (!s.challenge) ({ vm.step(-1) }) else null,
+                onNext = if (!s.challenge) ({ vm.step(1) }) else null,
+                emptyText = "Les coups de la leçon s'afficheront ici.",
+            )
             if (!s.challenge) {
-                val cur = s.cursor.coerceIn(0, line.size)
-                val title = if (cur == 0) "Objectif de la leçon" else moveLabel(line.positions[cur - 1].fullmove, line.positions[cur - 1].whiteToMove, line.sans[cur - 1]) + "   (${cur} / ${line.size})"
-                val text = if (cur == 0) l.summary + " Appuyez sur ▶ Lecture pour dérouler la leçon coup par coup." else l.texts[cur - 1]
-                FeedbackCard(text, Tone.INFO, Modifier.padding(top = 5.dp).weight(1f), maxSize = 15.sp, title = title)
-                EqualRow(Modifier.padding(vertical = 5.dp), gap = 5.dp) {
-                    DuckButton("⏮", vm::rewind, Modifier.weight(0.7f), enabled = cur > 0, height = 44.dp, maxSize = 17.sp)
-                    DuckButton("◀", { vm.step(-1) }, Modifier.weight(0.7f), enabled = cur > 0, height = 44.dp, maxSize = 17.sp)
-                    DuckButton(if (s.playing) "⏸ Pause" else "▶ Lecture", vm::togglePlay, Modifier.weight(1.5f), accent = c.blue, filled = true, height = 44.dp, maxSize = 15.sp)
-                    DuckButton("▶", { vm.step(1) }, Modifier.weight(0.7f), enabled = cur < line.size, height = 44.dp, maxSize = 17.sp)
-                    DuckButton("⇅ Retourner", vm::flip, Modifier.weight(1.3f), height = 44.dp)
+                val title = if (cur == 0) "Objectif de la leçon" else moveLabel(line.positions[cur - 1].fullmove, line.positions[cur - 1].whiteToMove, line.sans[cur - 1]) + " · coup $cur / ${line.size}"
+                val text = if (cur == 0) l.summary + " Touchez Lecture pour dérouler la leçon coup par coup." else l.texts[cur - 1]
+                FeedbackCard(text, Tone.INFO, Modifier.padding(top = 4.dp).weight(1f), title = title)
+                EqualRow(Modifier.padding(vertical = 6.dp)) {
+                    DuckButton("Début", vm::rewind, Modifier.weight(1f), enabled = cur > 0, icon = Icons.Rounded.SkipPrevious)
+                    DuckButton(
+                        if (s.playing) "Pause" else "Lecture", vm::togglePlay, Modifier.weight(1.5f), accent = c.blue, filled = true,
+                        icon = if (s.playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                    )
+                    DuckButton("Fin", vm::last, Modifier.weight(1f), enabled = cur < line.size, icon = Icons.Rounded.SkipNext)
                 }
             } else {
-                FeedbackCard(s.message, s.tone, Modifier.padding(top = 5.dp).weight(1f), maxSize = 15.sp, title = if (s.done) "Défi réussi" else "Défi : jouez les ${if (l.heroWhite) "Blancs" else "Noirs"}")
-                EqualRow(Modifier.padding(vertical = 5.dp), gap = 5.dp) {
-                    DuckButton("↺ Recommencer", vm::restartChallenge, Modifier.weight(1f), height = 44.dp)
-                    DuckButton("⇅ Retourner", vm::flip, Modifier.weight(1f), height = 44.dp)
-                    if (s.done) DuckButton("Leçon suivante →", vm::nextLesson, Modifier.weight(1.4f), accent = c.green, filled = true, height = 44.dp, maxSize = 14.sp)
-                    else DuckButton("💡 Indice ${(s.hintStage + 1).coerceAtMost(2)}/2", vm::hint, Modifier.weight(1.4f), accent = c.green, height = 44.dp, maxSize = 14.sp)
+                val title = if (s.done) "Défi réussi" else "Défi : jouez les ${if (l.heroWhite) "Blancs" else "Noirs"} · coup $cur / ${line.size}"
+                FeedbackCard(s.message, s.tone, Modifier.padding(top = 4.dp).weight(1f), title = title)
+                EqualRow(Modifier.padding(vertical = 6.dp)) {
+                    DuckButton("Recommencer", vm::restartChallenge, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt)
+                    if (s.done) DuckButton("Leçon suivante", vm::nextLesson, Modifier.weight(1.4f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
+                    else DuckButton("Indice ${(s.hintStage + 1).coerceAtMost(2)}/2", vm::hint, Modifier.weight(1.4f), accent = c.green, icon = Icons.Rounded.Lightbulb)
                 }
             }
         },
     )
 
-    if (catalog) {
-        var cat by remember { mutableStateOf(s.filter ?: l.category) }
-        DuckSheet("📚 Catalogue — ${mastered.size} / $total maîtrisées", { catalog = false }) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                for (k in LessonCategory.entries) {
-                    val n = Lessons.all.count { it.category == k }
-                    val m = Lessons.all.count { it.category == k && it.id in mastered }
-                    DuckChip("${k.label} $m/$n", cat == k, { cat = k }, Modifier.weight(1f), accent = c.blue)
-                }
+    if (catalog) LessonCatalog(vm, s, mastered) { catalog = false }
+}
+
+/** Catalogue des leçons : recherche, statut (toutes / à maîtriser / maîtrisées) et catégorie. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LessonCatalog(vm: AcademyViewModel, s: AcademyState, mastered: Set<Int>, onClose: () -> Unit) {
+    val c = LocalDuck.current
+    var query by remember { mutableStateOf("") }
+    var status by remember { mutableIntStateOf(0) }
+    var cat by remember { mutableStateOf(s.filter) }
+    val total = Lessons.all.size
+    fun norm(t: String) = Normalizer.normalize(t, Normalizer.Form.NFD).replace(Regex("\\p{M}"), "").lowercase()
+    val q = norm(query.trim())
+    val items = Lessons.all.filter { l ->
+        (cat == null || l.category == cat) &&
+            (status == 0 || (status == 1) == (l.id !in mastered)) &&
+            (q.isEmpty() || norm(l.title).contains(q) || norm(l.summary).contains(q) || l.id.toString() == q)
+    }
+    DuckSheet("Leçons — ${mastered.size} / $total maîtrisées", onClose) {
+        OutlinedTextField(
+            value = query, onValueChange = { query = it }, singleLine = true,
+            label = { Text("Rechercher une leçon") },
+            placeholder = { Text("ex. fourchette, Lucena, sicilienne…") },
+            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+            trailingIcon = { if (query.isNotEmpty()) DuckIconButton(Icons.Rounded.Close, "Effacer la recherche", { query = "" }) },
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = c.text, unfocusedTextColor = c.text, focusedBorderColor = c.goldText, unfocusedBorderColor = c.outlineStrong,
+                cursorColor = c.goldText, focusedLabelColor = c.goldText, unfocusedLabelColor = c.muted,
+                focusedLeadingIconColor = c.muted, unfocusedLeadingIconColor = c.muted,
+            ),
+        )
+        SectionTitle("Statut")
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf("Toutes", "À maîtriser", "Maîtrisées").forEachIndexed { i, label -> DuckChip(label, status == i, { status = i }, accent = c.blue) }
+        }
+        SectionTitle("Catégorie")
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            DuckChip("Toutes", cat == null, { cat = null; vm.setFilter(null) }, accent = c.blue)
+            for (k in LessonCategory.entries) {
+                val n = Lessons.all.count { it.category == k }
+                val m = Lessons.all.count { it.category == k && it.id in mastered }
+                DuckChip("${k.label} $m/$n", cat == k, { cat = k; vm.setFilter(k) }, accent = c.blue)
             }
-            SectionTitle("${cat.emoji} ${cat.label.uppercase()} — toutes les leçons sont en accès libre")
-            for (item in Lessons.all.filter { it.category == cat }) {
-                val current = item.id == s.lessonId
-                Row(
-                    Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(10.dp))
-                        .background(if (current) c.surfaceHi else c.surface)
-                        .clickable { vm.open(item.id); catalog = false }.padding(horizontal = 10.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(Modifier.size(30.dp), contentAlignment = Alignment.Center) {
-                        AutoText(if (item.id in mastered) "✅" else "${item.id}", color = c.gold, maxSize = 14.sp, weight = FontWeight.Bold, align = TextAlign.Center)
-                    }
-                    androidx.compose.foundation.layout.Column(Modifier.padding(start = 8.dp).weight(1f)) {
-                        AutoText(item.title, maxSize = 15.sp, weight = FontWeight.SemiBold, maxLines = 2)
-                        AutoText(item.summary, color = c.muted, maxSize = 12.sp, maxLines = 3)
-                    }
+        }
+        SectionTitle("${items.size} leçon${if (items.size > 1) "s" else ""} — toutes en accès libre")
+        if (items.isEmpty()) {
+            EmptyState(
+                Icons.Rounded.SearchOff, "Aucune leçon trouvée", "Essayez un autre mot ou retirez des filtres.",
+                actionLabel = "Réinitialiser les filtres", onAction = { query = ""; status = 0; cat = null; vm.setFilter(null) },
+            )
+        }
+        for (item in items) {
+            val current = item.id == s.lessonId
+            val done = item.id in mastered
+            Row(
+                Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(12.dp))
+                    .background(if (current) c.surfaceHi else c.surface)
+                    .clickable(role = Role.Button) { vm.open(item.id); onClose() }
+                    .semantics { stateDescription = (if (done) "maîtrisée" else "à maîtriser") + if (current) ", leçon en cours" else "" }
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.size(32.dp), contentAlignment = Alignment.Center) {
+                    if (done) Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = c.greenText)
+                    else Text("${item.id}", color = c.goldText, style = MaterialTheme.typography.labelLarge)
                 }
+                Column(Modifier.padding(start = 8.dp).weight(1f)) {
+                    Text(item.title, color = c.text, style = MaterialTheme.typography.titleSmall)
+                    Text(item.summary, color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+                Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = c.muted)
             }
         }
     }

@@ -153,7 +153,12 @@ data class PlayState(
     val analysis: Map<Int, Analysis> = emptyMap(),
     val evalOn: Boolean = false,
     val review: Review? = null,
+    /** Partie qui vient de se terminer, enregistrée dans l'historique : « Analyser la partie » l'ouvre en revue. */
+    val lastRecord: GameRecord? = null,
 ) {
+    /** Une partie est en cours (au moins un échange joué, pas encore de résultat). */
+    val inProgress: Boolean get() = result == null && line.size >= 2
+
     val position: Position get() = line.positions[cursor.coerceIn(0, line.size)]
     val canPlay: Boolean get() = result == null && !thinking && review == null && (twoPlayers || position.whiteToMove == playerWhite)
     val hint: Move? get() = analysis[cursor]?.best?.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }
@@ -298,6 +303,33 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
     fun back() = navigate(-1)
     fun forward() = navigate(1)
 
+    /** Affiche la position après [n] demi-coups (clic dans la liste des coups). */
+    fun goTo(n: Int) {
+        val s = state.value
+        if (s.thinking) return
+        val t = n.coerceIn(0, s.line.size)
+        if (t != s.cursor) navigate(t - s.cursor)
+    }
+
+    /**
+     * Cible de « Annuler mon coup » : contre l'ordinateur, on revient avant le dernier coup du joueur
+     * (deux demi-coups si l'ordinateur a déjà répondu) ; à deux joueurs, d'un demi-coup. -1 si impossible.
+     */
+    fun undoTarget(s: PlayState = state.value): Int {
+        if (s.thinking || s.result != null || s.review != null || s.cursor == 0) return -1
+        if (s.twoPlayers) return s.cursor - 1
+        var t = s.cursor - 1
+        while (t >= 0 && s.line.positions[t].whiteToMove != s.playerWhite) t--
+        return t
+    }
+
+    fun undoMove() {
+        val t = undoTarget()
+        if (t < 0) return
+        aiJob?.cancel()
+        goTo(t)
+    }
+
     private fun navigate(delta: Int) {
         val s = state.value
         if (s.thinking) return
@@ -337,40 +369,44 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
             val analysis = Analysis.encodeAll(List(line.size + 1) { s.analysis[it] })
             if (s.twoPlayers) {
                 val text = when (whiteResult) {
-                    1 -> "🏆 Victoire de ${st.pseudo} (Blancs) par $reason."
-                    -1 -> "🏆 Victoire de ${st.pseudo2} (Noirs) par $reason."
-                    else -> "🤝 Partie nulle ($reason)."
+                    1 -> "Victoire de ${st.pseudo} (Blancs) par $reason."
+                    -1 -> "Victoire de ${st.pseudo2} (Noirs) par $reason."
+                    else -> "Partie nulle ($reason)."
                 } + " Partie à 2 joueurs : l'ELO ne change pas."
                 state.update { it.copy(result = GameResult(text, Tone.GOLD), thinking = false) }
-                val record = GameRecord(
+                var record = GameRecord(
                         date = System.currentTimeMillis(), opponent = "2 joueurs", vsComputer = false, playerWhite = true, result = resultStr,
                         outcome = whiteResult, reason = reason, eloBefore = st.elo, eloAfter = st.elo, moves = line.uciMoves(), analysis = analysis,
                         whiteName = st.pseudo, blackName = st.pseudo2,
                     )
-                startAnalysis(record.copy(id = duck.db.user().insertGame(record)), line)
+                record = record.copy(id = duck.db.user().insertGame(record))
+                state.update { it.copy(lastRecord = record) }
+                startAnalysis(record, line)
             } else {
                 val outcome = if (s.playerWhite) whiteResult else -whiteResult
                 val newElo = GameLogic.newElo(st.elo, s.aiElo, (outcome + 1) / 2.0)
                 val diff = newElo - st.elo
                 val delta = if (diff >= 0) "+$diff" else "−${-diff}"
                 val head = when (outcome) {
-                    1 -> "🏆 Victoire par $reason !"
+                    1 -> "Victoire par $reason !"
                     -1 -> "Défaite par $reason."
-                    else -> "🤝 Partie nulle ($reason)."
+                    else -> "Partie nulle ($reason)."
                 }
                 state.update {
                     it.copy(
                         thinking = false,
-                        result = GameResult("$head ELO ${st.elo} → $newElo ($delta). Revoyez la partie dans 📜 Historique.", if (outcome == 1) Tone.GOOD else if (outcome == 0) Tone.GOLD else Tone.BAD),
+                        result = GameResult("$head ELO ${st.elo} → $newElo ($delta).", if (outcome == 1) Tone.GOOD else if (outcome == 0) Tone.GOLD else Tone.BAD),
                     )
                 }
                 duck.prefs.setElo(newElo)
-                val record = GameRecord(
+                var record = GameRecord(
                         date = System.currentTimeMillis(), opponent = "Ordinateur ${s.aiElo}", vsComputer = true, playerWhite = s.playerWhite,
                         result = resultStr, outcome = outcome, reason = reason, eloBefore = st.elo, eloAfter = newElo, moves = line.uciMoves(), analysis = analysis,
                         whiteName = if (s.playerWhite) st.pseudo else COMPUTER, blackName = if (s.playerWhite) COMPUTER else st.pseudo, opponentElo = s.aiElo,
                     )
-                startAnalysis(record.copy(id = duck.db.user().insertGame(record)), line)
+                record = record.copy(id = duck.db.user().insertGame(record))
+                state.update { it.copy(lastRecord = record) }
+                startAnalysis(record, line)
             }
         }
     }
@@ -463,6 +499,9 @@ class PlayViewModel(app: Application) : AndroidViewModel(app) {
         state.update { s -> s.review?.let { s.copy(review = it.copy(playing = true)) } ?: s }
         autoplay()
     }
+
+    /** Revue : saute directement au coup [n] (clic dans la liste ou le tableau des coups). */
+    fun reviewJump(n: Int) { reviewPause(); reviewGo(n) }
 
     fun reviewStep(delta: Int) { reviewPause(); reviewGo((state.value.review?.cursor ?: 0) + delta) }
     fun reviewFirst() { reviewPause(); reviewGo(0) }

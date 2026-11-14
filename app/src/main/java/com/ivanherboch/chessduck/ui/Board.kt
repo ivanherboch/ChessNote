@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -70,6 +71,20 @@ import com.ivanherboch.chessduck.chess.fileOf
 import com.ivanherboch.chessduck.chess.isWhite
 import com.ivanherboch.chessduck.chess.rankOf
 import com.ivanherboch.chessduck.chess.sq
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import com.ivanherboch.chessduck.chess.PIECE_NAMES_FR
+import com.ivanherboch.chessduck.chess.PIECE_VALUES
+import com.ivanherboch.chessduck.chess.pieceType
+import com.ivanherboch.chessduck.chess.sqName
+import com.ivanherboch.chessduck.engine.isMateScore
+import com.ivanherboch.chessduck.engine.mateIn
+import com.ivanherboch.chessduck.engine.winPercent
+import kotlinx.coroutines.launch
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -99,11 +114,6 @@ fun moveAnim(before: Position, m: Move): BoardAnim {
 /** Animation inverse (retour en arrière d'un coup). */
 fun undoAnim(before: Position, m: Move): BoardAnim =
     BoardAnim(nextAnimId(), moveAnim(before, m).slides.map { Slide(it.to, it.from) })
-
-val CaptureBadgeColor = Color(0xFF475569)
-
-/** Badge discret ✕ sur la case d'arrivée d'une prise. */
-fun captureBadge(before: Position, m: Move): Badge? = if (before.isCapture(m)) Badge(m.to, "✕", CaptureBadgeColor) else null
 
 val PIECE_RES = mapOf(
     KING to R.drawable.p_wk, QUEEN to R.drawable.p_wq, ROOK to R.drawable.p_wr,
@@ -139,6 +149,8 @@ fun ChessBoard(
     marks: List<Pair<Int, Color>> = emptyList(),
     badges: List<Badge> = emptyList(),
     kid: Boolean = false,
+    /** Appelé quand on touche une de ses pièces qui n'a aucun coup légal (clouée, ou roi en échec). */
+    onIllegalTouch: ((Int) -> Unit)? = null,
     onMove: (Move) -> Unit = {},
 ) {
     val c = LocalDuck.current
@@ -147,6 +159,21 @@ fun ChessBoard(
     val measurer = rememberTextMeasurer()
     val slop = LocalViewConfiguration.current.touchSlop
     val font = LocalDuckFont.current
+    val showCoords = LocalShowCoords.current
+    val scope = rememberCoroutineScope()
+    // Secousse d'une pièce qui ne peut pas bouger.
+    val shake = remember { Animatable(0f) }
+    var shakeSq by remember { mutableIntStateOf(-1) }
+    fun refuse(sq: Int) {
+        shakeSq = sq
+        fb?.error()
+        onIllegalTouch?.invoke(sq)
+        scope.launch {
+            shake.snapTo(0f)
+            for (x in floatArrayOf(1f, -1f, 0.7f, -0.7f, 0.35f, 0f)) shake.animateTo(x, tween(45))
+            shakeSq = -1
+        }
+    }
 
     var selected by remember(position) { mutableIntStateOf(-1) }
     var dragFrom by remember(position) { mutableIntStateOf(-1) }
@@ -197,6 +224,10 @@ fun ChessBoard(
         Canvas(
             Modifier
                 .fillMaxSize()
+                .semantics {
+                    contentDescription = describeBoard(position, lastMove, selected.takeIf { interactive && it >= 0 }, flipped)
+                    if (interactive) stateDescription = if (position.whiteToMove) "À vous de jouer avec les Blancs" else "À vous de jouer avec les Noirs"
+                }
                 .pointerInput(position, flipped, interactive) {
                     if (!interactive) return@pointerInput
                     val s = size.width / 8f
@@ -228,7 +259,11 @@ fun ChessBoard(
                                 ch.consume()
                             }
                         }
-                        if (dragging) {
+                        if (dragging && position.legalFrom(sqDown).isEmpty()) {
+                            dragFrom = -1
+                            selected = -1
+                            refuse(sqDown)
+                        } else if (dragging) {
                             val inside = last.x >= 0 && last.y >= 0 && last.x <= size.width && last.y <= size.height
                             val target = at(last)
                             dragFrom = -1
@@ -236,7 +271,8 @@ fun ChessBoard(
                         } else if (selected >= 0 && selected != sqDown && tryMove(selected, sqDown, false)) {
                             // coup joué par toucher-relâcher
                         } else if (own) {
-                            selected = if (selected == sqDown) -1 else sqDown
+                            if (position.legalFrom(sqDown).isEmpty()) { selected = -1; refuse(sqDown) }
+                            else selected = if (selected == sqDown) -1 else sqDown
                         } else {
                             selected = -1
                         }
@@ -270,18 +306,6 @@ fun ChessBoard(
                     Brush.radialGradient(listOf(Color(0xE6EF4444), Color(0x00EF4444)), center(k), s * 0.62f), topLeft(k), cell,
                 )
             }
-            // Coordonnées intégrées en bordure des cases
-            val coordStyle = TextStyle(fontSize = (s * 0.21f).toSp(), fontWeight = FontWeight.Bold, fontFamily = font)
-            for (i in 0..7) {
-                val fileSq = if (flipped) sq(i, 7) else sq(i, 0)
-                val rankSq = if (flipped) sq(7, i) else sq(0, i)
-                val fl = measurer.measure(('a' + i).toString(), coordStyle)
-                val lightF = (fileOf(fileSq) + rankOf(fileSq)) % 2 == 1
-                drawText(fl, if (lightF) c.coordOnLight else c.coordOnDark, topLeft(fileSq) + Offset(s - fl.size.width - s * 0.05f, s - fl.size.height - s * 0.01f))
-                val rl = measurer.measure(('1' + i).toString(), coordStyle)
-                val lightR = (fileOf(rankSq) + rankOf(rankSq)) % 2 == 1
-                drawText(rl, if (lightR) c.coordOnLight else c.coordOnDark, topLeft(rankSq) + Offset(s * 0.05f, s * 0.01f))
-            }
             // Sélection et case survolée
             if (selected >= 0 && interactive) drawRect(c.select.copy(alpha = 0.5f), topLeft(selected), cell)
             if (dragFrom >= 0) {
@@ -308,7 +332,29 @@ fun ChessBoard(
             for (q in 0 until 64) {
                 val piece = position[q]
                 if (piece == 0 || q == dragFrom || sliding.any { it.to == q }) continue
-                drawPiece(piece, topLeft(q))
+                drawPiece(piece, topLeft(q) + if (q == shakeSq) Offset(shake.value * s * 0.09f, 0f) else Offset.Zero)
+            }
+            // Coordonnées, dessinées par-dessus les pièces sur une pastille discrète : jamais masquées.
+            if (showCoords) {
+                val coordStyle = TextStyle(fontSize = (s * 0.19f).toSp(), fontWeight = FontWeight.Bold, fontFamily = font)
+                // Pastille dans un coin de la case : lettres en bas à droite, chiffres en haut à gauche.
+                fun label(text: String, cell: Offset, bottomRight: Boolean) {
+                    val l = measurer.measure(text, coordStyle)
+                    val pad = s * 0.035f
+                    val w = l.size.width + pad * 2
+                    val h = l.size.height.toFloat()
+                    val m = s * 0.03f
+                    val x = if (bottomRight) cell.x + s - m - w else cell.x + m
+                    val y = if (bottomRight) cell.y + s - m - h else cell.y + m
+                    drawRoundRect(c.coordPill, Offset(x, y), Size(w, h), CornerRadius(h / 3, h / 3))
+                    drawText(l, c.coordInk, Offset(x + pad, y))
+                }
+                for (i in 0..7) {
+                    val fileSq = if (flipped) sq(7 - i, 7) else sq(i, 0)
+                    val rankSq = if (flipped) sq(7, 7 - i) else sq(0, i)
+                    label(('a' + fileOf(fileSq)).toString(), topLeft(fileSq), true)
+                    label(('1' + rankOf(rankSq)).toString(), topLeft(rankSq), false)
+                }
             }
             // Destinations légales : pastilles (cases vides) et anneaux (prises)
             for (m in targets.distinctBy { it.to }) {
@@ -320,7 +366,7 @@ fun ChessBoard(
                 if (piece != 0) drawPiece(piece, topLeft(sl.from) + (topLeft(sl.to) - topLeft(sl.from)) * t)
             }
             for (a in arrows) drawArrow(a, s, ::center)
-            // Badges (✕ de prise, annotations) dans le coin supérieur droit de la case
+            // Badges d'annotation (!!, !, ?!, ?, ??) dans le coin supérieur droit de la case
             val seen = HashSet<Int>()
             for (b in badges) {
                 val right = seen.add(b.sq)
@@ -347,9 +393,9 @@ fun ChessBoard(
                     for (type in intArrayOf(QUEEN, ROOK, BISHOP, KNIGHT)) {
                         val res = (if (kid) KID_PIECE_RES else PIECE_RES).getValue(if (white) type else type + BLACK)
                         Image(
-                            painterResource(res), null,
+                            painterResource(res), "Promouvoir en ${PIECE_NAMES_FR[type]}",
                             Modifier.size(58.dp).clip(RoundedCornerShape(10.dp)).background(c.squareLight)
-                                .clickable { promo = null; selected = -1; onMove(Move(from, to, type)) },
+                                .clickable(role = Role.Button) { promo = null; selected = -1; onMove(Move(from, to, type)) },
                         )
                     }
                 }
@@ -407,24 +453,72 @@ private fun DrawScope.drawArrow(a: Arrow, s: Float, center: (Int) -> Offset) {
     drawPath(headPath, color)
 }
 
-/** Jauge latérale d'évaluation ([whiteShare] : part des Blancs entre 0 et 1). */
+/** Description TalkBack de l'échiquier : trait, échec, dernier coup, sélection et pièces de chaque camp. */
+fun describeBoard(p: Position, last: Move?, selected: Int?, flipped: Boolean): String {
+    val sb = StringBuilder("Échiquier, vue des ${if (flipped) "Noirs" else "Blancs"}. Trait aux ${if (p.whiteToMove) "Blancs" else "Noirs"}.")
+    if (p.isCheckmate) sb.append(" Échec et mat.") else if (p.inCheck) sb.append(" Échec au roi.")
+    if (last != null) sb.append(" Dernier coup : ${sqName(last.from)} vers ${sqName(last.to)}.")
+    if (selected != null && p[selected] != 0) {
+        val n = p.legalFrom(selected).distinctBy { it.to }.size
+        sb.append(" Sélection : ${PIECE_NAMES_FR[pieceType(p[selected])]} en ${sqName(selected)}, $n coup${if (n > 1) "s" else ""} possible${if (n > 1) "s" else ""}.")
+    }
+    for (white in listOf(true, false)) {
+        val list = (0 until 64).filter { p[it] != 0 && isWhite(p[it]) == white }
+            .sortedByDescending { PIECE_VALUES[pieceType(p[it])] }
+            .joinToString(", ") { "${PIECE_NAMES_FR[pieceType(p[it])]} ${sqName(it)}" }
+        sb.append(" ${if (white) "Blancs" else "Noirs"} : $list.")
+    }
+    return sb.toString()
+}
+
+/** Libellé court d'une évaluation (point de vue des Blancs) : « +1.4 », « −0.3 », « M2 ». */
+fun evalShort(evalWhite: Int): String = when {
+    isMateScore(evalWhite) -> "M${abs(mateIn(evalWhite)).coerceAtLeast(1)}"
+    else -> (if (evalWhite >= 0) "+" else "−") + String.format(Locale.US, "%.1f", abs(evalWhite) / 100.0)
+}
+
+/**
+ * Jauge latérale d'évaluation : part des Blancs, encoche médiane (égalité) et valeur affichée
+ * à l'extrémité du camp qui a l'avantage. [evalWhite] en centipions (ou score de mat), point de vue des Blancs.
+ */
 @Composable
-fun EvalBar(whiteShare: Float, flipped: Boolean, modifier: Modifier = Modifier) {
-    val share by animateFloatAsState(whiteShare.coerceIn(0.03f, 0.97f), tween(350), label = "eval")
-    Canvas(modifier.fillMaxHeight().width(12.dp).clip(RoundedCornerShape(4.dp))) {
-        drawRect(Color(0xFF1F2937))
+fun EvalBar(evalWhite: Int, flipped: Boolean, modifier: Modifier = Modifier) {
+    val share by animateFloatAsState((winPercent(evalWhite) / 100.0).toFloat().coerceIn(0.03f, 0.97f), tween(350), label = "eval")
+    val measurer = rememberTextMeasurer()
+    val whiteAhead = evalWhite >= 0
+    val label = evalShort(evalWhite)
+    val desc = when {
+        isMateScore(evalWhite) -> "Évaluation : mat en ${abs(mateIn(evalWhite)).coerceAtLeast(1)} pour les ${if (evalWhite > 0) "Blancs" else "Noirs"}"
+        abs(evalWhite) < 30 -> "Évaluation : position équilibrée"
+        else -> "Évaluation : avantage ${if (whiteAhead) "Blancs" else "Noirs"} ${label.drop(1).replace('.', ',')}"
+    }
+    val style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFeatureSettings = TNUM)
+    val c = LocalDuck.current
+    Canvas(
+        modifier.fillMaxHeight().width(26.dp).clip(RoundedCornerShape(6.dp)).border(1.dp, c.outlineStrong, RoundedCornerShape(6.dp))
+            .semantics { contentDescription = desc },
+    ) {
+        val dark = Color(0xFF1F2937)
+        val light = Color(0xFFF1F5F9)
+        drawRect(dark)
         val h = size.height * share
-        drawRect(Color(0xFFF1F5F9), Offset(0f, if (flipped) 0f else size.height - h), Size(size.width, h))
-        drawRect(Color(0xFFF59E0B), Offset(0f, size.height / 2 - 1f), Size(size.width, 2f))
+        drawRect(light, Offset(0f, if (flipped) 0f else size.height - h), Size(size.width, h))
+        // Encoche médiane nette (égalité)
+        drawRect(Color(0xFFF59E0B), Offset(0f, size.height / 2 - 1.5.dp.toPx()), Size(size.width, 3.dp.toPx()))
+        val t = measurer.measure(label, style)
+        val whiteAtBottom = !flipped
+        val atBottom = whiteAhead == whiteAtBottom
+        val y = if (atBottom) size.height - t.size.height - 3.dp.toPx() else 3.dp.toPx()
+        drawText(t, if (whiteAhead) Color(0xFF0F172A) else Color.White, Offset((size.width - t.size.width) / 2f, y))
     }
 }
 
-/** Échiquier avec jauge d'évaluation optionnelle à gauche. */
+/** Échiquier avec jauge d'évaluation optionnelle à gauche ([evalWhite] null : pas de jauge). */
 @Composable
-fun BoardRow(evalShare: Float?, flipped: Boolean, board: @Composable (Modifier) -> Unit) {
+fun BoardRow(evalWhite: Int?, flipped: Boolean, board: @Composable (Modifier) -> Unit) {
     Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-        if (evalShare != null) {
-            EvalBar(evalShare, flipped, Modifier.padding(end = 3.dp))
+        if (evalWhite != null) {
+            EvalBar(evalWhite, flipped, Modifier.padding(end = 4.dp))
         }
         Box(Modifier.fillMaxHeight().weight(1f), contentAlignment = Alignment.Center) {
             board(Modifier.aspectRatio(1f))

@@ -1,6 +1,24 @@
 package com.ivanherboch.chessduck.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,85 +76,154 @@ fun materialOf(p: Position): Material {
     return Material(lost(black, BLACK), lost(white, 0), diff)
 }
 
+private val PLURAL = arrayOf("", "pions", "cavaliers", "fous", "tours", "dames", "rois")
+private val SINGULAR = arrayOf("", "pion", "cavalier", "fou", "tour", "dame", "roi")
+
+/** Résumé TalkBack d'une liste de pièces : « 2 pions, 1 cavalier ». */
+fun describePieces(pieces: List<Int>): String =
+    if (pieces.isEmpty()) "aucune" else pieces.groupBy { pieceType(it) }.entries.joinToString(", ") { (t, l) -> "${l.size} ${if (l.size > 1) PLURAL[t] else SINGULAR[t]}" }
+
 /**
- * Barre des prises, placée juste sous l'échiquier : pièces noires capturées à gauche,
- * pièces blanches capturées à droite, et avantage matériel (« +3 ») du côté du camp qui mène.
- *
- * Le chevauchement des pièces identiques est calculé d'après la largeur disponible : la barre
- * contient toujours tout, même si les 30 pièces (hors rois) ont été capturées, sur téléphone comme sur tablette.
+ * Dessine des pièces capturées en miniature (mêmes images que l'échiquier), les pièces identiques
+ * se chevauchant juste assez pour toujours tenir dans la largeur, avec l'avantage « +N » si [lead] > 0.
+ */
+private fun DrawScope.drawCaptured(
+    pieces: List<Int>, lead: TextLayoutResult?, images: Array<ImageBitmap?>, dark: Boolean,
+    start: Float, avail: Float, pieceSize: Float, alignEnd: Boolean,
+) {
+    val groups = pieces.groupBy { it }.values.toList()
+    val scoreW = if (lead != null) lead.size.width + 6.dp.toPx() else 0f
+    var piece = pieceSize
+    var gap = 4.dp.toPx()
+    var step = piece - 5.dp.toPx()
+    val extra = groups.sumOf { it.size - 1 }
+    val gaps = (groups.size - 1).coerceAtLeast(0)
+    fun total() = groups.size * piece + extra * step + gaps * gap + scoreW
+    if (total() > avail && extra > 0) step = ((avail - (groups.size * piece + gaps * gap + scoreW)) / extra).coerceIn(piece * 0.24f, step)
+    if (total() > avail) gap = 2.dp.toPx()
+    if (total() > avail && total() - scoreW > 0) {
+        val k = ((avail - scoreW) / (total() - scoreW)).coerceAtMost(1f)
+        piece *= k; step *= k; gap *= k
+    }
+    val width = (if (groups.isEmpty()) 0f else total() - scoreW)
+    var x = if (alignEnd) start + avail - width - scoreW else start
+    val top = (size.height - piece) / 2
+    val d = piece.roundToInt()
+    fun drawPiece(p: Int, px: Float) {
+        val bmp = images[p] ?: return
+        // Pièces noires sur fond sombre : halo clair. Pièces blanches sur fond clair : halo sombre.
+        val halo = when {
+            dark && !isWhite(p) -> Color.White.copy(alpha = 0.8f)
+            !dark && isWhite(p) -> Color.Black.copy(alpha = 0.6f)
+            else -> null
+        }
+        fun at(dx: Float, dy: Float, filter: ColorFilter?) = drawImage(
+            bmp, dstOffset = IntOffset((px + dx).roundToInt(), (top + dy).roundToInt()), dstSize = IntSize(d, d), colorFilter = filter, filterQuality = FilterQuality.High,
+        )
+        if (halo != null) {
+            val r = 1.2.dp.toPx()
+            val tint = ColorFilter.tint(halo)
+            for ((dx, dy) in listOf(-r to 0f, r to 0f, 0f to -r, 0f to r, -r * 0.7f to -r * 0.7f, r * 0.7f to -r * 0.7f, -r * 0.7f to r * 0.7f, r * 0.7f to r * 0.7f)) at(dx, dy, tint)
+        }
+        at(0f, 0f, null)
+    }
+    for (g in groups) {
+        for (p in g) { drawPiece(p, x); x += step }
+        x += piece - step + gap
+    }
+    if (lead != null) {
+        val lx = if (groups.isEmpty()) (if (alignEnd) start + avail - lead.size.width else start) else x - gap + 6.dp.toPx()
+        drawText(lead, topLeft = Offset(lx, (size.height - lead.size.height) / 2))
+    }
+}
+
+/**
+ * Barre des prises du mode enfant : pièces noires capturées à gauche, blanches à droite, avantage
+ * matériel du côté du camp qui mène. Rien n'est affiché tant qu'aucune pièce n'a été prise.
  */
 @Composable
 fun CapturedBar(position: Position, modifier: Modifier = Modifier, kid: Boolean = false) {
     val c = LocalDuck.current
+    val m = materialOf(position)
+    if (m.blackLost.isEmpty() && m.whiteLost.isEmpty()) return
     val images = rememberPieceImages(kid)
     val measurer = rememberTextMeasurer()
     val font = LocalDuckFont.current
-    val m = materialOf(position)
     val shape = RoundedCornerShape(if (kid) 16.dp else 8.dp)
-    val scoreColor = if (kid) Color(0xFF1F3B57) else c.text
+    val desc = "Pièces prises par les Blancs : ${describePieces(m.blackLost)}. Pièces prises par les Noirs : ${describePieces(m.whiteLost)}." +
+        if (m.diff != 0) " Avantage ${if (m.diff > 0) "Blancs" else "Noirs"} +${abs(m.diff)}." else " Matériel égal."
     Canvas(
         modifier.fillMaxWidth().height(if (kid) 34.dp else 28.dp).clip(shape).background(if (kid) Color.White else c.surface)
-            .then(if (kid) Modifier.border(2.5.dp, Color(0xFF9CC9F0), shape) else Modifier),
+            .then(if (kid) Modifier.border(2.5.dp, c.outline, shape) else Modifier)
+            .semantics { contentDescription = desc },
     ) {
         val pad = (if (kid) 12.dp else 8.dp).toPx()
-        val avail = size.width - 2 * pad
-        val left = m.blackLost.groupBy { it }.values.toList()
-        val right = m.whiteLost.groupBy { it }.values.toList()
-        val score = if (m.diff != 0) measurer.measure("+${abs(m.diff)}", TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = font, color = scoreColor)) else null
-        val scoreW = if (score != null) score.size.width + 6.dp.toPx() else 0f
-        val middle = 10.dp.toPx()
+        val half = (size.width - 2 * pad - 10.dp.toPx()) / 2
+        val style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = font, color = c.text, fontFeatureSettings = TNUM)
+        val lead = if (m.diff != 0) measurer.measure("+${abs(m.diff)}", style) else null
+        val pieceSize = (if (kid) 22.dp else 20.dp).toPx()
+        drawCaptured(m.blackLost, lead.takeIf { m.diff > 0 }, images, c.dark, pad, half, pieceSize, alignEnd = false)
+        drawCaptured(m.whiteLost, lead.takeIf { m.diff < 0 }, images, c.dark, size.width - pad - half, half, pieceSize, alignEnd = true)
+    }
+}
 
-        var piece = (if (kid) 22.dp else 20.dp).toPx()
-        var gap = 4.dp.toPx()
-        var step = piece - 5.dp.toPx() // chevauchement léger par défaut
-        val groups = left.size + right.size
-        val extra = left.sumOf { it.size - 1 } + right.sumOf { it.size - 1 }
-        val gaps = (left.size - 1).coerceAtLeast(0) + (right.size - 1).coerceAtLeast(0)
-        fun total() = groups * piece + extra * step + gaps * gap + scoreW + middle
-        if (total() > avail && extra > 0) {
-            // On resserre d'abord les pièces identiques, sans descendre sous un décalage encore lisible.
-            step = ((avail - (groups * piece + gaps * gap + scoreW + middle)) / extra).coerceIn(piece * 0.24f, step)
+/** Disque de la couleur d'un camp (blanc ou noir), cerclé pour rester visible sur tout fond. */
+@Composable
+fun SideDot(white: Boolean, modifier: Modifier = Modifier) {
+    val c = LocalDuck.current
+    Box(
+        modifier.size(14.dp).clip(CircleShape).background(if (white) Color(0xFFF8FAFC) else Color(0xFF111827))
+            .border(1.5.dp, c.outlineStrong, CircleShape),
+    )
+}
+
+/**
+ * Bandeau d'un joueur, placé au-dessus (adversaire) ou au-dessous (joueur) de l'échiquier :
+ * couleur, nom, détail (ELO), indicateur « au trait » ou « réfléchit », pièces qu'il a prises et avantage.
+ */
+@Composable
+fun PlayerBar(
+    name: String,
+    detail: String?,
+    white: Boolean,
+    position: Position,
+    toMove: Boolean,
+    modifier: Modifier = Modifier,
+    thinking: Boolean = false,
+) {
+    val c = LocalDuck.current
+    val m = materialOf(position)
+    val captured = if (white) m.blackLost else m.whiteLost
+    val lead = if (white) m.diff else -m.diff
+    val images = rememberPieceImages(false)
+    val measurer = rememberTextMeasurer()
+    val side = if (white) "Blancs" else "Noirs"
+    val desc = buildString {
+        append("$name, $side")
+        if (detail != null) append(", $detail")
+        if (thinking) append(", réfléchit") else if (toMove) append(", au trait")
+        if (captured.isNotEmpty()) append(". A pris : ${describePieces(captured)}")
+        if (lead > 0) append(". Avantage +$lead")
+    }
+    Row(
+        modifier.fillMaxWidth().height(34.dp).clearAndSetSemantics { contentDescription = desc },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SideDot(white)
+        Text(
+            name, color = c.text, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 6.dp).widthIn(max = 150.dp),
+        )
+        if (detail != null) Text(" $detail", color = c.muted, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+        if (thinking) {
+            CircularProgressIndicator(Modifier.padding(start = 8.dp).size(14.dp), color = c.goldRole.fill, strokeWidth = 2.dp)
+        } else if (toMove) {
+            Box(Modifier.padding(start = 8.dp).size(8.dp).clip(CircleShape).background(c.greenRole.fill))
         }
-        if (total() > avail) gap = 2.dp.toPx()
-        if (total() > avail) {
-            // Dernier recours : réduire légèrement l'ensemble.
-            val k = (avail - scoreW - middle) / (total() - scoreW - middle)
-            piece *= k; step *= k; gap *= k
+        val style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold, color = c.text, fontFeatureSettings = TNUM)
+        Canvas(Modifier.weight(1f).fillMaxHeight().padding(start = 8.dp)) {
+            val leadText = if (lead > 0) measurer.measure("+$lead", style) else null
+            drawCaptured(captured, leadText, images, c.dark, 0f, size.width, 20.dp.toPx(), alignEnd = true)
         }
-        val top = (size.height - piece) / 2
-        val d = piece.roundToInt()
-        fun drawPiece(p: Int, x: Float) {
-            val bmp = images[p] ?: return
-            // Pièces noires sur fond sombre : halo clair. Pièces blanches sur fond clair : halo sombre.
-            val halo = when {
-                c.dark && !isWhite(p) -> Color.White.copy(alpha = 0.8f)
-                !c.dark && isWhite(p) -> Color.Black.copy(alpha = 0.6f)
-                else -> null
-            }
-            fun at(dx: Float, dy: Float, filter: ColorFilter?) = drawImage(
-                bmp, dstOffset = IntOffset((x + dx).roundToInt(), (top + dy).roundToInt()), dstSize = IntSize(d, d), colorFilter = filter, filterQuality = FilterQuality.High,
-            )
-            if (halo != null) {
-                val r = 1.2.dp.toPx()
-                val tint = ColorFilter.tint(halo)
-                for ((dx, dy) in listOf(-r to 0f, r to 0f, 0f to -r, 0f to r, -r * 0.7f to -r * 0.7f, r * 0.7f to -r * 0.7f, -r * 0.7f to r * 0.7f, r * 0.7f to r * 0.7f)) at(dx, dy, tint)
-            }
-            at(0f, 0f, null)
-        }
-        fun width(gs: List<List<Int>>) = gs.sumOf { (piece + (it.size - 1) * step).toDouble() }.toFloat() + (gs.size - 1).coerceAtLeast(0) * gap
-        fun drawGroups(gs: List<List<Int>>, start: Float) {
-            var x = start
-            for (g in gs) {
-                for (p in g) { drawPiece(p, x); x += step }
-                x += piece - step + gap
-            }
-        }
-        // Gauche : pièces noires capturées (+ score si les Blancs mènent)
-        drawGroups(left, pad)
-        if (score != null && m.diff > 0) drawText(score, topLeft = Offset(pad + width(left) + (if (left.isEmpty()) 0f else 6.dp.toPx()), (size.height - score.size.height) / 2))
-        // Droite : pièces blanches capturées (+ score si les Noirs mènent)
-        val rightStart = size.width - pad - width(right)
-        drawGroups(right, rightStart)
-        if (score != null && m.diff < 0) drawText(score, topLeft = Offset(rightStart - score.size.width - (if (right.isEmpty()) 0f else 6.dp.toPx()), (size.height - score.size.height) / 2))
     }
 }

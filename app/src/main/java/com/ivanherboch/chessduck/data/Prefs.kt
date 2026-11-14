@@ -13,6 +13,16 @@ private val Context.store by preferencesDataStore("chessduck")
 
 data class Settings(
     val dark: Boolean = true,
+    /** 0 = suivre le système, 1 = Jour, 2 = Nuit (déduit de [dark] tant que l'utilisateur n'a rien choisi). */
+    val themeMode: Int = 2,
+    /** Couleurs dynamiques Material You (Android 12+), désactivées par défaut. */
+    val dynamicColor: Boolean = false,
+    /** Coordonnées a–h / 1–8 affichées sur l'échiquier. */
+    val coords: Boolean = true,
+    /** Confirmation avant d'abandonner ou de recommencer une partie en cours. */
+    val confirmActions: Boolean = true,
+    /** Meilleure série de bonnes réponses en Notation. */
+    val notationBest: Int = 0,
     val haptics: Boolean = true,
     val sound: Boolean = true,
     val kidMode: Boolean = false,
@@ -38,6 +48,11 @@ data class Settings(
 class Prefs(private val context: Context) {
     private object K {
         val dark = booleanPreferencesKey("dark")
+        val themeMode = intPreferencesKey("theme_mode")
+        val dynamic = booleanPreferencesKey("dynamic_color")
+        val coords = booleanPreferencesKey("show_coords")
+        val confirm = booleanPreferencesKey("confirm_actions")
+        val notationBest = intPreferencesKey("notation_best_streak")
         val haptics = booleanPreferencesKey("haptics")
         val sound = booleanPreferencesKey("sound")
         val kid = booleanPreferencesKey("kid_mode")
@@ -58,6 +73,11 @@ class Prefs(private val context: Context) {
     val settings: Flow<Settings> = context.store.data.map { p ->
         Settings(
             dark = p[K.dark] ?: true,
+            themeMode = p[K.themeMode] ?: if (p[K.dark] ?: true) 2 else 1,
+            dynamicColor = p[K.dynamic] ?: false,
+            coords = p[K.coords] ?: true,
+            confirmActions = p[K.confirm] ?: true,
+            notationBest = p[K.notationBest] ?: 0,
             haptics = p[K.haptics] ?: true,
             sound = p[K.sound] ?: true,
             kidMode = p[K.kid] ?: false,
@@ -76,7 +96,17 @@ class Prefs(private val context: Context) {
         )
     }
 
-    suspend fun setDark(v: Boolean) = context.store.edit { it[K.dark] = v }
+    suspend fun setDark(v: Boolean) = context.store.edit { it[K.dark] = v; it[K.themeMode] = if (v) 2 else 1 }
+
+    /** 0 = système, 1 = Jour, 2 = Nuit ; la clé historique « dark » reste cohérente. */
+    suspend fun setThemeMode(v: Int) = context.store.edit {
+        it[K.themeMode] = v
+        if (v != 0) it[K.dark] = v == 2
+    }
+    suspend fun setDynamicColor(v: Boolean) = context.store.edit { it[K.dynamic] = v }
+    suspend fun setCoords(v: Boolean) = context.store.edit { it[K.coords] = v }
+    suspend fun setConfirmActions(v: Boolean) = context.store.edit { it[K.confirm] = v }
+    suspend fun setNotationBest(v: Int) = context.store.edit { if (v > (it[K.notationBest] ?: 0)) it[K.notationBest] = v }
     suspend fun setHaptics(v: Boolean) = context.store.edit { it[K.haptics] = v }
     suspend fun setSound(v: Boolean) = context.store.edit { it[K.sound] = v }
     suspend fun setKidMode(v: Boolean) = context.store.edit { it[K.kid] = v }

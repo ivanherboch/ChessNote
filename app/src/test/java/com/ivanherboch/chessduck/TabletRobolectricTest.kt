@@ -5,9 +5,14 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
+import kotlinx.coroutines.runBlocking
+import androidx.test.core.app.ApplicationProvider
+import com.ivanherboch.chessduck.data.GameRecord
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
@@ -23,6 +28,18 @@ import java.time.Duration
 class TabletRobolectricTest {
     @get:Rule
     val rule = createAndroidComposeRule<MainActivity>()
+
+    /** Ajoute une courte partie terminée à l'historique de l'application (mat du berger). */
+    private fun seedGame() = runBlocking {
+        val app = ApplicationProvider.getApplicationContext<ChessDuckApp>()
+        app.db.user().insertGame(
+            GameRecord(
+                date = 1_763_000_000_000, opponent = "Ordinateur 1200", vsComputer = true, playerWhite = true, result = "1-0", outcome = 1,
+                reason = "échec et mat", eloBefore = 1200, eloAfter = 1216, moves = "e2e4 e7e5 f1c4 b8c6 d1h5 g8f6 h5f7",
+                whiteName = "Joueur", blackName = "🤖 Ordinateur", opponentElo = 1200,
+            ),
+        )
+    }
 
     private fun settle(ms: Long = 1500) {
         repeat(6) {
@@ -43,8 +60,14 @@ class TabletRobolectricTest {
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("t2_academie")
         rule.onNodeWithText("Problèmes").performClick(); settle(2500); shot("t3_problemes")
         rule.onNodeWithText("Jeu Libre").performClick(); settle(2000); shot("t4_jeu")
-        rule.onNodeWithText("⚙️").performClick(); settle(800)
-        rule.onNodeWithText("🧒 Activer le mode enfant").performClick(); settle(1500); shot("t5_enfant")
-        rule.onNodeWithText("Dame").performClick(); settle(1200); shot("t6_lecon")
+        seedGame()
+        rule.onNodeWithContentDescription("Historique des parties").performClick(); settle(1200)
+        rule.onNodeWithText("Rejouer sur l’échiquier").performClick(); settle(400)
+        rule.onNodeWithText("Pause").performClick(); settle(400)
+        rule.onNodeWithText("Bc4").performClick(); settle(800); shot("t8_revue")
+        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1000)
+        rule.onNodeWithContentDescription("Paramètres").performClick(); settle(800); shot("t7_parametres")
+        rule.onNodeWithText("Activer le mode enfant").performScrollTo().performClick(); settle(1500); shot("t5_enfant")
+        rule.onNodeWithContentDescription("Dame :", substring = true).performClick(); settle(1200); shot("t6_lecon")
     }
 }

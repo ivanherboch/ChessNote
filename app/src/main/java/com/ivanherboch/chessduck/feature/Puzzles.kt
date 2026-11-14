@@ -1,9 +1,59 @@
 package com.ivanherboch.chessduck.feature
 
 import android.app.Application
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.Undo
+import androidx.compose.material.icons.rounded.Casino
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.IosShare
+import androidx.compose.material.icons.rounded.Lightbulb
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SearchOff
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextOverflow
+import com.ivanherboch.chessduck.ui.ButtonVariant
+import com.ivanherboch.chessduck.ui.SideDot
+import com.ivanherboch.chessduck.ui.DuckIconButton
+import com.ivanherboch.chessduck.ui.EmptyState
+import com.ivanherboch.chessduck.ui.LoadingState
+import java.text.Normalizer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -68,7 +118,6 @@ import com.ivanherboch.chessduck.ui.LocalFeedback
 import com.ivanherboch.chessduck.ui.ModuleLayout
 import com.ivanherboch.chessduck.ui.SectionTitle
 import com.ivanherboch.chessduck.ui.Tone
-import com.ivanherboch.chessduck.ui.captureBadge
 import com.ivanherboch.chessduck.ui.moveAnim
 import com.ivanherboch.chessduck.ui.undoAnim
 import kotlinx.coroutines.Dispatchers
@@ -109,7 +158,15 @@ data class PuzzleState(
     val band: Int = 0,
     val theme: String = "",
     val empty: Boolean = false,
+    /** Thème révélé à la demande avant la résolution (anti-spoiler en mode libre). */
+    val themeRevealed: Boolean = false,
+    /** Fin (horloge système) et durée de l'affichage de la réfutation, pour le compte à rebours. */
+    val refuteUntil: Long = 0L,
+    val refuteHold: Long = 0L,
 ) {
+    /** Le thème est visible si le joueur l'a choisi lui-même, l'a révélé, ou a résolu le problème. */
+    val themeVisible: Boolean get() = solved || themeRevealed || PuzzleThemes.byKey.containsKey(theme)
+
     val playerWhite: Boolean get() = line?.positions?.getOrNull(1)?.whiteToMove ?: true
 }
 
@@ -118,6 +175,9 @@ class ThemeCount(val total: Int, val solved: Int)
 /** Suggestion de recherche : identifiant Lichess + type de problème. */
 data class Suggestion(val id: String, val type: String, val rating: Int)
 data class Suggestions(val query: String = "", val items: List<Suggestion> = emptyList(), val more: Boolean = false)
+
+/** Durée d'affichage de la réfutation avant l'annulation automatique. */
+const val REFUTE_HOLD = 4000L
 
 class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     private val duck = app as ChessDuckApp
@@ -225,9 +285,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Conseil du thème que le joueur a choisi de travailler (si le problème le porte), sinon celui du type du problème. */
-    private fun tipFor(p: Puzzle, @Suppress("UNUSED_PARAMETER") chosen: String): String = PuzzleThemes.primary(p.themes).tip
-
-    private fun turnLabel(white: Boolean) = if (white) "⬜ Trait aux Blancs" else "⬛ Trait aux Noirs"
+    private fun turnLabel(white: Boolean) = if (white) "Trait aux Blancs" else "Trait aux Noirs"
 
     private fun show(p: Puzzle) {
         job?.cancel()
@@ -236,7 +294,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         state.update {
             it.copy(
                 puzzle = p, line = line, progress = 0, cursor = 0, solved = false, anim = null, hintStage = 0, refute = null, empty = false,
-                message = "${turnLabel(white)}. 💡 Conseil : ${tipFor(p, it.theme)}", tone = Tone.INFO,
+                themeRevealed = false, message = "${turnLabel(white)} : trouvez la meilleure suite.", tone = Tone.INFO,
             )
         }
         job = viewModelScope.launch {
@@ -291,6 +349,15 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             if (p != null) show(p)
             onResult(p != null)
         }
+    }
+
+    /** Révèle le thème (et son conseil) avant la résolution. */
+    fun revealTheme() = state.update { it.copy(themeRevealed = true) }
+
+    /** Change la difficulté sans tirer de problème : le filtre s'applique au prochain tirage aléatoire. */
+    fun setBand(band: Int) {
+        state.update { it.copy(band = band) }
+        viewModelScope.launch { duck.prefs.setPuzzleFilter(band, state.value.theme) }
     }
 
     fun setFilter(band: Int, theme: String) {
@@ -359,7 +426,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         state.update {
             it.copy(
                 hintStage = stage, tone = Tone.GOLD,
-                message = if (stage == 1) "💡 Indice 1/2 : la pièce à jouer est surlignée en vert." else "💡 Indice 2/2 : la flèche montre le coup à jouer.",
+                message = if (stage == 1) "Indice 1/2 : la pièce à jouer est surlignée en vert." else "Indice 2/2 : la flèche montre le coup à jouer.",
             )
         }
     }
@@ -383,7 +450,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
                 it.copy(
                     line = newLine, cursor = cur + 1, progress = cur + 1, anim = moveAnim(pos, m), hintStage = 0,
                     solved = it.solved || finished, tone = Tone.GOOD,
-                    message = if (finished) solvedMessage(p) else "✅ ${newLine.sans[cur]} — bon coup ! La suite arrive…",
+                    message = if (finished) solvedMessage(p) else "${newLine.sans[cur]} — bon coup ! La suite arrive…",
                 )
             }
             if (finished) {
@@ -396,7 +463,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
                 state.update {
                     it.copy(
                         cursor = cur + 2, progress = cur + 2, anim = moveAnim(newLine.positions[cur + 1], reply),
-                        message = "✅ Bien vu. L'adversaire répond ${newLine.sans[cur + 1]} : à vous de continuer.",
+                        message = "Bien vu. L'adversaire répond ${newLine.sans[cur + 1]} : à vous de continuer.",
                     )
                 }
             }
@@ -408,13 +475,14 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun solvedMessage(p: Puzzle): String {
         val themes = p.themes.trim().split(' ').mapNotNull { PuzzleThemes.byKey[it]?.name }.take(4)
-        return "✅ Problème résolu ! " + (if (themes.isNotEmpty()) "Thèmes : ${themes.joinToString(", ")}. " else "") +
-            "Touchez 🎲 Aléatoire pour le suivant."
+        return "Problème résolu ! " + (if (themes.isNotEmpty()) "Thèmes : ${themes.joinToString(", ")}. " else "") +
+            "Touchez « Problème aléatoire » pour le suivant."
     }
 
     /**
-     * Mauvais coup : exécuté à t = 0, réfutation adverse à t = 650 ms (flèche rouge),
-     * maintenue 2,5 s, puis retour automatique à la position d'avant l'erreur (t ≈ 3200 ms).
+     * Mauvais coup : exécuté à t = 0, réfutation adverse à t = 650 ms (flèche rouge), maintenue
+     * [REFUTE_HOLD] ms avec un compte à rebours visible, puis retour automatique à la position d'avant l'erreur.
+     * « Réessayer » annule immédiatement.
      */
     private fun refute(pos: Position, m: Move, after: Position, cur: Int) {
         val san = pos.san(m)
@@ -422,15 +490,15 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         state.update {
             it.copy(
                 progress = minOf(it.progress, cur).coerceAtLeast(cur), cursor = cur, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m),
-                refute = Refutation(after, m, null, captureBadge(pos, m)),
-                message = "❌ $san n'est pas la solution. Regardez la réponse des $oppName…",
+                refute = Refutation(after, m, null, null), refuteUntil = 0L, refuteHold = 0L,
+                message = "$san n'est pas la solution. Regardez la réponse des $oppName…",
             )
         }
         job = viewModelScope.launch {
             val t0 = System.currentTimeMillis()
             if (after.legalMoves.isEmpty()) {
-                state.update { it.copy(message = "❌ $san met l'adversaire pat : la partie serait nulle alors que vous aviez bien mieux !") }
-                delay(3200)
+                state.update { it.copy(message = "$san met l'adversaire pat : la partie serait nulle alors que vous aviez bien mieux !", refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD) }
+                delay(REFUTE_HOLD)
                 retry()
                 return@launch
             }
@@ -455,11 +523,12 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
             state.update {
                 it.copy(
                     anim = moveAnim(after, reply),
-                    refute = Refutation(after2, reply, Arrow(reply.from, reply.to, androidx.compose.ui.graphics.Color(0xFFEF4444)), captureBadge(after, reply)),
-                    message = "❌ Réfutation : après $san, les $oppName répondent $replySan$detail Le coup va être annulé.",
+                    refute = Refutation(after2, reply, Arrow(reply.from, reply.to, androidx.compose.ui.graphics.Color(0xFFEF4444)), null),
+                    refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD,
+                    message = "Réfutation : après $san, les $oppName répondent $replySan$detail Le coup sera annulé automatiquement.",
                 )
             }
-            delay(2550)
+            delay(REFUTE_HOLD)
             retry()
         }
     }
@@ -469,8 +538,7 @@ class PuzzlesViewModel(app: Application) : AndroidViewModel(app) {
         if (state.value.refute == null) return
         job?.cancel()
         state.update {
-            val tip = it.puzzle?.let { p -> tipFor(p, it.theme) } ?: ""
-            it.copy(refute = null, anim = null, tone = Tone.INFO, message = "↩️ Position rétablie, à vous de rejouer. 💡 Conseil : $tip")
+            it.copy(refute = null, anim = null, tone = Tone.INFO, refuteUntil = 0L, message = "Position rétablie : à vous de rejouer.")
         }
     }
 }
@@ -499,211 +567,301 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
     val line = s.line
     val p = s.puzzle
 
+    if (p == null || line == null) {
+        if (s.empty) Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+            EmptyState(
+                Icons.Rounded.SearchOff, "Aucun problème trouvé", "Aucun problème ne correspond à ces filtres.",
+                actionLabel = "Ouvrir le catalogue", onAction = { catalog = true },
+                secondaryLabel = "Réinitialiser les filtres", onSecondary = { vm.setFilter(0, "") },
+            )
+        } else LoadingState("Chargement du problème…")
+        if (catalog) PuzzleCatalog(vm, s, onClose = { catalog = false; vm.clearSearch() })
+        return
+    }
+    val type = PuzzleThemes.primary(p.themes)
+    val visible = s.themeVisible
+
     ModuleLayout(
-        bottomMin = 140.dp,
+        bottomMin = 170.dp,
         top = {
-            EqualRow(Modifier.padding(top = 4.dp)) {
-                DuckButton("🧩 ${fr(solved.size)} / ${fr(DuckDatabase.PUZZLE_COUNT)} ▾", { catalog = true }, Modifier.weight(1.45f), accent = c.blue, height = 38.dp, maxSize = 14.sp)
-                DuckButton("🎲 Aléatoire", vm::random, Modifier.weight(1.05f), accent = c.gold, filled = s.solved || s.empty, height = 38.dp)
-                DuckButton("🕘 Récents", { recentSheet = true }, Modifier.weight(1f), enabled = recents.isNotEmpty(), height = 38.dp)
-                DuckButton("🖼️ Exporter", { shareChoice = true }, Modifier.weight(1f), enabled = p != null && line != null, height = 38.dp)
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                DuckButton(
+                    "${fr(solved.size)} / ${fr(DuckDatabase.PUZZLE_COUNT)}", { catalog = true }, Modifier.weight(1f),
+                    accent = c.blue, icon = Icons.Rounded.Extension,
+                    contentDescription = "Catalogue des problèmes : ${fr(solved.size)} résolus sur ${fr(DuckDatabase.PUZZLE_COUNT)}",
+                )
+                DuckIconButton(Icons.Rounded.Casino, "Problème aléatoire", vm::random, accent = c.gold, filled = s.solved || s.empty)
+                DuckIconButton(Icons.Rounded.History, "Problèmes récents", { recentSheet = true }, enabled = recents.isNotEmpty())
+                DuckIconButton(Icons.Rounded.IosShare, "Exporter en image", { shareChoice = true })
             }
-            Row(Modifier.fillMaxWidth().padding(vertical = 5.dp).height(22.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (p != null) {
-                    AutoText(if (s.playerWhite) "⬜ Trait aux Blancs" else "⬛ Trait aux Noirs", maxSize = 14.sp, weight = FontWeight.Bold)
-                    // Si un thème est choisi dans le catalogue, c'est lui qui est affiché (le problème le porte toujours).
-                    AutoText(
-                        "   ${PuzzleThemes.primary(p.themes).name} · ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} ${p.rating}   #${p.id}",
-                        color = c.muted, maxSize = 13.sp, modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-        },
-        board = {
-            if (line != null) {
-                val r = s.refute
-                val cur = s.cursor.coerceIn(0, line.size)
-                val pos = r?.position ?: line.positions[cur]
-                val last = r?.last ?: if (cur > 0) line.moves[cur - 1] else null
-                val canPlay = vm.canPlay(s)
-                val next = if (canPlay) line.moves[cur] else null
-                ChessBoard(
-                    position = pos,
-                    modifier = Modifier.fillMaxSize(),
-                    flipped = !s.playerWhite,
-                    interactive = canPlay,
-                    lastMove = last,
-                    anim = s.anim,
-                    arrows = listOfNotNull(r?.arrow, if (next != null && s.hintStage >= 2) Arrow(next.from, next.to, c.green) else null),
-                    marks = if (next != null && s.hintStage >= 1) listOf(next.from to c.green) else emptyList(),
-                    badges = listOfNotNull(if (r != null) r.badge else if (cur > 0) captureBadge(line.positions[cur - 1], line.moves[cur - 1]) else null),
-                    onMove = { m ->
-                        when (vm.onMove(m)) {
-                            2 -> fb?.success()
-                            -1 -> fb?.error()
-                        }
-                    },
+            Row(Modifier.fillMaxWidth().height(32.dp), verticalAlignment = Alignment.CenterVertically) {
+                SideDot(s.playerWhite)
+                Text(
+                    if (s.playerWhite) "Trait aux Blancs" else "Trait aux Noirs", color = c.text, style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
+                Text(
+                    (if (visible) type.name else "Thème masqué") + " · ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} ${p.rating} · #${p.id}",
+                    color = c.muted, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 10.dp).weight(1f),
                 )
             }
         },
-        bottom = {
-            FeedbackCard(
-                s.message, s.tone, Modifier.padding(top = 5.dp).weight(1f), maxSize = 15.sp,
-                title = p?.let { "🧩 Type de problème : ${PuzzleThemes.primary(it.themes).name}" },
+        board = {
+            val r = s.refute
+            val cur = s.cursor.coerceIn(0, line.size)
+            val pos = r?.position ?: line.positions[cur]
+            val last = r?.last ?: if (cur > 0) line.moves[cur - 1] else null
+            val canPlay = vm.canPlay(s)
+            val next = if (canPlay) line.moves[cur] else null
+            ChessBoard(
+                position = pos,
+                modifier = Modifier.fillMaxSize(),
+                flipped = !s.playerWhite,
+                interactive = canPlay,
+                lastMove = last,
+                anim = s.anim,
+                arrows = listOfNotNull(r?.arrow, if (next != null && s.hintStage >= 2) Arrow(next.from, next.to, c.green) else null),
+                marks = if (next != null && s.hintStage >= 1) listOf(next.from to c.green) else emptyList(),
+                onMove = { m ->
+                    when (vm.onMove(m)) {
+                        2 -> fb?.success()
+                        -1 -> fb?.error()
+                    }
+                },
             )
-            EqualRow(Modifier.padding(vertical = 5.dp), gap = 5.dp) {
-                DuckButton("◀ Arrière", vm::back, Modifier.weight(1f), enabled = s.refute == null && s.cursor > 0, height = 44.dp)
-                if (s.refute != null) DuckButton("↩️ Réessayer", vm::retry, Modifier.weight(1.3f), accent = c.red, filled = true, height = 44.dp, maxSize = 14.sp)
-                else DuckButton("💡 Indice ${(s.hintStage + 1).coerceAtMost(2)}/2", vm::hint, Modifier.weight(1.3f), enabled = vm.canPlay(s), accent = c.green, height = 44.dp, maxSize = 14.sp)
-                DuckButton("Avant ▶", vm::forward, Modifier.weight(1f), enabled = s.refute == null && s.cursor < s.progress, height = 44.dp)
+        },
+        bottom = {
+            if (s.empty) {
+                EmptyState(
+                    Icons.Rounded.SearchOff, "Plus aucun problème", "Aucun problème ne correspond à ces filtres.",
+                    Modifier.padding(top = 6.dp), actionLabel = "Ouvrir le catalogue", onAction = { catalog = true },
+                    secondaryLabel = "Réinitialiser les filtres", onSecondary = { vm.setFilter(0, "") },
+                )
+                Spacer(Modifier.weight(1f))
+            } else {
+                // Anti-spoiler : en mode libre (tous les thèmes ou une famille), le thème et son conseil
+                // restent masqués jusqu'à la résolution, sauf demande explicite.
+                val showTip = visible && s.refute == null && !s.solved && s.tone == Tone.INFO
+                FeedbackCard(
+                    s.message + if (showTip) "\n\nConseil : ${type.tip}" else "",
+                    s.tone, Modifier.padding(top = 6.dp).weight(1f),
+                    title = if (visible) "Type de problème : ${type.name}" else "Thème masqué (mode libre)",
+                    action = if (!visible) ({
+                        DuckButton("Révéler le thème", vm::revealTheme, icon = Icons.Rounded.Visibility, accent = c.blue, variant = ButtonVariant.OUTLINED)
+                    }) else null,
+                )
+                if (s.refute != null && s.refuteUntil > 0) RefuteCountdown(s.refuteUntil, s.refuteHold)
+                EqualRow(Modifier.padding(vertical = 6.dp)) {
+                    DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Coup précédent", vm::back, enabled = s.refute == null && s.cursor > 0)
+                    if (s.refute != null) DuckButton("Réessayer", vm::retry, Modifier.weight(1f), accent = c.red, filled = true, icon = Icons.AutoMirrored.Rounded.Undo)
+                    else if (s.solved) DuckButton("Problème aléatoire", vm::random, Modifier.weight(1f), accent = c.gold, filled = true, icon = Icons.Rounded.Casino)
+                    else DuckButton("Indice ${(s.hintStage + 1).coerceAtMost(2)}/2", vm::hint, Modifier.weight(1f), enabled = vm.canPlay(s), accent = c.green, icon = Icons.Rounded.Lightbulb)
+                    DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Coup suivant", vm::forward, enabled = s.refute == null && s.cursor < s.progress)
+                }
             }
         },
     )
 
     if (catalog) PuzzleCatalog(vm, s, onClose = { catalog = false; vm.clearSearch() })
     if (recentSheet) {
-        DuckSheet("🕘 Derniers problèmes joués", { recentSheet = false }) {
+        DuckSheet("Derniers problèmes joués", { recentSheet = false }) {
             for (r in recents) {
                 val done = r.id in solved
                 Row(
-                    Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(10.dp)).background(c.surface)
-                        .clickable { recentSheet = false; vm.openPuzzle(r) }.padding(horizontal = 12.dp, vertical = 10.dp),
+                    Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(12.dp)).background(c.surface)
+                        .clickable(role = Role.Button) { recentSheet = false; vm.openPuzzle(r) }.padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        AutoText("#${r.id} · ${PuzzleThemes.primary(r.themes).name}", maxSize = 16.sp, weight = FontWeight.SemiBold)
-                        AutoText("${PuzzleThemes.BANDS[PuzzleThemes.bandOf(r.rating)]} · ${r.rating}", color = c.muted, maxSize = 13.sp)
+                        // Le thème d'un problème non résolu reste masqué (anti-spoiler).
+                        Text("#${r.id} · ${if (done) PuzzleThemes.primary(r.themes).name else "thème masqué"}", color = c.text, style = MaterialTheme.typography.titleSmall)
+                        Text("${PuzzleThemes.BANDS[PuzzleThemes.bandOf(r.rating)]} · ${r.rating}", color = c.muted, style = MaterialTheme.typography.bodySmall)
                     }
-                    AutoText(if (done) "✅ Résolu" else "À résoudre", color = if (done) c.green else c.gold, maxSize = 13.sp, weight = FontWeight.Bold)
+                    if (done) Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = c.greenText, modifier = Modifier.padding(end = 4.dp).size(18.dp))
+                    Text(if (done) "Résolu" else "À résoudre", color = if (done) c.greenText else c.goldText, style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
     }
-    if (shareChoice && p != null && line != null) {
-        var status by remember { mutableStateOf<String?>(null) }
-        DuckSheet("🖼️ Exporter en image", { shareChoice = false }) {
+    if (shareChoice) {
+        var status by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
+        DuckSheet("Exporter en image", { shareChoice = false }) {
             ExportCard(
-                "🧩 Le problème", "L'énoncé seul : échiquier, trait, difficulté, type et conseil — sans la solution.", c.blue,
+                "Le problème", "L'énoncé seul : échiquier, trait, difficulté, type et conseil — sans la solution.", c.blue, Icons.Rounded.Extension,
                 onShare = { shareChoice = false; ShareCard.share(context, p, line.positions[1], s.playerWhite, line.moves[0]) },
-                onSave = { status = ShareCard.saveProblem(context, p, line.positions[1], s.playerWhite, line.moves[0])?.let { "✅ $it" } ?: "❌ L'image n'a pas pu être enregistrée." },
+                onSave = { status = ShareCard.saveProblem(context, p, line.positions[1], s.playerWhite, line.moves[0])?.let { true to it } ?: (false to "L'image n'a pas pu être enregistrée.") },
             )
             ExportCard(
-                "✅ La solution", "Une grille par coup : flèches des déplacements, symboles ✕ + # et pièces capturées.", c.green,
+                "La solution", "Une grille par coup : flèches des déplacements, symboles ✕ + # et pièces capturées.", c.green, Icons.Rounded.CheckCircle,
                 onShare = { shareChoice = false; ShareCard.shareSolution(context, p) },
-                onSave = { status = ShareCard.saveSolution(context, p)?.let { "✅ $it" } ?: "❌ L'image n'a pas pu être enregistrée." },
+                onSave = { status = ShareCard.saveSolution(context, p)?.let { true to it } ?: (false to "L'image n'a pas pu être enregistrée.") },
             )
-            status?.let { AutoText(it, color = if (it.startsWith("✅")) c.green else c.red, maxSize = 13.sp, weight = FontWeight.SemiBold, maxLines = 3, modifier = Modifier.padding(top = 4.dp, bottom = 6.dp)) }
+            status?.let { (ok, msg) ->
+                Row(Modifier.padding(top = 4.dp, bottom = 6.dp).semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }, verticalAlignment = Alignment.CenterVertically) {
+                    Icon(if (ok) Icons.Rounded.CheckCircle else Icons.Rounded.ErrorOutline, contentDescription = null, tint = if (ok) c.greenText else c.redText, modifier = Modifier.size(18.dp))
+                    Text(msg, color = if (ok) c.greenText else c.redText, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 6.dp))
+                }
+            }
         }
     }
+}
+
+/** Compte à rebours visuel avant l'annulation automatique d'une réfutation. */
+@Composable
+private fun RefuteCountdown(until: Long, hold: Long) {
+    val c = LocalDuck.current
+    val progress = remember(until) { Animatable(((until - System.currentTimeMillis()).toFloat() / hold).coerceIn(0f, 1f)) }
+    LaunchedEffect(until) {
+        val left = (until - System.currentTimeMillis()).coerceAtLeast(0)
+        progress.animateTo(0f, tween(left.toInt(), easing = LinearEasing))
+    }
+    LinearProgressIndicator(
+        progress = { progress.value }, color = c.redRole.fill, trackColor = c.surfaceHi,
+        modifier = Modifier.fillMaxWidth().padding(top = 6.dp).height(4.dp).clip(RoundedCornerShape(2.dp))
+            .semantics { contentDescription = "Annulation automatique du coup imminente" },
+    )
 }
 
 /** Une image exportable : son titre, sa description et deux actions, partager ou enregistrer. */
 @Composable
-private fun ExportCard(title: String, description: String, accent: Color, onShare: () -> Unit, onSave: () -> Unit) {
+private fun ExportCard(title: String, description: String, accent: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, onShare: () -> Unit, onSave: () -> Unit) {
     val c = LocalDuck.current
     Column(Modifier.fillMaxWidth().padding(vertical = 5.dp).clip(RoundedCornerShape(14.dp)).background(c.surface).padding(12.dp)) {
-        AutoText(title, maxSize = 16.sp, weight = FontWeight.Bold)
-        AutoText(description, color = c.muted, maxSize = 13.sp, maxLines = 3, modifier = Modifier.padding(top = 2.dp, bottom = 10.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = null, tint = c.role(accent).text, modifier = Modifier.size(20.dp))
+            Text(title, color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 8.dp))
+        }
+        Text(description, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp, bottom = 10.dp))
         EqualRow(gap = 8.dp) {
-            DuckButton("📤 Partager", onShare, Modifier.weight(1f), accent = accent, filled = true, height = 44.dp, maxSize = 15.sp)
-            DuckButton("⬇️ Enregistrer", onSave, Modifier.weight(1f), accent = accent, height = 44.dp, maxSize = 15.sp)
+            DuckButton("Partager", onShare, Modifier.weight(1f), accent = accent, filled = true, icon = Icons.Rounded.Share, contentDescription = "Partager : $title")
+            DuckButton("Enregistrer", onSave, Modifier.weight(1f), accent = accent, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Download, contentDescription = "Enregistrer dans la galerie : $title")
         }
     }
 }
 
+private fun norm(t: String) = Normalizer.normalize(t, Normalizer.Form.NFD).replace(Regex("\\p{M}"), "").lowercase()
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> Unit) {
     val c = LocalDuck.current
     val counts by vm.counts.collectAsStateWithLifecycle()
-    var band by remember { mutableIntStateOf(s.band) }
-    LaunchedEffect(band) { vm.loadCounts(band) }
+    LaunchedEffect(s.band) { vm.loadCounts(s.band) }
     var query by remember { mutableStateOf("") }
     var notFound by remember { mutableStateOf(false) }
     val sugg by vm.suggestions.collectAsStateWithLifecycle()
     val open = { vm.openById(query) { ok -> if (ok) onClose() else notFound = true } }
-    DuckSheet("🧩 Catalogue des problèmes", onClose) {
-        SectionTitle("RECHERCHER PAR IDENTIFIANT LICHESS")
+    // Familles dépliées : par défaut, celle du thème en cours.
+    val expanded = remember {
+        androidx.compose.runtime.mutableStateListOf<String>().apply { PuzzleThemes.byKey[s.theme]?.group?.let { add(it) } }
+    }
+    val q = norm(query.trim().removePrefix("#"))
+    val themeMatches = if (q.length >= 2) PuzzleThemes.all.filter { norm(it.name).contains(q) || norm(it.goal).contains(q) } else emptyList()
+    DuckSheet("Catalogue des problèmes", onClose) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
-                value = query, onValueChange = { query = it.take(12); notFound = false; vm.search(query) }, singleLine = true,
-                placeholder = { AutoText("ex. 00sHx", color = c.muted, maxSize = 15.sp) },
+                value = query, onValueChange = { query = it.take(24); notFound = false; vm.search(query) }, singleLine = true,
+                label = { Text("Identifiant Lichess ou thème") },
+                placeholder = { Text("ex. 00sHx, fourchette…") },
+                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                 isError = notFound,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search, autoCorrectEnabled = false),
                 keyboardActions = KeyboardActions(onSearch = { open() }),
                 modifier = Modifier.weight(1f),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = c.text, unfocusedTextColor = c.text, focusedBorderColor = c.gold, unfocusedBorderColor = c.outline,
-                    cursorColor = c.gold, errorTextColor = c.text,
+                    focusedTextColor = c.text, unfocusedTextColor = c.text, focusedBorderColor = c.goldText, unfocusedBorderColor = c.outlineStrong,
+                    cursorColor = c.goldText, errorTextColor = c.text, focusedLabelColor = c.goldText, unfocusedLabelColor = c.muted,
+                    focusedLeadingIconColor = c.muted, unfocusedLeadingIconColor = c.muted,
                 ),
             )
-            DuckButton("🔎 Ouvrir", { open() }, Modifier.width(110.dp), enabled = query.isNotBlank(), accent = c.gold, filled = true, height = 52.dp, maxSize = 15.sp)
+            DuckButton("Ouvrir", { open() }, enabled = query.isNotBlank(), accent = c.gold, filled = true, height = 56.dp, contentDescription = "Ouvrir le problème « ${query.trim()} »")
         }
         if (sugg.items.isNotEmpty() && query.isNotBlank()) {
-            Column(Modifier.fillMaxWidth().padding(top = 6.dp).clip(RoundedCornerShape(10.dp)).background(c.surface)) {
+            Column(Modifier.fillMaxWidth().padding(top = 6.dp).clip(RoundedCornerShape(12.dp)).background(c.surface)) {
                 for (item in sugg.items) {
                     Row(
-                        Modifier.fillMaxWidth().clickable { vm.openSuggestion(item.id) { onClose() } }.padding(horizontal = 12.dp, vertical = 9.dp),
+                        Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(role = Role.Button) { vm.openSuggestion(item.id) { onClose() } }
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        BasicText(highlight("#${item.id}", sugg.query, c.gold, c.onAccent), style = TextStyle(color = c.text, fontSize = 16.sp, fontWeight = FontWeight.Bold))
-                        AutoText(item.type, color = c.blue, maxSize = 14.sp, modifier = Modifier.padding(start = 12.dp).weight(1f))
-                        AutoText("${item.rating}", color = c.muted, maxSize = 13.sp)
+                        Text(highlight("#${item.id}", sugg.query, c.goldRole.fill, c.goldRole.onFill), color = c.text, style = MaterialTheme.typography.titleSmall)
+                        Text(item.type, color = c.blueText, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 12.dp).weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("${item.rating}", color = c.muted, style = MaterialTheme.typography.labelMedium)
                     }
                 }
-                if (sugg.more) AutoText("…", color = c.muted, maxSize = 18.sp, weight = FontWeight.Bold, modifier = Modifier.padding(start = 12.dp, bottom = 6.dp))
+                if (sugg.more) Text("…", color = c.muted, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 12.dp, bottom = 6.dp))
             }
-        } else if (query.isNotBlank() && sugg.query.equals(query.trim().removePrefix("#"), ignoreCase = true) && !notFound) {
-            AutoText("Aucun identifiant ne contient « ${query.trim()} ».", color = c.muted, maxSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
         }
-        if (notFound) AutoText(
+        if (themeMatches.isNotEmpty()) {
+            SectionTitle("Thèmes correspondants")
+            for (t in themeMatches) ThemeRow(t.name, t.goal, counts[t.key], s.theme == t.key) { vm.setFilter(s.band, t.key); onClose() }
+        }
+        if (notFound) Text(
             "Aucun problème « ${query.trim()} » parmi les ${fr(DuckDatabase.PUZZLE_COUNT)} embarqués. Vérifiez l'identifiant (majuscules et minuscules comptent).",
-            color = c.red, maxSize = 13.sp, maxLines = 3, modifier = Modifier.padding(top = 6.dp),
+            color = c.redText, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp),
         )
-        SectionTitle("1. DIFFICULTÉ")
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-            PuzzleThemes.BANDS.forEachIndexed { i, label ->
-                DuckChip(label, band == i, { band = i }, Modifier.weight(if (i == 2) 1.5f else if (i == 0) 0.8f else 1.1f), accent = c.gold)
-            }
+        SectionTitle("1. Difficulté")
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            PuzzleThemes.BANDS.forEachIndexed { i, label -> DuckChip(label, s.band == i, { vm.setBand(i) }) }
         }
-        SectionTitle("2. THÈME — 50 thèmes officiels Lichess")
-        AutoText(
-            "Chaque problème est rangé dans un seul thème : son idée la plus caractéristique.",
-            color = c.muted, maxSize = 12.sp, maxLines = 2, modifier = Modifier.padding(bottom = 6.dp),
+        Text(
+            "Enregistrée immédiatement : elle s'applique au prochain problème aléatoire.",
+            color = c.muted, style = MaterialTheme.typography.bodySmall,
         )
-        ThemeRow("🎯 Tous les thèmes", "Un mélange de toutes les idées, sans indication à l'avance.", counts[""], s.theme.isEmpty() && s.band == band) {
-            vm.setFilter(band, ""); onClose()
+        SectionTitle("2. Thème — 50 thèmes officiels Lichess")
+        Text(
+            "Chaque problème est rangé dans un seul thème : son idée la plus caractéristique. En mode libre, le thème reste masqué jusqu'à la résolution.",
+            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 6.dp),
+        )
+        ThemeRow("Tous les thèmes", "Un mélange de toutes les idées, sans indication à l'avance.", counts[""], s.theme.isEmpty(), Icons.Rounded.Shuffle) {
+            vm.setFilter(s.band, ""); onClose()
         }
-        // Un bouton par famille : « Aléatoire » tire alors dans tous les thèmes de la famille.
+        // Familles en accordéon : toucher la ligne choisit toute la famille, la flèche déplie ses thèmes.
         for (g in PuzzleThemes.groups) {
             val key = PuzzleThemes.groupKey(g)
-            ThemeRow("📂 $g", PuzzleThemes.GROUP_GOALS[g] ?: "", counts[key], s.theme == key && s.band == band) { vm.setFilter(band, key); onClose() }
-        }
-        SectionTitle("OU UN THÈME PRÉCIS")
-        for (g in PuzzleThemes.groups) {
-            SectionTitle(g.uppercase())
-            for (t in PuzzleThemes.all.filter { it.group == g }) {
-                ThemeRow(t.name, t.goal, counts[t.key], s.theme == t.key && s.band == band) { vm.setFilter(band, t.key); onClose() }
+            val isOpen = g in expanded
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f)) {
+                    ThemeRow(g, PuzzleThemes.GROUP_GOALS[g] ?: "", counts[key], s.theme == key, Icons.Rounded.Folder) { vm.setFilter(s.band, key); onClose() }
+                }
+                DuckIconButton(
+                    if (isOpen) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                    if (isOpen) "Replier les thèmes : $g" else "Déplier les thèmes : $g",
+                    { if (isOpen) expanded.remove(g) else expanded.add(g) },
+                )
+            }
+            AnimatedVisibility(isOpen) {
+                Column(Modifier.padding(start = 16.dp)) {
+                    for (t in PuzzleThemes.all.filter { it.group == g }) {
+                        ThemeRow(t.name, t.goal, counts[t.key], s.theme == t.key) { vm.setFilter(s.band, t.key); onClose() }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ThemeRow(name: String, goal: String, count: ThemeCount?, selected: Boolean, onClick: () -> Unit) {
+private fun ThemeRow(name: String, goal: String, count: ThemeCount?, selected: Boolean, icon: androidx.compose.ui.graphics.vector.ImageVector? = null, onClick: () -> Unit) {
     val c = LocalDuck.current
     val enabled = count == null || count.total > 0
     Row(
-        Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(10.dp))
+        Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(12.dp))
             .background(if (selected) c.surfaceHi else c.surface)
-            .clickable(enabled = enabled) { onClick() }.padding(horizontal = 12.dp, vertical = 8.dp),
+            .then(if (selected) Modifier.border(1.dp, c.goldText, RoundedCornerShape(12.dp)) else Modifier)
+            .clickable(enabled = enabled, role = Role.Button) { onClick() }
+            .semantics { this.selected = selected; if (count != null) stateDescription = "${count.solved} résolus sur ${count.total}" }
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (icon != null) Icon(icon, contentDescription = null, tint = c.goldText, modifier = Modifier.padding(end = 8.dp).size(20.dp))
         Column(Modifier.weight(1f)) {
-            AutoText(name, color = if (enabled) c.text else c.muted, maxSize = 15.sp, weight = FontWeight.SemiBold)
-            AutoText(goal, color = c.muted, maxSize = 12.sp, maxLines = 3)
+            Text(name, color = if (enabled) c.text else c.muted, style = MaterialTheme.typography.titleSmall)
+            Text(goal, color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
         }
         if (count != null) {
-            AutoText("${fr(count.solved)} / ${fr(count.total)}", color = if (count.solved > 0) c.green else c.muted, maxSize = 12.sp, weight = FontWeight.Bold, modifier = Modifier.padding(start = 8.dp))
+            Text("${fr(count.solved)} / ${fr(count.total)}", color = if (count.solved > 0) c.greenText else c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 8.dp))
         }
     }
 }

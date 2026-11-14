@@ -10,6 +10,8 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -41,6 +43,18 @@ import java.time.Duration
 class AppRobolectricTest {
     @get:Rule
     val rule = createAndroidComposeRule<MainActivity>()
+
+    /** Ajoute une courte partie terminée à l'historique de l'application (mat du berger). */
+    private fun seedGame() = runBlocking {
+        val app = ApplicationProvider.getApplicationContext<ChessDuckApp>()
+        app.db.user().insertGame(
+            GameRecord(
+                date = 1_763_000_000_000, opponent = "Ordinateur 1200", vsComputer = true, playerWhite = true, result = "1-0", outcome = 1,
+                reason = "échec et mat", eloBefore = 1200, eloAfter = 1216, moves = "e2e4 e7e5 f1c4 b8c6 d1h5 g8f6 h5f7",
+                whiteName = "Joueur", blackName = "🤖 Ordinateur", opponentElo = 1200,
+            ),
+        )
+    }
 
     private fun settle(ms: Long = 1500) {
         repeat(6) {
@@ -128,7 +142,7 @@ class AppRobolectricTest {
                         for (p in listOf(few, worst, all)) com.ivanherboch.chessduck.ui.CapturedBar(p, androidx.compose.ui.Modifier.padding(vertical = 4.dp))
                     }
                 }
-                com.ivanherboch.chessduck.feature.KidTheme {
+                com.ivanherboch.chessduck.ui.ChessDuckTheme(dark = false, kid = true) {
                     androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.background(com.ivanherboch.chessduck.ui.LocalDuck.current.bg).padding(8.dp)) {
                         for (p in listOf(few, worst, all)) com.ivanherboch.chessduck.ui.CapturedBar(p, androidx.compose.ui.Modifier.padding(vertical = 4.dp), kid = true)
                     }
@@ -139,74 +153,99 @@ class AppRobolectricTest {
         shot("10_prises")
     }
 
+    private fun desc(text: String) = rule.onNodeWithContentDescription(text, substring = true)
+    private fun close() = rule.onAllNodesWithContentDescription("Fermer").onLast().performClick()
+
     @Test
     fun screens() {
         settle(2500)
         shot("1_notation")
-        rule.onNodeWithText("📖 Mémo Anglais").performClick(); settle(800); shot("1b_memo")
-        rule.onAllNodesWithText("✕").onLast().performClick(); settle(800)
+        desc("Mémo anglais").performClick(); settle(800); shot("1b_memo")
+        close(); settle(800)
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("2_academie")
-        rule.onNodeWithText("🎯 Mode Défi (Pratique)").performClick(); settle(1500); shot("2b_defi")
+        rule.onNodeWithText("Défi (pratique)").performClick(); settle(1500); shot("2b_defi")
+        desc("Ouvrir le catalogue des leçons").performClick(); settle(1200); shot("2c_catalogue_lecons")
+        close(); settle(800)
         rule.onNodeWithText("Problèmes").performClick(); settle(2500); shot("3_problemes")
-        rule.onAllNodesWithText("🧩", substring = true).onFirst().performClick(); settle(2000); shot("3b_catalogue")
-        rule.onAllNodesWithText("✕").onLast().performClick(); settle(800)
+        desc("Catalogue des problèmes").performClick(); settle(2000); shot("3b_catalogue")
+        close(); settle(800)
         rule.onNodeWithText("Jeu Libre").performClick(); settle(2000); shot("4_jeu")
-        rule.onNodeWithText("⚙️").performClick(); settle(800); shot("5_parametres")
-        rule.onNodeWithText("🔕 Vibration désactivée").performClick(); settle(500)
-        rule.onNodeWithText("🔇 Son désactivé").performClick(); settle(500)
-        rule.onNodeWithText("☀️ Mode Jour (clair)").performClick(); settle(800)
-        rule.onAllNodesWithText("✕").onLast().performClick(); settle(800); shot("4c_jeu_jour")
-        // Mode enfant : écran épuré à deux joueurs, puis retour au Jeu Libre réinitialisé.
-        rule.onNodeWithText("⚙️").performClick(); settle(800); shot("5b_parametres_jour")
-        rule.onNodeWithText("🧒 Activer le mode enfant").performClick(); settle(1500); shot("9_enfant")
+        // Retour Android : depuis un onglet secondaire, on revient à la Notation.
+        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1200)
+        desc("Mémo anglais").assertExists()
+        rule.onNodeWithText("Jeu Libre").performClick(); settle(1500)
+        rule.onNodeWithContentDescription("Paramètres").performClick(); settle(800); shot("5_parametres")
+        rule.onNodeWithText("Vibrations").performScrollTo().performClick(); settle(500)
+        rule.onNodeWithText("Bruit des pièces").performScrollTo().performClick(); settle(500)
+        rule.onNodeWithText("Jour").performScrollTo().performClick(); settle(800)
+        close(); settle(800); shot("4c_jeu_jour")
+        // Mode enfant : écran épuré à deux joueurs, puis retour au Jeu Libre.
+        rule.onNodeWithContentDescription("Paramètres").performClick(); settle(800); shot("5b_parametres_jour")
+        rule.onNodeWithText("Activer le mode enfant").performScrollTo().performClick(); settle(1500); shot("9_enfant")
         // Leçons animées du mode enfant
-        rule.onNodeWithText("Cavalier").performClick(); settle(1400); shot("9b_lecon_cavalier")
-        rule.onNodeWithText("⬅️ Revenir à la partie").performClick(); settle(800)
-        rule.onNodeWithText("Pion").performClick(); settle(900); shot("9c_lecon_pion")
-        rule.onNodeWithText("⬅️ Revenir à la partie").performClick(); settle(800)
-        rule.onNodeWithText("✕ Quitter le mode enfant").performClick(); settle(800); shot("9d_quitter")
+        desc("Cavalier :").performClick(); settle(1400); shot("9b_lecon_cavalier")
+        rule.onNodeWithText("Revenir à la partie").performClick(); settle(800)
+        desc("Pion :").performClick(); settle(900); shot("9c_lecon_pion")
+        // Retour Android dans une leçon : retour à la partie du mode enfant.
+        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(900)
+        rule.onNodeWithText("👆 Touche une pièce pour voir comment elle bouge !").assertExists()
+        desc("Quitter le mode enfant").performClick(); settle(800); shot("9d_quitter")
         // « Non » referme la boîte et on reste en mode enfant ; « Oui » quitte.
         rule.onNodeWithText("Non, on continue à jouer").performClick(); settle(600)
-        rule.onNodeWithText("✕ Quitter le mode enfant").performClick(); settle(600)
+        desc("Quitter le mode enfant").performClick(); settle(600)
         rule.onNodeWithText("Oui, quitter").performClick(); settle(1500)
         // Régression : le mode enfant doit pouvoir être relancé plusieurs fois de suite.
         repeat(3) {
-            rule.onNodeWithText("⚙️").performClick(); settle(800)
-            rule.onNodeWithText("🧒 Activer le mode enfant").performClick(); settle(1200)
+            rule.onNodeWithContentDescription("Paramètres").performClick(); settle(800)
+            rule.onNodeWithText("Activer le mode enfant").performScrollTo().performClick(); settle(1200)
             rule.onNodeWithText("👆 Touche une pièce pour voir comment elle bouge !").assertExists()
-            rule.onNodeWithText("✕ Quitter le mode enfant").performClick(); settle(600)
+            desc("Quitter le mode enfant").performClick(); settle(600)
             rule.onNodeWithText("Oui, quitter").performClick(); settle(1200)
             rule.onNodeWithText("Jeu Libre").assertExists()
         }
         rule.onNodeWithText("Problèmes").performClick(); settle(1500)
-        rule.onNodeWithText("🕘 Récents").assertExists()
+        desc("Problèmes récents").assertExists()
         // Recherche instantanée par identifiant Lichess.
-        rule.onAllNodesWithText("🧩", substring = true).onFirst().performClick(); settle(1500)
+        desc("Catalogue des problèmes").performClick(); settle(1500)
         rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("0d"); settle(1500); shot("3c_recherche")
         rule.onNodeWithText("#0D1Z6").performClick(); settle(2500)
-        rule.onNodeWithText("🕘 Récents").performClick(); settle(1000); shot("3d_recents")
-        rule.onAllNodesWithText("✕").onLast().performClick(); settle(800)
-        rule.onNodeWithText("🖼️ Exporter").performClick(); settle(1000); shot("3e_exporter")
-        rule.onAllNodesWithText("✕").onLast().performClick(); settle(800)
-        // Thème choisi : chaque tirage aléatoire affiche ce thème, quel que soit le type principal du problème.
-        rule.onAllNodesWithText("🧩", substring = true).onFirst().performClick(); settle(1500)
+        desc("Problèmes récents").performClick(); settle(1000); shot("3d_recents")
+        close(); settle(800)
+        desc("Exporter en image").performClick(); settle(1000); shot("3e_exporter")
+        close(); settle(800)
+        // Thème choisi : chaque tirage aléatoire affiche ce thème (visible : le joueur l'a choisi).
+        desc("Catalogue des problèmes").performClick(); settle(1500)
+        desc("Déplier les thèmes : Mats").performClick(); settle(800)
         rule.onNodeWithText("Mat en 1").performScrollTo().performClick(); settle(2500)
         repeat(8) {
-            rule.onNodeWithText("🧩 Type de problème : Mat en 1").assertExists()
-            rule.onNodeWithText("🎲 Aléatoire").performClick(); settle(2000)
+            rule.onNodeWithText("Type de problème : Mat en 1").assertExists()
+            desc("Problème aléatoire").performClick(); settle(2000)
         }
         shot("3f_theme_choisi")
-        // Famille « Mats » : chaque tirage est un mat, de n'importe quelle catégorie.
-        rule.onAllNodesWithText("🧩", substring = true).onFirst().performClick(); settle(1500); shot("3g_familles")
-        rule.onNodeWithText("📂 Mats").performClick(); settle(2500)
+        // Famille « Mats » : thème masqué (anti-spoiler) jusqu'à ce qu'on le révèle ; chaque tirage est un mat.
+        desc("Catalogue des problèmes").performClick(); settle(1500); shot("3g_familles")
+        rule.onNodeWithText("Mats").performClick(); settle(2500)
+        rule.onNodeWithText("Thème masqué (mode libre)").assertExists()
+        shot("3h_theme_masque")
         val mates = com.ivanherboch.chessduck.content.PuzzleThemes.all.filter { it.group == com.ivanherboch.chessduck.content.PuzzleThemes.G_MATE }.map { it.name }
         val seen = HashSet<String>()
         repeat(8) {
-            val shown = mates.filter { name -> rule.onAllNodesWithText("🧩 Type de problème : $name").fetchSemanticsNodes().isNotEmpty() }
+            rule.onNodeWithText("Révéler le thème").performClick(); settle(600)
+            val shown = mates.filter { name -> rule.onAllNodesWithText("Type de problème : $name").fetchSemanticsNodes().isNotEmpty() }
             assertEquals(1, shown.size)
             seen.addAll(shown)
-            rule.onNodeWithText("🎲 Aléatoire").performClick(); settle(2000)
+            desc("Problème aléatoire").performClick(); settle(2000)
         }
         org.junit.Assert.assertTrue("plusieurs catégories de mats attendues : $seen", seen.size >= 2)
+        // Historique et revue : résumé de partie, puis retour Android vers la partie en cours.
+        seedGame()
+        rule.onNodeWithText("Jeu Libre").performClick(); settle(1200)
+        rule.onNodeWithContentDescription("Historique des parties").performClick(); settle(1200); shot("4d_historique")
+        rule.onNodeWithText("Rejouer sur l’échiquier").performClick(); settle(400); shot("4e_revue")
+        rule.onNodeWithText("Pause").performClick(); settle(400)
+        rule.onNodeWithContentDescription("Coup suivant").performClick(); settle(600); shot("4f_revue_coup")
+        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1000)
+        rule.onNodeWithContentDescription("Annuler mon coup", substring = false).assertDoesNotExist()
+        rule.onNodeWithText("Annuler mon coup").assertExists()
     }
 }
