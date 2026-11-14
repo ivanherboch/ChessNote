@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.lazy.items
+import com.ivanherboch.chessduck.ui.DuckLazySheet
 import com.ivanherboch.chessduck.util.normalizeForSearch
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -865,8 +867,12 @@ private fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> U
         androidx.compose.runtime.mutableStateListOf<String>().apply { PuzzleThemes.byKey[s.theme]?.group?.let { add(it) } }
     }
     val q = normalizeForSearch(query.trim().removePrefix("#"))
-    val themeMatches = if (q.length >= 2) PuzzleThemes.all.filter { normalizeForSearch(it.name).contains(q) || normalizeForSearch(it.goal).contains(q) } else emptyList()
-    DuckSheet("Catalogue des problèmes", onClose) {
+    val themeMatches = remember(q) {
+        if (q.length >= 2) PuzzleThemes.all.filter { normalizeForSearch(it.name).contains(q) || normalizeForSearch(it.goal).contains(q) } else emptyList()
+    }
+    DuckLazySheet("Catalogue des problèmes", onClose) {
+      item(key = "recherche") {
+       Column {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DuckTextField(
                 value = query, onValueChange = { query = it.take(24); notFound = false; vm.search(query) },
@@ -920,8 +926,11 @@ private fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> U
         ThemeRow("Tous les thèmes", "Un mélange de toutes les idées, sans indication à l'avance.", counts[""], s.theme.isEmpty(), Icons.Rounded.Shuffle) {
             vm.setFilter(s.band, ""); onClose()
         }
+       }
+      }
         // Familles en accordéon : toucher la ligne choisit toute la famille, la flèche déplie ses thèmes.
-        for (g in PuzzleThemes.groups) {
+        items(PuzzleThemes.groups, key = { it }) { g ->
+          Column {
             val key = PuzzleThemes.groupKey(g)
             val isOpen = g in expanded
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -941,6 +950,7 @@ private fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> U
                     }
                 }
             }
+          }
         }
     }
 }

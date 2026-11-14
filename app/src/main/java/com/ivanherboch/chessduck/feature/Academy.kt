@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.lazy.items
+import com.ivanherboch.chessduck.ui.DuckLazySheet
 import com.ivanherboch.chessduck.ui.LinePlaybackController
 import com.ivanherboch.chessduck.util.normalizeForSearch
 import kotlinx.coroutines.flow.asStateFlow
@@ -408,41 +410,50 @@ private fun LessonCatalog(vm: AcademyViewModel, s: AcademyState, mastered: Set<I
     var cat by remember { mutableStateOf(s.filter) }
     val total = Lessons.all.size
     val q = normalizeForSearch(query.trim())
-    val items = Lessons.all.filter { l ->
-        (cat == null || l.category == cat) &&
-            (status == 0 || (status == 1) == (l.id !in mastered)) &&
-            (q.isEmpty() || normalizeForSearch(l.title).contains(q) || normalizeForSearch(l.summary).contains(q) || l.id.toString() == q)
-    }
-    DuckSheet("Leçons — ${mastered.size} / $total maîtrisées", onClose) {
-        DuckTextField(
-            value = query, onValueChange = { query = it },
-            label = "Rechercher une leçon",
-            placeholder = "ex. fourchette, Lucena, sicilienne…",
-            leadingIcon = Icons.Rounded.Search,
-            trailingIcon = { if (query.isNotEmpty()) DuckIconButton(Icons.Rounded.Close, "Effacer la recherche", { query = "" }) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        SectionTitle("Statut")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("Toutes", "À maîtriser", "Maîtrisées").forEachIndexed { i, label -> DuckChip(label, status == i, { status = i }, accent = c.blue) }
+    // Filtrage et compteurs mémorisés : recalculés seulement quand un filtre ou la progression change.
+    val items = remember(q, status, cat, mastered) {
+        Lessons.all.filter { l ->
+            (cat == null || l.category == cat) &&
+                (status == 0 || (status == 1) == (l.id !in mastered)) &&
+                (q.isEmpty() || normalizeForSearch(l.title).contains(q) || normalizeForSearch(l.summary).contains(q) || l.id.toString() == q)
         }
-        SectionTitle("Catégorie")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            DuckChip("Toutes", cat == null, { cat = null; vm.setFilter(null) }, accent = c.blue)
-            for (k in LessonCategory.entries) {
-                val n = Lessons.all.count { it.category == k }
-                val m = Lessons.all.count { it.category == k && it.id in mastered }
-                DuckChip("${k.label} $m/$n", cat == k, { cat = k; vm.setFilter(k) }, accent = c.blue)
+    }
+    val perCategory = remember(mastered) {
+        LessonCategory.entries.associateWith { k -> Lessons.all.count { it.category == k } to Lessons.all.count { it.category == k && it.id in mastered } }
+    }
+    DuckLazySheet("Leçons — ${mastered.size} / $total maîtrisées", onClose) {
+        item(key = "filtres") {
+            Column {
+                DuckTextField(
+                    value = query, onValueChange = { query = it },
+                    label = "Rechercher une leçon",
+                    placeholder = "ex. fourchette, Lucena, sicilienne…",
+                    leadingIcon = Icons.Rounded.Search,
+                    trailingIcon = { if (query.isNotEmpty()) DuckIconButton(Icons.Rounded.Close, "Effacer la recherche", { query = "" }) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                SectionTitle("Statut")
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf("Toutes", "À maîtriser", "Maîtrisées").forEachIndexed { i, label -> DuckChip(label, status == i, { status = i }, accent = c.blue) }
+                }
+                SectionTitle("Catégorie")
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    DuckChip("Toutes", cat == null, { cat = null; vm.setFilter(null) }, accent = c.blue)
+                    for (k in LessonCategory.entries) {
+                        val (n, m) = perCategory.getValue(k)
+                        DuckChip("${k.label} $m/$n", cat == k, { cat = k; vm.setFilter(k) }, accent = c.blue)
+                    }
+                }
+                SectionTitle("${items.size} leçon${if (items.size > 1) "s" else ""} — toutes en accès libre")
+                if (items.isEmpty()) {
+                    EmptyState(
+                        Icons.Rounded.SearchOff, "Aucune leçon trouvée", "Essayez un autre mot ou retirez des filtres.",
+                        actionLabel = "Réinitialiser les filtres", onAction = { query = ""; status = 0; cat = null; vm.setFilter(null) },
+                    )
+                }
             }
         }
-        SectionTitle("${items.size} leçon${if (items.size > 1) "s" else ""} — toutes en accès libre")
-        if (items.isEmpty()) {
-            EmptyState(
-                Icons.Rounded.SearchOff, "Aucune leçon trouvée", "Essayez un autre mot ou retirez des filtres.",
-                actionLabel = "Réinitialiser les filtres", onAction = { query = ""; status = 0; cat = null; vm.setFilter(null) },
-            )
-        }
-        for (item in items) {
+        items(items, key = { it.id }) { item ->
             val current = item.id == s.lessonId
             val done = item.id in mastered
             Row(

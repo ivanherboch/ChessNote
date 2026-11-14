@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck.ui
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -394,8 +398,12 @@ fun FeedbackCard(
     var full by remember { mutableStateOf(false) }
     val measurer = rememberTextMeasurer()
     val hasAction = action != null
+    // Résultat de la mesure (débordement à 12 sp), noté sans écrire d'état pendant la passe de mesure ;
+    // il est publié après le placement (onPlaced), ce qui ne déclenche aucune boucle de mise en page.
+    val measuredOverflow = remember { BooleanArray(1) }
     Box(modifier.fillMaxWidth(), contentAlignment = Alignment.TopStart) {
         Layout(
+            modifier = Modifier.onPlaced { if (measuredOverflow[0] != overflow) overflow = measuredOverflow[0] },
             content = {
                 Column(
                     Modifier
@@ -433,7 +441,7 @@ fun FeedbackCard(
                 override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
                     // Lien « Lire la suite » seulement si le texte ne tient pas, même à 12 sp.
                     val over = constraints.hasBoundedHeight && needed(constraints.maxWidth) > constraints.maxHeight + 2
-                    if (over != overflow) overflow = over
+                    measuredOverflow[0] = over
                     val p = measurables[0].measure(constraints)
                     return layout(p.width, p.height) { p.place(0, 0) }
                 }
@@ -624,6 +632,28 @@ fun DuckSheet(title: String, onClose: () -> Unit, content: @Composable ColumnSco
 }
 
 /**
+ * Variante paresseuse de [DuckSheet] pour les longues listes (catalogues, historique) : seules les lignes
+ * visibles sont composées ; [content] décrit les éléments avec des clés stables.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DuckLazySheet(title: String, onClose: () -> Unit, content: LazyListScope.() -> Unit) {
+    val c = LocalDuck.current
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val screenPx = LocalConfiguration.current.screenHeightDp * LocalContext.current.resources.displayMetrics.density
+    val maxH = (screenPx * 0.88f / LocalDensity.current.density).dp
+    ModalBottomSheet(onDismissRequest = onClose, sheetState = state, containerColor = c.bg, contentColor = c.text) {
+        Column(Modifier.fillMaxWidth().heightIn(max = maxH).navigationBarsPadding().imePadding().padding(horizontal = 16.dp)) {
+            Row(Modifier.fillMaxWidth().padding(bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(title, style = MaterialTheme.typography.titleLarge, color = c.text, modifier = Modifier.weight(1f).semantics { heading() }, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                DuckIconButton(Icons.Rounded.Close, "Fermer", onClose)
+            }
+            LazyColumn(Modifier.fillMaxWidth().weight(1f, fill = false), contentPadding = PaddingValues(bottom = 16.dp), content = content)
+        }
+    }
+}
+
+/**
  * Gabarit d'un module : bandeau haut, [overBoard], échiquier carré adaptatif, [underBoard], zone du pouce.
  * En portrait, l'échiquier prend toute la largeur tant que la zone basse conserve [bottomMin].
  * En paysage (tablette), l'échiquier occupe la hauteur à gauche et les commandes forment une seconde colonne.
@@ -643,7 +673,10 @@ fun ModuleLayout(
     val twoPane = LocalIsTwoPane.current
     var reserve by remember { mutableIntStateOf(0) }
     val animReserve by animateIntAsState(reserve, tween(260), label = "reserve")
+    // Besoin calculé pendant la mesure (sans écriture d'état), publié après le placement.
+    val wanted = remember { IntArray(1) }
     Layout(
+        modifier = Modifier.onPlaced { if (wanted[0] > reserve) reserve = wanted[0] },
         content = {
             Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp), content = top)
             Box(contentAlignment = Alignment.Center) { board() }
@@ -684,7 +717,7 @@ fun ModuleLayout(
             val avail = h - topP.height - underH - overH - baseSide
             val needed = runCatching { measurables[2].minIntrinsicHeight(w) }.getOrDefault(0)
             val want = (needed - avail).coerceIn(0, (baseSide * 0.22f).toInt())
-            if (want > reserve) reserve = want
+            if (want > wanted[0]) wanted[0] = want
         }
         val side = (baseSide - if (adaptive) animReserve else 0).coerceAtLeast(0)
         val boardP = measurables[1].measure(Constraints.fixed(side, side))

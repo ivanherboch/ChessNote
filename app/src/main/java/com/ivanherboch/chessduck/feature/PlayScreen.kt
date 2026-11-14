@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.lazy.items
+import com.ivanherboch.chessduck.ui.DuckLazySheet
 import com.ivanherboch.chessduck.ui.LocalIsTwoPane
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -281,12 +283,19 @@ private fun ReviewLayout(vm: PlayViewModel, r: Review) {
     val cur = r.cursor.coerceIn(0, line.size)
     val g = r.record
     val last = if (cur > 0) line.moves[cur - 1] else null
-    val note = if (last != null) GameLogic.annotate(
-        line.positions[cur - 1], last, r.analysis.getOrNull(cur - 1), r.analysis.getOrNull(cur), if (cur > 1) line.moves[cur - 2] else null,
-    ) else null
+    // Annotations mémorisées par coup : pendant l'analyse en tâche de fond, seuls les coups dont
+    // l'évaluation vient de changer sont réannotés (et non toute la partie à chaque position analysée).
+    val noteCache = remember(line) { arrayOfNulls<Pair<Pair<Analysis?, Analysis?>, String?>>(line.size) }
     val notes = remember(r.analysis, line) {
-        List(line.size) { i -> GameLogic.annotate(line.positions[i], line.moves[i], r.analysis.getOrNull(i), r.analysis.getOrNull(i + 1), if (i > 0) line.moves[i - 1] else null) }
+        List(line.size) { i ->
+            val key = r.analysis.getOrNull(i) to r.analysis.getOrNull(i + 1)
+            val cached = noteCache[i]
+            if (cached != null && cached.first == key) cached.second
+            else GameLogic.annotate(line.positions[i], line.moves[i], key.first, key.second, if (i > 0) line.moves[i - 1] else null)
+                .also { noteCache[i] = key to it }
+        }
     }
+    val note = if (last != null) notes.getOrNull(cur - 1) else null
     val wide = LocalIsTwoPane.current
     val names = Players(
         g.whiteName.ifEmpty { if (g.vsComputer && !g.playerWhite) COMPUTER else "Blancs" } to null,
@@ -458,15 +467,15 @@ private fun formatDate(t: Long): String = SimpleDateFormat("dd/MM/yyyy HH:mm", L
 private fun HistorySheet(games: List<GameRecord>, onClose: () -> Unit, onDelete: (Long) -> Unit, onReplay: (GameRecord) -> Unit) {
     val c = LocalDuck.current
     var pendingDelete by remember { mutableStateOf<GameRecord?>(null) }
-    DuckSheet("Historique des parties", onClose) {
-        if (games.isEmpty()) {
+    DuckLazySheet("Historique des parties", onClose) {
+        if (games.isEmpty()) item(key = "vide") {
             EmptyState(
                 Icons.Rounded.History, "Aucune partie pour l'instant",
                 "Terminez une partie en Jeu Libre : elle apparaîtra ici avec sa revue commentée.",
                 actionLabel = "Fermer", onAction = onClose,
             )
         }
-        for (g in games) {
+        items(games, key = { it.id }) { g ->
             Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(12.dp)).background(c.surface).padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val (label, col) = when {
