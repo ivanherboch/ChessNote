@@ -1,3 +1,9 @@
+## ChessDuck 2.2.3 — résumé de revue plus lisible
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Résumé de la partie : si chaque joueur tient sur une ligne (nom, couleur et annotations), les annotations des deux joueurs sont alignées en colonne ; sinon, pour les deux joueurs, le nom et la couleur sont sur une ligne et les annotations dessous, alignées à gauche.
+
 ## ChessDuck 2.2.2 — noms des joueurs toujours entiers dans le résumé de revue
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

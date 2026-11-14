@@ -1,7 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
 import com.ivanherboch.chessduck.ui.WholeOrNothing
-import com.ivanherboch.chessduck.ui.LabelWithTrailing
+import com.ivanherboch.chessduck.ui.AlignedLabelRows
+import com.ivanherboch.chessduck.ui.LabeledRow
 import androidx.compose.foundation.lazy.items
 import com.ivanherboch.chessduck.ui.DuckLazySheet
 import com.ivanherboch.chessduck.ui.LocalIsTwoPane
@@ -388,23 +389,25 @@ private fun ReviewSummary(g: GameRecord, line: Line, analysis: List<Analysis?>, 
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(4.dp).clip(RoundedCornerShape(2.dp)),
             )
         }
-        for (white in listOf(true, false)) {
-            val v = ReviewComments.voice(g, white)
-            val st = stats.getValue(white)
-            // Nom du camp toujours affiché en entier : les compteurs passent dessous s'ils ne tiennent pas à côté.
-            LabelWithTrailing(
-                label = v.label, style = MaterialTheme.typography.labelLarge, color = c.text,
-                trailing = {
+        // Nom (couleur) toujours en entier. Tout sur une ligne si les deux joueurs tiennent, sinon pour les deux :
+        // nom puis, à la ligne, les compteurs alignés à gauche.
+        AlignedLabelRows(
+            rows = listOf(true, false).map { white ->
+                val v = ReviewComments.voice(g, white)
+                val st = stats.getValue(white)
+                LabeledRow(
+                    v.label,
+                    v.label + " : " + NOTES.joinToString(", ") { "${st.counts[it]} ${NOTE_NAMES[it]}" } + ", ${st.missed} mat manqué",
+                ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                         for (n in NOTES) NoteCount(n, st.counts[n] ?: 0)
                         if (st.missed > 0) Text("${st.missed} mat${if (st.missed > 1) "s" else ""} manqué${if (st.missed > 1) "s" else ""}", color = c.redText, style = MaterialTheme.typography.labelMedium, maxLines = 1)
                     }
-                },
-                modifier = Modifier.fillMaxWidth().padding(top = 6.dp).semantics(mergeDescendants = true) {
-                    contentDescription = v.label + " : " + NOTES.joinToString(", ") { "${st.counts[it]} ${NOTE_NAMES[it]}" } + ", ${st.missed} mat manqué"
-                },
-            )
-        }
+                }
+            },
+            style = MaterialTheme.typography.labelLarge, color = c.text,
+            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+        )
         // Aide facultative : affichée en entier quand la place le permet, sinon masquée (jamais tronquée).
         WholeOrNothing(Modifier.padding(top = 8.dp).weight(1f, fill = false)) {
             Text("Touchez Lecture ou un coup pour lire les commentaires.", color = c.muted, style = MaterialTheme.typography.bodySmall)

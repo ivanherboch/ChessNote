@@ -205,24 +205,31 @@ class AppRobolectricTest {
         rule.activity.setContent {
             com.ivanherboch.chessduck.ui.ChessDuckTheme(true) {
                 val c = com.ivanherboch.chessduck.ui.LocalDuck.current
+                val counts: (String) -> @androidx.compose.runtime.Composable () -> Unit = { missed -> {
+                    androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
+                        for (n in listOf("!!", "!", "?!", "?", "??")) androidx.compose.material3.Text("$n 0", color = c.text, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
+                        if (missed.isNotEmpty()) androidx.compose.material3.Text(missed, color = c.redText, style = androidx.compose.material3.MaterialTheme.typography.labelMedium)
+                    }
+                } }
                 androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.width(360.dp).background(c.bg).padding(12.dp)) {
-                    for ((label, missed) in listOf("L'ordinateur (Blancs)" to "1 mat manqué", "Guduche (Noirs)" to "", "Un pseudo vraiment très long (Noirs)" to "2 mats manqués")) {
-                        com.ivanherboch.chessduck.ui.LabelWithTrailing(
-                            label = label, style = androidx.compose.material3.MaterialTheme.typography.labelLarge, color = c.text,
-                            trailing = {
-                                androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
-                                    for (n in listOf("!!", "!", "?!", "?", "??")) androidx.compose.material3.Text("$n 0", color = c.text, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
-                                    if (missed.isNotEmpty()) androidx.compose.material3.Text(missed, color = c.redText, style = androidx.compose.material3.MaterialTheme.typography.labelMedium)
-                                }
-                            },
-                            modifier = androidx.compose.ui.Modifier.fillMaxWidth().padding(top = 6.dp),
+                    // 1) Cas réel : ne tient pas sur une ligne → les deux joueurs passent à la ligne, compteurs à gauche.
+                    // 2) Noms courts : tout tient → une ligne chacun, compteurs alignés en colonne.
+                    for (group in listOf(
+                        listOf("L'ordinateur (Blancs)" to "1 mat manqué", "Guduche (Noirs)" to ""),
+                        listOf("Ivan (Blancs)" to "", "Lu (Noirs)" to ""),
+                        listOf("Un pseudo vraiment très long (Noirs)" to "2 mats manqués", "Moi (Blancs)" to ""),
+                    )) {
+                        com.ivanherboch.chessduck.ui.AlignedLabelRows(
+                            group.map { (label, missed) -> com.ivanherboch.chessduck.ui.LabeledRow(label, label, counts(missed)) },
+                            style = androidx.compose.material3.MaterialTheme.typography.labelLarge, color = c.text,
+                            modifier = androidx.compose.ui.Modifier.fillMaxWidth().padding(top = 14.dp),
                         )
                     }
                 }
             }
         }
         settle(500)
-        for (label in listOf("L'ordinateur (Blancs)", "Guduche (Noirs)", "Un pseudo vraiment très long (Noirs)")) {
+        for (label in listOf("L'ordinateur (Blancs)", "Guduche (Noirs)", "Ivan (Blancs)", "Lu (Noirs)", "Un pseudo vraiment très long (Noirs)", "Moi (Blancs)")) {
             val node = rule.onNodeWithText(label).fetchSemanticsNode()
             val layouts = ArrayList<androidx.compose.ui.text.TextLayoutResult>()
             node.config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)

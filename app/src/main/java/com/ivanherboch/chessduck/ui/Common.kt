@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.ui
 
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyColumn
@@ -551,39 +552,62 @@ fun DuckSegmentedRow(
     }
 }
 
+/** Une ligne de [AlignedLabelRows] : libellé, description TalkBack de toute la ligne, éléments qui suivent. */
+class LabeledRow(val label: String, val description: String, val trailing: @Composable () -> Unit)
+
 /**
- * Libellé suivi d'éléments alignés à droite (compteurs, badges) : sur une seule ligne quand tout tient,
- * sinon le libellé occupe toute la largeur (en entier, sur plusieurs lignes si besoin) et les éléments passent
- * dessous, alignés à droite. Le libellé n'est jamais tronqué : sa largeur naturelle est mesurée exactement.
+ * Lignes « libellé + éléments » (ex. joueur et compteurs d'annotations), cohérentes entre elles :
+ * - si chaque ligne tient en entier, tout est sur une ligne et les éléments commencent tous à la même position
+ *   (colonne alignée à gauche, juste après le libellé le plus long) ;
+ * - sinon, pour toutes les lignes, le libellé est seul sur sa ligne (en entier) et les éléments passent dessous,
+ *   alignés à gauche. Le libellé n'est jamais tronqué : sa largeur naturelle est mesurée exactement.
  */
 @Composable
-fun LabelWithTrailing(
-    label: String,
+fun AlignedLabelRows(
+    rows: List<LabeledRow>,
     style: TextStyle,
     color: Color,
-    trailing: @Composable () -> Unit,
     modifier: Modifier = Modifier,
-    gap: Dp = 6.dp,
+    gap: Dp = 10.dp,
+    rowGap: Dp = 6.dp,
 ) {
     val measurer = rememberTextMeasurer()
-    Layout(content = { Text(label, color = color, style = style); Box { trailing() } }, modifier = modifier) { measurables, constraints ->
-        val w = constraints.maxWidth
-        val gapPx = gap.roundToPx()
-        val t = measurables[1].measure(Constraints(maxWidth = w))
-        val natural = measurer.measure(label, style, maxLines = 1, softWrap = false, density = this, layoutDirection = layoutDirection).size.width
-        if (natural + gapPx + t.width <= w) {
-            val l = measurables[0].measure(Constraints(minWidth = natural.coerceAtMost(w), maxWidth = (w - gapPx - t.width).coerceAtLeast(natural.coerceAtMost(w))))
-            val h = maxOf(l.height, t.height)
-            layout(w, h) {
-                l.place(0, (h - l.height) / 2)
-                t.place(w - t.width, (h - t.height) / 2)
+    Layout(
+        content = {
+            for (r in rows) {
+                Text(r.label, color = color, style = style, modifier = Modifier.semantics { contentDescription = r.description })
+                Box(Modifier.clearAndSetSemantics { }) { r.trailing() }
             }
-        } else {
-            val l = measurables[0].measure(Constraints(maxWidth = w))
-            val top = 2.dp.roundToPx()
-            layout(w, l.height + top + t.height) {
-                l.place(0, 0)
-                t.place(w - t.width, l.height + top)
+        },
+        modifier = modifier,
+    ) { measurables, constraints ->
+        val w = constraints.maxWidth
+        val n = rows.size
+        val gapPx = gap.roundToPx()
+        val rowGapPx = rowGap.roundToPx()
+        val under = 2.dp.roundToPx()
+        val trailing = List(n) { measurables[2 * it + 1].measure(Constraints(maxWidth = w)) }
+        val natural = List(n) {
+            measurer.measure(rows[it].label, style, maxLines = 1, softWrap = false, density = this, layoutDirection = layoutDirection).size.width
+        }
+        val column = (natural.maxOrNull() ?: 0) + gapPx
+        val oneLine = trailing.all { column + it.width <= w }
+        val labels = List(n) {
+            measurables[2 * it].measure(if (oneLine) Constraints(maxWidth = natural[it].coerceAtMost(w)) else Constraints(maxWidth = w))
+        }
+        val heights = List(n) { if (oneLine) maxOf(labels[it].height, trailing[it].height) else labels[it].height + under + trailing[it].height }
+        val total = heights.sum() + rowGapPx * (n - 1).coerceAtLeast(0)
+        layout(w, total) {
+            var y = 0
+            for (i in 0 until n) {
+                if (oneLine) {
+                    labels[i].place(0, y + (heights[i] - labels[i].height) / 2)
+                    trailing[i].place(column, y + (heights[i] - trailing[i].height) / 2)
+                } else {
+                    labels[i].place(0, y)
+                    trailing[i].place(0, y + labels[i].height + under)
+                }
+                y += heights[i] + rowGapPx
             }
         }
     }
