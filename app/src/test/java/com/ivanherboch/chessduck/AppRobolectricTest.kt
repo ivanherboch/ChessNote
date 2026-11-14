@@ -34,7 +34,7 @@ import org.robolectric.annotation.GraphicsMode
 import java.io.File
 import java.time.Duration
 
-/** Vérifie la base embarquée (schéma Room + 100 000 problèmes) et produit des captures de chaque écran. */
+/** Vérifie la base embarquée (schéma Room + 150 000 problèmes) et produit des captures de chaque écran. */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34], qualifiers = "w360dp-h760dp-xxhdpi")
@@ -58,12 +58,19 @@ class AppRobolectricTest {
     @Test
     fun prepackagedDatabaseMatchesRoomSchema() = runBlocking {
         val db = DuckDatabase.create(ApplicationProvider.getApplicationContext())
-        assertEquals(100_000, db.puzzles().count())
+        assertEquals(150_000, db.puzzles().count())
         val p = db.puzzles().byId("0000D")
         assertNotNull(p)
         db.puzzles().markSolved(PuzzleProgress(p!!.id, 1L))
         assertEquals(listOf(p.id), db.puzzles().solvedIds().first())
-        assertEquals(100_000, db.puzzles().allMeta().size)
+        val meta = db.puzzles().allMeta()
+        assertEquals(150_000, meta.size)
+        assertEquals(150_000, meta.map { it.id }.toSet().size) // aucun doublon
+        // Au moins 300 problèmes par difficulté × thème, sauf les cases que la base Lichess entière ne peut pas remplir.
+        val cells = meta.groupingBy { com.ivanherboch.chessduck.content.PuzzleThemes.bandOf(it.rating) to com.ivanherboch.chessduck.content.PuzzleThemes.primary(it.themes).key }.eachCount()
+        val shortCells = (1..4).flatMap { b -> com.ivanherboch.chessduck.content.PuzzleThemes.all.map { b to it.key } }.filter { (cells[it] ?: 0) < 300 }
+        assertEquals(18, shortCells.size)
+        assertEquals(182, 200 - shortCells.size)
         // Une base déjà complète n'est pas réimportée.
         assertEquals(false, DuckDatabase.syncPuzzles(ApplicationProvider.getApplicationContext(), db))
         assertEquals(30, db.puzzles().slice(100, 30).size)
@@ -103,7 +110,7 @@ class AppRobolectricTest {
         assertEquals(50_000, db.puzzles().count())
         db.puzzles().markSolved(PuzzleProgress("0000D", 1L))
         assertEquals(true, DuckDatabase.syncPuzzles(ctx, db))
-        assertEquals(100_000, db.puzzles().count())
+        assertEquals(150_000, db.puzzles().count())
         assertEquals(listOf("0000D"), db.puzzles().solvedIds().first())
         db.close()
     }

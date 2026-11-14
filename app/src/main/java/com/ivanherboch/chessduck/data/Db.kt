@@ -135,7 +135,7 @@ abstract class DuckDatabase : RoomDatabase() {
     abstract fun user(): UserDao
 
     companion object {
-        const val PUZZLE_COUNT = 100_000
+        const val PUZZLE_COUNT = 150_000
 
         fun create(context: Context): DuckDatabase =
             Room.databaseBuilder(context, DuckDatabase::class.java, "chessduck.db")
