@@ -1,3 +1,9 @@
+## ChessDuck 2.1.2 — pièces bien visibles dans les images de solution
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Correctif : sur les petits échiquiers des images de solution, les pièces étaient dessinées semi-transparentes (plus foncées sur les cases sombres). Elles sont désormais toujours parfaitement opaques, comme dans l'image du problème.
+
 ## ChessDuck 2.1.1 — échiquiers plus grands dans les images partagées
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

@@ -279,6 +279,10 @@ object ShareCard {
                     cv.drawText(('1' + rankOf(rq)).toString(), x(rq) + s * 0.07f, y(rq) + s * 0.25f, paint)
                 }
             }
+            // Pièces toujours parfaitement opaques, quelle que soit la couleur utilisée juste avant.
+            paint.shader = null
+            paint.color = Color.WHITE
+            paint.alpha = 255
             for (q in 0 until 64) {
                 val p = position[q]
                 if (p != 0) cv.drawBitmap(piece(p), null, RectF(x(q), y(q), x(q) + s, y(q) + s), paint)
@@ -595,6 +599,7 @@ object ShareCard {
                     g.paint.style = Paint.Style.FILL
                     g.paint.color = LIGHT_SQ
                     g.cv.drawRoundRect(RectF(px, py, px + ps, py + ps), 10f, 10f, g.paint)
+                    g.paint.color = Color.WHITE
                     g.cv.drawBitmap(g.piece(victim), null, RectF(px, py, px + ps, py + ps), g.paint)
                     if (detailed) g.text("prend", px - 10f, ty0 - titleSz * 0.12f, textSize * 0.9f, pal.muted, align = Paint.Align.RIGHT)
                 }
