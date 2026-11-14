@@ -332,6 +332,7 @@ private fun KidGame(vm: KidViewModel, onQuit: () -> Unit) {
         }
         ModuleLayout(
             bottomMin = 200.dp,
+            adaptive = false,
             top = {
                 Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     // Bulle flottante : la bordure change de couleur selon le joueur au trait.
@@ -521,6 +522,7 @@ private fun KidDemo(piece: KidPiece, onClose: () -> Unit) {
 
     ModuleLayout(
         bottomMin = 190.dp,
+        adaptive = false,
         top = {
             val bubble = RoundedCornerShape(32.dp)
             Row(
@@ -590,7 +592,7 @@ private fun KidDemo(piece: KidPiece, onClose: () -> Unit) {
                     BasicText(
                         boldText(piece.text),
                         style = TextStyle(color = piece.ink, fontFamily = LocalDuckFont.current, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, lineHeight = 1.25.em),
-                        autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 22.sp, stepSize = 0.5.sp),
+                        autoSize = TextAutoSize.StepBased(minFontSize = 13.sp, maxFontSize = 22.sp, stepSize = 0.5.sp),
                     )
                 }
                 KidButton("Revenir à la partie", KidGreen, onClose, Modifier.fillMaxWidth(), height = 56.dp, maxSize = 19.sp, icon = Icons.AutoMirrored.Rounded.ArrowBack)

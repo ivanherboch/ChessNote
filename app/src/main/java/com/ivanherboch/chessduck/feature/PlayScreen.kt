@@ -22,8 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -370,7 +368,7 @@ private fun ReviewSummary(g: GameRecord, line: Line, analysis: List<Analysis?>, 
         }
     }
     val total = line.size + 1
-    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(c.surface).verticalScroll(rememberScrollState()).padding(12.dp)) {
+    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(c.surface).padding(12.dp)) {
         Text("Résumé de la partie", color = c.text, style = MaterialTheme.typography.titleSmall)
         if (ready < total) {
             Text("Analyse des coups : $ready / $total…", color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
@@ -382,20 +380,22 @@ private fun ReviewSummary(g: GameRecord, line: Line, analysis: List<Analysis?>, 
         for (white in listOf(true, false)) {
             val v = ReviewComments.voice(g, white)
             val st = stats.getValue(white)
-            Text(v.label, color = c.text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
             Row(
-                Modifier.padding(top = 4.dp).semantics(mergeDescendants = true) {
+                Modifier.fillMaxWidth().padding(top = 6.dp).semantics(mergeDescendants = true) {
                     contentDescription = v.label + " : " + NOTES.joinToString(", ") { "${st.counts[it]} ${NOTE_NAMES[it]}" } + ", ${st.missed} mat manqué"
                 },
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                Text(v.label, color = c.text, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                 for (n in NOTES) NoteCount(n, st.counts[n] ?: 0)
-                if (st.missed > 0) Text("· ${st.missed} mat manqué${if (st.missed > 1) "s" else ""}", color = c.redText, style = MaterialTheme.typography.labelMedium, modifier = Modifier.align(Alignment.CenterVertically))
+                if (st.missed > 0) Text("${st.missed} mat${if (st.missed > 1) "s" else ""} manqué${if (st.missed > 1) "s" else ""}", color = c.redText, style = MaterialTheme.typography.labelMedium, maxLines = 1)
             }
         }
         Text(
             "Touchez Lecture ou un coup de la liste pour lire les commentaires.",
-            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp),
+            color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 8.dp).weight(1f, fill = false),
         )
     }
 }

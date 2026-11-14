@@ -1,5 +1,18 @@
 package com.ivanherboch.chessduck.ui
 
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -319,8 +332,11 @@ fun toneRole(tone: Tone): AccentRole {
 
 /**
  * Carte pédagogique affichée sous l'échiquier (jamais par-dessus la grille).
- * Elle prend la hauteur de son contenu, alignée en haut de la zone [modifier] ; si le texte est long,
- * elle défile en interne. Les changements sont annoncés par TalkBack (région « polie »).
+ * Elle ne défile jamais : le texte réduit d'abord sa taille (de bodyMedium jusqu'à 12 sp) pour tenir dans
+ * la place disponible, et [ModuleLayout] réduit légèrement l'échiquier si nécessaire (la carte annonce sa
+ * hauteur utile à 12 sp via ses dimensions intrinsèques). En dernier recours (très petits écrans, grande
+ * police système), le texte se termine par « … » et un lien « Lire la suite » ouvre le message complet.
+ * Les changements sont annoncés par TalkBack (région « polie »).
  */
 @Composable
 fun FeedbackCard(
@@ -339,28 +355,86 @@ fun FeedbackCard(
         Tone.GOLD -> Icons.Rounded.Lightbulb
         Tone.NEUTRAL -> Icons.Rounded.HourglassTop
     }
+    val font = LocalDuckFont.current
+    val titleStyle = MaterialTheme.typography.titleSmall.copy(color = role.text)
+    val base = MaterialTheme.typography.bodyMedium
+    val maxSize = if (base.fontSize.isSp && base.fontSize.value > FEEDBACK_MIN.value) base.fontSize else FEEDBACK_MIN
+    val bodyStyle = base.copy(color = c.text, lineHeight = 1.3.em, fontFamily = base.fontFamily ?: font)
+    var overflow by remember { mutableStateOf(false) }
+    var full by remember { mutableStateOf(false) }
+    val measurer = rememberTextMeasurer()
+    val hasAction = action != null
     Box(modifier.fillMaxWidth(), contentAlignment = Alignment.TopStart) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(c.surface)
-                .drawBehind { drawRect(role.text, size = Size(4.dp.toPx(), size.height)) }
-                .verticalScroll(rememberScrollState())
-                .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }
-                .padding(start = 14.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
-        ) {
-            Row(verticalAlignment = Alignment.Top) {
-                Icon(icon, contentDescription = null, tint = role.text, modifier = Modifier.padding(top = 1.dp, end = 8.dp).size(18.dp))
-                Column(Modifier.weight(1f)) {
-                    if (title != null) Text(title, color = role.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 2.dp))
-                    Text(text, color = c.text, style = MaterialTheme.typography.bodyMedium)
+        Layout(
+            content = {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(c.surface)
+                        .drawBehind { drawRect(role.text, size = Size(4.dp.toPx(), size.height)) }
+                        .then(if (overflow) Modifier.clickable(onClickLabel = "Lire le message complet") { full = true } else Modifier)
+                        .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite; contentDescription = listOfNotNull(title, text).joinToString(". ") }
+                        .padding(start = 14.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+                ) {
+                    Row(Modifier.weight(1f, fill = false), verticalAlignment = Alignment.Top) {
+                        Icon(icon, contentDescription = null, tint = role.text, modifier = Modifier.padding(top = 1.dp, end = 8.dp).size(18.dp))
+                        Column(Modifier.weight(1f)) {
+                            if (title != null) Text(title, style = titleStyle, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(bottom = 2.dp))
+                            BasicText(
+                                text,
+                                style = bodyStyle,
+                                overflow = TextOverflow.Ellipsis,
+                                autoSize = TextAutoSize.StepBased(minFontSize = FEEDBACK_MIN, maxFontSize = maxSize, stepSize = 0.5.sp),
+                            )
+                        }
+                    }
+                    if (overflow) {
+                        Text(
+                            "Lire la suite",
+                            color = role.text, style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.align(Alignment.End).padding(top = 2.dp),
+                        )
+                    }
+                    if (action != null) Box(Modifier.padding(top = 6.dp)) { action() }
                 }
-            }
-            if (action != null) Box(Modifier.padding(top = 6.dp)) { action() }
+            },
+            measurePolicy = object : MeasurePolicy {
+                override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+                    // Lien « Lire la suite » seulement si le texte ne tient pas, même à 12 sp.
+                    val over = constraints.hasBoundedHeight && needed(constraints.maxWidth) > constraints.maxHeight + 2
+                    if (over != overflow) overflow = over
+                    val p = measurables[0].measure(constraints)
+                    return layout(p.width, p.height) { p.place(0, 0) }
+                }
+
+                /** Hauteur nécessaire pour tout afficher à la taille minimale (12 sp), sans défilement. */
+                private fun IntrinsicMeasureScope.needed(width: Int): Int {
+                    val inner = (width - (14 + 12 + 18 + 8).dp.roundToPx()).coerceAtLeast(1)
+                    val cs = Constraints(maxWidth = inner)
+                    var hgt = (8 + 8).dp.roundToPx()
+                    if (title != null) hgt += measurer.measure(title, titleStyle, maxLines = 2, constraints = cs, density = this, layoutDirection = layoutDirection).size.height + 2.dp.roundToPx()
+                    hgt += measurer.measure(text, bodyStyle.copy(fontSize = FEEDBACK_MIN), constraints = cs, density = this, layoutDirection = layoutDirection).size.height
+                    if (hasAction) hgt += (6 + 48).dp.roundToPx()
+                    return hgt
+                }
+
+                override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int) = needed(width)
+                override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int) = needed(width)
+                override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int) = measurables[0].minIntrinsicWidth(height)
+                override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int) = measurables[0].maxIntrinsicWidth(height)
+            },
+        )
+    }
+    if (full) {
+        DuckSheet(title ?: "Message", onClose = { full = false }) {
+            Text(text, color = c.text, style = MaterialTheme.typography.bodyLarge)
         }
     }
 }
+
+/** Taille plancher du texte des cartes sous l'échiquier. */
+private val FEEDBACK_MIN = 12.sp
 
 /** État vide : icône, message clair et action directe. */
 @Composable
@@ -454,8 +528,13 @@ fun ModuleLayout(
     board: @Composable () -> Unit,
     underBoard: @Composable () -> Unit = {},
     overBoard: @Composable () -> Unit = {},
+    adaptive: Boolean = true,
     bottom: @Composable ColumnScope.() -> Unit,
 ) {
+    // Place supplémentaire prise à l'échiquier pour que les textes du bas tiennent sans défilement.
+    // Elle ne fait que croître pendant la vie de l'écran (pas de « respiration » de la grille à chaque coup).
+    var reserve by remember { mutableIntStateOf(0) }
+    val animReserve by animateIntAsState(reserve, tween(260), label = "reserve")
     Layout(
         content = {
             Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp), content = top)
@@ -492,7 +571,14 @@ fun ModuleLayout(
         val topP = measurables[0].measure(Constraints(minWidth = w, maxWidth = w, minHeight = 0, maxHeight = h))
         val underH = measurables[3].minIntrinsicHeight(w)
         val overH = measurables[4].minIntrinsicHeight(w)
-        val side = minOf(w, h - topP.height - underH - overH - bottomMin.roundToPx()).coerceAtLeast(0)
+        val baseSide = minOf(w, h - topP.height - underH - overH - bottomMin.roundToPx()).coerceAtLeast(0)
+        if (adaptive) {
+            val avail = h - topP.height - underH - overH - baseSide
+            val needed = runCatching { measurables[2].minIntrinsicHeight(w) }.getOrDefault(0)
+            val want = (needed - avail).coerceIn(0, (baseSide * 0.22f).toInt())
+            if (want > reserve) reserve = want
+        }
+        val side = (baseSide - if (adaptive) animReserve else 0).coerceAtLeast(0)
         val boardP = measurables[1].measure(Constraints.fixed(side, side))
         val underP = measurables[3].measure(Constraints(minWidth = side, maxWidth = side, minHeight = 0, maxHeight = underH))
         val overP = measurables[4].measure(Constraints(minWidth = side, maxWidth = side, minHeight = 0, maxHeight = overH))
