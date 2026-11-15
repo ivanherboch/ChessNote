@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.icons.Replay
+import com.ivanherboch.chessduck.ui.ConfirmDialog
+import com.ivanherboch.chessduck.data.DEFAULT_ELO
 import com.ivanherboch.chessduck.ui.DuckPalette
 import com.ivanherboch.chessduck.ui.DuckRadius
 import androidx.compose.ui.draw.clip
@@ -129,12 +132,20 @@ internal fun PseudoField(label: String, initial: String, fallback: String, onSav
     )
 }
 
-/** Interrupteur d'une voix : grisé, avec une explication, si aucune voix française hors-ligne n'est installée. */
+/**
+ * Interrupteur d'une voix : neutre (grisé) tant que le moteur vocal n'a pas répondu, grisé avec une explication
+ * si aucune voix française hors-ligne n'est installée.
+ */
 @Composable
 private fun VoiceSwitch(title: String, description: String, checked: Boolean, voice: Boolean?, onChange: (Boolean) -> Unit) =
     SwitchRow(
-        title, if (voice == false) "Aucune voix française hors-ligne n'est installée sur ce téléphone." else description,
-        checked && voice != false, enabled = voice != false, onChange = onChange,
+        title,
+        when (voice) {
+            false -> "Aucune voix française hors-ligne n'est installée sur ce téléphone."
+            null -> "Recherche d'une voix française…"
+            true -> description
+        },
+        checked && voice != false, enabled = voice == true, onChange = onChange,
     )
 
 /**
@@ -150,6 +161,7 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
     val context = LocalContext.current
     val st = settings ?: return
     val c = LocalDuck.current
+    var resetElo by remember { mutableStateOf(false) }
     DuckSheet("Paramètres", onClose) {
         // Le mode enfant change toute l'application : c'est le premier choix proposé.
         SectionTitle("Mode enfant")
@@ -179,7 +191,7 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
             scope.launch { prefs.setConfirmActions(v) }
         }
 
-        SectionTitle("Sons et vibrations")
+        SectionTitle("Audio, voix et retours")
         SwitchRow("Bruit des pièces", "Petit bruit de bois quand une pièce se pose.", st.sound) { v -> scope.launch { prefs.setSound(v) } }
         SwitchRow("Vibrations", "Retour haptique au toucher, aux erreurs et aux réussites.", st.haptics) { v -> scope.launch { prefs.setHaptics(v) } }
         VoiceSwitch("Lecture vocale des leçons", "L'Académie lit à voix haute les commentaires du mode Guidé.", st.narration, voice) { v ->
@@ -199,6 +211,10 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
         Text(
             "Classement actuel : ${st.elo} ELO (formule FIDE, K = 32). Les parties à 2 joueurs ne comptent pas.",
             color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp),
+        )
+        DuckButton(
+            "Réinitialiser mon ELO", { resetElo = true }, Modifier.fillMaxWidth().padding(top = 6.dp),
+            enabled = st.elo != DEFAULT_ELO, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Replay,
         )
 
         SectionTitle("Palette de couleurs")
@@ -222,6 +238,10 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
         )
     }
+    if (resetElo) ConfirmDialog(
+        "Réinitialiser votre ELO ?", "Votre classement repartira de $DEFAULT_ELO. L'historique des parties est conservé.",
+        "Réinitialiser", { resetElo = false; scope.launch { prefs.setElo(DEFAULT_ELO) } }, { resetElo = false },
+    )
 }
 
 /**

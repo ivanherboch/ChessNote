@@ -29,6 +29,9 @@ private val Context.store by preferencesDataStore(
     },
 )
 
+/** Classement de départ (et après réinitialisation). */
+const val DEFAULT_ELO = 1200
+
 data class Settings(
     /** 0 = suivre le système, 1 = Jour, 2 = Nuit (déduit de la clé historique « dark » tant que l'utilisateur n'a rien choisi). */
     val themeMode: Int = 2,
@@ -56,7 +59,7 @@ data class Settings(
     val pseudo: String = "Joueur",
     /** Second joueur humain du mode 2 joueurs. */
     val pseudo2: String = "Joueur 2",
-    val elo: Int = 1200,
+    val elo: Int = DEFAULT_ELO,
     val twoPlayers: Boolean = false,
     /** 0 = Blancs, 1 = Aléatoire, 2 = Noirs. */
     val colorChoice: Int = 0,
@@ -125,7 +128,7 @@ class Prefs(private val context: Context) : SettingsRepository {
             knownThemePuzzles = (p[K.knownThemes] ?: "").split(',').filter { it.isNotBlank() }.toSet(),
             pseudo = p[K.pseudo] ?: "Joueur",
             pseudo2 = p[K.pseudo2] ?: "Joueur 2",
-            elo = p[K.elo] ?: 1200,
+            elo = p[K.elo] ?: DEFAULT_ELO,
             twoPlayers = p[K.twoPlayers] ?: false,
             colorChoice = p[K.color] ?: 0,
             aiElo = p[K.aiElo] ?: 1200,

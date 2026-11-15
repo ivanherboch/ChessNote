@@ -265,7 +265,8 @@ internal fun KidDemo(piece: KidPiece, vm: KidViewModel, onClose: () -> Unit) {
             Column(Modifier.fillMaxSize().padding(vertical = 8.dp), verticalArrangement = Arrangement.SpaceEvenly) {
                 val bubble = RoundedCornerShape(DuckRadius.Kid)
                 Box(
-                    Modifier.fillMaxWidth().weight(1f).padding(bottom = 10.dp).clip(bubble).background(Color.White).border(3.dp, piece.edge, bubble).padding(horizontal = 16.dp, vertical = 10.dp),
+                    // Carte à la taille du texte (jamais étirée sur tablette), au plus tout l'espace disponible.
+                    Modifier.fillMaxWidth().weight(1f, fill = false).padding(bottom = 10.dp).clip(bubble).background(Color.White).border(3.dp, piece.edge, bubble).padding(horizontal = 16.dp, vertical = 10.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     // Le texte reprend la couleur de la carte touchée ; les mots importants sont en gras.

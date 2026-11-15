@@ -101,7 +101,7 @@ Paquet racine : `app/src/main/java/com/ivanherboch/chessduck/`
 
 ### Commandes
 ```bash
-./gradlew :app:testDebugUnitTest      # 34 tests : règles, leçons, base Room, contrastes, ViewModels, captures d'écran
+./gradlew :app:testDebugUnitTest      # 59 tests : règles, leçons, base Room, contrastes, ViewModels, captures d'écran
 ./gradlew :app:assembleRelease        # APK signé : app/build/outputs/apk/release/app-release.apk (R8 + réduction des ressources)
 ```
 - Le dépôt Maven renvoie parfois **HTTP 429** : relancer la commande (boucle de 3 essais).
@@ -163,6 +163,10 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
   échiquiers agrandis, pièces opaques).
 - **2.2.0** : refactoring complet (plan P1 → P3) sans changement fonctionnel : performances, Room v3 indexée,
   architecture en dépôts, tests de ViewModels, tests d'interface sans attentes fixes.
+- **2.3.x–2.4.x** : lecture vocale des leçons (Guidé) et des fiches du mode enfant, leçons réécrites pour l'oral,
+  lexique de prononciation, cohérence jauge / commentaires de revue, bandeau de coups par tour, nulles expliquées.
+- **2.5.0** : refonte ergonomique en 4 étapes (shell et design system, échiquier accessible, écrans adultes,
+  mode enfant et paramètres). Interface adulte et commentaires de revue au vouvoiement ; mode enfant au tutoiement.
 
 Les détails de chaque version sont dans `docs/release-notes.md` ; les exemples d'images partagées dans `docs/screenshots/`.
 

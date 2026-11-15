@@ -1,3 +1,22 @@
+## ChessDuck 2.5.0 — refonte de l'ergonomie
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Démarrage : écran d'accueil aux couleurs du thème, sans flash blanc. L'orientation suit l'appareil et le bouton Retour remonte les onglets visités.
+- Échiquier : quatre matières (bois classique, ardoise, tournoi, améthyste), dernier coup et échec mieux marqués, choix de promotion près de la case. Le plateau se joue aussi avec TalkBack, case par case.
+- Toucher une pièce qui ne peut pas bouger explique pourquoi.
+- Notation : champ de saisie stable, un seul bouton « Passer à l'exercice suivant », Mémo anglais dans l'écran.
+- Académie : modes Guidé et Défi ; haut-parleur toujours visible, qui explique comment activer la voix ; leçon en cours signalée dans le catalogue.
+- Problèmes : le bouton du catalogue affiche le filtre actif (« Libre · 12 résolus », « Intermédiaire · Clouage ») au lieu de « 0 / 150 000 ».
+- Recherche plus tolérante dans le catalogue : elle ouvre l'unique suggestion ou le thème reconnu. Familles de thèmes en accordéon, avec « Toute la famille ».
+- Après une erreur dans un problème, un bouton pause garde la réfutation à l'écran le temps de la comprendre.
+- Export en image : le tiroir reste ouvert pendant la préparation (« Préparation… ») et les erreurs sont signalées. Toucher l'aperçu l'agrandit.
+- Images de partage : marges plus larges, coordonnées sur les petits échiquiers de la solution, plus de chevauchement avec la pièce prise.
+- Jeu Libre : sur tablette, tableau complet des coups. Toucher « Ordinateur · 1200 » ouvre les réglages, avec confirmation si une partie est en cours. Coups numérotés comme sur une feuille de partie.
+- Revue : elle s'ouvre en pause sur le résumé. Les commentaires vouvoient le joueur. L'historique affiche des cartes à toucher, avec l'état de l'analyse.
+- Mode enfant : confirmation avant d'abandonner, cartes de pièces qui réagissent au toucher. Les messages de nulle restent lisibles et « pièce bloquée » reste affiché plus longtemps.
+- Paramètres : section « Audio, voix et retours ». Interrupteurs de voix grisés tant que le téléphone cherche une voix. Nouveau bouton « Réinitialiser mon ELO ».
+
 ## ChessDuck 2.4.9 — le mode enfant explique les nulles
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

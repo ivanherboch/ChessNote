@@ -23,7 +23,6 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.animation.core.tween
@@ -37,7 +36,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -72,7 +70,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -163,7 +160,8 @@ internal fun KidButton(
 @Composable
 private fun PieceCard(p: KidPiece, modifier: Modifier, onClick: () -> Unit) {
     val fb = LocalFeedback.current
-    var pressed by remember { mutableStateOf(false) }
+    val source = remember { MutableInteractionSource() }
+    val pressed by source.collectIsPressedAsState()
     val scale by animateFloatAsState(
         if (pressed) 0.86f else 1f, spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = Spring.StiffnessMedium), label = "bounce",
     )
@@ -172,11 +170,9 @@ private fun PieceCard(p: KidPiece, modifier: Modifier, onClick: () -> Unit) {
         modifier
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(shape).background(p.bg).border(2.5.dp, p.edge, shape)
-            .pointerInput(Unit) { detectTapGestures(onPress = { pressed = true; tryAwaitRelease(); pressed = false }, onTap = { fb?.key(); onClick() }) }
+            .clickable(interactionSource = source, indication = ripple(), role = Role.Button) { fb?.key(); onClick() }
             .semantics(mergeDescendants = true) {
-                role = Role.Button
                 contentDescription = "${p.name} : voir comment bouge ${p.article.replaceFirstChar { it.lowercase() }}"
-                onClick { onClick(); true }
             }
             .padding(horizontal = 3.dp, vertical = 5.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -188,19 +184,31 @@ private fun PieceCard(p: KidPiece, modifier: Modifier, onClick: () -> Unit) {
 
 @Composable
 fun KidScreen(vm: KidViewModel, onQuit: () -> Unit) {
-    // Quitter demande une confirmation : l'écran se floute derrière la boîte de dialogue.
-    var confirm by remember { mutableStateOf(false) }
+    // Quitter et abandonner demandent une confirmation : l'écran se floute derrière la boîte de dialogue.
+    var ask by remember { mutableStateOf<KidAsk?>(null) }
     Box(Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxSize().then(if (confirm) Modifier.blur(14.dp) else Modifier)) {
-            KidGame(vm) { confirm = true }
+        Box(Modifier.fillMaxSize().then(if (ask != null) Modifier.blur(14.dp) else Modifier)) {
+            KidGame(vm, onQuit = { ask = KidAsk.QUIT }, onResign = { ask = KidAsk.RESIGN })
         }
-        if (confirm) QuitDialog(onStay = { confirm = false }, onQuit = { confirm = false; onQuit() })
+        when (ask) {
+            KidAsk.QUIT -> KidConfirm(
+                "Quitter le mode enfant ?", "La partie en cours du mode enfant sera effacée.",
+                "Oui, quitter", Icons.AutoMirrored.Rounded.Logout, onStay = { ask = null }, onGo = { ask = null; onQuit() },
+            )
+            KidAsk.RESIGN -> KidConfirm(
+                "Abandonner la partie ?", "L'autre joueur gagnera la partie.",
+                "Oui, abandonner", Icons.Rounded.Flag, onStay = { ask = null }, onGo = { ask = null; vm.resign() },
+            )
+            null -> Unit
+        }
     }
 }
 
-/** Boîte de confirmation au style du mode enfant : « Non » rassurant en vert, « Oui, quitter » en corail. */
+private enum class KidAsk { QUIT, RESIGN }
+
+/** Boîte de confirmation au style du mode enfant : « Non » rassurant en vert, « Oui, … » en corail. */
 @Composable
-private fun QuitDialog(onStay: () -> Unit, onQuit: () -> Unit) {
+private fun KidConfirm(title: String, text: String, goLabel: String, goIcon: ImageVector, onStay: () -> Unit, onGo: () -> Unit) {
     val c = LocalDuck.current
     BackHandler(onBack = onStay)
     Box(
@@ -216,16 +224,16 @@ private fun QuitDialog(onStay: () -> Unit, onQuit: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Image(painterResource(R.drawable.mascot), null, Modifier.size(84.dp))
-            AutoText("Quitter le mode enfant ?", color = c.text, maxSize = 24.sp, weight = FontWeight.Bold, align = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
-            AutoText("La partie en cours du mode enfant sera effacée.", color = c.muted, maxSize = 16.sp, weight = FontWeight.Medium, align = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
+            AutoText(title, color = c.text, maxSize = 24.sp, weight = FontWeight.Bold, align = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
+            AutoText(text, color = c.muted, maxSize = 16.sp, weight = FontWeight.Medium, align = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(top = 6.dp, bottom = 18.dp))
             KidButton("Non, on continue à jouer", KidGreen, onStay, Modifier.fillMaxWidth(), height = 58.dp, maxSize = 19.sp, icon = Icons.Rounded.SportsEsports)
-            KidButton("Oui, quitter", KidCoral, onQuit, Modifier.fillMaxWidth().padding(top = 12.dp), height = 50.dp, maxSize = 17.sp, icon = Icons.AutoMirrored.Rounded.Logout)
+            KidButton(goLabel, KidCoral, onGo, Modifier.fillMaxWidth().padding(top = 12.dp), height = 50.dp, maxSize = 17.sp, icon = goIcon)
         }
     }
 }
 
 @Composable
-private fun KidGame(vm: KidViewModel, onQuit: () -> Unit) {
+private fun KidGame(vm: KidViewModel, onQuit: () -> Unit, onResign: () -> Unit) {
     val s by vm.state.collectAsStateWithLifecycle()
     val c = LocalDuck.current
     val pos = s.position
@@ -240,7 +248,7 @@ private fun KidGame(vm: KidViewModel, onQuit: () -> Unit) {
     DisposableEffect(vm) { onDispose { vm.pieceClosed() } }
     // Message bref quand l'enfant touche une pièce qui ne peut pas bouger.
     var blocked by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(blocked) { if (blocked != null) { delay(2600); blocked = null } }
+    LaunchedEffect(blocked) { if (blocked != null) { delay(4000); blocked = null } }
     AnimatedContent(demo, label = "leçon", transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(140)) }) { shown ->
         val piece = KID_LEGEND.firstOrNull { it.type == shown }
         if (piece != null) {
@@ -273,7 +281,8 @@ private fun KidGame(vm: KidViewModel, onQuit: () -> Unit) {
                             )
                         }
                         val text = s.result ?: blocked ?: ((if (pos.inCheck) "Échec ! " else "") + if (whiteTurn) "Aux Blancs de jouer" else "Aux Noirs de jouer")
-                        AutoText(text, color = c.text, maxSize = 22.sp, minSize = 13.sp, weight = FontWeight.Bold, align = TextAlign.Center, maxLines = if (text.length > 22) 3 else 1, modifier = Modifier.padding(start = 10.dp, top = 4.dp, bottom = 4.dp))
+                        // Messages longs (nulles expliquées) : plus de lignes plutôt qu'un texte rapetissé.
+                        AutoText(text, color = c.text, maxSize = 22.sp, minSize = 16.sp, weight = FontWeight.Bold, align = TextAlign.Center, maxLines = if (text.length > 22) 5 else 1, modifier = Modifier.padding(start = 10.dp, top = 4.dp, bottom = 4.dp))
                     }
                     // Sortie discrète, loin de la zone du pouce ; une confirmation est demandée.
                     QuitPill(onQuit, Modifier.padding(start = 8.dp, end = 4.dp))
@@ -309,7 +318,7 @@ private fun KidGame(vm: KidViewModel, onQuit: () -> Unit) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         KidButton("", KidBlue, vm::back, Modifier.weight(1f), enabled = cur > 0, icon = Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = "Coup précédent")
                         KidButton("", KidBlue, vm::forward, Modifier.weight(1f), enabled = cur < s.line.size, icon = Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = "Coup suivant")
-                        if (s.result == null) KidButton("Abandonner", KidOrange, vm::resign, Modifier.weight(1.9f), enabled = s.line.size > 0, icon = Icons.Rounded.Flag)
+                        if (s.result == null) KidButton("Abandonner", KidOrange, onResign, Modifier.weight(1.9f), enabled = s.line.size > 0, icon = Icons.Rounded.Flag)
                         else KidButton("Rejouer", KidGreen, vm::reset, Modifier.weight(1.9f), icon = Icons.Rounded.Replay)
                     }
                 }
