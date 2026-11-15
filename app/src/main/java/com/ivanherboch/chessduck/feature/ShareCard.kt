@@ -30,19 +30,26 @@ import com.ivanherboch.chessduck.chess.sq
 import com.ivanherboch.chessduck.chess.sqName
 import com.ivanherboch.chessduck.content.PuzzleThemes
 import com.ivanherboch.chessduck.data.Puzzle
+import com.ivanherboch.chessduck.ui.DuckColors
+import com.ivanherboch.chessduck.ui.DuckPalette
 import com.ivanherboch.chessduck.ui.PIECE_RES
+import androidx.compose.ui.graphics.toArgb
 import java.util.concurrent.ConcurrentHashMap
 
 /** Format de l'image : portrait 4:5 (WhatsApp, fil Instagram) ou carré 1:1 (publication Instagram). */
 enum class ShareFormat(val height: Int, val label: String) { PORTRAIT(1350, "Portrait 4:5"), SQUARE(1080, "Carré 1:1") }
 
-/** Réglages d'une image partagée : format et fond clair ou sombre (persistés dans DataStore, voir Prefs). */
-data class ShareStyle(val format: ShareFormat = ShareFormat.PORTRAIT, val light: Boolean = false) {
+/**
+ * Réglages d'une image partagée : format et fond clair ou sombre (persistés dans DataStore, voir Prefs),
+ * dans la palette choisie dans les Paramètres.
+ */
+data class ShareStyle(val format: ShareFormat = ShareFormat.PORTRAIT, val light: Boolean = false, val palette: DuckPalette = DuckPalette.SLATE_GOLD) {
     companion object {
         /** Style enregistré dans les réglages (format inconnu : portrait). */
         fun from(settings: Settings) = ShareStyle(
             ShareFormat.entries.firstOrNull { it.name == settings.shareFormat } ?: ShareFormat.PORTRAIT,
             settings.shareLight,
+            DuckPalette.of(settings.palette),
         )
     }
 }
@@ -58,36 +65,38 @@ object ShareCard {
     private const val M = 44f
     /** Hauteur du pied de page compact. */
     private const val FOOTER_H = 62f
-    private val LIGHT_SQ = Color.parseColor("#F0D9B5")
-    private val DARK_SQ = Color.parseColor("#B58863")
-    private val GOLD = Color.parseColor("#F59E0B")
-    private val GREEN = Color.parseColor("#10B981")
-    private val RED = Color.parseColor("#EF4444")
-    private val INK = Color.parseColor("#1C1917")
     private val BOLD: Typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
 
-    /** Palette d'une image, déclinée des jetons Nuit et Jour de l'application (contrastes ≥ 4,5:1). */
-    private class Pal(
-        val light: Boolean,
-        val bgTop: Int, val bgBottom: Int, val texture: Int, val halo: Int,
-        val text: Int, val body: Int, val soft: Int, val muted: Int, val faint: Int,
-        val surface: Int, val stroke: Int, val dotOff: Int, val shadow: Int,
-        val goldText: Int, val greenText: Int, val greenFill: Int, val onGreen: Int, val redText: Int, val blueText: Int,
-    )
-
-    private val NIGHT = Pal(
-        false, Color.parseColor("#1E293B"), Color.parseColor("#0B1220"), Color.argb(9, 255, 255, 255), Color.argb(44, 245, 158, 11),
-        Color.parseColor("#F8FAFC"), Color.parseColor("#E2E8F0"), Color.parseColor("#CBD5E1"), Color.parseColor("#94A3B8"), Color.parseColor("#64748B"),
-        Color.parseColor("#1A2536"), Color.argb(28, 255, 255, 255), Color.parseColor("#334155"), Color.argb(140, 0, 0, 0),
-        Color.parseColor("#FBBF24"), Color.parseColor("#34D399"), GREEN, Color.parseColor("#04221A"), Color.parseColor("#FCA5A5"), Color.parseColor("#7DD3FC"),
-    )
-
-    private val DAY = Pal(
-        true, Color.parseColor("#FFFFFF"), Color.parseColor("#E8EDF3"), Color.argb(10, 15, 23, 42), Color.argb(46, 245, 158, 11),
-        Color.parseColor("#0F172A"), Color.parseColor("#1E293B"), Color.parseColor("#334155"), Color.parseColor("#475569"), Color.parseColor("#64748B"),
-        Color.WHITE, Color.argb(26, 15, 23, 42), Color.parseColor("#CBD5E1"), Color.argb(60, 15, 23, 42),
-        Color.parseColor("#92400E"), Color.parseColor("#065F46"), Color.parseColor("#047857"), Color.WHITE, Color.parseColor("#B91C1C"), Color.parseColor("#075985"),
-    )
+    /** Couleurs d'une image en entiers ARGB (Canvas), tirées des jetons de la palette choisie dans les Paramètres. */
+    private class Pal(c: DuckColors) {
+        val light = !c.dark
+        val bgTop = c.surface.toArgb()
+        val bgBottom = (if (c.dark) c.bg else c.surfaceSubtle).toArgb()
+        val texture = if (c.dark) Color.argb(9, 255, 255, 255) else Color.argb(10, 15, 23, 42)
+        val halo = c.gold.copy(alpha = 0.18f).toArgb()
+        val text = c.text.toArgb()
+        val muted = c.muted.toArgb()
+        /** Mentions discrètes du pied de page (contraste ≥ 3:1). */
+        val faint = c.outlineStrong.toArgb()
+        val surface = (if (c.dark) c.surfaceSubtle else c.surface).toArgb()
+        val stroke = if (c.dark) Color.argb(28, 255, 255, 255) else Color.argb(26, 15, 23, 42)
+        val dotOff = (if (c.dark) c.surfaceHi else c.outline).toArgb()
+        val shadow = if (c.dark) Color.argb(140, 0, 0, 0) else Color.argb(60, 15, 23, 42)
+        val sqLight = c.squareLight.toArgb()
+        val sqDark = c.squareDark.toArgb()
+        val gold = c.gold.toArgb()
+        val green = c.green.toArgb()
+        val red = c.red.toArgb()
+        val goldText = c.goldText.toArgb()
+        val goldFill = c.goldRole.fill.toArgb()
+        val onGold = c.goldRole.onFill.toArgb()
+        val greenText = c.greenText.toArgb()
+        val greenFill = c.greenRole.fill.toArgb()
+        val onGreen = c.greenRole.onFill.toArgb()
+        val redText = c.redText.toArgb()
+        val redFill = c.redRole.fill.toArgb()
+        val onRed = c.redRole.onFill.toArgb()
+    }
 
     /** Mascotte décodée une seule fois puis réutilisée par toutes les images. */
     @Volatile private var mascotCache: Bitmap? = null
@@ -128,7 +137,7 @@ object ShareCard {
         }
     }
 
-    private class Painter(val context: Context, val cv: Canvas, val pal: Pal = NIGHT) : TextMetrics() {
+    private class Painter(val context: Context, val cv: Canvas, val pal: Pal) : TextMetrics() {
         fun piece(p: Int): Bitmap = pieceBitmap(context, p)
 
         fun text(s: String, x: Float, y: Float, size: Float, color: Int, bold: Boolean = false, align: Paint.Align = Paint.Align.LEFT, spacing: Float = 0f) {
@@ -170,11 +179,11 @@ object ShareCard {
             var x = right - r
             paint.style = Paint.Style.FILL
             for (i in 4 downTo 1) {
-                paint.color = if (i <= band) GOLD else pal.dotOff
+                paint.color = if (i <= band) pal.gold else pal.dotOff
                 cv.drawCircle(x, y - 11f, r, paint)
                 x -= 2 * r + 8f
             }
-            text("${PuzzleThemes.BANDS[band]} · $rating", x - 6f, y, 30f, pal.soft, align = Paint.Align.RIGHT)
+            text("${PuzzleThemes.BANDS[band]} · $rating", x - 6f, y, 30f, pal.muted, align = Paint.Align.RIGHT)
         }
 
         /** Pastille ronde du camp au trait (comme dans l'application). */
@@ -184,7 +193,7 @@ object ShareCard {
             cv.drawCircle(cx, cy, r, paint)
             paint.style = Paint.Style.STROKE
             paint.strokeWidth = 4f
-            paint.color = if (pal.light) Color.parseColor("#475569") else pal.muted
+            paint.color = pal.muted
             cv.drawCircle(cx, cy, r, paint)
             paint.style = Paint.Style.FILL
         }
@@ -232,7 +241,7 @@ object ShareCard {
             paint.style = Paint.Style.FILL
             paint.color = Color.WHITE
             cv.drawBitmap(mascot, null, RectF(M, y - 34f, M + 42f, y + 8f), paint)
-            text("ChessDuck", M + 52f, y, 26f, pal.soft, bold = true)
+            text("ChessDuck", M + 52f, y, 26f, pal.muted, bold = true)
             text("Lichess #$id", M + 52f + width("ChessDuck", 26f, bold = true) + 16f, y, 24f, pal.faint)
             text("© Ivan Herboch, 2026", W - M, y, 24f, pal.faint, align = Paint.Align.RIGHT)
         }
@@ -248,14 +257,14 @@ object ShareCard {
             fun y(q: Int) = top + BoardGeometry.row(q, flipped) * s
             val rect = RectF(left, top, left + side, top + side)
             paint.style = Paint.Style.FILL
-            paint.color = DARK_SQ
+            paint.color = pal.sqDark
             paint.setShadowLayer(side * 0.03f, 0f, side * 0.012f, pal.shadow)
             cv.drawRoundRect(rect, radius, radius, paint)
             paint.clearShadowLayer()
             cv.save()
             cv.clipPath(Path().apply { addRoundRect(rect, radius, radius, Path.Direction.CW) })
             for (q in 0 until 64) {
-                paint.color = if ((fileOf(q) + rankOf(q)) % 2 == 1) LIGHT_SQ else DARK_SQ
+                paint.color = if ((fileOf(q) + rankOf(q)) % 2 == 1) pal.sqLight else pal.sqDark
                 cv.drawRect(x(q), y(q), x(q) + s, y(q) + s, paint)
             }
             lastMove?.let {
@@ -276,10 +285,10 @@ object ShareCard {
                 paint.textSize = s * 0.2f
                 for (i in 0..7) {
                     val fq = if (flipped) sq(7 - i, 7) else sq(i, 0)
-                    paint.color = if ((fileOf(fq) + rankOf(fq)) % 2 == 1) DARK_SQ else LIGHT_SQ
+                    paint.color = if ((fileOf(fq) + rankOf(fq)) % 2 == 1) pal.sqDark else pal.sqLight
                     cv.drawText(('a' + fileOf(fq)).toString(), x(fq) + s * 0.80f, y(fq) + s * 0.92f, paint)
                     val rq = if (flipped) sq(7, 7 - i) else sq(0, i)
-                    paint.color = if ((fileOf(rq) + rankOf(rq)) % 2 == 1) DARK_SQ else LIGHT_SQ
+                    paint.color = if ((fileOf(rq) + rankOf(rq)) % 2 == 1) pal.sqDark else pal.sqLight
                     cv.drawText(('1' + rankOf(rq)).toString(), x(rq) + s * 0.07f, y(rq) + s * 0.25f, paint)
                 }
             }
@@ -406,7 +415,7 @@ object ShareCard {
      * (avec le thème) dans une carte compacte, puis un pied de page discret.
      */
     fun render(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle()): Bitmap {
-        val pal = if (style.light) DAY else NIGHT
+        val pal = Pal(style.palette.colors(dark = !style.light))
         val square = style.format == ShareFormat.SQUARE
         val h = style.format.height
         val line = Line.fromUci(puzzle.fen, puzzle.moves)
@@ -434,13 +443,13 @@ object ShareCard {
 
         if (tip.isNotEmpty()) {
             val y = top + side + 16f
-            g.panel(RectF(M, y, W - M, y + tipH), accent = GOLD)
+            g.panel(RectF(M, y, W - M, y + tipH), accent = pal.gold)
             var ty = y + 14f + tipSize
             tip.forEachIndexed { i, l ->
                 if (i == 0 && l.startsWith(label)) {
                     g.text(label, M + 26f, ty, tipSize, pal.goldText, bold = true)
-                    g.text(l.removePrefix(label), M + 26f + g.width(label, tipSize, bold = true), ty, tipSize, pal.body)
-                } else g.text(l, M + 26f, ty, tipSize, pal.body)
+                    g.text(l.removePrefix(label), M + 26f + g.width(label, tipSize, bold = true), ty, tipSize, pal.text)
+                } else g.text(l, M + 26f, ty, tipSize, pal.text)
                 ty += tipLineH
             }
         }
@@ -478,7 +487,7 @@ object ShareCard {
      * Flèche verte = coup à jouer, flèche rouge = réponse adverse, badges + et #, roi maté mis en lumière.
      */
     fun renderSolution(context: Context, puzzle: Puzzle, style: ShareStyle = ShareStyle()): Bitmap {
-        val pal = if (style.light) DAY else NIGHT
+        val pal = Pal(style.palette.colors(dark = !style.light))
         val square = style.format == ShareFormat.SQUARE
         val h = style.format.height
         val line = Line.fromUci(puzzle.fen, puzzle.moves)
@@ -555,12 +564,12 @@ object ShareCard {
                 } else -1
                 val at = g.board(x + (panelW - side) / 2, by, side, st.before, !playerWhite, st.prev, glow)
                 val s = side / 8
-                st.reply?.let { g.arrow(it, at, s, RED, 0.10f) }
-                g.arrow(st.move, at, s, GREEN, 0.17f)
+                st.reply?.let { g.arrow(it, at, s, pal.red, 0.10f) }
+                g.arrow(st.move, at, s, pal.green, 0.17f)
                 val (dx, dy) = at(st.move.to)
                 when {
-                    st.san.endsWith("#") -> g.badge("#", dx + s * 0.80f, dy + s * 0.20f, s * 0.22f, RED)
-                    st.san.endsWith("+") -> g.badge("+", dx + s * 0.80f, dy + s * 0.20f, s * 0.22f, GOLD, INK)
+                    st.san.endsWith("#") -> g.badge("#", dx + s * 0.80f, dy + s * 0.20f, s * 0.22f, pal.redFill, pal.onRed)
+                    st.san.endsWith("+") -> g.badge("+", dx + s * 0.80f, dy + s * 0.20f, s * 0.22f, pal.goldFill, pal.onGold)
                 }
                 // Ligne de titre : numéro, coup, réponse (grille compacte) et pièce prise.
                 val ty0 = by + side + 10f + titleSz * 0.95f
@@ -578,7 +587,7 @@ object ShareCard {
                     val px = bx + textW - ps
                     val py = ty0 - ps * 0.8f
                     g.paint.style = Paint.Style.FILL
-                    g.paint.color = LIGHT_SQ
+                    g.paint.color = pal.sqLight
                     g.cv.drawRoundRect(RectF(px, py, px + ps, py + ps), 10f, 10f, g.paint)
                     g.paint.color = Color.WHITE
                     g.cv.drawBitmap(g.piece(victim), null, RectF(px, py, px + ps, py + ps), g.paint)
@@ -586,18 +595,18 @@ object ShareCard {
                 }
                 var ty = ty0 + titleSz * 0.25f
                 if (detailed) {
-                    for (l in probe.wrap(describe(st.before, st.move, st.san), textSize, textW)) { ty += lineH; g.text(l, bx, ty, textSize, pal.body) }
+                    for (l in probe.wrap(describe(st.before, st.move, st.san), textSize, textW)) { ty += lineH; g.text(l, bx, ty, textSize, pal.text) }
                     if (st.reply != null && st.replySan != null) {
                         probe.wrap(replyText(st), textSize, textW - textSize * 0.8f).forEachIndexed { i, l ->
                             ty += lineH
-                            if (i == 0) { g.paint.color = RED; g.cv.drawCircle(bx + textSize * 0.25f, ty - textSize * 0.34f, textSize * 0.2f, g.paint) }
+                            if (i == 0) { g.paint.color = pal.red; g.cv.drawCircle(bx + textSize * 0.25f, ty - textSize * 0.34f, textSize * 0.2f, g.paint) }
                             g.text(l, bx + textSize * 0.8f, ty, textSize, pal.redText)
                         }
                     }
                 }
                 if (last) {
                     ty += 10f
-                    if (st.san.endsWith("#")) g.pill("Échec et mat !", bx, ty, textSize, GOLD, INK)
+                    if (st.san.endsWith("#")) g.pill("Échec et mat !", bx, ty, textSize, pal.goldFill, pal.onGold)
                     else g.pill("Avantage décisif", bx, ty, textSize, pal.greenFill, pal.onGreen)
                 }
                 x += panelW + gap
@@ -607,13 +616,13 @@ object ShareCard {
         // Légende des symboles
         val ly = h - FOOTER_H - 18f
         g.paint.style = Paint.Style.FILL
-        g.paint.color = GREEN; g.cv.drawRoundRect(RectF(M, ly - 15f, M + 48f, ly - 3f), 6f, 6f, g.paint)
+        g.paint.color = pal.green; g.cv.drawRoundRect(RectF(M, ly - 15f, M + 48f, ly - 3f), 6f, 6f, g.paint)
         g.text("votre coup", M + 58f, ly, 25f, pal.muted)
-        g.paint.color = RED; g.cv.drawRoundRect(RectF(M + 230f, ly - 13f, M + 278f, ly - 5f), 4f, 4f, g.paint)
+        g.paint.color = pal.red; g.cv.drawRoundRect(RectF(M + 230f, ly - 13f, M + 278f, ly - 5f), 4f, 4f, g.paint)
         g.text("réponse adverse", M + 288f, ly, 25f, pal.muted)
-        g.badge("+", M + 560f, ly - 9f, 14f, GOLD, INK)
+        g.badge("+", M + 560f, ly - 9f, 14f, pal.goldFill, pal.onGold)
         g.text("échec", M + 582f, ly, 25f, pal.muted)
-        g.badge("#", M + 680f, ly - 9f, 14f, RED)
+        g.badge("#", M + 680f, ly - 9f, 14f, pal.redFill, pal.onRed)
         g.text("mat", M + 702f, ly, 25f, pal.muted)
         g.footer(h, puzzle.id)
         return bmp

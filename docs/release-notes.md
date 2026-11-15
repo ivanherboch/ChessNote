@@ -1,3 +1,10 @@
+## ChessDuck 2.3.2 — jauge lisible, images aux couleurs de votre palette
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Jauge d'évaluation : le score s'affiche toujours en entier, même avec une grande taille de police (au-delà de 10 pions, il est arrondi à l'unité : « +12 »).
+- Images de problèmes et de solutions : elles reprennent la palette choisie dans les Paramètres (fond, accents, flèches et pastilles), en version sombre comme claire.
+
 ## ChessDuck 2.3.1 — fiabilité et fluidité
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

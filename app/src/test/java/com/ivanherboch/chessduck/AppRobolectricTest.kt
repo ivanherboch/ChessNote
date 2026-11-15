@@ -33,6 +33,7 @@ import com.ivanherboch.chessduck.data.PuzzleProgress
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
@@ -177,6 +178,17 @@ class AppRobolectricTest {
                 File(dir, "share_${tag}_${id}_pb.png").outputStream().use { a.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
                 File(dir, "share_${tag}_${id}_sol.png").outputStream().use { b.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
             }
+        }
+        // Les images reprennent la palette choisie dans les Paramètres.
+        db.puzzles().byId("0000D")?.let { pz ->
+            val l = com.ivanherboch.chessduck.chess.Line.fromUci(pz.fen, pz.moves)
+            val shots = com.ivanherboch.chessduck.ui.DuckPalette.entries.map { pal ->
+                val st = com.ivanherboch.chessduck.feature.ShareStyle(palette = pal)
+                com.ivanherboch.chessduck.feature.ShareCard.renderSolution(ctx, pz, st).also { img ->
+                    File(dir, "share_palette_${pal.name.lowercase()}.png").outputStream().use { img.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+                }
+            }
+            for (i in shots.indices) for (j in i + 1 until shots.size) assertFalse(shots[i].sameAs(shots[j]))
         }
         assertNotNull(db.puzzles().byIdIgnoreCase("0000d"))
         db.close()

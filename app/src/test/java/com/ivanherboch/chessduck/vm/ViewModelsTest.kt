@@ -14,6 +14,7 @@ import com.ivanherboch.chessduck.feature.PlayViewModel
 import com.ivanherboch.chessduck.feature.PuzzlesViewModel
 import com.ivanherboch.chessduck.feature.ShareFormat
 import com.ivanherboch.chessduck.feature.ShareStyle
+import com.ivanherboch.chessduck.ui.DuckPalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -77,6 +78,8 @@ class ViewModelsTest {
         advanceUntilIdle()
         assertEquals(ShareFormat.SQUARE.name, prefs.settings.first().shareFormat)
         assertEquals(square, vm.shareStyle())
+        prefs.setPalette(DuckPalette.BLUE_ORANGE.ordinal)
+        assertEquals(DuckPalette.BLUE_ORANGE, vm.shareStyle().palette)
     }
 
     @Test

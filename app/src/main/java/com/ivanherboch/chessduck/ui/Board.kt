@@ -54,6 +54,7 @@ import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -486,8 +487,13 @@ fun describeBoard(p: Position, last: Move?, selected: Int?, flipped: Boolean): S
 /** Libellé court d'une évaluation (point de vue des Blancs) : « +1.4 », « −0.3 », « M2 ». */
 fun evalShort(evalWhite: Int): String = when {
     isMateScore(evalWhite) -> "M${abs(mateIn(evalWhite)).coerceAtLeast(1)}"
-    else -> (if (evalWhite >= 0) "+" else "−") + String.format(Locale.US, "%.1f", abs(evalWhite) / 100.0)
+    // Au-delà de 10 pions la décimale n'apporte rien et élargirait la jauge.
+    else -> (if (evalWhite >= 0) "+" else "−") + String.format(Locale.US, if (abs(evalWhite) >= 1000) "%.0f" else "%.1f", abs(evalWhite) / 100.0)
 }
+
+/** Libellés les plus larges que peut produire [evalShort] : la jauge est dimensionnée pour eux. */
+private val EVAL_WIDEST = listOf("−9.9", "+99", "M99")
+private val EVAL_STYLE = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFeatureSettings = TNUM)
 
 /**
  * Jauge latérale d'évaluation : part des Blancs, encoche médiane (égalité) et valeur affichée
@@ -502,12 +508,19 @@ fun EvalBar(evalWhite: Int, flipped: Boolean, modifier: Modifier = Modifier) {
     val desc = when {
         isMateScore(evalWhite) -> "Évaluation : mat en ${abs(mateIn(evalWhite)).coerceAtLeast(1)} pour les ${if (evalWhite > 0) "Blancs" else "Noirs"}"
         abs(evalWhite) < 30 -> "Évaluation : position équilibrée"
-        else -> "Évaluation : avantage ${if (whiteAhead) "Blancs" else "Noirs"} ${label.drop(1).replace('.', ',')}"
+        else -> "Évaluation : avantage ${if (whiteAhead) "Blancs" else "Noirs"} ${String.format(Locale.FRANCE, "%.1f", abs(evalWhite) / 100.0)}"
     }
-    val labelLayout = remember(label, measurer) { measurer.measure(label, TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFeatureSettings = TNUM)) }
+    val labelLayout = remember(label, measurer) { measurer.measure(label, EVAL_STYLE) }
+    // Largeur fixe (pas de saut de l'échiquier quand le score change) qui contient toujours le libellé,
+    // quelle que soit la taille de police du système.
+    val density = LocalDensity.current
+    val barWidth = remember(measurer, density) {
+        val widest = EVAL_WIDEST.maxOf { measurer.measure(it, EVAL_STYLE).size.width }
+        maxOf(26.dp, with(density) { widest.toDp() } + 6.dp)
+    }
     val c = LocalDuck.current
     Canvas(
-        modifier.fillMaxHeight().width(26.dp).clip(RoundedCornerShape(6.dp)).border(1.dp, c.outlineStrong, RoundedCornerShape(6.dp))
+        modifier.fillMaxHeight().width(barWidth).clip(RoundedCornerShape(6.dp)).border(1.dp, c.outlineStrong, RoundedCornerShape(6.dp))
             .semantics { contentDescription = desc },
     ) {
         val dark = Color(0xFF1F2937)
