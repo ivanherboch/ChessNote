@@ -36,6 +36,11 @@ data class Move(val from: Int, val to: Int, val promo: Int = 0) {
     val uci: String get() = sqName(from) + sqName(to) + if (promo != 0) pieceLetter(promo).lowercaseChar() else ""
 
     companion object {
+        private val UCI = Regex("[a-h][1-8][a-h][1-8][qrbn]?")
+
+        /** Vrai si [s] a la forme d'un coup UCI : case de départ, case d'arrivée, promotion éventuelle (e2e4, e7e8q). */
+        fun isUci(s: String): Boolean = UCI.matches(s)
+
         fun fromUci(s: String): Move =
             Move(sqFromName(s.substring(0, 2)), sqFromName(s.substring(2, 4)), if (s.length > 4) pieceType(pieceFromChar(s[4])) else 0)
     }
@@ -491,13 +496,12 @@ class Line private constructor(
             val l = Line(startFen)
             for (t in tokens) {
                 val p = l.last
-                val uci = if (UCI.matches(t)) Move.fromUci(t).takeIf { p.isLegal(it) } else null
+                val uci = if (Move.isUci(t)) Move.fromUci(t).takeIf { p.isLegal(it) } else null
                 l.push(uci ?: p.parseSan(t) ?: error("Coup illégal « $t » après ${l.sans.joinToString(" ")} ($startFen)"))
             }
             return l
         }
 
-        private val UCI = Regex("[a-h][1-8][a-h][1-8][qrbn]?")
 
         /** Construit une ligne depuis des coups SAN ; lève une exception si un coup est illégal. */
         fun fromSan(startFen: String, sans: List<String>): Line {

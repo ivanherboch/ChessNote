@@ -4,7 +4,6 @@ import com.ivanherboch.chessduck.ui.WholeOrNothing
 import com.ivanherboch.chessduck.ui.AlignedLabelRows
 import com.ivanherboch.chessduck.ui.LabeledRow
 import androidx.compose.foundation.lazy.items
-import com.ivanherboch.chessduck.ui.DuckLazySheet
 import com.ivanherboch.chessduck.ui.LocalIsTwoPane
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -17,8 +16,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,7 +31,6 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import com.ivanherboch.chessduck.ui.icons.Undo
 import androidx.compose.material.icons.rounded.Add
 import com.ivanherboch.chessduck.ui.icons.Analytics
-import androidx.compose.material.icons.rounded.Delete
 import com.ivanherboch.chessduck.ui.icons.Flag
 import com.ivanherboch.chessduck.ui.icons.History
 import com.ivanherboch.chessduck.ui.icons.Insights
@@ -50,14 +46,10 @@ import com.ivanherboch.chessduck.ui.icons.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -69,8 +61,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ivanherboch.chessduck.chess.Line
@@ -81,10 +71,7 @@ import com.ivanherboch.chessduck.ui.BoardRow
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.ConfirmDialog
 import com.ivanherboch.chessduck.ui.DuckButton
-import com.ivanherboch.chessduck.ui.DuckChip
 import com.ivanherboch.chessduck.ui.DuckIconButton
-import com.ivanherboch.chessduck.ui.DuckSheet
-import com.ivanherboch.chessduck.ui.EmptyState
 import com.ivanherboch.chessduck.ui.EqualRow
 import com.ivanherboch.chessduck.ui.FeedbackCard
 import com.ivanherboch.chessduck.ui.LocalDuck
@@ -92,7 +79,6 @@ import com.ivanherboch.chessduck.ui.LocalFeedback
 import com.ivanherboch.chessduck.ui.ModuleLayout
 import com.ivanherboch.chessduck.ui.MoveStrip
 import com.ivanherboch.chessduck.ui.PlayerBar
-import com.ivanherboch.chessduck.ui.SectionTitle
 import com.ivanherboch.chessduck.ui.Tone
 import java.text.SimpleDateFormat
 import java.util.Date

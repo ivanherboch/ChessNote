@@ -4,9 +4,6 @@ import com.ivanherboch.chessduck.chess.rankOf
 import com.ivanherboch.chessduck.chess.fileOf
 import com.ivanherboch.chessduck.chess.sq
 import com.ivanherboch.chessduck.ui.BoardGeometry
-import androidx.compose.runtime.Immutable
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -110,22 +107,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ivanherboch.chessduck.R
 import com.ivanherboch.chessduck.chess.BISHOP
-import com.ivanherboch.chessduck.chess.GameEnd
 import com.ivanherboch.chessduck.chess.KING
 import com.ivanherboch.chessduck.chess.KNIGHT
-import com.ivanherboch.chessduck.chess.Line
-import com.ivanherboch.chessduck.chess.Move
 import com.ivanherboch.chessduck.chess.PAWN
-import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.chess.QUEEN
 import com.ivanherboch.chessduck.chess.ROOK
-import com.ivanherboch.chessduck.chess.START_FEN
 import com.ivanherboch.chessduck.ui.AutoText
-import com.ivanherboch.chessduck.ui.BoardAnim
 import com.ivanherboch.chessduck.ui.CapturedBar
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.KID_PIECE_RES
@@ -133,10 +123,6 @@ import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.LocalDuckFont
 import com.ivanherboch.chessduck.ui.LocalFeedback
 import com.ivanherboch.chessduck.ui.ModuleLayout
-import com.ivanherboch.chessduck.ui.moveAnim
-import com.ivanherboch.chessduck.ui.undoAnim
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 
 /** Une pièce du mode enfant : couleurs de sa carte, couleur du texte et phrase d'explication (**gras**). */
 internal class KidPiece(val type: Int, val name: String, val bg: Color, val edge: Color, val ink: Color, val article: String, val text: String)
@@ -378,7 +364,6 @@ private fun QuitPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 // ------------------------------------------------------------------ Leçons animées
-
 
 /** Une étape de démonstration : case de départ, trajets (suite de cases), cases à signaler, pièce à manger. */
 private class DemoPhase(

@@ -7,116 +7,11 @@ import androidx.lifecycle.ViewModel
 import com.ivanherboch.chessduck.engine.ChessEngine
 import com.ivanherboch.chessduck.data.PuzzleRepository
 import com.ivanherboch.chessduck.data.SettingsRepository
-import androidx.compose.foundation.lazy.items
-import com.ivanherboch.chessduck.ui.DuckLazySheet
-import com.ivanherboch.chessduck.util.normalizeForSearch
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import com.ivanherboch.chessduck.ui.DuckSegmentedRow
-import com.ivanherboch.chessduck.ui.DuckTextField
-import android.graphics.Bitmap
-import androidx.compose.runtime.rememberCoroutineScope
 import com.ivanherboch.chessduck.util.runCatchingSuspend
-import androidx.compose.ui.text.style.TextAlign
-import com.ivanherboch.chessduck.ui.icons.VisibilityOff
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.runtime.produceState
-import android.app.Application
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import com.ivanherboch.chessduck.ui.icons.Undo
-import com.ivanherboch.chessduck.ui.icons.Casino
-import androidx.compose.material.icons.rounded.CheckCircle
-import com.ivanherboch.chessduck.ui.icons.Download
-import com.ivanherboch.chessduck.ui.icons.ErrorOutline
-import com.ivanherboch.chessduck.ui.icons.ExpandLess
-import com.ivanherboch.chessduck.ui.icons.ExpandMore
-import com.ivanherboch.chessduck.ui.icons.Extension
-import com.ivanherboch.chessduck.ui.icons.Folder
-import com.ivanherboch.chessduck.ui.icons.History
-import com.ivanherboch.chessduck.ui.icons.IosShare
-import com.ivanherboch.chessduck.ui.icons.Lightbulb
-import androidx.compose.material.icons.rounded.Search
-import com.ivanherboch.chessduck.ui.icons.SearchOff
-import androidx.compose.material.icons.rounded.Share
-import com.ivanherboch.chessduck.ui.icons.Shuffle
-import com.ivanherboch.chessduck.ui.icons.Visibility
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.style.TextOverflow
-import com.ivanherboch.chessduck.ui.ButtonVariant
-import com.ivanherboch.chessduck.ui.SideDot
-import com.ivanherboch.chessduck.ui.DuckIconButton
-import com.ivanherboch.chessduck.ui.EmptyState
-import com.ivanherboch.chessduck.ui.LoadingState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
-import com.ivanherboch.chessduck.ChessDuckApp
 import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.chess.Move
 import com.ivanherboch.chessduck.chess.PAWN
@@ -124,24 +19,11 @@ import com.ivanherboch.chessduck.chess.PIECE_NAMES_FR
 import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.chess.pieceType
 import com.ivanherboch.chessduck.content.PuzzleThemes
-import com.ivanherboch.chessduck.data.DuckDatabase
 import com.ivanherboch.chessduck.data.Puzzle
-import com.ivanherboch.chessduck.data.PuzzleProgress
 import com.ivanherboch.chessduck.engine.isMateScore
 import com.ivanherboch.chessduck.engine.mateIn
 import com.ivanherboch.chessduck.ui.Arrow
-import com.ivanherboch.chessduck.ui.AutoText
 import com.ivanherboch.chessduck.ui.BoardAnim
-import com.ivanherboch.chessduck.ui.ChessBoard
-import com.ivanherboch.chessduck.ui.DuckButton
-import com.ivanherboch.chessduck.ui.DuckChip
-import com.ivanherboch.chessduck.ui.DuckSheet
-import com.ivanherboch.chessduck.ui.EqualRow
-import com.ivanherboch.chessduck.ui.FeedbackCard
-import com.ivanherboch.chessduck.ui.LocalDuck
-import com.ivanherboch.chessduck.ui.LocalFeedback
-import com.ivanherboch.chessduck.ui.ModuleLayout
-import com.ivanherboch.chessduck.ui.SectionTitle
 import com.ivanherboch.chessduck.ui.Tone
 import com.ivanherboch.chessduck.ui.moveAnim
 import com.ivanherboch.chessduck.ui.undoAnim
@@ -154,16 +36,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import java.text.NumberFormat
-import java.util.Locale
 
 /** Affichage temporaire d'un mauvais coup puis de sa réfutation (la grille reste dégagée). */
 @Immutable
@@ -256,7 +132,6 @@ class PuzzlesViewModel(
         // Tirage, compteurs et recherche interrogent directement la base indexée : rien n'est chargé en mémoire.
         viewModelScope.launch(Dispatchers.IO) { dao.syncCatalogue() }
     }
-
 
     /**
      * Suggestions pendant la saisie : correspondance insensible à la casse sur l'identifiant,
@@ -511,7 +386,7 @@ class PuzzlesViewModel(
             _state.update {
                 it.copy(
                     anim = moveAnim(after, reply),
-                    refute = Refutation(after2, reply, Arrow(reply.from, reply.to, androidx.compose.ui.graphics.Color(0xFFEF4444))),
+                    refute = Refutation(after2, reply, Arrow(reply.from, reply.to, Color(0xFFEF4444))),
                     refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD,
                     message = "Réfutation : après $san, les $oppName répondent $replySan$detail Le coup sera annulé automatiquement.",
                 )

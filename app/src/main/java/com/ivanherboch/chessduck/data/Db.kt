@@ -156,9 +156,6 @@ interface PuzzleDao {
     @Query("SELECT COUNT(*) FROM puzzles")
     suspend fun count(): Int
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertAll(puzzles: List<Puzzle>)
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun markSolved(p: PuzzleProgress)
 

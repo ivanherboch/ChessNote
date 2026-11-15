@@ -7,7 +7,6 @@ import com.ivanherboch.chessduck.data.GameRepository
 import com.ivanherboch.chessduck.data.LessonProgressRepository
 import com.ivanherboch.chessduck.data.Puzzle
 import com.ivanherboch.chessduck.data.PuzzleHit
-import com.ivanherboch.chessduck.data.PuzzleMeta
 import com.ivanherboch.chessduck.data.PuzzleRepository
 import com.ivanherboch.chessduck.data.Settings
 import com.ivanherboch.chessduck.data.SettingsRepository
@@ -46,7 +45,6 @@ class FakePuzzles(private val puzzles: List<Puzzle>) : PuzzleRepository {
     override suspend fun byId(id: String) = puzzles.firstOrNull { it.id == id }
     override suspend fun byIds(ids: List<String>) = puzzles.filter { it.id in ids }
     override suspend fun byIdIgnoreCase(id: String) = puzzles.firstOrNull { it.id.equals(id, ignoreCase = true) }
-    override suspend fun allMeta() = puzzles.map { PuzzleMeta(it.id, it.rating, it.themes, it.primaryTheme) }
     override suspend fun slice(start: Int, n: Int) = emptyList<Puzzle>()
     override suspend fun sliceThemes(start: Int, themes: List<String>, n: Int) = emptyList<Puzzle>()
     override suspend fun sliceCastling(start: Int, n: Int) = emptyList<Puzzle>()

@@ -24,8 +24,6 @@ interface PuzzleRepository {
     suspend fun byId(id: String): Puzzle?
     suspend fun byIds(ids: List<String>): List<Puzzle>
     suspend fun byIdIgnoreCase(id: String): Puzzle?
-    /** Index compact du catalogue (identifiant, classement, thèmes) pour le tirage et la recherche. */
-    suspend fun allMeta(): List<PuzzleMeta>
     suspend fun slice(start: Int, n: Int): List<Puzzle>
     /** Échantillon de problèmes dont le thème principal est l'un de [themes] (requête indexée). */
     suspend fun sliceThemes(start: Int, themes: List<String>, n: Int): List<Puzzle>
@@ -65,7 +63,6 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
     override suspend fun byId(id: String) = dao.byId(id)
     override suspend fun byIds(ids: List<String>) = dao.byIds(ids)
     override suspend fun byIdIgnoreCase(id: String) = dao.byIdIgnoreCase(id)
-    override suspend fun allMeta() = dao.allMeta()
     override suspend fun slice(start: Int, n: Int) = dao.slice(start, n)
     override suspend fun sliceThemes(start: Int, themes: List<String>, n: Int) = dao.sliceThemes(start, themes, n)
 

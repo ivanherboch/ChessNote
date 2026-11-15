@@ -1,16 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
-import androidx.compose.runtime.Immutable
-import androidx.lifecycle.ViewModel
-import com.ivanherboch.chessduck.data.PuzzleRepository
-import com.ivanherboch.chessduck.data.SettingsRepository
-import com.ivanherboch.chessduck.chess.PieceLexiconFr
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import com.ivanherboch.chessduck.chess.BISHOP
 import com.ivanherboch.chessduck.chess.ROOK
 import com.ivanherboch.chessduck.chess.QUEEN
-import com.ivanherboch.chessduck.util.runCatchingSuspend
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -44,7 +36,6 @@ import androidx.compose.ui.semantics.semantics
 import com.ivanherboch.chessduck.ui.DuckIconButton
 import com.ivanherboch.chessduck.ui.InfoPill
 import com.ivanherboch.chessduck.ui.LoadingState
-import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -63,51 +54,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
-import com.ivanherboch.chessduck.ChessDuckApp
 import com.ivanherboch.chessduck.chess.KING
 import com.ivanherboch.chessduck.chess.KNIGHT
-import com.ivanherboch.chessduck.chess.Line
-import com.ivanherboch.chessduck.chess.Move
-import com.ivanherboch.chessduck.chess.PAWN
-import com.ivanherboch.chessduck.chess.PIECE_NAMES_EN
 import com.ivanherboch.chessduck.chess.PIECE_NAMES_FR
-import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.chess.pieceLetter
-import com.ivanherboch.chessduck.chess.pieceType
-import com.ivanherboch.chessduck.chess.sqName
-import com.ivanherboch.chessduck.data.DuckDatabase
-import com.ivanherboch.chessduck.data.Puzzle
 import com.ivanherboch.chessduck.ui.Arrow
-import com.ivanherboch.chessduck.ui.AutoText
-import com.ivanherboch.chessduck.ui.BoardAnim
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.DuckButton
-import com.ivanherboch.chessduck.ui.DuckChip
-import com.ivanherboch.chessduck.ui.DuckSheet
-import com.ivanherboch.chessduck.ui.EqualRow
 import com.ivanherboch.chessduck.ui.FeedbackCard
 import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.LocalFeedback
 import com.ivanherboch.chessduck.ui.ModuleLayout
-import com.ivanherboch.chessduck.ui.SectionTitle
-import com.ivanherboch.chessduck.ui.Tone
-import com.ivanherboch.chessduck.ui.moveAnim
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.random.Random
 
 private val LEVEL_SHORT = listOf("Tous", "Bases", "Prises", "Roques")
 

@@ -39,8 +39,6 @@ interface ChessEngine {
     suspend fun search(fen: String, movetimeMs: Int, multiPv: Int = 1, elo: Int? = null, depth: Int? = null): SearchResult
 }
 
-/** Forme d'un coup UCI valide : case de départ, case d'arrivée et promotion éventuelle (ex. e2e4, e7e8q). */
-private val UCI_MOVE = Regex("^[a-h][1-8][a-h][1-8][qrbn]?$")
 
 /**
  * Stockfish embarqué (exécutable natif dans nativeLibraryDir), piloté en UCI, 100 % hors-ligne.
@@ -150,7 +148,7 @@ class Stockfish(private val context: Context) : ChessEngine, Closeable {
                             parseInfo(l)?.let { (idx, pv) -> pvs[idx] = pv }
                         } else if (l.startsWith("bestmove")) {
                             val tok = l.split(' ').getOrNull(1)
-                            best = if (tok != null && UCI_MOVE.matches(tok)) Move.fromUci(tok) else null
+                            best = if (tok != null && Move.isUci(tok)) Move.fromUci(tok) else null
                             done = true
                             break
                         }
@@ -189,7 +187,7 @@ class Stockfish(private val context: Context) : ChessEngine, Closeable {
                     val v = t.getOrNull(i + 2)?.toIntOrNull() ?: 0
                     score = if (t.getOrNull(i + 1) == "mate") (if (v > 0) MATE - (2 * v - 1) else -MATE - 2 * v) else v
                 }
-                "pv" -> { move = t.getOrNull(i + 1)?.takeIf { UCI_MOVE.matches(it) }?.let { Move.fromUci(it) }; i = t.size }
+                "pv" -> { move = t.getOrNull(i + 1)?.takeIf { Move.isUci(it) }?.let { Move.fromUci(it) }; i = t.size }
             }
             i++
         }
