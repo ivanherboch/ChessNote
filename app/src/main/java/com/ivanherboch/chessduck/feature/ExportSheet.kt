@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
 import com.ivanherboch.chessduck.ui.DuckSegmentedRow
+import com.ivanherboch.chessduck.ui.DuckRadius
 import android.graphics.Bitmap
 import androidx.compose.ui.text.style.TextAlign
 import com.ivanherboch.chessduck.ui.icons.VisibilityOff
@@ -80,9 +81,9 @@ internal fun ExportCard(
     val c = LocalDuck.current
     // Anti-spoiler : l'aperçu de la solution reste caché tant que le problème n'est pas résolu.
     var reveal by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth().padding(vertical = 5.dp).clip(RoundedCornerShape(14.dp)).background(c.surface).padding(12.dp)) {
+    Column(Modifier.fillMaxWidth().padding(vertical = 5.dp).clip(RoundedCornerShape(DuckRadius.L)).background(c.surface).padding(12.dp)) {
         Row(verticalAlignment = Alignment.Top) {
-            Box(Modifier.width(96.dp).height(120.dp).clip(RoundedCornerShape(8.dp)).background(c.surfaceHi), contentAlignment = Alignment.Center) {
+            Box(Modifier.width(96.dp).height(120.dp).clip(RoundedCornerShape(DuckRadius.S)).background(c.surfaceHi), contentAlignment = Alignment.Center) {
                 if (masked && !reveal) {
                     Column(
                         Modifier.fillMaxSize().clickable(onClickLabel = "Afficher l'aperçu de la solution") { reveal = true },

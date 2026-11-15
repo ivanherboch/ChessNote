@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
 import com.ivanherboch.chessduck.chess.rankOf
+import com.ivanherboch.chessduck.ui.DuckRadius
 import com.ivanherboch.chessduck.chess.fileOf
 import com.ivanherboch.chessduck.chess.sq
 import com.ivanherboch.chessduck.ui.BoardGeometry
@@ -197,7 +198,7 @@ internal fun KidDemo(piece: KidPiece, vm: KidViewModel, onClose: () -> Unit) {
         bottomMin = 190.dp,
         adaptive = false,
         top = {
-            val bubble = RoundedCornerShape(32.dp)
+            val bubble = RoundedCornerShape(DuckRadius.Kid)
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 10.dp).shadow(8.dp, bubble).clip(bubble)
                     .background(Color.White).border(4.dp, piece.edge, bubble).heightIn(min = 54.dp).padding(horizontal = 18.dp),
@@ -208,10 +209,10 @@ internal fun KidDemo(piece: KidPiece, vm: KidViewModel, onClose: () -> Unit) {
             }
         },
         board = {
-            val frame = RoundedCornerShape(22.dp)
+            val frame = RoundedCornerShape(DuckRadius.Kid)
             Box(Modifier.fillMaxSize().padding(horizontal = 4.dp).clip(frame).background(Color(0xFF3DB89C)).padding(7.dp)) {
                 val knightPath = remember { Path() }
-                Canvas(Modifier.fillMaxSize().clip(RoundedCornerShape(15.dp))) {
+                Canvas(Modifier.fillMaxSize().clip(RoundedCornerShape(DuckRadius.Kid - 7.dp))) {
                     val s = size.width / 8f
                     val cell = Size(s, s)
                     fun topLeft(q: Pair<Int, Int>) = Offset(q.first * s, (7 - q.second) * s)
@@ -262,7 +263,7 @@ internal fun KidDemo(piece: KidPiece, vm: KidViewModel, onClose: () -> Unit) {
         },
         bottom = {
             Column(Modifier.fillMaxSize().padding(vertical = 8.dp), verticalArrangement = Arrangement.SpaceEvenly) {
-                val bubble = RoundedCornerShape(22.dp)
+                val bubble = RoundedCornerShape(DuckRadius.Kid)
                 Box(
                     Modifier.fillMaxWidth().weight(1f).padding(bottom = 10.dp).clip(bubble).background(Color.White).border(3.dp, piece.edge, bubble).padding(horizontal = 16.dp, vertical = 10.dp),
                     contentAlignment = Alignment.Center,

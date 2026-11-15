@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
 import androidx.compose.material3.MaterialTheme
+import com.ivanherboch.chessduck.ui.DuckRadius
 import androidx.compose.material3.Text
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -59,7 +60,7 @@ fun MemoSheet(onClose: () -> Unit) {
 private fun MemoRow(key: String, text: String) {
     val c = LocalDuck.current
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.height(36.dp).fillMaxWidth(0.22f).clip(RoundedCornerShape(8.dp)).background(c.surfaceHi), contentAlignment = Alignment.Center) {
+        Box(Modifier.height(36.dp).fillMaxWidth(0.22f).clip(RoundedCornerShape(DuckRadius.S)).background(c.surfaceHi), contentAlignment = Alignment.Center) {
             Text(key, color = c.goldText, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
         }
         Text(text, color = c.text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 10.dp).weight(1f))

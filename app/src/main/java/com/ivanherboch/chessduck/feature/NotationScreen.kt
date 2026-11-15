@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
 import com.ivanherboch.chessduck.chess.BISHOP
+import com.ivanherboch.chessduck.ui.DuckRadius
 import com.ivanherboch.chessduck.chess.ROOK
 import com.ivanherboch.chessduck.chess.QUEEN
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -15,7 +16,6 @@ import com.ivanherboch.chessduck.ui.icons.Backspace
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import com.ivanherboch.chessduck.ui.icons.LocalFireDepartment
-import com.ivanherboch.chessduck.ui.icons.Lightbulb
 import com.ivanherboch.chessduck.ui.icons.Replay
 import com.ivanherboch.chessduck.ui.icons.SkipNext
 import com.ivanherboch.chessduck.ui.icons.SwapVert
@@ -51,11 +51,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import com.ivanherboch.chessduck.ui.icons.MenuBook
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.em
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ivanherboch.chessduck.chess.KING
 import com.ivanherboch.chessduck.chess.KNIGHT
@@ -64,6 +66,7 @@ import com.ivanherboch.chessduck.chess.pieceLetter
 import com.ivanherboch.chessduck.ui.Arrow
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.DuckButton
+import com.ivanherboch.chessduck.ui.HintIconButton
 import com.ivanherboch.chessduck.ui.FeedbackCard
 import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.LocalFeedback
@@ -75,6 +78,7 @@ private val LEVEL_SHORT = listOf("Tous", "Bases", "Prises", "Roques")
 fun NotationScreen(vm: NotationViewModel) {
     val s by vm.state.collectAsStateWithLifecycle()
     val c = LocalDuck.current
+    var memo by rememberSaveable { mutableStateOf(false) }
     val fb = LocalFeedback.current
     val ex = s.exercise
     if (ex == null) {
@@ -87,12 +91,10 @@ fun NotationScreen(vm: NotationViewModel) {
         top = {
             Row(Modifier.fillMaxWidth().height(52.dp), verticalAlignment = Alignment.CenterVertically) {
                 LevelMenu(s.level, vm::setLevel, Modifier.weight(1f))
+                DuckIconButton(Icons.AutoMirrored.Rounded.MenuBook, "Mémo anglais : lettres et symboles FIDE", { memo = true }, accent = c.blue)
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
                 DuckIconButton(Icons.Rounded.Replay, "Revoir le coup", vm::replay)
-                DuckIconButton(
-                    Icons.Rounded.Lightbulb, "Indice", vm::hint, enabled = !s.solved, accent = c.green,
-                    badge = if (s.hintStage > 0) "${s.hintStage}/2" else null,
-                )
+                HintIconButton(s.hintStage, vm::hint, enabled = !s.solved)
                 DuckIconButton(Icons.Rounded.SkipNext, "Exercice suivant", vm::next, accent = c.gold, filled = s.solved)
             }
         },
@@ -107,6 +109,7 @@ fun NotationScreen(vm: NotationViewModel) {
                 arrows = if (s.shown) listOf(Arrow(ex.move.from, ex.move.to, c.blue)) else emptyList(),
             )
         },
+        underBoardFullWidth = true,
         underBoard = {
             // Orientation de l'échiquier et série en cours : toujours présents, la mise en page ne saute pas.
             Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -128,8 +131,8 @@ fun NotationScreen(vm: NotationViewModel) {
             // Barre de saisie : « Tout effacer » à gauche, ⌫ (appui long = tout effacer) et Valider à droite.
             Row(Modifier.fillMaxWidth().padding(top = 6.dp).height(48.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Row(
-                    Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(12.dp)).background(c.surface)
-                        .border(1.dp, if (s.solved) c.greenText else c.outlineStrong, RoundedCornerShape(12.dp))
+                    Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
+                        .border(1.dp, if (s.solved) c.greenText else c.outlineStrong, RoundedCornerShape(DuckRadius.M))
                         .semantics(mergeDescendants = true) {
                             contentDescription = if (s.input.isEmpty()) "Votre réponse : vide" else "Votre réponse : ${s.input.toList().joinToString(" ")}"
                         },
@@ -178,6 +181,7 @@ fun NotationScreen(vm: NotationViewModel) {
             }
         },
     )
+    if (memo) MemoSheet { memo = false }
 }
 
 /** Sélecteur de niveau compact (menu déroulant). */
@@ -209,7 +213,7 @@ private fun BackspaceKey(enabled: Boolean, onTap: () -> Unit, onLong: () -> Unit
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     Box(
-        Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(if (enabled) c.surfaceHi else c.surfaceSubtle)
+        Modifier.size(48.dp).clip(RoundedCornerShape(DuckRadius.M)).background(if (enabled) c.surfaceHi else c.surfaceSubtle)
             .combinedClickable(
                 enabled = enabled, role = Role.Button, onClickLabel = "Effacer un caractère", onLongClickLabel = "Tout effacer",
                 onLongClick = { fb?.error(); onLong() },
@@ -226,14 +230,14 @@ private fun Key(label: String, sub: String?, modifier: Modifier, enabled: Boolea
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     Column(
-        modifier.fillMaxHeight().clip(RoundedCornerShape(10.dp)).background(if (enabled) c.surfaceHi else c.surfaceSubtle)
+        modifier.fillMaxHeight().clip(RoundedCornerShape(DuckRadius.M)).background(if (enabled) c.surfaceHi else c.surfaceSubtle)
             .clickable(enabled = enabled, role = Role.Button) { fb?.key(); onClick() }
             .clearAndSetSemantics { contentDescription = description; if (!enabled) disabled() },
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // Interlignes resserrés : les trois lignes des touches de pièces tiennent dans 52 dp.
-        val small = MaterialTheme.typography.labelSmall.copy(lineHeight = 12.sp)
-        Text(label, color = if (enabled) c.text else c.muted, style = MaterialTheme.typography.titleMedium.copy(lineHeight = 19.sp), maxLines = 1)
+        val small = MaterialTheme.typography.labelSmall.copy(lineHeight = 1.1.em)
+        Text(label, color = if (enabled) c.text else c.muted, style = MaterialTheme.typography.titleMedium.copy(lineHeight = 1.2.em), maxLines = 1)
         if (sub != null) Text(sub, color = c.muted, style = small, maxLines = 1)
         if (sub2 != null) Text(sub2, color = if (enabled) c.text else c.muted, style = small, maxLines = 1)
     }

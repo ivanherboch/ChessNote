@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
 import androidx.compose.animation.AnimatedContent
+import com.ivanherboch.chessduck.ui.DuckRadius
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -166,7 +167,7 @@ private fun PieceCard(p: KidPiece, modifier: Modifier, onClick: () -> Unit) {
     val scale by animateFloatAsState(
         if (pressed) 0.86f else 1f, spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = Spring.StiffnessMedium), label = "bounce",
     )
-    val shape = RoundedCornerShape(16.dp)
+    val shape = RoundedCornerShape(DuckRadius.Kid)
     Column(
         modifier
             .graphicsLayer { scaleX = scale; scaleY = scale }
@@ -207,7 +208,7 @@ private fun QuitDialog(onStay: () -> Unit, onQuit: () -> Unit) {
         Modifier.fillMaxSize().background(Color(0x661F3B57)).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onStay() },
         contentAlignment = Alignment.Center,
     ) {
-        val shape = RoundedCornerShape(30.dp)
+        val shape = RoundedCornerShape(DuckRadius.Kid)
         Column(
             Modifier.padding(horizontal = 22.dp).widthIn(max = 420.dp).shadow(16.dp, shape).clip(shape).background(Color.White).border(4.dp, Color(0xFF9CC9F0), shape)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
@@ -258,7 +259,7 @@ private fun KidGame(vm: KidViewModel, onQuit: () -> Unit) {
                         whiteTurn -> Color(0xFFF59E0B)
                         else -> Color(0xFF7C3AED)
                     }
-                    val bubble = RoundedCornerShape(32.dp)
+                    val bubble = RoundedCornerShape(DuckRadius.Kid)
                     Row(
                         Modifier.weight(1f).padding(start = 4.dp).shadow(8.dp, bubble).clip(bubble)
                             .background(Color.White).border(4.dp, accent, bubble).heightIn(min = 54.dp).padding(horizontal = 14.dp)
@@ -279,11 +280,11 @@ private fun KidGame(vm: KidViewModel, onQuit: () -> Unit) {
                 }
             },
             board = {
-                val frame = RoundedCornerShape(22.dp)
+                val frame = RoundedCornerShape(DuckRadius.Kid)
                 Box(Modifier.fillMaxSize().padding(horizontal = 4.dp).clip(frame).background(Color(0xFF3DB89C)).padding(7.dp)) {
                     ChessBoard(
                         position = pos,
-                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(15.dp)),
+                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(DuckRadius.Kid - 7.dp)),
                         interactive = s.result == null,
                         lastMove = last,
                         anim = s.anim,

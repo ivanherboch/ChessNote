@@ -83,7 +83,7 @@ fun MoveStrip(
     Row(modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
         if (onPrev != null) DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Coup précédent", onPrev, enabled = prevEnabled)
         LazyRow(
-            Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(10.dp)).background(c.surface).padding(horizontal = 4.dp),
+            Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface).padding(horizontal = 4.dp),
             state = listState, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             if (line.size == 0) item { Text(emptyText, color = c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 6.dp)) }
@@ -116,12 +116,12 @@ fun MoveStrip(
                             contentAlignment = Alignment.Center,
                         ) {
                             Box(
-                                Modifier.clip(RoundedCornerShape(8.dp)).background(if (current) c.goldRole.fill else Color.Transparent)
+                                Modifier.clip(RoundedCornerShape(DuckRadius.S)).background(if (current) c.goldRole.fill else Color.Transparent)
                                     .padding(horizontal = 6.dp, vertical = 4.dp),
                             ) {
                                 Text(
                                     line.sans[i], color = if (current) c.goldRole.onFill else if (white) c.text else c.muted,
-                                    style = if (current) MaterialTheme.typography.labelLarge else MaterialTheme.typography.labelMedium,
+                                    style = if (current) MaterialTheme.typography.chessMove else MaterialTheme.typography.labelMedium,
                                     // TalkBack annonce le coup avec son numéro : « 6. O-O ».
                                     modifier = Modifier.clearAndSetSemantics { contentDescription = label },
                                 )

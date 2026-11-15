@@ -18,7 +18,6 @@ import com.ivanherboch.chessduck.ui.icons.Analytics
 import com.ivanherboch.chessduck.ui.icons.Flag
 import com.ivanherboch.chessduck.ui.icons.History
 import com.ivanherboch.chessduck.ui.icons.Insights
-import com.ivanherboch.chessduck.ui.icons.Lightbulb
 import com.ivanherboch.chessduck.ui.icons.People
 import com.ivanherboch.chessduck.ui.icons.SmartToy
 import com.ivanherboch.chessduck.ui.icons.SwapVert
@@ -45,6 +44,7 @@ import com.ivanherboch.chessduck.ui.evalBarSpace
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.ConfirmDialog
 import com.ivanherboch.chessduck.ui.DuckButton
+import com.ivanherboch.chessduck.ui.HintButton
 import com.ivanherboch.chessduck.ui.DuckIconButton
 import com.ivanherboch.chessduck.ui.EqualRow
 import com.ivanherboch.chessduck.ui.FeedbackCard
@@ -164,13 +164,10 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                     )
                     DuckButton("Nouvelle partie", vm::newGame, Modifier.weight(1f), accent = c.gold, filled = true, icon = Icons.Rounded.Add)
                 } else {
+                    HintButton(s.hintStage, vm::hint, Modifier.weight(1f), enabled = s.canPlay)
                     DuckButton(
-                        "Indice ${(s.hintStage + 1).coerceAtMost(2)}/2", vm::hint, Modifier.weight(1f), enabled = s.canPlay,
-                        accent = c.green, icon = Icons.Rounded.Lightbulb,
-                    )
-                    DuckButton(
-                        if (s.twoPlayers) "Annuler le coup" else "Annuler mon coup", vm::undoMove, Modifier.weight(1f),
-                        enabled = undo >= 0, icon = Icons.AutoMirrored.Rounded.Undo,
+                        "Annuler", vm::undoMove, Modifier.weight(1f), enabled = undo >= 0, icon = Icons.AutoMirrored.Rounded.Undo,
+                        contentDescription = if (s.twoPlayers) "Annuler le dernier coup" else "Annuler mon dernier coup",
                     )
                     DuckIconButton(
                         Icons.Rounded.Flag, "Abandonner", { if (st.confirmActions && s.inProgress) confirm = ConfirmAction.RESIGN else vm.resign() },

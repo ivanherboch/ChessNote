@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
 import com.ivanherboch.chessduck.ui.DuckPalette
+import com.ivanherboch.chessduck.ui.DuckRadius
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.RadioButtonDefaults
@@ -228,7 +229,7 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
 private fun PaletteOption(palette: DuckPalette, selected: Boolean, onSelect: () -> Unit) {
     val c = LocalDuck.current
     val p = palette.colors(c.dark)
-    val shape = RoundedCornerShape(14.dp)
+    val shape = RoundedCornerShape(DuckRadius.L)
     Row(
         Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(shape)
             .background(if (selected) c.surfaceHi else c.surface)
@@ -238,9 +239,9 @@ private fun PaletteOption(palette: DuckPalette, selected: Boolean, onSelect: () 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Mini-écran : fond de la palette, carte, bouton principal et pastilles des couleurs de sens.
-        Box(Modifier.size(width = 92.dp, height = 60.dp).clip(RoundedCornerShape(10.dp)).background(p.bg).border(1.dp, p.outline, RoundedCornerShape(10.dp)).padding(6.dp)) {
-            Column(Modifier.fillMaxSize().clip(RoundedCornerShape(6.dp)).background(p.surface).padding(5.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                Box(Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)).background(p.goldRole.fill))
+        Box(Modifier.size(width = 92.dp, height = 60.dp).clip(RoundedCornerShape(DuckRadius.M)).background(p.bg).border(1.dp, p.outline, RoundedCornerShape(DuckRadius.M)).padding(6.dp)) {
+            Column(Modifier.fillMaxSize().clip(RoundedCornerShape(DuckRadius.S)).background(p.surface).padding(5.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                Box(Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(DuckRadius.S)).background(p.goldRole.fill))
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                     for (col in listOf(p.greenRole.fill, p.blueRole.fill, p.redRole.fill)) Box(Modifier.size(10.dp).clip(CircleShape).background(col))
                     Spacer(Modifier.weight(1f))

@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck.ui
 
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
@@ -80,6 +81,18 @@ data class DuckColors(
         red -> redRole
         else -> AccentRole(accent, accent, if (accent.luminance() > 0.4f) Color(0xFF0F172A) else Color.White)
     }
+}
+
+/**
+ * Échelle des rayons de coins : petits éléments (badges, pastilles de case), contrôles et cartes,
+ * grands conteneurs, mode enfant. Exceptions voulues : l'échiquier (4 dp, pour ne pas rogner les cases
+ * d'angle) et les fines barres de progression (entièrement arrondies).
+ */
+object DuckRadius {
+    val S = 8.dp
+    val M = 12.dp
+    val L = 16.dp
+    val Kid = 24.dp
 }
 
 private val Ink = Color(0xFF0F172A)
@@ -223,6 +236,9 @@ val Fredoka = FontFamily(
 
 /** Chiffres tabulaires : scores, ELO, numéros de coups et compteurs restent alignés. */
 const val TNUM = "tnum"
+
+/** Style des coups en notation algébrique (bande des coups, tableau de la revue) : chiffres tabulaires, semi-gras. */
+val Typography.chessMove: TextStyle get() = labelLarge.copy(fontWeight = FontWeight.SemiBold)
 
 /** Échelle typographique M3 de ChessDuck ; aucun texte sous 11 sp. */
 fun duckTypography(font: FontFamily?): Typography {

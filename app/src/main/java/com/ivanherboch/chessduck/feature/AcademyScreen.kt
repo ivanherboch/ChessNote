@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
 import com.ivanherboch.chessduck.ui.DuckSegmentedRow
+import com.ivanherboch.chessduck.ui.DuckRadius
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -10,7 +11,6 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.CheckCircle
 import com.ivanherboch.chessduck.ui.icons.ExpandMore
-import com.ivanherboch.chessduck.ui.icons.Lightbulb
 import com.ivanherboch.chessduck.ui.icons.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import com.ivanherboch.chessduck.ui.icons.RestartAlt
@@ -58,6 +58,7 @@ import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.ui.Arrow
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.DuckButton
+import com.ivanherboch.chessduck.ui.HintButton
 import com.ivanherboch.chessduck.ui.EqualRow
 import com.ivanherboch.chessduck.ui.FeedbackCard
 import com.ivanherboch.chessduck.ui.LocalDuck
@@ -90,7 +91,7 @@ fun AcademyScreen(vm: AcademyViewModel) {
             Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Leçon précédente", vm::prevLesson)
                 Column(
-                    Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(c.surface)
+                    Modifier.weight(1f).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
                         .clickable(role = Role.Button, onClickLabel = "Ouvrir le catalogue des leçons") { catalog = true }
                         .clearAndSetSemantics {
                             role = Role.Button
@@ -178,7 +179,7 @@ fun AcademyScreen(vm: AcademyViewModel) {
                 EqualRow(Modifier.padding(vertical = 6.dp)) {
                     DuckButton("Recommencer", vm::restartChallenge, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt)
                     if (s.done) DuckButton("Leçon suivante", vm::nextLesson, Modifier.weight(1.4f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
-                    else DuckButton("Indice ${(s.hintStage + 1).coerceAtMost(2)}/2", vm::hint, Modifier.weight(1.4f), accent = c.green, icon = Icons.Rounded.Lightbulb)
+                    else HintButton(s.hintStage, vm::hint, Modifier.weight(1.4f))
                 }
             }
         },

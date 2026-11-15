@@ -1,6 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
 import com.ivanherboch.chessduck.ui.WholeOrNothing
+import com.ivanherboch.chessduck.ui.DuckRadius
+import com.ivanherboch.chessduck.ui.chessMove
 import com.ivanherboch.chessduck.ui.AlignedLabelRows
 import com.ivanherboch.chessduck.ui.LabeledRow
 import androidx.compose.foundation.lazy.items
@@ -169,7 +171,7 @@ private fun ReviewSummary(g: GameRecord, line: Line, analysis: List<Analysis?>, 
         }
     }
     val total = line.size + 1
-    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(c.surface).padding(12.dp)) {
+    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(DuckRadius.M)).background(c.surface).padding(12.dp)) {
         Text("Résumé de la partie", color = c.text, style = MaterialTheme.typography.titleSmall)
         if (ready < total) {
             Text("Analyse des coups : $ready / $total…", color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
@@ -207,7 +209,7 @@ private fun ReviewSummary(g: GameRecord, line: Line, analysis: List<Analysis?>, 
 @Composable
 private fun NoteCount(note: String, n: Int) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.clip(RoundedCornerShape(8.dp)).background(annotationColor(note)).padding(horizontal = 6.dp, vertical = 1.dp)) {
+        Box(Modifier.clip(RoundedCornerShape(DuckRadius.S)).background(annotationColor(note)).padding(horizontal = 6.dp, vertical = 1.dp)) {
             Text(note, color = Color.White, style = MaterialTheme.typography.labelMedium)
         }
         Text(" $n", color = LocalDuck.current.text, style = MaterialTheme.typography.labelLarge)
@@ -223,7 +225,7 @@ private fun MoveTable(line: Line, cursor: Int, notes: List<String?>, onSelect: (
     val first = if (line.size > 0 && !line.positions[0].whiteToMove) 1 else 0
     val rows = (line.size + first + 1) / 2
     LaunchedEffect(cursor) { if (cursor > 0) state.animateScrollToItem(((cursor - 1 + first) / 2 - 2).coerceAtLeast(0)) }
-    LazyColumn(modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(c.surface), state = state) {
+    LazyColumn(modifier.fillMaxWidth().clip(RoundedCornerShape(DuckRadius.M)).background(c.surface), state = state) {
         items(rows) { row ->
             Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
                 val start = line.positions[0].fullmove
@@ -234,16 +236,16 @@ private fun MoveTable(line: Line, cursor: Int, notes: List<String?>, onSelect: (
                         if (i in 0 until line.size) {
                             val current = i == cursor - 1
                             Row(
-                                Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(2.dp).clip(RoundedCornerShape(8.dp))
+                                Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(2.dp).clip(RoundedCornerShape(DuckRadius.S))
                                     .background(if (current) c.goldRole.fill else Color.Transparent)
                                     .clickable(role = Role.Button, onClickLabel = "Aller au coup ${line.sans[i]}") { fb?.key(); onSelect(i + 1) }
                                     .semantics { selected = current }
                                     .padding(horizontal = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text(line.sans[i], color = if (current) c.goldRole.onFill else c.text, style = MaterialTheme.typography.labelLarge)
+                                Text(line.sans[i], color = if (current) c.goldRole.onFill else c.text, style = MaterialTheme.typography.chessMove)
                                 notes.getOrNull(i)?.let { n ->
-                                    Box(Modifier.padding(start = 6.dp).clip(RoundedCornerShape(6.dp)).background(annotationColor(n)).padding(horizontal = 4.dp)) {
+                                    Box(Modifier.padding(start = 6.dp).clip(RoundedCornerShape(DuckRadius.S)).background(annotationColor(n)).padding(horizontal = 4.dp)) {
                                         Text(n, color = Color.White, style = MaterialTheme.typography.labelSmall)
                                     }
                                 }

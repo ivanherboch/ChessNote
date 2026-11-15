@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Écran de démarrage (API SplashScreen) : visible jusqu'à la lecture des réglages, sans écran vide. -->
+    <style name="Theme.ChessDuck.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/start_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.ChessDuck</item>
+    </style>
     <style name="Theme.ChessDuck" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">@color/slate900</item>
+        <item name="android:windowBackground">@color/start_background</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
-    <color name="slate900">#0F172A</color>
+    <!-- Fond du démarrage : clair ou sombre selon le système (le thème choisi est appliqué juste après). -->
+    <color name="start_background">#F8FAFC</color>
 </resources>

@@ -60,7 +60,7 @@ fun EmptyState(
 ) {
     val c = LocalDuck.current
     Column(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(c.surface).padding(16.dp),
+        modifier.fillMaxWidth().clip(RoundedCornerShape(DuckRadius.L)).background(c.surface).padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(icon, contentDescription = null, tint = c.muted, modifier = Modifier.size(36.dp))

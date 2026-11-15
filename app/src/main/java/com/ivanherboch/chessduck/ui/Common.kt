@@ -61,6 +61,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import com.ivanherboch.chessduck.ui.icons.Lightbulb
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
@@ -142,7 +144,7 @@ fun DuckButton(
     val fb = LocalFeedback.current
     val v = variant ?: if (filled) ButtonVariant.PRIMARY else ButtonVariant.TONAL
     val col = buttonColors(v, accent, enabled)
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(DuckRadius.M)
     Row(
         modifier
             .minimumInteractiveComponentSize()
@@ -217,15 +219,19 @@ private fun DuckIconButtonImpl(
     val fb = LocalFeedback.current
     val r = c.role(accent)
     val on = selected == true || filled
+    // Désactivé : fond éteint et icône très atténuée (jamais confondu avec un bouton actif sans fond).
+    // Interrupteur éteint (selected == false) : surface neutre ; l'accent n'apparaît qu'une fois activé.
     val bg = when {
-        !enabled -> Color.Transparent
+        !enabled -> c.surfaceSubtle
         on -> r.fill.takeIf { accent != null } ?: c.text
+        selected == false -> c.surfaceHi
         accent != null -> r.fill.copy(alpha = if (c.dark) 0.16f else 0.14f)
         else -> c.surfaceHi
     }
     val fg = when {
-        !enabled -> c.muted
+        !enabled -> c.muted.copy(alpha = 0.45f)
         on -> if (accent != null) r.onFill else c.bg
+        selected == false -> c.text
         accent != null -> r.text
         else -> c.text
     }
@@ -247,7 +253,7 @@ private fun DuckIconButtonImpl(
                 },
             contentAlignment = Alignment.Center,
         ) {
-            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(bg), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(40.dp).clip(RoundedCornerShape(DuckRadius.M)).background(bg), contentAlignment = Alignment.Center) {
                 Icon(painter, contentDescription = null, tint = fg, modifier = Modifier.size(22.dp))
             }
             if (badge != null) {
@@ -281,7 +287,7 @@ fun DuckChip(
         label = { Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         modifier = modifier.semantics { stateDescription = if (selected) "sélectionné" else "non sélectionné" },
         leadingIcon = icon?.let { { Icon(it, contentDescription = null, modifier = Modifier.size(18.dp)) } },
-        shape = RoundedCornerShape(17.dp),
+        shape = RoundedCornerShape(50),
         colors = FilterChipDefaults.filterChipColors(
             containerColor = c.surface, labelColor = c.text, iconColor = c.text,
             selectedContainerColor = r.fill, selectedLabelColor = r.onFill, selectedLeadingIconColor = r.onFill,
@@ -403,7 +409,7 @@ fun InfoPill(text: String, modifier: Modifier = Modifier, icon: ImageVector? = n
     val c = LocalDuck.current
     val r = c.role(accent)
     Row(
-        modifier.clip(RoundedCornerShape(14.dp)).background(if (accent == null) c.surfaceHi else r.fill.copy(alpha = if (c.dark) 0.18f else 0.14f))
+        modifier.clip(RoundedCornerShape(DuckRadius.L)).background(if (accent == null) c.surfaceHi else r.fill.copy(alpha = if (c.dark) 0.18f else 0.14f))
             .semantics(mergeDescendants = true) { if (description != null) contentDescription = description }
             .padding(horizontal = 10.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -412,3 +418,19 @@ fun InfoPill(text: String, modifier: Modifier = Modifier, icon: ImageVector? = n
         Text(text, color = if (accent == null) c.text else r.text, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
+
+/** Libellé du bouton Indice selon le nombre d'indices déjà révélés (0, 1 ou 2). */
+fun hintLabel(stage: Int) = if (stage >= 2) "Indice utilisé" else "Indice ${stage + 1}/2"
+
+/** Bouton Indice commun à l'Académie, aux Problèmes et au Jeu Libre : désactivé une fois les deux indices révélés. */
+@Composable
+fun HintButton(stage: Int, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) =
+    DuckButton(hintLabel(stage), onClick, modifier, enabled = enabled && stage < 2, accent = LocalDuck.current.green, icon = Icons.Rounded.Lightbulb)
+
+/** Variante compacte du bouton Indice (icône et pastille « 1/2 ») pour une barre d'outils. */
+@Composable
+fun HintIconButton(stage: Int, onClick: () -> Unit, enabled: Boolean = true) =
+    DuckIconButton(
+        Icons.Rounded.Lightbulb, hintLabel(stage), onClick, enabled = enabled && stage < 2, accent = LocalDuck.current.green,
+        badge = if (stage > 0) "$stage/2" else null,
+    )

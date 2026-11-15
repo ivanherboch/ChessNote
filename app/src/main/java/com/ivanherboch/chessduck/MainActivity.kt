@@ -11,7 +11,6 @@ import com.ivanherboch.chessduck.feature.SettingsSheet
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
-import android.content.pm.ActivityInfo
 import android.graphics.Color as AColor
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -47,7 +46,6 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
-import com.ivanherboch.chessduck.ui.icons.MenuBook
 import com.ivanherboch.chessduck.ui.icons.Extension
 import com.ivanherboch.chessduck.ui.icons.Keyboard
 import com.ivanherboch.chessduck.ui.icons.School
@@ -86,7 +84,6 @@ import com.ivanherboch.chessduck.feature.AcademyScreen
 import com.ivanherboch.chessduck.feature.AcademyViewModel
 import com.ivanherboch.chessduck.feature.KidScreen
 import com.ivanherboch.chessduck.feature.KidViewModel
-import com.ivanherboch.chessduck.feature.MemoSheet
 import com.ivanherboch.chessduck.feature.NotationScreen
 import com.ivanherboch.chessduck.feature.NotationViewModel
 import com.ivanherboch.chessduck.feature.PlayScreen
@@ -94,12 +91,14 @@ import com.ivanherboch.chessduck.feature.PlayViewModel
 import com.ivanherboch.chessduck.feature.PuzzlesScreen
 import com.ivanherboch.chessduck.feature.PuzzlesViewModel
 import com.ivanherboch.chessduck.ui.ChessDuckTheme
-import com.ivanherboch.chessduck.ui.DuckButton
 import com.ivanherboch.chessduck.ui.DuckIconButton
 import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.LocalFeedback
 import com.ivanherboch.chessduck.ui.LocalShowCoords
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import androidx.lifecycle.lifecycleScope
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
 /** Réglages qui habillent toute l'application (thème, retours, mode enfant). */
 data class AppChrome(
@@ -113,19 +112,22 @@ data class AppChrome(
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        // L'écran de démarrage reste affiché jusqu'à la lecture des réglages : jamais d'écran vide ni de flash.
+        val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
         val app = application as ChessDuckApp
-        // Téléphone : portrait. Tablette (plus petite largeur >= 600 dp) : paysage, en deux colonnes.
-        val tablet = resources.getBoolean(R.bool.is_tablet)
-        requestedOrientation = if (tablet) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        // Aucune orientation imposée : la mise en page s'adapte à la fenêtre (portrait, paysage, pliable,
+        // écran partagé) ; l'activité n'est pas recréée à la rotation (configChanges).
         // Seuls les réglages d'habillage sont observés ici : les changements de problème, de leçon,
         // d'ELO ou de série ne recomposent plus tout l'arbre de l'application.
-        val chromeFlow = app.prefs.settings.map { AppChrome(it.themeMode, it.palette, it.coords, it.haptics, it.sound, it.kidMode) }
-            .distinctUntilChanged()
+        val chrome = MutableStateFlow<AppChrome?>(null)
+        lifecycleScope.launch {
+            app.prefs.settings.map { AppChrome(it.themeMode, it.palette, it.coords, it.haptics, it.sound, it.kidMode) }
+                .distinctUntilChanged().collect { chrome.value = it }
+        }
+        splash.setKeepOnScreenCondition { chrome.value == null }
         setContent {
-            val chrome by chromeFlow.collectAsStateWithLifecycle(initialValue = null)
-            val st = chrome ?: return@setContent
+            val st = chrome.collectAsStateWithLifecycle().value ?: return@setContent
             val systemDark = isSystemInDarkTheme()
             // Le mode enfant impose un écran clair et épuré.
             val dark = !st.kidMode && when (st.themeMode) {
@@ -162,7 +164,7 @@ private val TABS = listOf(
     TabSpec("Notation", { rememberVectorPainter(Icons.Outlined.Keyboard) }, { rememberVectorPainter(Icons.Rounded.Keyboard) }),
     TabSpec("Académie", { rememberVectorPainter(Icons.Outlined.School) }, { rememberVectorPainter(Icons.Rounded.School) }),
     TabSpec("Problèmes", { rememberVectorPainter(Icons.Outlined.Extension) }, { rememberVectorPainter(Icons.Rounded.Extension) }),
-    TabSpec("Jeu Libre", { painterResource(R.drawable.ic_knight) }, { painterResource(R.drawable.ic_knight) }),
+    TabSpec("Jeu Libre", { painterResource(R.drawable.ic_knight_outline) }, { painterResource(R.drawable.ic_knight) }),
 )
 
 /** Icône et libellé d'un onglet, partagés par le rail (tablette) et la barre de navigation (téléphone). */
@@ -178,7 +180,6 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
     val fb = LocalFeedback.current
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var showSettings by remember { mutableStateOf(false) }
-    var showMemo by remember { mutableStateOf(false) }
     // Les ViewModels vivent au niveau de l'activité : l'état de chaque module est conservé d'un onglet à l'autre.
     // Ils ne sont créés qu'à la première visite de leur onglet (Stockfish et l'index des 150 000 problèmes
     // ne sont donc chargés que si l'utilisateur ouvre le Jeu Libre ou les Problèmes).
@@ -204,9 +205,16 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
         return
     }
 
-    // Retour Android : depuis un onglet secondaire, on revient à la Notation avant de quitter l'application.
-    BackHandler(enabled = tab != 0) { tab = 0 }
-    val select: (Int) -> Unit = { if (it != tab) { fb?.key(); tab = it } }
+    // Retour Android : on revient aux onglets visités, du plus récent au plus ancien, puis on quitte l'application.
+    var visited by rememberSaveable { mutableStateOf(intArrayOf()) }
+    BackHandler(enabled = visited.isNotEmpty()) { tab = visited.last(); visited = visited.copyOf(visited.size - 1) }
+    val select: (Int) -> Unit = {
+        if (it != tab) {
+            fb?.key()
+            visited = (visited.filter { v -> v != tab } + tab).toIntArray()
+            tab = it
+        }
+    }
 
     val header: @Composable (Modifier) -> Unit = { m ->
         Row(m.fillMaxWidth().height(50.dp).padding(start = 12.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -215,7 +223,6 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                 "ChessDuck", style = MaterialTheme.typography.titleLarge, color = c.text,
                 modifier = Modifier.padding(start = 8.dp).weight(1f).semantics { heading() },
             )
-            if (tab == 0) DuckButton("Mémo", { showMemo = true }, icon = Icons.AutoMirrored.Rounded.MenuBook, accent = c.blue, contentDescription = "Mémo anglais : lettres et symboles FIDE")
             DuckIconButton(Icons.Rounded.Settings, "Paramètres", { showSettings = true })
         }
     }
@@ -287,6 +294,5 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
         }
     }
 
-    if (showMemo) MemoSheet { showMemo = false }
     if (showSettings) SettingsSheet(prefs, narrator, appScope) { showSettings = false }
 }

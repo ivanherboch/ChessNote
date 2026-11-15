@@ -12,6 +12,7 @@
         android:theme="@style/Theme.ChessDuck">
         <activity
             android:name=".MainActivity"
+            android:theme="@style/Theme.ChessDuck.Starting"
             android:exported="true"
             android:windowSoftInputMode="adjustResize"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode">

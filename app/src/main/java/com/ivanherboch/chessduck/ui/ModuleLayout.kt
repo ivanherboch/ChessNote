@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.CheckCircle
 import com.ivanherboch.chessduck.ui.icons.ErrorOutline
 import com.ivanherboch.chessduck.ui.icons.HourglassTop
@@ -40,6 +41,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalDensity
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -74,6 +78,7 @@ fun FeedbackCard(
     tone: Tone,
     modifier: Modifier = Modifier,
     title: String? = null,
+    /** Commande placée sous le texte, dans la carte ; sa hauteur réelle est prise sur celle du texte. */
     action: (@Composable () -> Unit)? = null,
 ) {
     val c = LocalDuck.current
@@ -93,73 +98,81 @@ fun FeedbackCard(
     var overflow by remember { mutableStateOf(false) }
     var full by remember { mutableStateOf(false) }
     val measurer = rememberTextMeasurer()
-    val hasAction = action != null
     // Résultat de la mesure (débordement à 12 sp), noté sans écrire d'état pendant la passe de mesure ;
     // il est publié après le placement (onPlaced), ce qui ne déclenche aucune boucle de mise en page.
     val measuredOverflow = remember { BooleanArray(1) }
-    Box(modifier.fillMaxWidth(), contentAlignment = Alignment.TopStart) {
-        Layout(
-            modifier = Modifier.onPlaced { if (measuredOverflow[0] != overflow) overflow = measuredOverflow[0] },
-            content = {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(c.surface)
-                        .drawBehind { drawRect(role.text, size = Size(4.dp.toPx(), size.height)) }
-                        .then(if (overflow) Modifier.clickable(onClickLabel = "Lire le message complet") { full = true } else Modifier)
-                        .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite; contentDescription = listOfNotNull(title, text).joinToString(". ") }
-                        .padding(start = 14.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
-                ) {
-                    Row(Modifier.weight(1f, fill = false), verticalAlignment = Alignment.Top) {
-                        Icon(icon, contentDescription = null, tint = role.text, modifier = Modifier.padding(top = 1.dp, end = 8.dp).size(18.dp))
-                        Column(Modifier.weight(1f)) {
-                            if (title != null) Text(title, style = titleStyle, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(bottom = 2.dp))
-                            BasicText(
-                                text,
-                                style = bodyStyle,
-                                overflow = TextOverflow.Ellipsis,
-                                autoSize = TextAutoSize.StepBased(minFontSize = FEEDBACK_MIN, maxFontSize = maxSize, stepSize = 0.5.sp),
-                            )
-                        }
-                    }
-                    if (overflow) {
-                        Text(
-                            "Lire la suite",
-                            color = role.text, style = MaterialTheme.typography.labelLarge,
-                            modifier = Modifier.align(Alignment.End).padding(top = 2.dp),
+    Layout(
+        modifier = modifier
+            .fillMaxWidth()
+            .onPlaced { if (measuredOverflow[0] != overflow) overflow = measuredOverflow[0] }
+            .clip(RoundedCornerShape(DuckRadius.M))
+            .background(c.surface)
+            .drawBehind { drawRect(role.text, size = Size(4.dp.toPx(), size.height)) }
+            .then(if (overflow) Modifier.clickable(onClickLabel = "Lire le message complet") { full = true } else Modifier)
+            .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite; contentDescription = listOfNotNull(title, text).joinToString(". ") }
+            .padding(start = 14.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+        content = {
+            // Enfant 0 : icône, titre, texte et, si besoin, le lien « Lire la suite ».
+            Column {
+                Row(Modifier.weight(1f, fill = false), verticalAlignment = Alignment.Top) {
+                    Icon(icon, contentDescription = null, tint = role.text, modifier = Modifier.padding(top = 1.dp, end = 8.dp).size(18.dp))
+                    Column(Modifier.weight(1f)) {
+                        if (title != null) Text(title, style = titleStyle, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(bottom = 2.dp))
+                        BasicText(
+                            text,
+                            style = bodyStyle,
+                            overflow = TextOverflow.Ellipsis,
+                            autoSize = TextAutoSize.StepBased(minFontSize = FEEDBACK_MIN, maxFontSize = maxSize, stepSize = 0.5.sp),
                         )
                     }
-                    if (action != null) Box(Modifier.padding(top = 6.dp)) { action() }
                 }
-            },
-            measurePolicy = object : MeasurePolicy {
-                override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
-                    // Lien « Lire la suite » seulement si le texte ne tient pas, même à 12 sp.
-                    val over = constraints.hasBoundedHeight && needed(constraints.maxWidth) > constraints.maxHeight + 2
-                    measuredOverflow[0] = over
-                    val p = measurables[0].measure(constraints)
-                    return layout(p.width, p.height) { p.place(0, 0) }
+                if (overflow) {
+                    // Affordance explicite : la carte entière s'ouvre, le libellé et le chevron l'annoncent.
+                    Row(Modifier.align(Alignment.End).padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("Lire la suite", color = role.text, style = MaterialTheme.typography.labelLarge)
+                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = role.text, modifier = Modifier.size(18.dp))
+                    }
                 }
+            }
+            // Enfant 1 (facultatif) : la commande, mesurée à sa vraie hauteur.
+            if (action != null) Box(Modifier.padding(top = 6.dp)) { action() }
+        },
+        measurePolicy = object : MeasurePolicy {
+            override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+                val w = constraints.maxWidth
+                val act = measurables.getOrNull(1)?.measure(Constraints(maxWidth = w))
+                val actH = act?.height ?: 0
+                val bodyMax = if (constraints.hasBoundedHeight) (constraints.maxHeight - actH).coerceAtLeast(0) else Constraints.Infinity
+                // Lien « Lire la suite » seulement si le texte ne tient pas, même à 12 sp.
+                measuredOverflow[0] = constraints.hasBoundedHeight && textNeeded(w) > bodyMax + 2
+                val body = measurables[0].measure(Constraints(minWidth = w, maxWidth = w, maxHeight = bodyMax))
+                val h = (body.height + actH).coerceIn(constraints.minHeight, constraints.maxHeight)
+                return layout(w, h) {
+                    body.place(0, 0)
+                    act?.place(0, body.height)
+                }
+            }
 
-                /** Hauteur nécessaire pour tout afficher à la taille minimale (12 sp), sans défilement. */
-                private fun IntrinsicMeasureScope.needed(width: Int): Int {
-                    val inner = (width - (14 + 12 + 18 + 8).dp.roundToPx()).coerceAtLeast(1)
-                    val cs = Constraints(maxWidth = inner)
-                    var hgt = (8 + 8).dp.roundToPx()
-                    if (title != null) hgt += measurer.measure(title, titleStyle, maxLines = 2, constraints = cs, density = this, layoutDirection = layoutDirection).size.height + 2.dp.roundToPx()
-                    hgt += measurer.measure(text, bodyStyle.copy(fontSize = FEEDBACK_MIN), constraints = cs, density = this, layoutDirection = layoutDirection).size.height
-                    if (hasAction) hgt += (6 + 48).dp.roundToPx()
-                    return hgt
-                }
+            /** Hauteur du titre et du texte affichés à la taille minimale (12 sp), sans défilement. */
+            private fun IntrinsicMeasureScope.textNeeded(width: Int): Int {
+                val inner = (width - (18 + 8).dp.roundToPx()).coerceAtLeast(1)
+                val cs = Constraints(maxWidth = inner)
+                var hgt = 0
+                if (title != null) hgt += measurer.measure(title, titleStyle, maxLines = 2, constraints = cs, density = this, layoutDirection = layoutDirection).size.height + 2.dp.roundToPx()
+                hgt += measurer.measure(text, bodyStyle.copy(fontSize = FEEDBACK_MIN), constraints = cs, density = this, layoutDirection = layoutDirection).size.height
+                return hgt
+            }
 
-                override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int) = needed(width)
-                override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int) = needed(width)
-                override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int) = measurables[0].minIntrinsicWidth(height)
-                override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int) = measurables[0].maxIntrinsicWidth(height)
-            },
-        )
-    }
+            /** Hauteur utile annoncée à [ModuleLayout] : texte à 12 sp et vraie hauteur de la commande. */
+            private fun IntrinsicMeasureScope.needed(measurables: List<IntrinsicMeasurable>, width: Int) =
+                textNeeded(width) + (measurables.getOrNull(1)?.minIntrinsicHeight(width) ?: 0)
+
+            override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int) = needed(measurables, width)
+            override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int) = needed(measurables, width)
+            override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int) = measurables[0].minIntrinsicWidth(height)
+            override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int) = measurables[0].maxIntrinsicWidth(height)
+        },
+    )
     if (full) {
         DuckSheet(title ?: "Message", onClose = { full = false }) {
             Text(text, color = c.text, style = MaterialTheme.typography.bodyLarge)
@@ -249,6 +262,7 @@ fun WholeOrNothing(modifier: Modifier = Modifier, content: @Composable () -> Uni
  * Gabarit d'un module : bandeau haut, [overBoard], échiquier carré adaptatif, [underBoard], zone du pouce.
  * En portrait, l'échiquier prend toute la largeur tant que la zone basse conserve [bottomMin].
  * En paysage (tablette), l'échiquier occupe la hauteur à gauche et les commandes forment une seconde colonne.
+ * [underBoardFullWidth] : en portrait, [underBoard] occupe toute la largeur (pastilles) au lieu de celle de l'échiquier.
  */
 @Composable
 fun ModuleLayout(
@@ -258,17 +272,25 @@ fun ModuleLayout(
     underBoard: @Composable () -> Unit = {},
     overBoard: @Composable () -> Unit = {},
     adaptive: Boolean = true,
+    underBoardFullWidth: Boolean = false,
     bottom: @Composable ColumnScope.() -> Unit,
 ) {
     // Place supplémentaire prise à l'échiquier pour que les textes du bas tiennent sans défilement.
-    // Elle ne fait que croître pendant la vie de l'écran (pas de « respiration » de la grille à chaque coup).
+    // Elle grandit aussitôt qu'un texte en a besoin, et ne se relâche que si au moins RESERVE_RELEASE se libère
+    // durablement : la grille ne « respire » pas à chaque coup, mais retrouve sa taille après un long message.
     val twoPane = LocalIsTwoPane.current
     var reserve by remember { mutableIntStateOf(0) }
+    var target by remember { mutableIntStateOf(0) }
+    val releasePx = with(LocalDensity.current) { RESERVE_RELEASE.roundToPx() }
+    LaunchedEffect(target) {
+        if (target > reserve) reserve = target
+        else if (reserve - target >= releasePx) { delay(RESERVE_RELEASE_DELAY_MS); reserve = target }
+    }
     val animReserve by animateIntAsState(reserve, tween(260), label = "reserve")
     // Besoin calculé pendant la mesure (sans écriture d'état), publié après le placement.
     val wanted = remember { IntArray(1) }
     Layout(
-        modifier = Modifier.onPlaced { if (wanted[0] > reserve) reserve = wanted[0] },
+        modifier = Modifier.onPlaced { if (wanted[0] != target) target = wanted[0] },
         content = {
             Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp), content = top)
             Box(contentAlignment = Alignment.Center) { board() }
@@ -308,12 +330,12 @@ fun ModuleLayout(
         if (adaptive) {
             val avail = h - topP.height - underH - overH - baseSide
             val needed = runCatching { measurables[2].minIntrinsicHeight(w) }.getOrDefault(0)
-            val want = (needed - avail).coerceIn(0, (baseSide * 0.22f).toInt())
-            if (want > wanted[0]) wanted[0] = want
+            wanted[0] = (needed - avail).coerceIn(0, (baseSide * 0.22f).toInt())
         }
         val side = (baseSide - if (adaptive) animReserve else 0).coerceAtLeast(0)
         val boardP = measurables[1].measure(Constraints.fixed(side, side))
-        val underP = measurables[3].measure(Constraints(minWidth = side, maxWidth = side, minHeight = 0, maxHeight = underH))
+        val underW = if (underBoardFullWidth) w else side
+        val underP = measurables[3].measure(Constraints(minWidth = underW, maxWidth = underW, minHeight = 0, maxHeight = underH))
         val overP = measurables[4].measure(Constraints(minWidth = side, maxWidth = side, minHeight = 0, maxHeight = overH))
         val rest = (h - topP.height - side - underP.height - overP.height).coerceAtLeast(0)
         val bottomP = measurables[2].measure(Constraints.fixed(w, rest))
@@ -321,8 +343,12 @@ fun ModuleLayout(
             topP.place(0, 0)
             overP.place((w - side) / 2, topP.height)
             boardP.place((w - side) / 2, topP.height + overP.height)
-            underP.place((w - side) / 2, topP.height + overP.height + side)
+            underP.place((w - underP.width) / 2, topP.height + overP.height + side)
             bottomP.place(0, topP.height + overP.height + side + underP.height)
         }
     }
 }
+
+/** Écart de besoin à partir duquel la réserve se relâche, et délai avant de rendre la place à l'échiquier. */
+private val RESERVE_RELEASE = 24.dp
+private const val RESERVE_RELEASE_DELAY_MS = 1500L

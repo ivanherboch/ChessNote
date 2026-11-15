@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
 import androidx.compose.foundation.lazy.items
+import com.ivanherboch.chessduck.ui.DuckRadius
 import com.ivanherboch.chessduck.ui.DuckLazySheet
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -43,7 +44,7 @@ internal fun HistorySheet(games: List<GameRecord>, onClose: () -> Unit, onDelete
             )
         }
         items(games, key = { it.id }) { g ->
-            Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(12.dp)).background(c.surface).padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 10.dp)) {
+            Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface).padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val (label, col) = when {
                         !g.vsComputer -> (if (g.outcome == 1) "Victoire de ${g.whiteName.ifEmpty { "Blancs" }}" else if (g.outcome == -1) "Victoire de ${g.blackName.ifEmpty { "Noirs" }}" else "Nulle") to c.goldText

@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
 import androidx.compose.foundation.lazy.items
+import com.ivanherboch.chessduck.ui.DuckRadius
 import com.ivanherboch.chessduck.ui.DuckLazySheet
 import com.ivanherboch.chessduck.util.normalizeForSearch
 import com.ivanherboch.chessduck.ui.DuckTextField
@@ -103,7 +104,7 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
             DuckButton("Ouvrir", { open() }, enabled = query.isNotBlank(), accent = c.gold, filled = true, height = 56.dp, contentDescription = "Ouvrir le problème « ${query.trim()} »")
         }
         if (sugg.items.isNotEmpty() && query.isNotBlank()) {
-            Column(Modifier.fillMaxWidth().padding(top = 6.dp).clip(RoundedCornerShape(12.dp)).background(c.surface)) {
+            Column(Modifier.fillMaxWidth().padding(top = 6.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)) {
                 for (item in sugg.items) {
                     Row(
                         Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(role = Role.Button) { vm.openSuggestion(item.id) { onClose() } }
@@ -176,9 +177,9 @@ private fun ThemeRow(name: String, goal: String, count: ThemeCount?, selected: B
     val c = LocalDuck.current
     val enabled = count == null || count.total > 0
     Row(
-        Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(12.dp))
+        Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(DuckRadius.M))
             .background(if (selected) c.surfaceHi else c.surface)
-            .then(if (selected) Modifier.border(1.dp, c.goldText, RoundedCornerShape(12.dp)) else Modifier)
+            .then(if (selected) Modifier.border(1.dp, c.goldText, RoundedCornerShape(DuckRadius.M)) else Modifier)
             .clickable(enabled = enabled, role = Role.Button) { onClick() }
             .semantics { this.selected = selected; if (count != null) stateDescription = "${count.solved} résolus sur ${count.total}" }
             .padding(horizontal = 12.dp, vertical = 8.dp),

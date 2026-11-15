@@ -78,6 +78,7 @@ dependencies {
     implementation(libs.compose.material.icons.core)
     implementation(libs.activity.compose)
     implementation(libs.core.ktx)
+    implementation(libs.core.splashscreen)
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.room.runtime)

@@ -199,8 +199,9 @@ abstract class DuckDatabase : RoomDatabase() {
     companion object {
         const val PUZZLE_COUNT = 150_000
 
-        fun create(context: Context): DuckDatabase =
-            Room.databaseBuilder(context, DuckDatabase::class.java, "chessduck.db")
+        /** Base de l'application ([name] : autre fichier, pour les tests qui simulent une ancienne installation). */
+        fun create(context: Context, name: String = "chessduck.db"): DuckDatabase =
+            Room.databaseBuilder(context, DuckDatabase::class.java, name)
                 .createFromAsset("chessduck.db")
                 .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()

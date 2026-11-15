@@ -17,6 +17,7 @@ import kotlinx.coroutines.runBlocking
 import androidx.test.core.app.ApplicationProvider
 import com.ivanherboch.chessduck.data.GameRecord
 import org.junit.Test
+import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
@@ -31,6 +32,10 @@ import java.time.Duration
 class TabletRobolectricTest {
     @get:Rule
     val rule = createAndroidComposeRule<MainActivity>()
+
+    /** Les réglages (DataStore) survivent d'un test à l'autre : chaque test démarre hors du mode enfant. */
+    @Before
+    fun leaveKidMode() = runBlocking { ApplicationProvider.getApplicationContext<ChessDuckApp>().prefs.setKidMode(false) }
 
     /** Ajoute une courte partie terminée à l'historique de l'application (mat du berger). */
     private fun seedGame() = runBlocking {
@@ -71,6 +76,22 @@ class TabletRobolectricTest {
     private fun shot(name: String) {
         val dir = File(System.getenv("SHOT_DIR") ?: "build/screenshots").apply { mkdirs() }
         rule.onRoot().captureRoboImage(File(dir, "$name.png").path)
+    }
+
+    /** Téléphone en paysage : l'orientation n'est plus imposée, l'échiquier passe à gauche avec le rail de navigation. */
+    @Test
+    @Config(qualifiers = "w760dp-h360dp-land-xxhdpi")
+    fun phoneLandscape() {
+        settle(2500); shot("o1_telephone_paysage_notation")
+        rule.onNodeWithText("Jeu Libre").performClick(); settle(2000); shot("o2_telephone_paysage_jeu")
+    }
+
+    /** Tablette en portrait : une seule colonne, échiquier en haut et commandes dessous. */
+    @Test
+    @Config(qualifiers = "w800dp-h1280dp-port-xhdpi")
+    fun tabletPortrait() {
+        settle(2500); shot("o3_tablette_portrait_notation")
+        rule.onNodeWithText("Académie").performClick(); settle(1500); shot("o4_tablette_portrait_academie")
     }
 
     @Test

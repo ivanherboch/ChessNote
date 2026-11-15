@@ -415,14 +415,14 @@ fun ChessBoard(
                 contentAlignment = Alignment.Center,
             ) {
                 Row(
-                    Modifier.clip(RoundedCornerShape(14.dp)).background(c.surface).padding(8.dp),
+                    Modifier.clip(RoundedCornerShape(DuckRadius.L)).background(c.surface).padding(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     for (type in intArrayOf(QUEEN, ROOK, BISHOP, KNIGHT)) {
                         val res = (if (kid) KID_PIECE_RES else PIECE_RES).getValue(if (white) type else type + BLACK)
                         Image(
                             painterResource(res), "Promouvoir en ${PIECE_NAMES_FR[type]}",
-                            Modifier.size(58.dp).clip(RoundedCornerShape(10.dp)).background(c.squareLight)
+                            Modifier.size(58.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.squareLight)
                                 .clickable(role = Role.Button) { promo = null; selected = -1; onMove(Move(from, to, type)) },
                         )
                     }
@@ -510,7 +510,7 @@ fun EvalBar(evalWhite: Int, flipped: Boolean, modifier: Modifier = Modifier) {
     val labelLayout = remember(label, measurer) { measurer.measure(label, EVAL_STYLE) }
     val c = LocalDuck.current
     Canvas(
-        modifier.fillMaxHeight().width(evalBarWidth()).clip(RoundedCornerShape(6.dp)).border(1.dp, c.outlineStrong, RoundedCornerShape(6.dp))
+        modifier.fillMaxHeight().width(evalBarWidth()).clip(RoundedCornerShape(DuckRadius.S)).border(1.dp, c.outlineStrong, RoundedCornerShape(DuckRadius.S))
             .semantics { contentDescription = desc },
     ) {
         val dark = Color(0xFF1F2937)

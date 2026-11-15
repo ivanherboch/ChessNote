@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
 import androidx.compose.foundation.lazy.items
+import com.ivanherboch.chessduck.ui.DuckRadius
 import com.ivanherboch.chessduck.ui.DuckLazySheet
 import com.ivanherboch.chessduck.util.normalizeForSearch
 import com.ivanherboch.chessduck.ui.DuckTextField
@@ -106,7 +107,7 @@ internal fun LessonCatalog(vm: AcademyViewModel, s: AcademyState, mastered: Set<
             val current = item.id == s.lessonId
             val done = item.id in mastered
             Row(
-                Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(12.dp))
+                Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(DuckRadius.M))
                     .background(if (current) c.surfaceHi else c.surface)
                     .clickable(role = Role.Button) { vm.open(item.id); onClose() }
                     .semantics { stateDescription = (if (done) "maîtrisée" else "à maîtriser") + if (current) ", leçon en cours" else "" }

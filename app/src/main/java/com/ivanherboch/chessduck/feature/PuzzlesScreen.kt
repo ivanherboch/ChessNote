@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
 import androidx.compose.runtime.rememberCoroutineScope
+import com.ivanherboch.chessduck.ui.DuckRadius
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -17,7 +18,6 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import com.ivanherboch.chessduck.ui.icons.Extension
 import com.ivanherboch.chessduck.ui.icons.History
 import com.ivanherboch.chessduck.ui.icons.IosShare
-import com.ivanherboch.chessduck.ui.icons.Lightbulb
 import com.ivanherboch.chessduck.ui.icons.SearchOff
 import com.ivanherboch.chessduck.ui.icons.Visibility
 import androidx.compose.material3.Icon
@@ -58,6 +58,7 @@ import com.ivanherboch.chessduck.data.DuckDatabase
 import com.ivanherboch.chessduck.ui.Arrow
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.DuckButton
+import com.ivanherboch.chessduck.ui.HintButton
 import com.ivanherboch.chessduck.ui.DuckSheet
 import com.ivanherboch.chessduck.ui.EqualRow
 import com.ivanherboch.chessduck.ui.FeedbackCard
@@ -181,7 +182,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                     DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Coup précédent", vm::back, enabled = s.refute == null && s.cursor > 0)
                     if (s.refute != null) DuckButton("Réessayer", vm::retry, Modifier.weight(1f), accent = c.red, filled = true, icon = Icons.AutoMirrored.Rounded.Undo)
                     else if (s.solved) DuckButton("Problème aléatoire", vm::random, Modifier.weight(1f), accent = c.gold, filled = true, icon = Icons.Rounded.Casino)
-                    else DuckButton("Indice ${(s.hintStage + 1).coerceAtMost(2)}/2", vm::hint, Modifier.weight(1f), enabled = vm.canPlay(s), accent = c.green, icon = Icons.Rounded.Lightbulb)
+                    else HintButton(s.hintStage, vm::hint, Modifier.weight(1f), enabled = vm.canPlay(s))
                     DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Coup suivant", vm::forward, enabled = s.refute == null && s.cursor < s.progress)
                 }
             }
@@ -196,7 +197,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                 // Thème visible si le problème est résolu, ou s'il était déjà affiché quand il a été joué.
                 val themeShown = done || r.id in knownThemes
                 Row(
-                    Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(12.dp)).background(c.surface)
+                    Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
                         .clickable(role = Role.Button) { recentSheet = false; vm.openPuzzle(r) }.padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {

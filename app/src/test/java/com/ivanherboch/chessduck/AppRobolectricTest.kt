@@ -39,6 +39,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
@@ -53,6 +54,10 @@ import java.time.Duration
 class AppRobolectricTest {
     @get:Rule
     val rule = createAndroidComposeRule<MainActivity>()
+
+    /** Les réglages (DataStore) survivent d'un test à l'autre : chaque test démarre hors du mode enfant. */
+    @Before
+    fun leaveKidMode() = runBlocking { ApplicationProvider.getApplicationContext<ChessDuckApp>().prefs.setKidMode(false) }
 
     /** Ajoute une courte partie terminée à l'historique de l'application (mat du berger). */
     private fun seedGame() = runBlocking {
@@ -200,9 +205,12 @@ class AppRobolectricTest {
         if (!old.exists()) return@runBlocking
         val ctx: android.content.Context = ApplicationProvider.getApplicationContext()
         // Simule une installation existante : l'ancienne base (v1, 50 000 problèmes) est déjà sur l'appareil.
-        val target = ctx.getDatabasePath("chessduck.db").apply { parentFile?.mkdirs() }
+        // Fichier propre au test : la base de l'application lancée par la règle peut déjà être ouverte.
+        val name = "chessduck-ancienne-installation.db"
+        ctx.deleteDatabase(name)
+        val target = ctx.getDatabasePath(name).apply { parentFile?.mkdirs() }
         old.copyTo(target, overwrite = true)
-        val db = DuckDatabase.create(ctx)
+        val db = DuckDatabase.create(ctx, name)
         assertEquals(50_000, db.puzzles().count())
         db.puzzles().markSolved(PuzzleProgress("0000D", 1L))
         assertEquals(true, DuckDatabase.syncPuzzles(ctx, db))
@@ -357,9 +365,11 @@ class AppRobolectricTest {
         desc("Catalogue des problèmes").performClick(); settle(2000); shot("3b_catalogue")
         close(); settle(800)
         rule.onNodeWithText("Jeu Libre").performClick(); settle(2000); shot("4_jeu")
-        // Retour Android : depuis un onglet secondaire, on revient à la Notation.
-        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1200)
-        desc("Mémo anglais").assertExists()
+        // Retour Android : on remonte les onglets visités (Problèmes, Académie, puis Notation).
+        val back = { rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1200) }
+        back(); desc("Catalogue des problèmes").assertExists()
+        back(); desc("Ouvrir le catalogue des leçons").assertExists()
+        back(); desc("Mémo anglais").assertExists()
         rule.onNodeWithText("Jeu Libre").performClick(); settle(1500)
         rule.onNodeWithContentDescription("Paramètres").performClick(); settle(800); shot("5_parametres")
         // Le mode enfant est le premier réglage du tiroir.
@@ -444,8 +454,7 @@ class AppRobolectricTest {
         rule.onNodeWithText("Pause").performClick(); settle(400)
         rule.onNodeWithContentDescription("Coup suivant").performClick(); settle(600); shot("4f_revue_coup")
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1000)
-        rule.onNodeWithContentDescription("Annuler mon coup", substring = false).assertDoesNotExist()
-        rule.onNodeWithText("Annuler mon coup").assertExists()
+        rule.onNodeWithContentDescription("Annuler mon dernier coup", substring = false).assertExists()
     }
 
     private companion object {
