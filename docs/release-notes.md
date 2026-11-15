@@ -1,3 +1,10 @@
+## ChessDuck 2.4.8 — un échiquier plus grand en Notation
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Notation : clavier un peu plus compact, échiquier environ 9 % plus grand.
+- Les touches restent faciles à viser : 44 dp de haut pour les lettres, chiffres et symboles, 52 dp pour les pièces, 48 dp pour la barre de saisie, Effacer et Valider.
+
 ## ChessDuck 2.4.7 — fiches du mode enfant parlées au bon moment
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

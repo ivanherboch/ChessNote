@@ -326,6 +326,23 @@ class AppRobolectricTest {
     private fun desc(text: String) = rule.onNodeWithContentDescription(text, substring = true)
     private fun close() = rule.onAllNodesWithContentDescription("Fermer").onLast().performClick()
 
+    /** Clavier de Notation : touches assez grandes pour le doigt (hauteurs 44 et 48 dp) sur un téléphone de 360 dp. */
+    @Test
+    fun notationKeysStayLargeEnough() {
+        settle(2500)
+        val density = rule.activity.resources.displayMetrics.density
+        fun size(label: String) = rule.onNodeWithContentDescription(label).fetchSemanticsNode().boundsInRoot.let { it.width / density to it.height / density }
+        for (key in listOf("colonne a", "rangée 8", "x, prise", "petit roque")) {
+            val (w, h) = size(key)
+            assertTrue("$key : hauteur $h dp", h >= 43.5f)
+            assertTrue("$key : largeur $w dp", w >= 40f)
+        }
+        val (_, piece) = size("K, King, Roi")
+        assertTrue("touche de pièce : $piece dp", piece >= 47.5f)
+        val (_, erase) = size("Effacer")
+        assertTrue("effacer : $erase dp", erase >= 47.5f)
+    }
+
     @Test
     fun screens() {
         settle(2500)

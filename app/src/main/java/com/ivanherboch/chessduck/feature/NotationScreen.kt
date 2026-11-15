@@ -55,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ivanherboch.chessduck.chess.KING
 import com.ivanherboch.chessduck.chess.KNIGHT
@@ -81,7 +82,8 @@ fun NotationScreen(vm: NotationViewModel) {
         return
     }
     ModuleLayout(
-        bottomMin = 320.dp,
+        // Zone basse : carte (~34 dp), saisie 6 + 48, clavier 4 + 52 + 3 × (4 + KEY_ROW) + 4.
+        bottomMin = 298.dp,
         top = {
             Row(Modifier.fillMaxWidth().height(52.dp), verticalAlignment = Alignment.CenterVertically) {
                 LevelMenu(s.level, vm::setLevel, Modifier.weight(1f))
@@ -124,7 +126,7 @@ fun NotationScreen(vm: NotationViewModel) {
         bottom = {
             FeedbackCard(s.message, s.tone, Modifier.padding(top = 6.dp).weight(1f))
             // Barre de saisie : « Tout effacer » à gauche, ⌫ (appui long = tout effacer) et Valider à droite.
-            Row(Modifier.fillMaxWidth().padding(top = 6.dp).height(52.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp).height(48.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Row(
                     Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(12.dp)).background(c.surface)
                         .border(1.dp, if (s.solved) c.greenText else c.outlineStrong, RoundedCornerShape(12.dp))
@@ -146,27 +148,27 @@ fun NotationScreen(vm: NotationViewModel) {
                     )
                 }
                 BackspaceKey(enabled = !s.solved && s.input.isNotEmpty(), onTap = vm::backspace, onLong = vm::clear)
-                if (s.solved) DuckButton("Suivant", vm::next, Modifier.width(112.dp), accent = c.green, filled = true, height = 52.dp, icon = Icons.AutoMirrored.Rounded.ArrowForward)
-                else DuckButton("Valider", { if (vm.validate()) fb?.success() else fb?.error() }, Modifier.width(112.dp), enabled = s.input.isNotEmpty(), accent = c.gold, filled = true, height = 52.dp, icon = Icons.Rounded.Check)
+                if (s.solved) DuckButton("Suivant", vm::next, Modifier.width(112.dp), accent = c.green, filled = true, height = 48.dp, icon = Icons.AutoMirrored.Rounded.ArrowForward)
+                else DuckButton("Valider", { if (vm.validate()) fb?.success() else fb?.error() }, Modifier.width(112.dp), enabled = s.input.isNotEmpty(), accent = c.gold, filled = true, height = 48.dp, icon = Icons.Rounded.Check)
             }
             // Clavier virtuel FIDE (aucun clavier système), désactivé une fois la réponse validée.
             val type: (String) -> Unit = { k -> if (!vm.type(k)) fb?.error() }
             val on = !s.solved
-            Column(Modifier.padding(top = 6.dp, bottom = 6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(Modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 // Touches de pièces : lettre FIDE, nom anglais, puis nom français.
-                Row(Modifier.fillMaxWidth().height(60.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(Modifier.fillMaxWidth().height(52.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     for ((pt, sub) in listOf(KING to "King", QUEEN to "Queen", ROOK to "Rook", BISHOP to "Bishop", KNIGHT to "Knight")) {
                         val k = pieceLetter(pt).toString()
                         Key(k, sub, Modifier.weight(1f), on, "$k, ${sub}, ${PIECE_NAMES_FR[pt]}", sub2 = PIECE_NAMES_FR[pt]) { type(k) }
                     }
                 }
-                Row(Modifier.fillMaxWidth().height(46.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(Modifier.fillMaxWidth().height(KEY_ROW), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                     for (ch in 'a'..'h') Key(ch.toString(), null, Modifier.weight(1f), on, "colonne $ch") { type(ch.toString()) }
                 }
-                Row(Modifier.fillMaxWidth().height(46.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(Modifier.fillMaxWidth().height(KEY_ROW), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                     for (ch in '1'..'8') Key(ch.toString(), null, Modifier.weight(1f), on, "rangée $ch") { type(ch.toString()) }
                 }
-                Row(Modifier.fillMaxWidth().height(46.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(Modifier.fillMaxWidth().height(KEY_ROW), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     for ((k, d) in listOf("x" to "x, prise", "+" to "plus, échec", "#" to "dièse, échec et mat", "=" to "égal, promotion")) {
                         Key(k, null, Modifier.weight(1f), on, d) { type(k) }
                     }
@@ -207,7 +209,7 @@ private fun BackspaceKey(enabled: Boolean, onTap: () -> Unit, onLong: () -> Unit
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     Box(
-        Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)).background(if (enabled) c.surfaceHi else c.surfaceSubtle)
+        Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(if (enabled) c.surfaceHi else c.surfaceSubtle)
             .combinedClickable(
                 enabled = enabled, role = Role.Button, onClickLabel = "Effacer un caractère", onLongClickLabel = "Tout effacer",
                 onLongClick = { fb?.error(); onLong() },
@@ -229,8 +231,16 @@ private fun Key(label: String, sub: String?, modifier: Modifier, enabled: Boolea
             .clearAndSetSemantics { contentDescription = description; if (!enabled) disabled() },
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(label, color = if (enabled) c.text else c.muted, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-        if (sub != null) Text(sub, color = c.muted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
-        if (sub2 != null) Text(sub2, color = if (enabled) c.text else c.muted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        // Interlignes resserrés : les trois lignes des touches de pièces tiennent dans 52 dp.
+        val small = MaterialTheme.typography.labelSmall.copy(lineHeight = 12.sp)
+        Text(label, color = if (enabled) c.text else c.muted, style = MaterialTheme.typography.titleMedium.copy(lineHeight = 19.sp), maxLines = 1)
+        if (sub != null) Text(sub, color = c.muted, style = small, maxLines = 1)
+        if (sub2 != null) Text(sub2, color = if (enabled) c.text else c.muted, style = small, maxLines = 1)
     }
 }
+
+/**
+ * Hauteur des rangées de lettres, chiffres et symboles (44 dp, taille de cible WCAG 2.5.5). La largeur dépend de l'écran :
+ * huit touches par rangée, soit environ 41 dp sur un téléphone de 360 dp, bien au-dessus du minimum WCAG 2.5.8 (24 dp).
+ */
+private val KEY_ROW = 44.dp
