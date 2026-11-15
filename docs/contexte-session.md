@@ -36,7 +36,7 @@ Paquet racine : `app/src/main/java/com/ivanherboch/chessduck/`
 
 - `ChessDuckApp.kt` — `AppContainer` (injection manuelle : `db`, `prefs`, dépôts, `engine`, `analysis`, `feedback`)
   et `DuckViewModels.Factory` (tous les ViewModels sont créés par cette fabrique, avec `SavedStateHandle` si besoin).
-- `MainActivity.kt` — n'observe que `AppChrome` (thème, couleurs dynamiques, coordonnées, sons, vibrations, mode enfant) ;
+- `MainActivity.kt` — n'observe que `AppChrome` (thème, palette, coordonnées, sons, vibrations, mode enfant) ;
   ViewModels créés **paresseusement** à la première visite d'un onglet ; `rememberSaveableStateHolder` par onglet ;
   `LocalIsTwoPane` (règle unique `isTwoPane(w, h) = w > h × 1,15`) fournie à la racine.
 - `chess/` — moteur de règles pur Kotlin : `Chess.kt` (`Position` immuable, `Line` en lecture seule hors `push`,
@@ -57,7 +57,7 @@ Paquet racine : `app/src/main/java/com/ivanherboch/chessduck/`
     `HistorySheet.kt`, `GameReviewViewModel.kt`, `GameAnalysis.kt` (`GameAnalysisService` partagé), `ReviewComments.kt`
   - Mode enfant : `KidViewModel.kt`, `KidScreen.kt`
   - `SettingsSheet.kt` (Paramètres, pseudo avec debounce de 300 ms)
-- `ui/` — `Theme.kt` (jetons Nuit/Jour/Enfant, contrastes WCAG AA, Fredoka, `LocalIsTwoPane`), `Common.kt`
+- `ui/` — `Theme.kt` (jetons Nuit/Jour/Enfant, 5 palettes `DuckPalette` au choix dont une adaptée au daltonisme, contrastes WCAG AA, Fredoka, `LocalIsTwoPane`), `Common.kt`
   (`DuckButton`, `DuckIconButton`, `DuckChip`, `DuckTextField`, `DuckSegmentedRow`, `FeedbackCard`, `ModuleLayout`,
   `DuckSheet`, `DuckLazySheet`, `EmptyState`, `ConfirmDialog`, `MoveStrip`…), `Board.kt` (échiquier interactif),
   `BoardGeometry.kt` (géométrie partagée écran / export / mode enfant), `LinePlayback.kt`, `Captured.kt`, `Feedback.kt`,

@@ -240,7 +240,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                 interactive = canPlay,
                 lastMove = last,
                 anim = s.anim,
-                arrows = listOfNotNull(r?.arrow, if (next != null && s.hintStage >= 2) Arrow(next.from, next.to, c.green) else null),
+                arrows = listOfNotNull(r?.arrow?.copy(color = c.red), if (next != null && s.hintStage >= 2) Arrow(next.from, next.to, c.green) else null),
                 marks = if (next != null && s.hintStage >= 1) listOf(next.from to c.green) else emptyList(),
                 onMove = { m ->
                     when (vm.onMove(m)) {

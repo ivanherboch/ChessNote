@@ -1,6 +1,24 @@
 package com.ivanherboch.chessduck.feature
 
-import android.os.Build
+import com.ivanherboch.chessduck.ui.DuckPalette
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.RadioButton
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
@@ -112,14 +130,20 @@ fun SettingsSheet(app: ChessDuckApp, onClose: () -> Unit) {
     // Les réglages sont écrits dans la portée de l'application : fermer le tiroir n'annule jamais l'écriture.
     val scope = app.scope
     DuckSheet("Paramètres", onClose) {
+        // Le mode enfant change toute l'application : c'est le premier choix proposé.
+        SectionTitle("Mode enfant")
+        DuckButton(
+            "Activer le mode enfant", { onClose(); scope.launch { app.prefs.setKidMode(true) } }, Modifier.fillMaxWidth(),
+            accent = c.green, filled = true, icon = Icons.Rounded.ChildCare,
+        )
+        Text(
+            "Un écran joyeux et coloré pour jouer à deux avec un enfant : grand échiquier, cavalier en forme de girafe, " +
+                "animations qui montrent comment chaque pièce bouge, sans ordinateur ni historique.",
+            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp),
+        )
+
         SectionTitle("Apparence")
         DuckSegmentedRow(listOf("Système", "Jour", "Nuit"), st.themeMode, { i -> scope.launch { app.prefs.setThemeMode(i) } }, Modifier.fillMaxWidth())
-        val dynamicAvailable = Build.VERSION.SDK_INT >= 31
-        SwitchRow(
-            "Couleurs dynamiques (Material You)",
-            if (dynamicAvailable) "Reprend les couleurs de votre fond d'écran. Désactivé : charte ChessDuck." else "Disponible à partir d'Android 12.",
-            st.dynamicColor, enabled = dynamicAvailable,
-        ) { v -> scope.launch { app.prefs.setDynamicColor(v) } }
 
         SectionTitle("Échiquier et parties")
         SwitchRow("Afficher les coordonnées", "Lettres a–h et chiffres 1–8 sur l'échiquier. Masquez-les pour vous entraîner à la notation.", st.coords) { v ->
@@ -141,16 +165,12 @@ fun SettingsSheet(app: ChessDuckApp, onClose: () -> Unit) {
             color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp),
         )
 
-        SectionTitle("Mode enfant")
-        DuckButton(
-            "Activer le mode enfant", { onClose(); scope.launch { app.prefs.setKidMode(true) } }, Modifier.fillMaxWidth(),
-            accent = c.green, filled = true, icon = Icons.Rounded.ChildCare,
-        )
-        Text(
-            "Un écran joyeux et coloré pour jouer à deux avec un enfant : grand échiquier, cavalier en forme de girafe, " +
-                "animations qui montrent comment chaque pièce bouge, sans ordinateur ni historique.",
-            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp),
-        )
+        SectionTitle("Palette de couleurs")
+        Column(Modifier.selectableGroup()) {
+            for (palette in DuckPalette.entries) {
+                PaletteOption(palette, selected = st.palette == palette.ordinal) { scope.launch { app.prefs.setPalette(palette.ordinal) } }
+            }
+        }
 
         SectionTitle("À propos")
         Text(
@@ -164,6 +184,47 @@ fun SettingsSheet(app: ChessDuckApp, onClose: () -> Unit) {
         Text(
             "© Ivan Herboch, 2026 · v$version", color = c.muted, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
+        )
+    }
+}
+
+/**
+ * Choix d'une palette : aperçu fidèle (fond, carte, accent principal, réussite, information, erreur et cases de
+ * l'échiquier) dans le mode d'affichage courant (Jour ou Nuit), nom et description ; toute la ligne est sélectionnable.
+ */
+@Composable
+private fun PaletteOption(palette: DuckPalette, selected: Boolean, onSelect: () -> Unit) {
+    val c = LocalDuck.current
+    val p = palette.colors(c.dark)
+    val shape = RoundedCornerShape(14.dp)
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(shape)
+            .background(if (selected) c.surfaceHi else c.surface)
+            .border(if (selected) 2.dp else 1.dp, if (selected) c.goldRole.fill else c.outline, shape)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onSelect)
+            .padding(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Mini-écran : fond de la palette, carte, bouton principal et pastilles des couleurs de sens.
+        Box(Modifier.size(width = 92.dp, height = 60.dp).clip(RoundedCornerShape(10.dp)).background(p.bg).border(1.dp, p.outline, RoundedCornerShape(10.dp)).padding(6.dp)) {
+            Column(Modifier.fillMaxSize().clip(RoundedCornerShape(6.dp)).background(p.surface).padding(5.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                Box(Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)).background(p.goldRole.fill))
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    for (col in listOf(p.greenRole.fill, p.blueRole.fill, p.redRole.fill)) Box(Modifier.size(10.dp).clip(CircleShape).background(col))
+                    Spacer(Modifier.weight(1f))
+                    Row {
+                        Box(Modifier.size(9.dp).background(p.squareLight)); Box(Modifier.size(9.dp).background(p.squareDark))
+                    }
+                }
+            }
+        }
+        Column(Modifier.padding(start = 12.dp).weight(1f)) {
+            Text(palette.label, color = c.text, style = MaterialTheme.typography.titleSmall)
+            Text(palette.description, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        }
+        RadioButton(
+            selected = selected, onClick = null,
+            colors = RadioButtonDefaults.colors(selectedColor = c.goldRole.fill, unselectedColor = c.outlineStrong),
         )
     }
 }

@@ -49,6 +49,10 @@ class ContrastTest {
     fun allPalettesMeetWcagAA() {
         palette("Nuit", NightColors)
         palette("Jour", DayColors)
+        for (p in com.ivanherboch.chessduck.ui.DuckPalette.entries) {
+            palette("${p.label} Nuit", p.night)
+            palette("${p.label} Jour", p.day)
+        }
         palette("Enfant", KidColors)
         for ((n, pair) in mapOf("bleu" to KidBlue, "orange" to KidOrange, "corail" to KidCoral, "vert" to KidGreen)) {
             check("Enfant bouton $n", Color.White, pair.first)

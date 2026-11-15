@@ -32,8 +32,8 @@ private val Context.store by preferencesDataStore(
 data class Settings(
     /** 0 = suivre le système, 1 = Jour, 2 = Nuit (déduit de la clé historique « dark » tant que l'utilisateur n'a rien choisi). */
     val themeMode: Int = 2,
-    /** Couleurs dynamiques Material You (Android 12+), désactivées par défaut. */
-    val dynamicColor: Boolean = false,
+    /** Palette de couleurs choisie (indice de DuckPalette ; 0 = Ardoise & Or). */
+    val palette: Int = 0,
     /** Coordonnées a–h / 1–8 affichées sur l'échiquier. */
     val coords: Boolean = true,
     /** Confirmation avant d'abandonner ou de recommencer une partie en cours. */
@@ -77,7 +77,7 @@ class Prefs(private val context: Context) : SettingsRepository {
     private object K {
         val dark = booleanPreferencesKey("dark")
         val themeMode = intPreferencesKey("theme_mode")
-        val dynamic = booleanPreferencesKey("dynamic_color")
+        val palette = intPreferencesKey("palette")
         val coords = booleanPreferencesKey("show_coords")
         val confirm = booleanPreferencesKey("confirm_actions")
         val notationBest = intPreferencesKey("notation_best_streak")
@@ -102,7 +102,7 @@ class Prefs(private val context: Context) : SettingsRepository {
     override val settings: Flow<Settings> = context.store.data.map { p ->
         Settings(
             themeMode = p[K.themeMode] ?: if (p[K.dark] ?: true) 2 else 1,
-            dynamicColor = p[K.dynamic] ?: false,
+            palette = p[K.palette] ?: 0,
             coords = p[K.coords] ?: true,
             confirmActions = p[K.confirm] ?: true,
             notationBest = p[K.notationBest] ?: 0,
@@ -132,7 +132,7 @@ class Prefs(private val context: Context) : SettingsRepository {
         it[K.themeMode] = v
         if (v != 0) it[K.dark] = v == 2
     } }
-    suspend fun setDynamicColor(v: Boolean) { context.store.edit { it[K.dynamic] = v } }
+    suspend fun setPalette(v: Int) { context.store.edit { it[K.palette] = v } }
     suspend fun setCoords(v: Boolean) { context.store.edit { it[K.coords] = v } }
     suspend fun setConfirmActions(v: Boolean) { context.store.edit { it[K.confirm] = v } }
     override suspend fun setNotationBest(v: Int) { context.store.edit { if (v > (it[K.notationBest] ?: 0)) it[K.notationBest] = v } }

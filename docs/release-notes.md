@@ -1,3 +1,11 @@
+## ChessDuck 2.3.0 — palettes de couleurs
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Paramètres : 5 palettes de couleurs au choix, avec aperçu, en mode Jour comme en mode Nuit : Ardoise & Or (charte ChessDuck), Améthyste, Noyer, Graphite & Rose et Bleu-Orange, adaptée au daltonisme (réussite en bleu, erreur en vermillon). Elles remplacent l'option « Couleurs dynamiques ».
+- Toutes les palettes respectent les contrastes WCAG AA ; l'échiquier en bois reste identique.
+- Le mode enfant est désormais le premier réglage du tiroir Paramètres ; le choix de la palette se trouve sous les pseudos.
+
 ## ChessDuck 2.2.6 — correctif des problèmes récents
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

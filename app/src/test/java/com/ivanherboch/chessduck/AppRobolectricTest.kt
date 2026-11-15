@@ -2,6 +2,8 @@ package com.ivanherboch.chessduck
 
 import android.os.Looper
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
@@ -245,6 +247,47 @@ class AppRobolectricTest {
     }
 
     @Test
+    @org.robolectric.annotation.Config(qualifiers = "w1280dp-h1100dp-mdpi")
+    fun paletteGallery() {
+        // Chaque palette (Nuit puis Jour) sur de vrais composants : boutons, carte de message, échiquier et flèches.
+        val pos = com.ivanherboch.chessduck.chess.Position.fromFen("r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4")
+        rule.activity.setContent {
+            androidx.compose.foundation.layout.Column {
+                for (dark in listOf(true, false)) androidx.compose.foundation.layout.Row {
+                    for (p in com.ivanherboch.chessduck.ui.DuckPalette.entries) com.ivanherboch.chessduck.ui.ChessDuckTheme(dark, palette = p) {
+                        val c = com.ivanherboch.chessduck.ui.LocalDuck.current
+                        androidx.compose.foundation.layout.Column(
+                            androidx.compose.ui.Modifier.width(240.dp).background(c.bg).padding(8.dp),
+                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
+                        ) {
+                            androidx.compose.material3.Text(p.label, color = c.text, style = androidx.compose.material3.MaterialTheme.typography.titleSmall)
+                            androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.size(224.dp)) {
+                                com.ivanherboch.chessduck.ui.ChessBoard(
+                                    pos, androidx.compose.ui.Modifier.fillMaxSize(),
+                                    arrows = listOf(
+                                        com.ivanherboch.chessduck.ui.Arrow(com.ivanherboch.chessduck.chess.sqFromName("h5"), com.ivanherboch.chessduck.chess.sqFromName("f7"), c.green),
+                                        com.ivanherboch.chessduck.ui.Arrow(com.ivanherboch.chessduck.chess.sqFromName("f6"), com.ivanherboch.chessduck.chess.sqFromName("h5"), c.red),
+                                    ),
+                                )
+                            }
+                            com.ivanherboch.chessduck.ui.FeedbackCard("Bien vu : le mat est imparable.", com.ivanherboch.chessduck.ui.Tone.GOOD)
+                            com.ivanherboch.chessduck.ui.FeedbackCard("Ce coup laisse la dame en prise.", com.ivanherboch.chessduck.ui.Tone.BAD)
+                            com.ivanherboch.chessduck.ui.DuckButton("Problème aléatoire", {}, androidx.compose.ui.Modifier.fillMaxWidth(), accent = c.gold, filled = true)
+                            androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
+                                com.ivanherboch.chessduck.ui.DuckButton("Indice", {}, androidx.compose.ui.Modifier.weight(1f), accent = c.green)
+                                com.ivanherboch.chessduck.ui.DuckButton("Lecture", {}, androidx.compose.ui.Modifier.weight(1f), accent = c.blue, filled = true)
+                            }
+                            com.ivanherboch.chessduck.ui.DuckButton("Réessayer", {}, androidx.compose.ui.Modifier.fillMaxWidth(), accent = c.red, filled = true)
+                        }
+                    }
+                }
+            }
+        }
+        settle(600)
+        shot("12_palettes")
+    }
+
+    @Test
     fun capturedBars() {
         // Pire cas : presque tout a été capturé des deux côtés ; la barre doit tout contenir sur 360 dp.
         val worst = com.ivanherboch.chessduck.chess.Position.fromFen("4k3/8/8/8/8/8/8/3QK3 w - - 0 1")
@@ -290,12 +333,16 @@ class AppRobolectricTest {
         desc("Mémo anglais").assertExists()
         rule.onNodeWithText("Jeu Libre").performClick(); settle(1500)
         rule.onNodeWithContentDescription("Paramètres").performClick(); settle(800); shot("5_parametres")
+        // Le mode enfant est le premier réglage du tiroir.
+        rule.onNodeWithText("Activer le mode enfant").performScrollTo(); settle(500); shot("5a_parametres_haut")
         rule.onNodeWithText("Vibrations").performScrollTo().performClick(); settle(500)
         rule.onNodeWithText("Bruit des pièces").performScrollTo().performClick(); settle(500)
         rule.onNodeWithText("Jour").performScrollTo().performClick(); settle(800)
         close(); settle(800); shot("4c_jeu_jour")
         // Mode enfant : écran épuré à deux joueurs, puis retour au Jeu Libre.
         rule.onNodeWithContentDescription("Paramètres").performClick(); settle(800); shot("5b_parametres_jour")
+        // Section « Palette de couleurs » (sous les pseudos) : 5 palettes avec aperçu.
+        rule.onNodeWithText("Bleu-Orange").performScrollTo(); settle(600); shot("5c_palettes_jour")
         rule.onNodeWithText("Activer le mode enfant").performScrollTo().performClick(); settle(1500); shot("9_enfant")
         // Leçons animées du mode enfant
         desc("Cavalier :").performClick(); settle(1400); shot("9b_lecon_cavalier")
@@ -347,6 +394,7 @@ class AppRobolectricTest {
         repeat(16) {
             rule.waitUntil(10_000) { rule.onAllNodesWithText("Révéler le thème").fetchSemanticsNodes().isNotEmpty() }
             rule.onNodeWithText("Révéler le thème").performClick(); settle(600)
+            rule.waitUntil(10_000) { rule.onAllNodesWithText("Type de problème : ", substring = true).fetchSemanticsNodes().isNotEmpty() }
             val shown = mates.filter { name -> rule.onAllNodesWithText("Type de problème : $name").fetchSemanticsNodes().isNotEmpty() }
             assertEquals(1, shown.size)
             seen.addAll(shown)

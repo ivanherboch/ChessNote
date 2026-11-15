@@ -1,20 +1,16 @@
 package com.ivanherboch.chessduck.ui
 
 import androidx.compose.ui.unit.Dp
-import android.os.Build
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -118,6 +114,77 @@ val DayColors = DuckColors(
     redRole = AccentRole(Color(0xFFB91C1C), Color(0xFFDC2626), Color.White),
 )
 
+/**
+ * Palettes au choix (Paramètres) : chacune décline les surfaces et l'accent principal en Nuit et en Jour, sans toucher
+ * à l'échiquier en bois ; toutes respectent les contrastes WCAG AA (ContrastTest). [BLUE_ORANGE] remplace le couple
+ * vert / rouge (réussite / erreur) par bleu / vermillon (palette Okabe-Ito), lisible avec un daltonisme rouge-vert.
+ */
+enum class DuckPalette(val label: String, val description: String, val night: DuckColors, val day: DuckColors) {
+    SLATE_GOLD("Ardoise & Or", "La charte ChessDuck : ardoise et or.", NightColors, DayColors),
+    AMETHYST(
+        "Améthyste", "Violet profond, assorti à l'icône.",
+        NightColors.copy(
+            bg = Color(0xFF120F24), surface = Color(0xFF1F1A38), surfaceSubtle = Color(0xFF18142E), surfaceHi = Color(0xFF322B55),
+            muted = Color(0xFFD4CDEB), outline = Color(0xFF4C4378), outlineStrong = Color(0xFF9B92C9),
+            gold = Color(0xFFA78BFA), goldRole = AccentRole(Color(0xFFC4B5FD), Color(0xFFA78BFA), Ink),
+        ),
+        DayColors.copy(
+            bg = Color(0xFFF8F6FE), surface = Color(0xFFFFFFFF), surfaceSubtle = Color(0xFFF0ECFC), surfaceHi = Color(0xFFE2DCF7),
+            text = Color(0xFF1E1538), muted = Color(0xFF4E4470), outline = Color(0xFFCFC6EC), outlineStrong = Color(0xFF6E62A0),
+            gold = Color(0xFF7C3AED), goldRole = AccentRole(Color(0xFF5B21B6), Color(0xFF6D28D9), Color.White),
+        ),
+    ),
+    WALNUT(
+        "Noyer", "Bois chaleureux et orange, comme l'échiquier.",
+        NightColors.copy(
+            bg = Color(0xFF17110D), surface = Color(0xFF261C16), surfaceSubtle = Color(0xFF1F1712), surfaceHi = Color(0xFF3A2C22),
+            text = Color(0xFFFBF5EF), muted = Color(0xFFE2D3C4), outline = Color(0xFF5A463A), outlineStrong = Color(0xFFA8927F),
+            gold = Color(0xFFFB923C), goldRole = AccentRole(Color(0xFFFDBA74), Color(0xFFFB923C), Ink),
+        ),
+        DayColors.copy(
+            bg = Color(0xFFFBF7F2), surface = Color(0xFFFFFFFF), surfaceSubtle = Color(0xFFF6F0E8), surfaceHi = Color(0xFFE9DDCF),
+            text = Color(0xFF24170F), muted = Color(0xFF5E4B3D), outline = Color(0xFFDCCBB9), outlineStrong = Color(0xFF8A7360),
+            gold = Color(0xFFC2410C), goldRole = AccentRole(Color(0xFF9A3412), Color(0xFFC2410C), Color.White),
+        ),
+    ),
+    GRAPHITE_ROSE(
+        "Graphite & Rose", "Gris neutre et rose vif.",
+        NightColors.copy(
+            bg = Color(0xFF121214), surface = Color(0xFF1E1E22), surfaceSubtle = Color(0xFF18181B), surfaceHi = Color(0xFF323238),
+            text = Color(0xFFFAFAFA), muted = Color(0xFFD4D4DC), outline = Color(0xFF4B4B55), outlineStrong = Color(0xFF9C9CA8),
+            gold = Color(0xFFF472B6), goldRole = AccentRole(Color(0xFFF9A8D4), Color(0xFFF472B6), Ink),
+        ),
+        DayColors.copy(
+            bg = Color(0xFFF7F7F8), surface = Color(0xFFFFFFFF), surfaceSubtle = Color(0xFFEFEFF2), surfaceHi = Color(0xFFE2E2E7),
+            text = Color(0xFF18181B), muted = Color(0xFF52525B), outline = Color(0xFFD4D4D8), outlineStrong = Color(0xFF71717A),
+            gold = Color(0xFFDB2777), goldRole = AccentRole(Color(0xFF9D174D), Color(0xFFBE185D), Color.White),
+        ),
+    ),
+    BLUE_ORANGE(
+        "Bleu-Orange", "Adaptée au daltonisme : réussite en bleu, erreur en vermillon.",
+        NightColors.copy(
+            gold = Color(0xFFF0E442), goldRole = AccentRole(Color(0xFFF0E442), Color(0xFFF0E442), Ink),
+            green = Color(0xFF56B4E9), greenRole = AccentRole(Color(0xFF7CC6F0), Color(0xFF56B4E9), Ink),
+            blue = Color(0xFFCC79A7), blueRole = AccentRole(Color(0xFFE3A5C7), Color(0xFFCC79A7), Ink),
+            red = Color(0xFFE07A3F), redRole = AccentRole(Color(0xFFF3A06E), Color(0xFFE07A3F), Ink),
+            select = Color(0xFF0072B2),
+        ),
+        DayColors.copy(
+            gold = Color(0xFFF0E442), goldRole = AccentRole(Color(0xFF6B5D00), Color(0xFFF0E442), Ink),
+            green = Color(0xFF0072B2), greenRole = AccentRole(Color(0xFF005A8C), Color(0xFF0072B2), Color.White),
+            blue = Color(0xFFA64D7E), blueRole = AccentRole(Color(0xFF8E3A68), Color(0xFFA64D7E), Color.White),
+            red = Color(0xFFD55E00), redRole = AccentRole(Color(0xFFA63F00), Color(0xFFB34D00), Color.White),
+            select = Color(0xFF0072B2),
+        ),
+    );
+
+    fun colors(dark: Boolean): DuckColors = if (dark) night else day
+
+    companion object {
+        fun of(index: Int): DuckPalette = entries.getOrElse(index) { SLATE_GOLD }
+    }
+}
+
 /** Mode enfant : bleu ciel très doux, cases menthe et vanille, boutons denses à texte blanc lisible. */
 val KidColors = DuckColors(
     dark = false,
@@ -206,32 +273,15 @@ private fun Color.compositeOver(bg: Color): Color {
     return Color(red * a + bg.red * (1 - a), green * a + bg.green * (1 - a), blue * a + bg.blue * (1 - a), 1f)
 }
 
-/** Palette dérivée des couleurs dynamiques Material You (Android 12+) ; accents et échiquier ChessDuck conservés. */
-private fun dynamicDuck(base: DuckColors, s: ColorScheme) = base.copy(
-    bg = s.background, surface = s.surfaceContainer, surfaceSubtle = s.surfaceContainerLow, surfaceHi = s.surfaceContainerHighest,
-    text = s.onSurface, muted = s.onSurfaceVariant, outline = s.outlineVariant, outlineStrong = s.outline,
-)
-
 /**
  * Thème ChessDuck : [dark] Nuit/Jour, [kid] mode enfant (palette dédiée et police Fredoka),
- * [dynamic] couleurs Material You sur Android 12+ (désactivées par défaut pour préserver la charte).
+ * [palette] palette choisie dans les Paramètres (sans effet en mode enfant).
  */
 @Composable
-fun ChessDuckTheme(dark: Boolean, kid: Boolean = false, dynamic: Boolean = false, content: @Composable () -> Unit) {
-    var c = when {
-        kid -> KidColors
-        dark -> NightColors
-        else -> DayColors
-    }
-    var scheme = schemeOf(c)
-    if (dynamic && !kid && Build.VERSION.SDK_INT >= 31) {
-        val ctx = LocalContext.current
-        val dyn = if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
-        c = dynamicDuck(c, dyn)
-        scheme = schemeOf(c)
-    }
+fun ChessDuckTheme(dark: Boolean, kid: Boolean = false, palette: DuckPalette = DuckPalette.SLATE_GOLD, content: @Composable () -> Unit) {
+    val c = if (kid) KidColors else palette.colors(dark)
     val font = if (kid) Fredoka else null
     CompositionLocalProvider(LocalDuck provides c, LocalDuckFont provides font) {
-        MaterialTheme(colorScheme = scheme, typography = duckTypography(font), content = content)
+        MaterialTheme(colorScheme = schemeOf(c), typography = duckTypography(font), content = content)
     }
 }
