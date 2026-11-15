@@ -10,6 +10,7 @@ import com.ivanherboch.chessduck.feature.GameLogic
 import com.ivanherboch.chessduck.feature.NotationExercise
 import com.ivanherboch.chessduck.feature.NotationLogic
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -151,5 +152,30 @@ class ChessTest {
             n++
         }
         assertEquals(150_000, n)
+    }
+
+    @Test
+    fun enPassantFollowsTheRules() {
+        // Permise seulement juste après l'avance de deux cases ; le pion pris disparaît.
+        val l = Line.fromSan(START_FEN, "e4 a6 e5 d5".split(" "))
+        assertTrue(l.last.isLegal(Move.fromUci("e5d6")))
+        val ep = l.last.play(Move.fromUci("e5d6"))
+        assertEquals(0, ep[35]) // d5 vidée
+        val late = Line.fromSan(START_FEN, "e4 a6 e5 d5 Nf3 h6".split(" "))
+        assertFalse(late.last.isLegal(Move.fromUci("e5d6"))) // trop tard : le droit est perdu
+        // Interdite si elle expose son propre roi (clouage sur la rangée par la tour h5).
+        val pinned = Position.fromFen("8/8/8/KPp4r/8/8/8/7k w - c6 0 1")
+        assertFalse(pinned.isLegal(Move.fromUci("b5c6")))
+        // La répétition ne tient compte du droit de prise en passant que s'il est réellement jouable.
+        assertEquals(Position.fromFen("4k3/8/8/8/4P3/8/8/4K3 b - e3 0 1").key, Position.fromFen("4k3/8/8/8/4P3/8/8/4K3 b - - 0 1").key)
+    }
+
+    @Test
+    fun stalemateIsADraw() {
+        val l = Line.fromSan("7k/8/5QK1/8/8/8/8/8 w - - 0 1", listOf("Qf7"))
+        assertTrue(l.last.legalMoves.isEmpty() && !l.last.inCheck)
+        assertEquals(GameEnd.STALEMATE, l.end())
+        assertEquals("pat", GameLogic.endText(GameEnd.STALEMATE))
+        assertEquals(0, Analysis.decided(l.last, GameEnd.STALEMATE).eval)
     }
 }
