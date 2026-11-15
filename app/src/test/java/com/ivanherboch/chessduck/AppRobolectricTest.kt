@@ -404,8 +404,14 @@ class AppRobolectricTest {
         val mates = com.ivanherboch.chessduck.content.PuzzleThemes.all.filter { it.group == com.ivanherboch.chessduck.content.PuzzleThemes.G_MATE }.map { it.name }
         val seen = HashSet<String>()
         repeat(16) {
-            rule.waitUntil(10_000) { rule.onAllNodesWithText("Révéler le thème").fetchSemanticsNodes().isNotEmpty() }
-            rule.onNodeWithText("Révéler le thème").performClick(); settle(600)
+            // Un problème déjà révélé plus tôt (tirage au hasard) affiche directement son thème : rien à révéler.
+            rule.waitUntil(10_000) {
+                rule.onAllNodesWithText("Révéler le thème").fetchSemanticsNodes().isNotEmpty() ||
+                    rule.onAllNodesWithText("Type de problème : ", substring = true).fetchSemanticsNodes().isNotEmpty()
+            }
+            if (rule.onAllNodesWithText("Révéler le thème").fetchSemanticsNodes().isNotEmpty()) {
+                rule.onNodeWithText("Révéler le thème").performClick(); settle(600)
+            }
             rule.waitUntil(10_000) { rule.onAllNodesWithText("Type de problème : ", substring = true).fetchSemanticsNodes().isNotEmpty() }
             val shown = mates.filter { name -> rule.onAllNodesWithText("Type de problème : $name").fetchSemanticsNodes().isNotEmpty() }
             assertEquals(1, shown.size)
