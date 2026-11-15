@@ -242,6 +242,8 @@ class Position(
     fun isLegal(m: Move) = legalMoves.contains(m)
     fun isCapture(m: Move) = board[m.to] != 0 || isEnPassant(m)
     fun isEnPassant(m: Move) = pieceType(board[m.from]) == PAWN && m.to == ep && board[m.to] == 0 && fileOf(m.from) != fileOf(m.to)
+    /** Type (sans couleur) de la pièce prise par [m], en passant compris ; 0 si le coup ne prend rien. */
+    fun capturedType(m: Move): Int = if (isEnPassant(m)) PAWN else pieceType(board[m.to])
     fun isCastle(m: Move) = pieceType(board[m.from]) == KING && abs(fileOf(m.from) - fileOf(m.to)) == 2
     fun isPromotionMove(from: Int, to: Int) =
         pieceType(board[from]) == PAWN && (rankOf(to) == 7 || rankOf(to) == 0)

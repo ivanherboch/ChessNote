@@ -25,10 +25,9 @@ import android.graphics.Shader
 import android.graphics.Typeface
 import androidx.core.content.FileProvider
 import com.ivanherboch.chessduck.R
-import com.ivanherboch.chessduck.chess.KING
+import com.ivanherboch.chessduck.chess.BLACK
 import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.chess.Move
-import com.ivanherboch.chessduck.chess.PAWN
 import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.chess.fileOf
 import com.ivanherboch.chessduck.chess.isWhite
@@ -556,7 +555,7 @@ object ShareCard {
                 val by = y + pad
                 val glow = if (last && st.san.endsWith("#")) {
                     val after = st.before.play(st.move)
-                    (0 until 64).firstOrNull { q -> after[q] != 0 && pieceType(after[q]) == KING && isWhite(after[q]) != playerWhite } ?: -1
+                    after.kingSquare(!playerWhite)
                 } else -1
                 val at = g.board(x + (panelW - side) / 2, by, side, st.before, !playerWhite, st.prev, glow)
                 val s = side / 8
@@ -576,10 +575,8 @@ object ShareCard {
                 if (!detailed && st.replySan != null) {
                     g.text("— ${st.replySan}", sanX + g.width(st.san, titleSz, bold = true) + 12f, ty0, titleSz * 0.85f, pal.redText, bold = true)
                 }
-                val victim = when {
-                    st.before.isEnPassant(st.move) -> PAWN + (if (isWhite(st.before[st.move.from])) 8 else 0)
-                    else -> st.before[st.move.to]
-                }
+                // Pièce prise, colorée à l'opposé de celle qui joue.
+                val victim = st.before.capturedType(st.move).let { t -> if (t == 0) 0 else t + if (isWhite(st.before[st.move.from])) BLACK else 0 }
                 if (victim != 0) {
                     val ps = titleSz * 1.05f
                     val px = bx + textW - ps

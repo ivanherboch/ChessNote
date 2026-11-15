@@ -16,9 +16,9 @@ import com.ivanherboch.chessduck.chess.START_FEN
 import com.ivanherboch.chessduck.data.GameRecord
 import com.ivanherboch.chessduck.data.Settings
 import com.ivanherboch.chessduck.ui.BoardAnim
+import com.ivanherboch.chessduck.ui.LinePlaybackController
 import com.ivanherboch.chessduck.ui.Tone
 import com.ivanherboch.chessduck.ui.moveAnim
-import com.ivanherboch.chessduck.ui.undoAnim
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
@@ -251,7 +251,7 @@ class PlayViewModel(
         if (s.thinking) return
         val t = (s.cursor + delta).coerceIn(0, s.line.size)
         if (t == s.cursor) return
-        val anim = if (delta > 0) moveAnim(s.line.positions[s.cursor], s.line.moves[s.cursor]) else undoAnim(s.line.positions[t], s.line.moves[t])
+        val anim = LinePlaybackController.transition(s.line, s.cursor, t)
         _state.update { it.copy(cursor = t, anim = anim, hintStage = 0) }
         precompute()
     }

@@ -24,10 +24,8 @@ object NotationLogic {
 
     /** Niveau pédagogique d'un coup : 1 = bases, 2 = prises & échecs, 3 = roques & avancé. */
     fun levelOf(p: Position, m: Move, san: String): Int {
-        val body = san.trimEnd('+', '#')
-        val disamb = pieceType(p[m.from]) != PAWN && !p.isCastle(m) && body.replace("x", "").length > 3
         return when {
-            p.isCastle(m) || m.promo != 0 || san.endsWith("#") || p.isEnPassant(m) || disamb -> 3
+            p.isCastle(m) || m.promo != 0 || san.endsWith("#") || p.isEnPassant(m) || isDisambiguated(p, m, san) -> 3
             p.isCapture(m) || san.endsWith("+") -> 2
             else -> 1
         }
@@ -58,9 +56,13 @@ object NotationLogic {
         1 -> p.isCastle(m)
         2 -> m.promo != 0
         3 -> san.endsWith("#")
-        4 -> pieceType(p[m.from]) != PAWN && !p.isCastle(m) && san.trimEnd('+', '#').replace("x", "").length > 3
+        4 -> isDisambiguated(p, m, san)
         else -> true
     }
+
+    /** Vrai si le SAN d'une pièce (hors pion et roque) précise sa colonne ou sa rangée de départ. */
+    private fun isDisambiguated(p: Position, m: Move, san: String): Boolean =
+        pieceType(p[m.from]) != PAWN && !p.isCastle(m) && san.trimEnd('+', '#').replace("x", "").length > 3
 
     private fun nameOf(type: Int) = "${PieceLexiconFr.title(type)} (${PIECE_NAMES_EN[type]})"
 

@@ -689,31 +689,29 @@ fun ConfirmDialog(
  * Tiroir coulissant : se ferme par glissement vers le bas, appui sur l'arrière-plan ou bouton Fermer.
  * Respecte la barre de navigation Android et le clavier.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DuckSheet(title: String, onClose: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-    val c = LocalDuck.current
-    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val screenPx = LocalConfiguration.current.screenHeightDp * LocalContext.current.resources.displayMetrics.density
-    val maxH = (screenPx * 0.88f / LocalDensity.current.density).dp
-    ModalBottomSheet(onDismissRequest = onClose, sheetState = state, containerColor = c.bg, contentColor = c.text) {
-        Column(Modifier.fillMaxWidth().heightIn(max = maxH).navigationBarsPadding().imePadding().padding(horizontal = 16.dp)) {
-            Row(Modifier.fillMaxWidth().padding(bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(title, style = MaterialTheme.typography.titleLarge, color = c.text, modifier = Modifier.weight(1f).semantics { heading() }, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                DuckIconButton(Icons.Rounded.Close, "Fermer", onClose)
-            }
-            Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(bottom = 16.dp), content = content)
-        }
+fun DuckSheet(title: String, onClose: () -> Unit, content: @Composable ColumnScope.() -> Unit) =
+    DuckSheetFrame(title, onClose) { bottom ->
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = bottom), content = content)
     }
-}
 
 /**
  * Variante paresseuse de [DuckSheet] pour les longues listes (catalogues, historique) : seules les lignes
  * visibles sont composées ; [content] décrit les éléments avec des clés stables.
  */
+@Composable
+fun DuckLazySheet(title: String, onClose: () -> Unit, content: LazyListScope.() -> Unit) =
+    DuckSheetFrame(title, onClose) { bottom ->
+        LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(bottom = bottom), content = content)
+    }
+
+/**
+ * Cadre commun des feuilles : hauteur max 88 % de l'écran, en-tête titre + fermer, marges et insets.
+ * [content] reçoit la marge basse à appliquer et occupe l'espace restant (sans le forcer).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DuckLazySheet(title: String, onClose: () -> Unit, content: LazyListScope.() -> Unit) {
+private fun DuckSheetFrame(title: String, onClose: () -> Unit, content: @Composable (Dp) -> Unit) {
     val c = LocalDuck.current
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val screenPx = LocalConfiguration.current.screenHeightDp * LocalContext.current.resources.displayMetrics.density
@@ -724,7 +722,7 @@ fun DuckLazySheet(title: String, onClose: () -> Unit, content: LazyListScope.() 
                 Text(title, style = MaterialTheme.typography.titleLarge, color = c.text, modifier = Modifier.weight(1f).semantics { heading() }, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 DuckIconButton(Icons.Rounded.Close, "Fermer", onClose)
             }
-            LazyColumn(Modifier.fillMaxWidth().weight(1f, fill = false), contentPadding = PaddingValues(bottom = 16.dp), content = content)
+            Box(Modifier.fillMaxWidth().weight(1f, fill = false)) { content(16.dp) }
         }
     }
 }

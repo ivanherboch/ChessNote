@@ -81,7 +81,7 @@ object ReviewComments {
             p.isCastle(m) -> "roque pour mettre son roi à l'abri"
             m.promo != 0 -> "mène son pion à promotion et obtient ${PieceLexiconFr.indefinite(m.promo)}"
             p.isCapture(m) -> {
-                val victim = if (p.isEnPassant(m)) PAWN else pieceType(p[m.to])
+                val victim = p.capturedType(m)
                 (if (prev != null && prev.to == m.to) "reprend en capturant " else "capture ") + the(victim) + " en ${sqName(m.to)}"
             }
             p.fullmove <= 12 && (t == KNIGHT || t == BISHOP) && rankOf(m.from) == (if (v.white) 0 else 7) -> "développe ${PieceLexiconFr.possessive(t, false)}"
@@ -113,8 +113,8 @@ object ReviewComments {
         }
         // 2. Une pièce est laissée en prise.
         if (reply != null && after.isCapture(reply)) {
-            val victim = if (after.isEnPassant(reply)) PAWN else pieceType(after[reply.to])
-            val gained = if (p.isCapture(m)) PIECE_VALUES[if (p.isEnPassant(m)) PAWN else pieceType(p[m.to])] else 0
+            val victim = after.capturedType(reply)
+            val gained = if (p.isCapture(m)) PIECE_VALUES[p.capturedType(m)] else 0
             if (PIECE_VALUES[victim] > gained) {
                 val rs = after.san(reply)
                 return if (reply.to == m.to) "en jouant $san, ${v.f("tu exposes", "il expose")} ${poss(v, victim)} : $rs peut ${it(victim)} capturer."
@@ -126,7 +126,7 @@ object ReviewComments {
             val bt = pieceType(p[best.from])
             // 3. Une capture avantageuse a été manquée.
             if (p.isCapture(best)) {
-                val victim = if (p.isEnPassant(best)) PAWN else pieceType(p[best.to])
+                val victim = p.capturedType(best)
                 val free = p.attackers(best.to, !p.whiteToMove).isEmpty()
                 if (free || PIECE_VALUES[victim] >= PIECE_VALUES[bt]) {
                     return "${v.f("tu as", "il a")} manqué l'occasion de capturer ${the(victim)} en ${sqName(best.to)} avec $bs : cela ${v.f("t'", "lui ")}aurait donné l'avantage."

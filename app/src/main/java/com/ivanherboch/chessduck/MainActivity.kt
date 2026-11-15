@@ -184,6 +184,13 @@ private val TABS = listOf(
     TabSpec("Jeu Libre", { painterResource(R.drawable.ic_knight) }, { painterResource(R.drawable.ic_knight) }),
 )
 
+/** Icône et libellé d'un onglet, partagés par le rail (tablette) et la barre de navigation (téléphone). */
+@Composable
+private fun TabIcon(t: TabSpec, selected: Boolean) = Icon(if (selected) t.selectedIcon() else t.icon(), contentDescription = null)
+
+@Composable
+private fun TabLabel(t: TabSpec, maxLines: Int = Int.MAX_VALUE) = Text(t.label, style = MaterialTheme.typography.labelMedium, maxLines = maxLines)
+
 @Composable
 fun MainScreen(st: AppChrome, app: ChessDuckApp) {
     val c = LocalDuck.current
@@ -260,8 +267,8 @@ fun MainScreen(st: AppChrome, app: ChessDuckApp) {
                     TABS.forEachIndexed { i, t ->
                         NavigationRailItem(
                             selected = tab == i, onClick = { select(i) },
-                            icon = { Icon(if (tab == i) t.selectedIcon() else t.icon(), contentDescription = null) },
-                            label = { Text(t.label, style = MaterialTheme.typography.labelMedium) },
+                            icon = { TabIcon(t, tab == i) },
+                            label = { TabLabel(t) },
                             colors = NavigationRailItemDefaults.colors(
                                 selectedIconColor = c.goldRole.onFill, indicatorColor = c.goldRole.fill, selectedTextColor = c.text,
                                 unselectedIconColor = c.muted, unselectedTextColor = c.muted,
@@ -286,8 +293,8 @@ fun MainScreen(st: AppChrome, app: ChessDuckApp) {
                     TABS.forEachIndexed { i, t ->
                         NavigationBarItem(
                             selected = tab == i, onClick = { select(i) },
-                            icon = { Icon(if (tab == i) t.selectedIcon() else t.icon(), contentDescription = null) },
-                            label = { Text(t.label, style = MaterialTheme.typography.labelMedium, maxLines = 1) },
+                            icon = { TabIcon(t, tab == i) },
+                            label = { TabLabel(t, maxLines = 1) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = c.goldRole.onFill, indicatorColor = c.goldRole.fill, selectedTextColor = c.text,
                                 unselectedIconColor = c.muted, unselectedTextColor = c.muted,
