@@ -156,6 +156,20 @@ class ViewModelsTest {
         voice.finish()
         advanceTimeBy(601); runCurrent()
         assertEquals(3, vm.state.value.cursor)
+        // Pause pendant un commentaire : la voix s'arrête, puis reprend (au début de sa phrase) avec la lecture.
+        voice.spoken.clear()
+        vm.goTo(4) // la lecture automatique est toujours en cours
+        assertTrue(vm.state.value.playing)
+        vm.togglePlay()
+        assertFalse(voice.speaking.value)
+        assertFalse(vm.state.value.playing)
+        vm.togglePlay()
+        assertTrue(voice.speaking.value)
+        assertEquals(2, voice.spoken.size)
+        assertEquals(4, vm.state.value.cursor) // le coup suivant attend toujours la fin du commentaire
+        voice.finish()
+        advanceTimeBy(601); runCurrent()
+        assertEquals(5, vm.state.value.cursor)
         // Écran quitté : silence et pause.
         vm.silence()
         assertFalse(voice.speaking.value)

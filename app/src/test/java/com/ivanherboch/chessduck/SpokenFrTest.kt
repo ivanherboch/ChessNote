@@ -2,6 +2,7 @@ package com.ivanherboch.chessduck
 
 import com.ivanherboch.chessduck.chess.SpokenFr
 import com.ivanherboch.chessduck.content.Lessons
+import com.ivanherboch.chessduck.ui.Narrator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -49,5 +50,13 @@ class SpokenFrTest {
     fun noLessonKeepsAHardWordForTheVoice() {
         val hard = Regex("(?<![\\p{L}-])(pat|mat|gambit|fianchetto|zugzwang|Giuoco|Kieseritzky|Najdorf|Winawer|Tarrasch|Grünfeld)(?![\\p{L}-])", RegexOption.IGNORE_CASE)
         for (l in Lessons.all) for (t in l.texts + l.summary + l.title) assertFalse(t, hard.containsMatchIn(SpokenFr.text(t)))
+    }
+
+    @Test
+    fun pausedSpeechResumesAtTheStartOfItsSentence() {
+        val t = "Le fou sort. Il vise la case f7 : seul le roi la protège."
+        assertEquals(0, Narrator.resumePoint(t, 7)) // interrompu dans « sort » : on reprend tout le début
+        assertEquals(t.indexOf("Il vise"), Narrator.resumePoint(t, t.indexOf("case")))
+        assertEquals(t.indexOf("seul"), Narrator.resumePoint(t, t.indexOf("protège") + 3))
     }
 }

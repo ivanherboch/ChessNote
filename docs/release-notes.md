@@ -1,3 +1,9 @@
+## ChessDuck 2.4.5 — pause de la lecture vocale
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Académie : le bouton Pause met aussi la voix en pause. Avec Lecture, elle reprend au début de la phrase interrompue, jamais au milieu d'un mot, puis la leçon continue.
+
 ## ChessDuck 2.4.4 — une voix qui parle échecs
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

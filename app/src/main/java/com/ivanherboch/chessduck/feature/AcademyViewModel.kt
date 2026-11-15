@@ -160,15 +160,17 @@ class AcademyViewModel(
     fun step(delta: Int) { pause(); goTo(state.value.cursor + delta) }
     fun rewind() { pause(); goTo(0) }
 
+    /** Arrête la lecture automatique ; la voix se met en pause et reprendra au début de sa phrase. */
     fun pause() {
         playback.cancel()
+        narrator.pause()
         _state.update { it.copy(playing = false) }
     }
 
     fun togglePlay() {
         if (state.value.playing) return pause()
         playback.cancel()
-        if (state.value.cursor >= lesson.line.size) goTo(0)
+        if (state.value.cursor >= lesson.line.size) goTo(0) else narrator.resume()
         _state.update { it.copy(playing = true) }
         playback.autoplay(
             cursor = { state.value.cursor }, size = { lesson.line.size },

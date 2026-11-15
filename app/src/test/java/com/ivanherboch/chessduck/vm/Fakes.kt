@@ -117,7 +117,10 @@ class FakeNarrator : Narrator {
     override val available = MutableStateFlow<Boolean?>(true)
     override val speaking = MutableStateFlow(false)
     override fun prepare() = Unit
-    override fun speak(text: String) { spoken.add(text); speaking.value = true }
-    override fun stop() { speaking.value = false }
+    var paused: String? = null
+    override fun speak(text: String) { spoken.add(text); speaking.value = true; paused = null }
+    override fun stop() { speaking.value = false; paused = null }
+    override fun pause() { if (speaking.value) { paused = spoken.last(); speaking.value = false } }
+    override fun resume(): Boolean = paused?.let { speak(it); true } ?: false
     fun finish() { speaking.value = false }
 }
