@@ -301,7 +301,7 @@ class Position(
      * Prise en passant réellement jouable : on ne génère les coups légaux que si un pion du camp au trait
      * est à côté du pion qui vient d'avancer de deux cases (cas rare).
      */
-    private val epCaptureLegal: Boolean by lazy(LazyThreadSafetyMode.NONE) {
+    private val epCaptureLegal: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
         if (ep < 0) return@lazy false
         val pawn = if (whiteToMove) PAWN else PAWN + BLACK
         val r = if (whiteToMove) 4 else 3
@@ -311,7 +311,7 @@ class Position(
     }
 
     /** Clé de répétition : placement, trait, roques, prise en passant (calculée une fois, sans passer par toFen). */
-    val key: String by lazy(LazyThreadSafetyMode.NONE) {
+    val key: String by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val sb = StringBuilder(72)
         appendPlacement(sb)
         appendStateFields(sb)

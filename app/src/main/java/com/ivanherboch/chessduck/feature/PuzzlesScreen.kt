@@ -69,9 +69,10 @@ import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Locale
 
-private val frNumber: NumberFormat = NumberFormat.getIntegerInstance(Locale.FRANCE)
+/** NumberFormat n'est pas thread-safe : une instance par thread. */
+private val frNumber: ThreadLocal<NumberFormat> = ThreadLocal.withInitial { NumberFormat.getIntegerInstance(Locale.FRANCE) }
 
-fun fr(n: Int): String = frNumber.format(n).replace(' ', ' ').replace(' ', ' ')
+fun fr(n: Int): String = frNumber.get()!!.format(n).replace(' ', ' ').replace(' ', ' ')
 
 @Composable
 fun PuzzlesScreen(vm: PuzzlesViewModel) {

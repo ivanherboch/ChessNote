@@ -39,6 +39,7 @@ import com.ivanherboch.chessduck.content.PuzzleThemes
 import com.ivanherboch.chessduck.data.Puzzle
 import com.ivanherboch.chessduck.ui.PIECE_RES
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -109,22 +110,15 @@ object ShareCard {
             mascotCache ?: BitmapFactory.decodeResource(context.resources, R.drawable.mascot).also { mascotCache = it }
         }
 
-    private class Painter(val context: Context, val cv: Canvas, val pal: Pal = NIGHT) {
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-        private val pieces = HashMap<Int, Bitmap>()
-        fun piece(p: Int): Bitmap = pieces.getOrPut(p) { BitmapFactory.decodeResource(context.resources, PIECE_RES.getValue(p)) }
+    /** Les 12 pièces, décodées une seule fois puis partagées par toutes les images (jamais recyclées). */
+    private val pieceCache = ConcurrentHashMap<Int, Bitmap>()
 
-        fun text(s: String, x: Float, y: Float, size: Float, color: Int, bold: Boolean = false, align: Paint.Align = Paint.Align.LEFT, spacing: Float = 0f) {
-            paint.style = Paint.Style.FILL
-            paint.typeface = if (bold) BOLD else Typeface.DEFAULT
-            paint.textSize = size
-            paint.color = color
-            paint.textAlign = align
-            paint.letterSpacing = spacing
-            cv.drawText(s, x, y, paint)
-            paint.textAlign = Paint.Align.LEFT
-            paint.letterSpacing = 0f
-        }
+    private fun pieceBitmap(context: Context, p: Int): Bitmap =
+        pieceCache.getOrPut(p) { BitmapFactory.decodeResource(context.resources, PIECE_RES.getValue(p)) }
+
+    /** Mesure de texte seule, sans canevas : sert à dimensionner les images avant de les dessiner. */
+    private open class TextMetrics {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
 
         fun width(s: String, size: Float, bold: Boolean = false, spacing: Float = 0f): Float {
             paint.typeface = if (bold) BOLD else Typeface.DEFAULT
@@ -144,6 +138,22 @@ object ShareCard {
             }
             if (cur.isNotEmpty()) out.add(cur)
             return out
+        }
+    }
+
+    private class Painter(val context: Context, val cv: Canvas, val pal: Pal = NIGHT) : TextMetrics() {
+        fun piece(p: Int): Bitmap = pieceBitmap(context, p)
+
+        fun text(s: String, x: Float, y: Float, size: Float, color: Int, bold: Boolean = false, align: Paint.Align = Paint.Align.LEFT, spacing: Float = 0f) {
+            paint.style = Paint.Style.FILL
+            paint.typeface = if (bold) BOLD else Typeface.DEFAULT
+            paint.textSize = size
+            paint.color = color
+            paint.textAlign = align
+            paint.letterSpacing = spacing
+            cv.drawText(s, x, y, paint)
+            paint.textAlign = Paint.Align.LEFT
+            paint.letterSpacing = 0f
         }
 
         /** Fond dégradé, motif d'échiquier à peine visible et halo doré derrière le titre. */
@@ -380,7 +390,7 @@ object ShareCard {
     private const val EYEBROW_Y = 64f
 
     /** Titre sur une ligne si possible (taille réduite jusqu'à 44 px), sinon sur plusieurs lignes. */
-    private fun fitTitle(p: Painter, text: String, max: Float): Pair<List<String>, Float> {
+    private fun fitTitle(p: TextMetrics, text: String, max: Float): Pair<List<String>, Float> {
         val width = W - 2 * M - 56f
         var size = max
         while (size > 44f && p.width(text, size, bold = true) > width) size -= 2f
@@ -416,7 +426,7 @@ object ShareCard {
         val theme = PuzzleThemes.primary(puzzle.themes)
         val mate = line.sans.lastOrNull()?.endsWith("#") == true
         val n = playerMoves(line)
-        val probe = Painter(context, Canvas(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)), pal)
+        val probe = TextMetrics()
         val (title, titleSize) = fitTitle(probe, challenge(puzzle, line, playerWhite), if (square) 52f else 58f)
         val eyebrow = if (mate) "Problème d'échecs" else "Problème · ${coups(n)} à trouver"
         val tipSize = 28f
@@ -491,7 +501,7 @@ object ShareCard {
             Step(line.positions[i], line.moves[i], line.sans[i], line.moves[i - 1], line.moves.getOrNull(i + 1), line.sans.getOrNull(i + 1))
         }
         val n = steps.size
-        val probe = Painter(context, Canvas(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)), pal)
+        val probe = TextMetrics()
         val (title, titleSize) = fitTitle(probe, challenge(puzzle, line, playerWhite), if (square) 50f else 56f)
         val top = headerHeight(title.size, titleSize) + 4f
         val legendH = 44f

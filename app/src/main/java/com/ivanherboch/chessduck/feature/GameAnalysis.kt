@@ -40,6 +40,19 @@ class GameAnalysisService(
         return Analysis(sign * first.score, r.lines.getOrNull(1)?.let { sign * it.score }, first.move.uci)
     }
 
+    /**
+     * Range l'analyse de la partie [id] en tête du cache, borné aux [MAX_CACHED] parties les plus récentes :
+     * les plus anciennes restent relues depuis la base via [analysisOf].
+     */
+    private fun publish(id: Long, list: List<Analysis?>) = _analyses.update { m ->
+        val next = LinkedHashMap<Long, List<Analysis?>>(m)
+        next.remove(id)
+        next[id] = list
+        val it = next.keys.iterator()
+        while (next.size > MAX_CACHED && it.hasNext()) { it.next(); it.remove() }
+        next
+    }
+
     /** Analyses connues d'une partie (cache), sinon celles enregistrées avec la partie. */
     fun analysisOf(g: GameRecord, line: Line): List<Analysis?> = _analyses.value[g.id] ?: Analysis.decodeAll(g.analysis, line.size + 1)
 
@@ -52,7 +65,7 @@ class GameAnalysisService(
         job?.cancel()
         gameId = g.id
         val list = analysisOf(g, line).toMutableList()
-        _analyses.update { it + (g.id to list.toList()) }
+        publish(g.id, list.toList())
         job = scope.launch {
             var changed = false
             try {
@@ -63,12 +76,16 @@ class GameAnalysisService(
                     list[i] = a
                     changed = true
                     val snapshot = list.toList()
-                    _analyses.update { it + (g.id to snapshot) }
+                    publish(g.id, snapshot)
                 }
             } finally {
                 // Même interrompue, l'analyse déjà faite est conservée.
                 if (changed) withContext(NonCancellable) { games.saveAnalysis(g.id, Analysis.encodeAll(list)) }
             }
         }
+    }
+
+    private companion object {
+        const val MAX_CACHED = 20
     }
 }

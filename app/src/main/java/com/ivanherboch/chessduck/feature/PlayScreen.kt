@@ -80,8 +80,9 @@ import com.ivanherboch.chessduck.ui.ModuleLayout
 import com.ivanherboch.chessduck.ui.MoveStrip
 import com.ivanherboch.chessduck.ui.PlayerBar
 import com.ivanherboch.chessduck.ui.Tone
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /** Couleurs des badges d'annotation (texte blanc ≥ 4,5:1). */
@@ -453,7 +454,10 @@ private fun MoveTable(line: Line, cursor: Int, notes: List<String?>, onSelect: (
     }
 }
 
-internal fun formatDate(t: Long): String = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRANCE).format(Date(t))
+/** Formateur immuable et thread-safe, partagé par tous les appels. */
+private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.FRANCE)
+
+internal fun formatDate(t: Long): String = DATE_FORMAT.format(Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault()))
 
 /** Action destructive en attente de confirmation dans le Jeu Libre. */
 private enum class ConfirmAction { RESIGN, NEW_GAME }

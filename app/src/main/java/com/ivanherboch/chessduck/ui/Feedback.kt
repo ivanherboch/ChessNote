@@ -9,12 +9,13 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.ivanherboch.chessduck.R
+import java.io.Closeable
 
 /**
  * Retours sensoriels : un unique son feutré de pièce en bois (aucun bip, aucun son de réussite)
  * et des vibrations subtiles (coup, touche, double vibration d'erreur, succès).
  */
-class Feedback(context: Context) {
+class Feedback(context: Context) : Closeable {
     private val pool = SoundPool.Builder().setMaxStreams(3).setAudioAttributes(
         AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
@@ -49,6 +50,9 @@ class Feedback(context: Context) {
     fun key() = buzz(VibrationEffect.createOneShot(8, 45))
     fun error() = buzz(VibrationEffect.createWaveform(longArrayOf(0, 35, 70, 35), intArrayOf(0, 150, 0, 150), -1))
     fun success() = buzz(VibrationEffect.createOneShot(45, 130))
+
+    /** Libère le SoundPool natif ; l'instance ne doit plus être utilisée ensuite. */
+    override fun close() = pool.release()
 }
 
 val LocalFeedback = staticCompositionLocalOf<Feedback?> { null }
