@@ -19,6 +19,7 @@ import com.ivanherboch.chessduck.engine.MATE
 import com.ivanherboch.chessduck.ui.evalShort
 import com.ivanherboch.chessduck.ui.DuckPalette
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -101,27 +102,45 @@ class ViewModelsTest {
     }
 
     @Test
-    fun kidPieceCardsAreReadOnceWhenParentsAllowIt() = test {
+    fun kidPieceStepsAreSpokenInSyncOnlyWhenParentsAllowIt() = test {
         val prefs = FakeSettings()
         val voice = FakeNarrator()
         var now = 0L
         val vm = KidViewModel(prefs, voice) { now }
         runCurrent()
-        vm.pieceShown(6, "Le **Roi** avance d'une case.")
-        assertTrue(voice.spoken.isEmpty()) // désactivé par défaut
+        // Voix désactivée (par défaut) : rien n'est dit et l'animation n'attend jamais.
+        vm.pieceShown(5)
+        vm.say(5, "La **Dame** va **tout droit**.")
+        vm.awaitVoice(5)
+        assertTrue(voice.spoken.isEmpty())
         prefs.setKidNarration(true); runCurrent()
-        vm.pieceShown(6, "Le **Roi** avance d'une case.")
-        assertEquals(listOf("Le Roi avance d'une case."), voice.spoken)
+        // Voix activée : chaque étape est annoncée quand elle commence, et l'étape suivante attend la fin de la phrase.
+        vm.pieceShown(5)
+        vm.say(5, "La **Dame** va **tout droit**.")
+        assertEquals(listOf("La Dame va tout droit."), voice.spoken)
+        val waiting = async { vm.awaitVoice(5) }
+        runCurrent()
+        assertFalse(waiting.isCompleted)
+        voice.finish(); runCurrent()
+        assertTrue(waiting.isCompleted)
+        // Premier tour terminé : les tours suivants sont silencieux.
+        vm.voiceDone(5)
+        vm.say(5, "La **Dame** va **tout droit**.")
+        assertEquals(1, voice.spoken.size)
+        // Même pièce rouverte tout de suite : pas de commentaire ; fermer la fiche coupe la voix.
         vm.pieceClosed()
-        assertFalse(voice.speaking.value) // fermer la fiche coupe la voix
         now += 10_000
-        vm.pieceShown(6, "Le **Roi** avance d'une case.")
-        assertEquals(1, voice.spoken.size) // la même pièce rouverte tout de suite : pas de nouvelle lecture
-        vm.pieceShown(5, "La **Dame** va partout.")
-        assertEquals(2, voice.spoken.size) // une autre pièce est lue
+        vm.pieceShown(5)
+        vm.say(5, "La **Dame** va **tout droit**.")
+        assertEquals(1, voice.spoken.size)
+        // Une autre pièce est commentée ; après le temps de calme, la Dame peut l'être de nouveau.
+        vm.pieceShown(1)
+        vm.say(1, "Le **Pion** avance.")
+        assertEquals(2, voice.spoken.size)
         now += 30_000
-        vm.pieceShown(5, "La **Dame** va partout.")
-        assertEquals(3, voice.spoken.size) // après le temps de calme, elle peut être relue
+        vm.pieceShown(5)
+        vm.say(5, "La **Dame** va **tout droit**.")
+        assertEquals(3, voice.spoken.size)
     }
 
     @Test

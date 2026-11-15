@@ -1,3 +1,12 @@
+## ChessDuck 2.4.7 — fiches du mode enfant parlées au bon moment
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Mode enfant : les explications des pièces sont réécrites pour l'oral (plus de parenthèses, nombres en lettres).
+- La voix suit l'animation : chaque façon de bouger est annoncée au moment où on la voit (la Dame tout droit, puis en diagonale ; le Pion d'une case, de deux cases, puis la prise). L'étape suivante attend la fin de la phrase. Sans voix, le rythme de l'animation ne change pas.
+- La jauge d'évaluation et les noms des joueurs restent alignés avec l'échiquier, même avec une grande taille de police.
+- Nettoyage du code : fonctions jamais utilisées supprimées, réglages de voix factorisés.
+
 ## ChessDuck 2.4.6 — une voix douce pour le mode enfant
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

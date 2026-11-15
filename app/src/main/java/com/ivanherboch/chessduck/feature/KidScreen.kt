@@ -95,16 +95,16 @@ import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.LocalFeedback
 import com.ivanherboch.chessduck.ui.ModuleLayout
 
-/** Une pièce du mode enfant : couleurs de sa carte, couleur du texte et phrase d'explication (**gras**). */
-internal class KidPiece(val type: Int, val name: String, val bg: Color, val edge: Color, val ink: Color, val article: String, val text: String)
+/** Une pièce du mode enfant : couleurs de sa carte et de son texte (l'explication est dans KidDemo, étape par étape). */
+internal class KidPiece(val type: Int, val name: String, val bg: Color, val edge: Color, val ink: Color, val article: String)
 
 internal val KID_LEGEND = listOf(
-    KidPiece(KING, "Roi", Color(0xFFFFE08A), Color(0xFFF2B705), Color(0xFF8A5A00), "Le Roi", "Le **Roi** avance d'**une seule case**, dans **toutes les directions**."),
-    KidPiece(QUEEN, "Dame", Color(0xFFFFC2D4), Color(0xFFFF7AA2), Color(0xFFD6336C), "La Dame", "La **Dame** va **tout droit** ou **en diagonale**, aussi loin qu'elle veut."),
-    KidPiece(ROOK, "Tour", Color(0xFFBFE6FF), Color(0xFF4DB5F5), Color(0xFF1971C2), "La Tour", "La **Tour** va **tout droit** : devant, derrière ou sur les côtés, aussi loin qu'elle veut."),
-    KidPiece(BISHOP, "Fou", Color(0xFFD9C8FF), Color(0xFF9B7BFF), Color(0xFF6741D9), "Le Fou", "Le **Fou** glisse **en diagonale**, aussi loin qu'il veut."),
-    KidPiece(KNIGHT, "Cavalier", Color(0xFFFFD3A8), Color(0xFFFF9F43), Color(0xFFC2410C), "Le Cavalier", "Le **Cavalier** saute en forme de **L** : 2 cases tout droit, puis 1 sur le côté. Il peut **sauter par-dessus** les autres pièces !"),
-    KidPiece(PAWN, "Pion", Color(0xFFC9F2B0), Color(0xFF6CCB3A), Color(0xFF237A36), "Le Pion", "Le **Pion** avance **tout droit** d'une case (2 cases la première fois). Il mange **en diagonale** !"),
+    KidPiece(KING, "Roi", Color(0xFFFFE08A), Color(0xFFF2B705), Color(0xFF8A5A00), "Le Roi"),
+    KidPiece(QUEEN, "Dame", Color(0xFFFFC2D4), Color(0xFFFF7AA2), Color(0xFFD6336C), "La Dame"),
+    KidPiece(ROOK, "Tour", Color(0xFFBFE6FF), Color(0xFF4DB5F5), Color(0xFF1971C2), "La Tour"),
+    KidPiece(BISHOP, "Fou", Color(0xFFD9C8FF), Color(0xFF9B7BFF), Color(0xFF6741D9), "Le Fou"),
+    KidPiece(KNIGHT, "Cavalier", Color(0xFFFFD3A8), Color(0xFFFF9F43), Color(0xFFC2410C), "Le Cavalier"),
+    KidPiece(PAWN, "Pion", Color(0xFFC9F2B0), Color(0xFF6CCB3A), Color(0xFF237A36), "Le Pion"),
 )
 
 // Couleurs denses : texte blanc ≥ 4,5:1 (face) et bordure basse plus sombre (effet « coussin »).
@@ -234,7 +234,7 @@ private fun KidGame(vm: KidViewModel, onQuit: () -> Unit) {
     // Leçon animée ouverte en touchant une carte ; la partie en cours est conservée.
     var demo by rememberSaveable { mutableIntStateOf(0) }
     // Voix des fiches : lue à l'ouverture, coupée à la fermeture et dès que l'écran n'est plus visible.
-    LaunchedEffect(demo) { KID_LEGEND.firstOrNull { it.type == demo }?.let { vm.pieceShown(it.type, it.text) } ?: vm.pieceClosed() }
+    LaunchedEffect(demo) { if (demo == 0) vm.pieceClosed() }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { vm.pieceClosed() }
     DisposableEffect(vm) { onDispose { vm.pieceClosed() } }
     // Message bref quand l'enfant touche une pièce qui ne peut pas bouger.
@@ -243,7 +243,7 @@ private fun KidGame(vm: KidViewModel, onQuit: () -> Unit) {
     AnimatedContent(demo, label = "leçon", transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(140)) }) { shown ->
         val piece = KID_LEGEND.firstOrNull { it.type == shown }
         if (piece != null) {
-            KidDemo(piece) { demo = 0 }
+            KidDemo(piece, vm) { demo = 0 }
             return@AnimatedContent
         }
         ModuleLayout(

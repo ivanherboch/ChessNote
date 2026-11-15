@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ivanherboch.chessduck.data.GameRecord
 import com.ivanherboch.chessduck.ui.Arrow
 import com.ivanherboch.chessduck.ui.BoardRow
+import com.ivanherboch.chessduck.ui.evalBarSpace
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.ConfirmDialog
 import com.ivanherboch.chessduck.ui.DuckButton
@@ -126,7 +127,7 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                 DuckIconButton(Icons.Rounded.Tune, "Paramètres de partie", { gameSettings = true })
             }
         },
-        overBoard = { Box(Modifier.padding(start = if (s.evalOn) 30.dp else 0.dp)) { bar(s.flipped) } },
+        overBoard = { Box(Modifier.padding(start = if (s.evalOn) evalBarSpace() else 0.dp)) { bar(s.flipped) } },
         board = {
             val cur = s.cursor
             val last = if (cur > 0) s.line.moves[cur - 1] else null
@@ -146,7 +147,7 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                 )
             }
         },
-        underBoard = { Box(Modifier.padding(start = if (s.evalOn) 30.dp else 0.dp)) { bar(!s.flipped) } },
+        underBoard = { Box(Modifier.padding(start = if (s.evalOn) evalBarSpace() else 0.dp)) { bar(!s.flipped) } },
         bottom = {
             MoveStrip(
                 s.line, s.cursor, Modifier.padding(top = 2.dp), onSelect = vm::goTo, onPrev = vm::back, onNext = vm::forward,

@@ -245,8 +245,6 @@ class Position(
     /** Type (sans couleur) de la pièce prise par [m], en passant compris ; 0 si le coup ne prend rien. */
     fun capturedType(m: Move): Int = if (isEnPassant(m)) PAWN else pieceType(board[m.to])
     fun isCastle(m: Move) = pieceType(board[m.from]) == KING && abs(fileOf(m.from) - fileOf(m.to)) == 2
-    fun isPromotionMove(from: Int, to: Int) =
-        pieceType(board[from]) == PAWN && (rankOf(to) == 7 || rankOf(to) == 0)
 
     /** Joue le coup (supposé pseudo-légal) et renvoie la nouvelle position. */
     fun play(m: Move): Position {
@@ -284,7 +282,6 @@ class Position(
     }
 
     val isCheckmate: Boolean get() = inCheck && legalMoves.isEmpty()
-    val isStalemate: Boolean get() = !inCheck && legalMoves.isEmpty()
 
     val insufficientMaterial: Boolean
         get() {
@@ -400,8 +397,6 @@ class Position(
         private val K_DF = intArrayOf(1, 1, 1, 0, -1, -1, -1, 0)
         private val K_DR = intArrayOf(1, 0, -1, -1, -1, 0, 1, 1)
 
-        val START: Position by lazy { fromFen(START_FEN) }
-
         private val FEN_WHITESPACE = Regex("\\s+")
 
         fun fromFen(fen: String): Position {
@@ -503,7 +498,6 @@ class Line private constructor(
             }
             return l
         }
-
 
         /** Construit une ligne depuis des coups SAN ; lève une exception si un coup est illégal. */
         fun fromSan(startFen: String, sans: List<String>): Line {

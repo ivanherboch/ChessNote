@@ -126,6 +126,14 @@ internal fun PseudoField(label: String, initial: String, fallback: String, onSav
     )
 }
 
+/** Interrupteur d'une voix : grisé, avec une explication, si aucune voix française hors-ligne n'est installée. */
+@Composable
+private fun VoiceSwitch(title: String, description: String, checked: Boolean, voice: Boolean?, onChange: (Boolean) -> Unit) =
+    SwitchRow(
+        title, if (voice == false) "Aucune voix française hors-ligne n'est installée sur ce téléphone." else description,
+        checked && voice != false, enabled = voice != false, onChange = onChange,
+    )
+
 /**
  * Paramètres globaux (persistés via DataStore), collectés uniquement pendant que le tiroir est ouvert.
  * Les réglages sont écrits dans [scope], la portée de l'application : fermer le tiroir n'annule jamais l'écriture.
@@ -151,11 +159,9 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
                 "animations qui montrent comment chaque pièce bouge, sans ordinateur ni historique.",
             color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp),
         )
-        SwitchRow(
-            "Voix en mode enfant",
-            if (voice == false) "Aucune voix française hors-ligne n'est installée sur ce téléphone."
-            else "Lit une seule fois la présentation d'une pièce quand l'enfant l'ouvre. Rien n'est lu pendant les parties.",
-            st.kidNarration && voice != false, enabled = voice != false,
+        VoiceSwitch(
+            "Voix en mode enfant", "Lit chaque façon de bouger au moment où l'enfant la voit, une seule fois. Rien n'est lu pendant les parties.",
+            st.kidNarration, voice,
         ) { v -> scope.launch { prefs.setKidNarration(v) } }
 
         SectionTitle("Apparence")
@@ -172,12 +178,9 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
         SectionTitle("Sons et vibrations")
         SwitchRow("Bruit des pièces", "Petit bruit de bois quand une pièce se pose.", st.sound) { v -> scope.launch { prefs.setSound(v) } }
         SwitchRow("Vibrations", "Retour haptique au toucher, aux erreurs et aux réussites.", st.haptics) { v -> scope.launch { prefs.setHaptics(v) } }
-        SwitchRow(
-            "Lecture vocale des leçons",
-            if (voice == false) "Aucune voix française hors-ligne n'est installée sur ce téléphone."
-            else "L'Académie lit à voix haute les commentaires du mode Guidé.",
-            st.narration && voice != false, enabled = voice != false,
-        ) { v -> scope.launch { prefs.setNarration(v) } }
+        VoiceSwitch("Lecture vocale des leçons", "L'Académie lit à voix haute les commentaires du mode Guidé.", st.narration, voice) { v ->
+            scope.launch { prefs.setNarration(v) }
+        }
         if (voice == false) {
             DuckButton(
                 "Installer une voix française",

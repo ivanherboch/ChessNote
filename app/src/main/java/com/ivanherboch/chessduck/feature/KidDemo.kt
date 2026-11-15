@@ -77,8 +77,12 @@ import com.ivanherboch.chessduck.ui.LocalDuckFont
 import com.ivanherboch.chessduck.ui.LocalFeedback
 import com.ivanherboch.chessduck.ui.ModuleLayout
 
-/** Une étape de démonstration : case de départ, trajets (suite de cases), cases à signaler, pièce à manger. */
+/**
+ * Une étape de démonstration : la phrase qui l'explique (**mots importants** en gras, écrite pour être dite
+ * à voix haute), la case de départ, les trajets (suite de cases), les cases à signaler et la pièce à manger.
+ */
 private class DemoPhase(
+    val say: String,
     val home: Pair<Int, Int>,
     val paths: List<List<Pair<Int, Int>>>,
     val dots: List<Pair<Int, Int>>,
@@ -102,26 +106,33 @@ private fun demoPhases(type: Int): List<DemoPhase> {
     val home = 3 to 3 // d4
     fun rays(dirs: List<Pair<Int, Int>>) = dirs.map { ray(home, it.first, it.second) }
     return when (type) {
-        ROOK -> listOf(DemoPhase(home, rays(STRAIGHT), rays(STRAIGHT).flatten()))
-        BISHOP -> listOf(DemoPhase(home, rays(DIAGONAL), rays(DIAGONAL).flatten()))
+        ROOK -> listOf(
+            DemoPhase("La **Tour** va **tout droit** : devant, derrière ou sur les côtés, aussi loin qu'elle veut.", home, rays(STRAIGHT), rays(STRAIGHT).flatten()),
+        )
+        BISHOP -> listOf(DemoPhase("Le **Fou** glisse **en diagonale**, aussi loin qu'il veut.", home, rays(DIAGONAL), rays(DIAGONAL).flatten()))
         // La Dame : d'abord tout droit, puis en diagonale.
         QUEEN -> listOf(
-            DemoPhase(home, rays(STRAIGHT.take(2)), rays(STRAIGHT).flatten()),
-            DemoPhase(home, rays(listOf(1 to 1, -1 to -1)), rays(DIAGONAL).flatten()),
+            DemoPhase("La **Dame** va **tout droit**, aussi loin qu'elle veut.", home, rays(STRAIGHT.take(2)), rays(STRAIGHT).flatten()),
+            DemoPhase("Elle va aussi **en diagonale**, aussi loin qu'elle veut.", home, rays(listOf(1 to 1, -1 to -1)), rays(DIAGONAL).flatten()),
         )
         KING -> {
             val steps = (STRAIGHT + DIAGONAL).map { home.first + it.first to home.second + it.second }
-            listOf(DemoPhase(home, listOf(0, 4, 1, 5, 2, 6, 3, 7).map { listOf(steps[it]) }, steps))
+            listOf(DemoPhase("Le **Roi** avance d'**une seule case**, dans **toutes les directions**.", home, listOf(0, 4, 1, 5, 2, 6, 3, 7).map { listOf(steps[it]) }, steps))
         }
         KNIGHT -> {
             val jumps = listOf(1 to 2, 2 to -1, -1 to -2, -2 to 1, 2 to 1, 1 to -2, -2 to -1, -1 to 2).map { home.first + it.first to home.second + it.second }
-            listOf(DemoPhase(home, jumps.take(4).map { listOf(it) }, jumps))
+            listOf(
+                DemoPhase(
+                    "Le **Cavalier** saute en forme de **L** : deux cases tout droit, puis une sur le côté. Il peut **sauter par-dessus** les autres pièces !",
+                    home, jumps.take(4).map { listOf(it) }, jumps,
+                ),
+            )
         }
         else -> listOf(
             // Le Pion : un pas, puis deux pas depuis sa case de départ, puis une prise en diagonale.
-            DemoPhase(3 to 1, listOf(listOf(3 to 2)), listOf(3 to 2)),
-            DemoPhase(3 to 1, listOf(listOf(3 to 3)), listOf(3 to 2, 3 to 3)),
-            DemoPhase(3 to 3, listOf(listOf(4 to 4)), listOf(4 to 4), enemy = 4 to 4),
+            DemoPhase("Le **Pion** avance **tout droit**, d'une seule case.", 3 to 1, listOf(listOf(3 to 2)), listOf(3 to 2)),
+            DemoPhase("La première fois qu'il bouge, il peut avancer de **deux cases**.", 3 to 1, listOf(listOf(3 to 3)), listOf(3 to 2, 3 to 3)),
+            DemoPhase("Et il mange **en diagonale** !", 3 to 3, listOf(listOf(4 to 4)), listOf(4 to 4), enemy = 4 to 4),
         )
     }
 }
@@ -136,9 +147,11 @@ private fun boldText(src: String): AnnotatedString = buildAnnotatedString {
 /**
  * Leçon animée d'une pièce : seule sur un échiquier vide, elle rejoue en boucle, en sautillant,
  * ses différents types de coups. Ni promotion ni prise en passant : trop compliqué pour un enfant.
+ * Si la voix est activée, chaque type de coup est annoncé au moment où il est montré (premier tour seulement) ;
+ * sinon le rythme de l'animation est inchangé.
  */
 @Composable
-internal fun KidDemo(piece: KidPiece, onClose: () -> Unit) {
+internal fun KidDemo(piece: KidPiece, vm: KidViewModel, onClose: () -> Unit) {
     val c = LocalDuck.current
     BackHandler(onBack = onClose)
     val images = rememberPieceImages(kid = true)
@@ -152,8 +165,10 @@ internal fun KidDemo(piece: KidPiece, onClose: () -> Unit) {
     val t = remember { Animatable(1f) }
 
     LaunchedEffect(piece.type) {
+        vm.pieceShown(piece.type)
         while (true) {
             for (ph in phases) {
+                vm.say(piece.type, ph.say)
                 for (path in ph.paths) {
                     phase = ph; from = ph.home; to = ph.home; enemyAlive = true; target = path.last()
                     t.snapTo(1f)
@@ -170,9 +185,13 @@ internal fun KidDemo(piece: KidPiece, onClose: () -> Unit) {
                     }
                     delay(650)
                 }
+                // La phrase de cette étape se termine avant de passer à la suivante : voix et image restent synchrones.
+                vm.awaitVoice(piece.type)
             }
+            vm.voiceDone(piece.type)
         }
     }
+    val explanation = remember(piece.type) { boldText(phases.joinToString(" ") { it.say }) }
 
     ModuleLayout(
         bottomMin = 190.dp,
@@ -250,7 +269,7 @@ internal fun KidDemo(piece: KidPiece, onClose: () -> Unit) {
                 ) {
                     // Le texte reprend la couleur de la carte touchée ; les mots importants sont en gras.
                     BasicText(
-                        boldText(piece.text),
+                        explanation,
                         style = TextStyle(color = piece.ink, fontFamily = LocalDuckFont.current, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, lineHeight = 1.25.em),
                         autoSize = TextAutoSize.StepBased(minFontSize = 13.sp, maxFontSize = 22.sp, stepSize = 0.5.sp),
                     )

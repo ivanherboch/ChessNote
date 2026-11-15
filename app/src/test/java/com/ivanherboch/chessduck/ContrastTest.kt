@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import com.ivanherboch.chessduck.feature.KID_LEGEND
 import com.ivanherboch.chessduck.feature.KidBlue
 import com.ivanherboch.chessduck.feature.KidCoral
@@ -11,13 +12,19 @@ import com.ivanherboch.chessduck.ui.DayColors
 import com.ivanherboch.chessduck.ui.DuckColors
 import com.ivanherboch.chessduck.ui.KidColors
 import com.ivanherboch.chessduck.ui.NightColors
-import com.ivanherboch.chessduck.ui.contrast
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** Contrastes WCAG 2.1 AA des palettes Nuit, Jour et Enfant : 4,5:1 pour le texte, 3:1 pour les bordures interactives. */
 class ContrastTest {
     private val failures = ArrayList<String>()
+
+    /** Rapport de contraste WCAG entre deux couleurs opaques (luminance relative sRGB). */
+    private fun contrast(a: Color, b: Color): Float {
+        val la = a.luminance()
+        val lb = b.luminance()
+        return (maxOf(la, lb) + 0.05f) / (minOf(la, lb) + 0.05f)
+    }
 
     private fun Color.over(bg: Color): Color = Color(red * alpha + bg.red * (1 - alpha), green * alpha + bg.green * (1 - alpha), blue * alpha + bg.blue * (1 - alpha), 1f)
 

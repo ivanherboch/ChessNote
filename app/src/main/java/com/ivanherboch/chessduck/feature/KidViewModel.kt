@@ -54,22 +54,42 @@ class KidViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
     private var lastPiece = 0
     private var lastSpokenAt = 0L
+    /** Pièce dont la fiche est en train d'être commentée à voix haute (0 : aucune). */
+    private var voiceFor = 0
 
     /**
-     * Fiche d'une pièce ouverte : son explication est lue une fois. Rouvrir la même pièce dans les
+     * Fiche d'une pièce ouverte : son premier tour d'animation sera commenté. Rouvrir la même pièce dans les
      * [REPEAT_COOLDOWN_MS] qui suivent ne relance pas la voix ; une autre pièce coupe la précédente.
      */
-    fun pieceShown(type: Int, text: String) {
+    fun pieceShown(type: Int) {
         if (!kidNarration.value) return
         val now = clock()
         if (type == lastPiece && now - lastSpokenAt < REPEAT_COOLDOWN_MS) return
         lastPiece = type
         lastSpokenAt = now
-        narrator.speak(SpokenFr.text(text))
+        voiceFor = type
+    }
+
+    /** Phrase d'une étape de l'animation, dite au moment où elle commence (si la fiche est commentée). */
+    fun say(type: Int, sentence: String) {
+        if (voiceFor == type) narrator.speak(SpokenFr.text(sentence))
+    }
+
+    /** Attend la fin de la phrase en cours avant l'étape suivante ; sans voix, ne fait rien (rythme inchangé). */
+    suspend fun awaitVoice(type: Int) {
+        if (voiceFor == type) narrator.awaitIdle()
+    }
+
+    /** Premier tour d'animation terminé : les tours suivants sont silencieux. */
+    fun voiceDone(type: Int) {
+        if (voiceFor == type) voiceFor = 0
     }
 
     /** Fiche fermée, écran quitté ou application en arrière-plan : la voix se tait aussitôt. */
-    fun pieceClosed() = narrator.stop()
+    fun pieceClosed() {
+        voiceFor = 0
+        narrator.stop()
+    }
 
     override fun onCleared() = narrator.stop()
 

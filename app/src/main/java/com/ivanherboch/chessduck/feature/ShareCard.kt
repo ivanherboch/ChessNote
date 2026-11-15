@@ -198,22 +198,6 @@ object ShareCard {
             paint.style = Paint.Style.FILL
         }
 
-        /** Pastille contour (ex. « 2 coups à trouver ») ; renvoie sa largeur. */
-        fun chip(label: String, x: Float, y: Float, color: Int): Float {
-            val size = 30f
-            val w = width(label, size, bold = true) + 44f
-            val r = RectF(x, y, x + w, y + 56f)
-            paint.style = Paint.Style.FILL
-            paint.color = Color.argb(if (pal.light) 22 else 30, Color.red(color), Color.green(color), Color.blue(color))
-            cv.drawRoundRect(r, 28f, 28f, paint)
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = 2.5f
-            paint.color = Color.argb(150, Color.red(color), Color.green(color), Color.blue(color))
-            cv.drawRoundRect(r, 28f, 28f, paint)
-            text(label, x + 22f, y + 39f, size, color, bold = true)
-            return w
-        }
-
         fun panel(r: RectF, accent: Int? = null) {
             paint.style = Paint.Style.FILL
             paint.color = pal.surface

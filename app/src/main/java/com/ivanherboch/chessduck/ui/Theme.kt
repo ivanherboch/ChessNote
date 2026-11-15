@@ -82,13 +82,6 @@ data class DuckColors(
     }
 }
 
-/** Rapport de contraste WCAG entre deux couleurs opaques (luminance relative sRGB). */
-fun contrast(a: Color, b: Color): Float {
-    val la = a.luminance()
-    val lb = b.luminance()
-    return (maxOf(la, lb) + 0.05f) / (minOf(la, lb) + 0.05f)
-}
-
 private val Ink = Color(0xFF0F172A)
 
 val NightColors = DuckColors(

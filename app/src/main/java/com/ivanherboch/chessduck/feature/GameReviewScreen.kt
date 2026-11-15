@@ -48,6 +48,7 @@ import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.data.GameRecord
 import com.ivanherboch.chessduck.ui.Badge
 import com.ivanherboch.chessduck.ui.BoardRow
+import com.ivanherboch.chessduck.ui.evalBarSpace
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.DuckButton
 import com.ivanherboch.chessduck.ui.DuckIconButton
@@ -114,7 +115,7 @@ internal fun ReviewLayout(vm: GameReviewViewModel, r: Review) {
                 DuckIconButton(Icons.Rounded.Insights, "Jauge d'évaluation", vm::toggleEval, accent = c.blue, selected = r.evalOn)
             }
         },
-        overBoard = { Box(Modifier.padding(start = if (r.evalOn) 30.dp else 0.dp)) { bar(r.flipped) } },
+        overBoard = { Box(Modifier.padding(start = if (r.evalOn) evalBarSpace() else 0.dp)) { bar(r.flipped) } },
         board = {
             val known = r.analysis.getOrNull(cur) ?: r.analysis.take(cur + 1).lastOrNull { it != null }
             BoardRow(if (r.evalOn) (known?.eval ?: 0) else null, r.flipped) { m ->
@@ -123,7 +124,7 @@ internal fun ReviewLayout(vm: GameReviewViewModel, r: Review) {
                 ChessBoard(position = pos, modifier = m, flipped = r.flipped, lastMove = last, anim = r.anim, badges = badges)
             }
         },
-        underBoard = { Box(Modifier.padding(start = if (r.evalOn) 30.dp else 0.dp)) { bar(!r.flipped) } },
+        underBoard = { Box(Modifier.padding(start = if (r.evalOn) evalBarSpace() else 0.dp)) { bar(!r.flipped) } },
         bottom = {
             if (!wide) MoveStrip(line, cur, Modifier.padding(top = 2.dp), onSelect = vm::jump, onPrev = { vm.step(-1) }, onNext = { vm.step(1) })
             val ready = r.analysis.count { it != null }

@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -61,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ivanherboch.chessduck.R
@@ -92,11 +92,7 @@ import com.ivanherboch.chessduck.engine.winPercent
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.abs
-import kotlin.math.atan2
-import kotlin.math.cos
 import kotlin.math.roundToInt
-import kotlin.math.sin
-import kotlin.math.sqrt
 
 @Immutable
 data class Arrow(val from: Int, val to: Int, val color: Color)
@@ -512,16 +508,9 @@ fun EvalBar(evalWhite: Int, flipped: Boolean, modifier: Modifier = Modifier) {
         else -> "Évaluation : avantage ${if (whiteAhead) "Blancs" else "Noirs"} ${String.format(Locale.FRANCE, "%.1f", abs(evalWhite) / 100.0)}"
     }
     val labelLayout = remember(label, measurer) { measurer.measure(label, EVAL_STYLE) }
-    // Largeur fixe (pas de saut de l'échiquier quand le score change) qui contient toujours le libellé,
-    // quelle que soit la taille de police du système.
-    val density = LocalDensity.current
-    val barWidth = remember(measurer, density) {
-        val widest = EVAL_WIDEST.maxOf { measurer.measure(it, EVAL_STYLE).size.width }
-        maxOf(26.dp, with(density) { widest.toDp() } + 6.dp)
-    }
     val c = LocalDuck.current
     Canvas(
-        modifier.fillMaxHeight().width(barWidth).clip(RoundedCornerShape(6.dp)).border(1.dp, c.outlineStrong, RoundedCornerShape(6.dp))
+        modifier.fillMaxHeight().width(evalBarWidth()).clip(RoundedCornerShape(6.dp)).border(1.dp, c.outlineStrong, RoundedCornerShape(6.dp))
             .semantics { contentDescription = desc },
     ) {
         val dark = Color(0xFF1F2937)
@@ -539,12 +528,32 @@ fun EvalBar(evalWhite: Int, flipped: Boolean, modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * Largeur de la jauge : fixe (l'échiquier ne saute pas quand le score change) et assez large pour le score
+ * le plus long, quelle que soit la taille de police du système.
+ */
+@Composable
+fun evalBarWidth(): Dp {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    return remember(measurer, density) {
+        val widest = EVAL_WIDEST.maxOf { measurer.measure(it, EVAL_STYLE).size.width }
+        maxOf(26.dp, with(density) { widest.toDp() } + 6.dp)
+    }
+}
+
+/** Espace occupé à gauche de l'échiquier par la jauge : les bandeaux des joueurs s'alignent dessus. */
+@Composable
+fun evalBarSpace(): Dp = evalBarWidth() + EVAL_GAP
+
+private val EVAL_GAP = 4.dp
+
 /** Échiquier avec jauge d'évaluation optionnelle à gauche ([evalWhite] null : pas de jauge). */
 @Composable
 fun BoardRow(evalWhite: Int?, flipped: Boolean, board: @Composable (Modifier) -> Unit) {
     Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
         if (evalWhite != null) {
-            EvalBar(evalWhite, flipped, Modifier.padding(end = 4.dp))
+            EvalBar(evalWhite, flipped, Modifier.padding(end = EVAL_GAP))
         }
         Box(Modifier.fillMaxHeight().weight(1f), contentAlignment = Alignment.Center) {
             board(Modifier.aspectRatio(1f))
