@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.role
 import com.ivanherboch.chessduck.ui.DuckIconButton
 import com.ivanherboch.chessduck.ui.InfoPill
 import com.ivanherboch.chessduck.ui.MoveStrip
+import com.ivanherboch.chessduck.ui.stepTitle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -150,9 +151,11 @@ fun AcademyScreen(vm: AcademyViewModel) {
                 onPrev = if (!s.challenge) ({ vm.step(-1) }) else null,
                 onNext = if (!s.challenge) ({ vm.step(1) }) else null,
                 emptyText = "Les coups de la leçon s'afficheront ici.",
+                firstTurn = 1,
             )
             if (!s.challenge) {
-                val title = if (cur == 0) "Objectif de la leçon" else moveLabel(line.positions[cur - 1].fullmove, line.positions[cur - 1].whiteToMove, line.sans[cur - 1]) + " · coup $cur / ${line.size}"
+                // Dans une leçon, les tours sont numérotés depuis son début, quelle que soit la partie d'origine.
+                val title = if (cur == 0) "Objectif de la leçon" else line.stepTitle(cur, first = 1)
                 val text = if (cur == 0) l.summary + " Touchez Lecture pour dérouler la leçon coup par coup." else l.texts[cur - 1]
                 FeedbackCard(text, Tone.INFO, Modifier.padding(top = 4.dp).weight(1f), title = title)
                 EqualRow(Modifier.padding(vertical = 6.dp)) {
@@ -184,4 +187,3 @@ fun AcademyScreen(vm: AcademyViewModel) {
     if (catalog) LessonCatalog(vm, s, mastered) { catalog = false }
 }
 
-fun moveLabel(fullmove: Int, white: Boolean, san: String) = if (white) "$fullmove. $san" else "$fullmove… $san"

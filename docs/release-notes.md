@@ -1,3 +1,11 @@
+## ChessDuck 2.4.3 — numérotation par tour
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Bande des coups : chaque tour est regroupé dans une capsule avec son numéro en bleu, le coup des Blancs et la réponse des Noirs. Seul le coup affiché est surligné, plus son numéro.
+- Titres des cartes en numérotation standard : « 12… Qe5+ · coup 12 sur 14 » au lieu de « Coup 24 / 28 », qui comptait les demi-coups.
+- Académie : les leçons sont numérotées depuis leur début (1, 2, 3…), même quand elles viennent d'une vraie partie ; une leçon qui commence par un coup noir débute par « 1… ». La revue et les problèmes gardent les vrais numéros de la partie.
+
 ## ChessDuck 2.4.2 — revue : jauge et commentaires concordants
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

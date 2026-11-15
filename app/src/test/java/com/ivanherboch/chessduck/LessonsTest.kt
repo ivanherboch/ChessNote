@@ -3,6 +3,7 @@ package com.ivanherboch.chessduck
 import com.ivanherboch.chessduck.content.LessonCategory
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.content.PuzzleThemes
+import com.ivanherboch.chessduck.ui.stepTitle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -44,5 +45,16 @@ class LessonsTest {
         assertEquals("middlegame", PuzzleThemes.primary("   long  short ").key)
         assertEquals("pin", PuzzleThemes.primary("pin   endgame").key)
         assertEquals(PuzzleThemes.all.indexOfFirst { it.key == "fork" }, PuzzleThemes.primaryIndex(" fork "))
+    }
+
+    /** Les leçons sont numérotées depuis leur début, même tirées d'une vraie partie ; « coup N sur M » compte les tours. */
+    @Test
+    fun lessonTurnsAreNumberedFromOne() {
+        val l = Lessons.all.first { it.title == "L'enfilade" } // position réelle, les Noirs jouent d'abord
+        assertEquals("1… Qxe5 · coup 1 sur 3", l.line.stepTitle(1, first = 1))
+        assertEquals("2. Bf4 · coup 2 sur 3", l.line.stepTitle(2, first = 1))
+        assertEquals("3. Bxb8 · coup 3 sur 3", l.line.stepTitle(4, first = 1))
+        // Sans renumérotation (revue, problèmes), on garde les vrais numéros de la partie.
+        assertEquals("16… Qxe5 · coup 16 sur 18", l.line.stepTitle(1))
     }
 }

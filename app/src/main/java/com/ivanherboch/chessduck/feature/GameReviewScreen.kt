@@ -57,6 +57,7 @@ import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.LocalFeedback
 import com.ivanherboch.chessduck.ui.ModuleLayout
 import com.ivanherboch.chessduck.ui.MoveStrip
+import com.ivanherboch.chessduck.ui.stepTitle
 import com.ivanherboch.chessduck.ui.PlayerBar
 
 /** Compteurs d'annotations d'un camp pour le résumé de partie. */
@@ -132,8 +133,7 @@ internal fun ReviewLayout(vm: GameReviewViewModel, r: Review) {
                 // Commentaire en langage naturel : aucune évaluation chiffrée, le joueur concerné est toujours nommé.
                 val (c0, t0) = ReviewComments.comment(g, line, cur - 1, r.analysis)
                 val text = c0 + if (cur == line.size) " " + ReviewComments.ending(g) else ""
-                val before = line.positions[cur - 1]
-                val title = "Coup $cur / ${line.size} · " + moveLabel(before.fullmove, before.whiteToMove, line.sans[cur - 1]) + (if (note != null) " $note" else "")
+                val title = line.stepTitle(cur, note = note)
                 if (wide) {
                     // Tablette : commentaire puis tableau complet des coups sur deux colonnes.
                     FeedbackCard(text, t0, Modifier.padding(top = 4.dp).heightIn(max = 180.dp), title = title)
