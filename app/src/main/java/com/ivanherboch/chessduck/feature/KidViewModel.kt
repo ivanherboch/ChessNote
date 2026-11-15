@@ -108,7 +108,11 @@ class KidViewModel(
         val result = when (nl.end()) {
             GameEnd.CHECKMATE -> "🎉 Échec et mat ! Bravo aux ${if (white) "Blancs" else "Noirs"} !"
             GameEnd.NONE -> null
-            else -> "🤝 Partie nulle : personne n'a perdu !"
+            // Chaque nulle est expliquée avec des mots simples : l'enfant comprend pourquoi la partie s'arrête.
+            GameEnd.STALEMATE -> "🤝 Pat ! Le roi n'est pas en échec, mais il ne peut plus bouger : partie nulle, personne n'a perdu !"
+            GameEnd.INSUFFICIENT -> "🤝 Il ne reste plus assez de pièces pour faire échec et mat : partie nulle !"
+            GameEnd.REPETITION -> "🤝 La même position est revenue trois fois : partie nulle !"
+            GameEnd.FIFTY_MOVES -> "🤝 Cinquante coups sans prise ni pion avancé : partie nulle !"
         }
         _state.update { it.copy(line = nl, cursor = nl.size, anim = moveAnim(s.position, m), result = result) }
     }

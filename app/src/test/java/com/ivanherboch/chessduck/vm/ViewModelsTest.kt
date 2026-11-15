@@ -2,6 +2,8 @@ package com.ivanherboch.chessduck.vm
 
 import androidx.lifecycle.SavedStateHandle
 import com.ivanherboch.chessduck.chess.Move
+import com.ivanherboch.chessduck.chess.START_FEN
+import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.chess.SpokenFr
 import com.ivanherboch.chessduck.data.GameRecord
@@ -141,6 +143,15 @@ class ViewModelsTest {
         vm.pieceShown(5)
         vm.say(5, "La **Dame** va **tout droit**.")
         assertEquals(3, voice.spoken.size)
+    }
+
+    @Test
+    fun kidStalemateIsExplained() = test {
+        val vm = KidViewModel(FakeSettings(), FakeNarrator())
+        // Pat le plus rapide connu (Sam Loyd, 10 coups), joué depuis la position de départ.
+        val loyd = Line.fromSan(START_FEN, "e3 a5 Qh5 Ra6 Qxa5 h5 h4 Rah6 Qxc7 f6 Qxd7+ Kf7 Qxb7 Qd3 Qxb8 Qh7 Qxc8 Kg6 Qe6".split(" "))
+        for (m in loyd.moves) vm.move(m)
+        assertTrue(vm.state.value.result!!, vm.state.value.result!!.startsWith("🤝 Pat !"))
     }
 
     @Test

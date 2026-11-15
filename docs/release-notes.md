@@ -1,3 +1,9 @@
+## ChessDuck 2.4.9 — le mode enfant explique les nulles
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Mode enfant : une partie nulle dit pourquoi elle s'arrête, avec des mots simples : pat (le roi n'est pas en échec mais ne peut plus bouger), plus assez de pièces pour mater, même position trois fois, ou cinquante coups sans prise ni pion avancé.
+
 ## ChessDuck 2.4.8 — un échiquier plus grand en Notation
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
