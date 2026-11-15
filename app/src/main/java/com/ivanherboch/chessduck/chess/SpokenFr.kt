@@ -30,6 +30,25 @@ object SpokenFr {
         ).joinToString(" ") + suffix
     }
 
-    /** Phrase à lire : chaque coup en notation est remplacé par sa forme parlée, la mise en gras est retirée. */
-    fun text(s: String): String = SAN_IN_TEXT.replace(s.replace("**", "")) { move(it.groupValues[1]) }
+    /**
+     * Mots que la synthèse vocale française prononce mal (« pat » lu « pa », « gambit » lu « gambi »…), écrits
+     * comme ils se disent. Ce lexique ne sert qu'à la voix : l'écran affiche toujours l'orthographe correcte.
+     */
+    private val PRONUNCIATION = listOf(
+        "pat" to "patte", "mat" to "matte", "mats" to "mattes",
+        "gambit" to "gambitte", "gambits" to "gambittes",
+        "fianchetto" to "fianquétto", "zugzwang" to "zougtsvang",
+        "Giuoco" to "Djouoco", "Fegatello" to "Fégatello", "Kieseritzky" to "Kizéritski",
+        "Sveshnikov" to "Svéchnikov", "Najdorf" to "Naïdorf", "Winawer" to "Vinaver", "Tarrasch" to "Tarache",
+        "Caro-Kann" to "Caro-Kane", "Grünfeld" to "Grunfèlde", "Alekhine" to "Aliékhine", "Pirc" to "Pirtse",
+        "Rubinstein" to "Roubinnchtaïne", "Fischer" to "Fichère", "Lucena" to "Loucéna", "Boden" to "Bodène",
+        "Evans" to "Évanse", "Petrov" to "Pétrof", "Kasparov" to "Kasparof",
+    ).map { (word, said) -> Regex("(?<![\\p{L}-])${Regex.escape(word)}(?![\\p{L}-])", RegexOption.IGNORE_CASE) to said }
+
+    /**
+     * Phrase à lire : chaque coup en notation est remplacé par sa forme parlée, la mise en gras est retirée,
+     * et les mots difficiles sont réécrits comme ils se prononcent.
+     */
+    fun text(s: String): String =
+        PRONUNCIATION.fold(SAN_IN_TEXT.replace(s.replace("**", "")) { move(it.groupValues[1]) }) { acc, (re, said) -> re.replace(acc, said) }
 }

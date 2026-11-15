@@ -1,3 +1,10 @@
+## ChessDuck 2.4.4 — une voix qui parle échecs
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Lecture vocale des leçons : les termes d'échecs et les noms d'ouvertures sont désormais bien prononcés (« pat », « mat », « gambit », « fianchetto », « zugzwang », Giuoco Piano, Kieseritzky, Najdorf, Winawer, Tarrasch, Caro-Kann, Grünfeld…).
+- L'écran garde l'orthographe exacte : seule la voix reçoit la prononciation.
+
 ## ChessDuck 2.4.3 — numérotation par tour
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

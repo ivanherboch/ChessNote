@@ -139,7 +139,7 @@ class AcademyViewModel(
     private fun spokenStep(): String {
         val l = lesson
         val c = state.value.cursor
-        return if (c == 0) SpokenFr.text("${l.title}. ${l.summary}") else "${SpokenFr.move(l.line.sans[c - 1])}. ${SpokenFr.text(l.texts[c - 1])}"
+        return if (c == 0) SpokenFr.text("${l.title}. ${l.summary}") else SpokenFr.text("${SpokenFr.move(l.line.sans[c - 1])}. ${l.texts[c - 1]}")
     }
 
     private fun narrate() {

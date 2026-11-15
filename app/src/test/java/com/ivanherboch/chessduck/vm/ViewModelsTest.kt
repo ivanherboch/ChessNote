@@ -148,7 +148,7 @@ class ViewModelsTest {
         assertTrue(voice.spoken.isEmpty()) // réglage désactivé par défaut
         prefs.setNarration(true); runCurrent()
         vm.goTo(2)
-        assertEquals("${SpokenFr.move(l.line.sans[1])}. ${SpokenFr.text(l.texts[1])}", voice.spoken.single())
+        assertEquals(SpokenFr.text("${SpokenFr.move(l.line.sans[1])}. ${l.texts[1]}"), voice.spoken.single())
         // Lecture automatique : le coup suivant attend la fin du commentaire.
         vm.togglePlay()
         advanceTimeBy(5_000); runCurrent()

@@ -33,4 +33,21 @@ class SpokenFrTest {
         val english = Regex("""(?<!\w)[KQRBN][a-h1-8]?x?[a-h][1-8]""")
         for (l in Lessons.all) for (t in l.texts + l.summary + l.title) assertFalse(t, english.containsMatchIn(SpokenFr.text(t)))
     }
+
+    @Test
+    fun chessTermsArePronounced() {
+        assertEquals("C'est patte : partie nulle.", SpokenFr.text("C'est pat : partie nulle."))
+        assertEquals("Le gambitte Évanse.", SpokenFr.text("Le gambit Evans."))
+        assertEquals("Fou h2, échec et matte.", SpokenFr.text("Fou h2, échec et mat."))
+        assertEquals("dame h4, matte", SpokenFr.text(SpokenFr.move("Qh4#")))
+        // Les mots qui ne font que ressembler restent intacts.
+        val same = "Il faut mater sans perdre de matériel, avec patience."
+        assertEquals(same, SpokenFr.text(same))
+    }
+
+    @Test
+    fun noLessonKeepsAHardWordForTheVoice() {
+        val hard = Regex("(?<![\\p{L}-])(pat|mat|gambit|fianchetto|zugzwang|Giuoco|Kieseritzky|Najdorf|Winawer|Tarrasch|Grünfeld)(?![\\p{L}-])", RegexOption.IGNORE_CASE)
+        for (l in Lessons.all) for (t in l.texts + l.summary + l.title) assertFalse(t, hard.containsMatchIn(SpokenFr.text(t)))
+    }
 }
