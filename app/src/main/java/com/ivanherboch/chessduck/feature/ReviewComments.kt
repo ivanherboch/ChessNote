@@ -17,8 +17,7 @@ import com.ivanherboch.chessduck.chess.pieceType
 import com.ivanherboch.chessduck.chess.rankOf
 import com.ivanherboch.chessduck.chess.sqName
 import com.ivanherboch.chessduck.data.GameRecord
-import com.ivanherboch.chessduck.engine.isMateScore
-import com.ivanherboch.chessduck.engine.mateIn
+import com.ivanherboch.chessduck.engine.mateFor
 import com.ivanherboch.chessduck.engine.winPercent
 import com.ivanherboch.chessduck.ui.Tone
 
@@ -102,12 +101,10 @@ object ReviewComments {
         val after = p.play(m)
         val reply = a1.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { after.isLegal(it) }
         val best = a0.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { p.isLegal(it) && it != m }
-        val sign = if (p.whiteToMove) 1 else -1
 
         // 1. Le coup autorise un mat rapide.
-        val oppScore = -sign * a1.eval
-        if (isMateScore(oppScore) && oppScore > 0 && reply != null) {
-            val n = mateIn(oppScore)
+        val n = mateFor(a1.eval, !p.whiteToMove)
+        if (n != null && reply != null) {
             return if (n <= 2) "en jouant $san, ${v.f("tu permets", "il permet")} à l'adversaire de faire échec et mat en $n (${after.san(reply)})."
             else "$san laisse l'adversaire lancer une attaque décisive contre ${v.f("ton", "son")} roi."
         }
@@ -187,7 +184,13 @@ object ReviewComments {
         GameLogic.missedMate(p.whiteToMove, a0, a1)?.let { k ->
             val best = a0.best.takeIf { it.isNotEmpty() }?.let { p.san(Move.fromUci(it)) }
             val how = if (k == 1) "matait immédiatement" else "forçait le mat en 2 coups"
-            return "⚠️ Mat en $k manqué · ${v.label} : ${v.f("tu pouvais", "il pouvait")} gagner tout de suite" + (if (best != null) ", $best $how." else ".") + trend to Tone.BAD
+            // La jauge montre la position après le coup : on dit aussi où en est le mat, pour qu'elle et le texte concordent.
+            val left = mateFor(a1.eval, p.whiteToMove)
+            val now = when (left) {
+                null -> " Après $san, le mat n'est plus forcé."
+                else -> " Après $san, ${v.f("il te faut", "il lui faut")} encore $left ${if (left > 1) "coups" else "coup"} pour mater."
+            }
+            return "⚠️ Mat en $k manqué · ${v.label} : ${v.f("tu pouvais", "il pouvait")} gagner tout de suite" + (if (best != null) ", $best $how." else ".") + now + trend to Tone.BAD
         }
         return when (GameLogic.annotate(p, m, a0, a1, prev)) {
             "??" -> "Gaffe · ${v.label} : ${explain(v, p, m, san, a0, a1)}$trend" to Tone.BAD

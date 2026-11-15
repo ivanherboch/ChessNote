@@ -8,8 +8,7 @@ import com.ivanherboch.chessduck.chess.PIECE_VALUES
 import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.chess.pieceType
 import com.ivanherboch.chessduck.engine.MATE
-import com.ivanherboch.chessduck.engine.isMateScore
-import com.ivanherboch.chessduck.engine.mateIn
+import com.ivanherboch.chessduck.engine.mateFor
 import com.ivanherboch.chessduck.engine.winPercent
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -84,14 +83,9 @@ object GameLogic {
      */
     fun missedMate(whiteToMove: Boolean, a0: Analysis?, a1: Analysis?): Int? {
         if (a0 == null || a1 == null) return null
-        val sign = if (whiteToMove) 1 else -1
-        val before = sign * a0.eval
-        if (!isMateScore(before) || before <= 0) return null
-        val k = mateIn(before)
-        if (k !in 1..2) return null
-        val after = sign * a1.eval
-        val kept = isMateScore(after) && after > 0 && mateIn(after) <= k - 1
-        return if (kept) null else k
+        val k = mateFor(a0.eval, whiteToMove)?.takeIf { it in 1..2 } ?: return null
+        val left = mateFor(a1.eval, whiteToMove)
+        return if (left != null && left <= k - 1) null else k
     }
 
     fun endText(end: GameEnd): String = when (end) {

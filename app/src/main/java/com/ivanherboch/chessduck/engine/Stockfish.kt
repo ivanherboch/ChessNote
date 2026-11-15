@@ -27,6 +27,10 @@ const val MATE = 100_000
 fun isMateScore(s: Int) = kotlin.math.abs(s) > MATE - 1000
 fun mateIn(s: Int) = if (s > 0) (MATE - s + 1) / 2 else -((MATE + s + 1) / 2)
 
+/** Nombre de coups du camp [white] pour mater d'après [evalWhite] (point de vue des Blancs), sinon null. */
+fun mateFor(evalWhite: Int, white: Boolean): Int? =
+    if (isMateScore(evalWhite) && (evalWhite > 0) == white) kotlin.math.abs(mateIn(evalWhite)) else null
+
 /** Probabilité de gain (0–100) estimée à partir d'une évaluation en centipions (formule Lichess). */
 fun winPercent(cp: Int): Double {
     if (isMateScore(cp)) return if (cp > 0) 100.0 else 0.0
@@ -41,12 +45,15 @@ interface ChessEngine {
 
 
 /**
- * Stockfish embarqué (exécutable natif dans nativeLibraryDir), piloté en UCI, 100 % hors-ligne.
+ * Stockfish piloté en UCI, 100 % hors-ligne. Dans l'application, c'est l'exécutable natif embarqué
+ * (nativeLibraryDir) ; les outils de test peuvent lui passer un autre exécutable UCI.
  * Toutes les recherches sont sérialisées et annulables sans bloquer le thread UI. Après une annulation,
  * le moteur est resynchronisé (stop puis isready/readyok) ; s'il ne répond plus, il est relancé, afin
  * qu'aucun « bestmove » orphelin ne soit lu par la recherche suivante.
  */
-class Stockfish(private val context: Context) : ChessEngine, Closeable {
+class Stockfish(private val executable: File) : ChessEngine, Closeable {
+    constructor(context: Context) : this(File(context.applicationInfo.nativeLibraryDir, "libstockfish.so"))
+
     private val mutex = Mutex()
     private var process: Process? = null
     private var out: BufferedWriter? = null
@@ -64,8 +71,7 @@ class Stockfish(private val context: Context) : ChessEngine, Closeable {
     private suspend fun ensureStarted() {
         if (process?.isAlive == true) return
         shutdown()
-        val exe = File(context.applicationInfo.nativeLibraryDir, "libstockfish.so")
-        val p = ProcessBuilder(exe.absolutePath).redirectErrorStream(true).start()
+        val p = ProcessBuilder(executable.absolutePath).redirectErrorStream(true).start()
         val ch = Channel<String>(Channel.UNLIMITED)
         thread(isDaemon = true, name = "stockfish-reader") {
             try {
