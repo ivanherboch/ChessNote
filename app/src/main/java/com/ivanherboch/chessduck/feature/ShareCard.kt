@@ -242,10 +242,10 @@ object ShareCard {
         }
 
         /**
-         * Échiquier aux coins arrondis, avec ombre portée ; [glow] fait rayonner une case (roi maté).
+         * Échiquier aux coins arrondis, avec ombre portée ; [glow] fait rayonner des cases en rouge (roi en échec ou maté).
          * Renvoie la fonction donnant le coin supérieur gauche d'une case.
          */
-        fun board(left: Float, top: Float, side: Float, position: Position, flipped: Boolean, lastMove: Move?, glow: Int = -1): (Int) -> Pair<Float, Float> {
+        fun board(left: Float, top: Float, side: Float, position: Position, flipped: Boolean, lastMove: Move?, glow: List<Int> = emptyList()): (Int) -> Pair<Float, Float> {
             val s = side / 8
             val radius = side * 0.018f
             fun x(q: Int) = left + BoardGeometry.column(q, flipped) * s
@@ -267,9 +267,13 @@ object ShareCard {
                 cv.drawRect(x(it.from), y(it.from), x(it.from) + s, y(it.from) + s, paint)
                 cv.drawRect(x(it.to), y(it.to), x(it.to) + s, y(it.to) + s, paint)
             }
-            if (glow >= 0) {
-                val cx = x(glow) + s / 2
-                val cy = y(glow) + s / 2
+            for (q in glow) {
+                if (q < 0) continue
+                val cx = x(q) + s / 2
+                val cy = y(q) + s / 2
+                // Case du roi franchement rougie, puis halo qui déborde légèrement : lisible même sur les petits échiquiers.
+                paint.color = Color.argb(150, 220, 38, 38)
+                cv.drawRect(x(q), y(q), x(q) + s, y(q) + s, paint)
                 paint.shader = RadialGradient(cx, cy, s * 0.8f, intArrayOf(Color.argb(230, 239, 68, 68), Color.argb(120, 239, 68, 68), Color.TRANSPARENT), floatArrayOf(0f, 0.55f, 1f), Shader.TileMode.CLAMP)
                 cv.drawRect(cx - s, cy - s, cx + s, cy + s, paint)
                 paint.shader = null
@@ -435,7 +439,7 @@ object ShareCard {
         val g = Painter(context, Canvas(bmp), pal)
         g.background(h)
         header(g, eyebrow, pal.goldText, puzzle, title, titleSize, playerWhite)
-        g.board((W - side) / 2, top, side, position, !playerWhite, lastMove)
+        g.board((W - side) / 2, top, side, position, !playerWhite, lastMove, listOfNotNull(position.kingSquare(position.whiteToMove).takeIf { position.inCheck }))
 
         if (tip.isNotEmpty()) {
             val y = top + side + 16f
@@ -480,7 +484,7 @@ object ShareCard {
      * Solution illustrée, toujours sur une seule image au format choisi : une carte par coup du joueur,
      * avec des grilles aussi grandes que possible (marges et légendes réduites au strict nécessaire).
      * Une ou deux étapes : phrases complètes ; au-delà, notation seule « coup — réponse » sur une ligne.
-     * Flèche verte = coup à jouer, flèche rouge = réponse adverse, badges + et #, roi maté mis en lumière.
+     * Flèche verte = coup à jouer, flèche rouge = réponse adverse, badges +, # et x (prise), roi en échec ou maté rougi.
      */
     fun renderSolution(context: Context, puzzle: Puzzle, style: ShareStyle = ShareStyle()): Bitmap {
         val pal = Pal(style.colors)
@@ -554,10 +558,13 @@ object ShareCard {
                 g.panel(RectF(x, y, x + panelW, y + panelH))
                 val bx = x + pad
                 val by = y + pad
-                val glow = if (last && st.san.endsWith("#")) {
-                    val after = st.before.play(st.move)
-                    after.kingSquare(!playerWhite)
-                } else -1
+                // Roi en échec (ou maté) rougi : après le coup du joueur, puis après la réponse adverse.
+                val after = st.before.play(st.move)
+                val after2 = st.reply?.let { after.play(it) }
+                val glow = listOfNotNull(
+                    after.kingSquare(after.whiteToMove).takeIf { after.inCheck },
+                    after2?.let { a -> a.kingSquare(a.whiteToMove).takeIf { a.inCheck } },
+                )
                 val at = g.board(x + (panelW - side) / 2, by, side, st.before, !playerWhite, st.prev, glow)
                 val s = side / 8
                 st.reply?.let { g.arrow(it, at, s, pal.red, 0.10f) }
@@ -566,6 +573,12 @@ object ShareCard {
                 when {
                     st.san.endsWith("#") -> g.badge("#", dx + s * 0.80f, dy + s * 0.20f, s * 0.22f, pal.redFill, pal.onRed)
                     st.san.endsWith("+") -> g.badge("+", dx + s * 0.80f, dy + s * 0.20f, s * 0.22f, pal.goldFill, pal.onGold)
+                }
+                // « x » : prise, en haut à gauche de la case d'arrivée (coup du joueur et réponse adverse).
+                if (st.before.isCapture(st.move)) g.badge("x", dx + s * 0.20f, dy + s * 0.20f, s * 0.22f, pal.text, pal.bgTop)
+                st.reply?.takeIf { after.isCapture(it) }?.let { r ->
+                    val (rx, ry) = at(r.to)
+                    g.badge("x", rx + s * 0.20f, ry + s * 0.20f, s * 0.22f, pal.text, pal.bgTop)
                 }
                 // Ligne de titre : numéro, coup, réponse (grille compacte) et pièce prise.
                 val ty0 = by + side + 10f + titleSz * 0.95f
@@ -626,6 +639,8 @@ object ShareCard {
         g.text("échec", M + 582f, ly, 25f, pal.muted)
         g.badge("#", M + 680f, ly - 9f, 14f, pal.redFill, pal.onRed)
         g.text("mat", M + 702f, ly, 25f, pal.muted)
+        g.badge("x", M + 790f, ly - 9f, 14f, pal.text, pal.bgTop)
+        g.text("prise", M + 812f, ly, 25f, pal.muted)
         g.footer(h, puzzle.id)
         return bmp
     }

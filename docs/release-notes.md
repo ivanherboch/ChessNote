@@ -1,3 +1,10 @@
+## ChessDuck 2.5.2 — échecs et prises visibles dans les images
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Images exportées : la case du roi en échec ou maté est rougie, sur l'énoncé comme sur chaque étape de la solution (après votre coup et après la réponse adverse).
+- Nouveau badge « x » sur la case d'arrivée de chaque prise (votre coup et la réponse adverse), ajouté à la légende : « x prise ».
+
 ## ChessDuck 2.5.1 — couleurs d'échiquier partout
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
