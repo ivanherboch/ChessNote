@@ -1,3 +1,12 @@
+## ChessDuck 2.4.0 — lecture vocale des leçons
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Académie : nouvelle lecture à voix haute des leçons en mode Guidé (objectif, puis chaque coup et son commentaire), pour garder les yeux sur l'échiquier. Les coups sont prononcés en français (« cavalier prend e5, échec »).
+- La lecture automatique attend la fin de chaque commentaire avant de jouer le coup suivant ; un bouton haut-parleur permet d'arrêter ou de réécouter.
+- À activer dans Paramètres › Sons et vibrations (désactivée par défaut). Elle utilise une voix française installée sur le téléphone, sans connexion ; aucune voix en mode Défi ni en mode enfant.
+- Jeu Libre : à la fin d'une partie, la jauge d'évaluation affiche « # » (mat) ou l'égalité (nulle) au lieu d'une ancienne évaluation.
+
 ## ChessDuck 2.3.2 — jauge lisible, images aux couleurs de votre palette
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

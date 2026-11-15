@@ -3,6 +3,7 @@ package com.ivanherboch.chessduck.vm
 import androidx.lifecycle.SavedStateHandle
 import com.ivanherboch.chessduck.chess.Move
 import com.ivanherboch.chessduck.content.Lessons
+import com.ivanherboch.chessduck.chess.SpokenFr
 import com.ivanherboch.chessduck.data.GameRecord
 import com.ivanherboch.chessduck.data.Settings
 import com.ivanherboch.chessduck.feature.AcademyViewModel
@@ -14,6 +15,8 @@ import com.ivanherboch.chessduck.feature.PlayViewModel
 import com.ivanherboch.chessduck.feature.PuzzlesViewModel
 import com.ivanherboch.chessduck.feature.ShareFormat
 import com.ivanherboch.chessduck.feature.ShareStyle
+import com.ivanherboch.chessduck.engine.MATE
+import com.ivanherboch.chessduck.ui.evalShort
 import com.ivanherboch.chessduck.ui.DuckPalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -60,11 +63,12 @@ class ViewModelsTest {
         prefs.setKidMode(true)
         prefs.setPseudo("Alice")
         prefs.setPseudo2("Bob")
+        prefs.setNarration(true)
         val st = prefs.settings.first()
         assertEquals(1, st.themeMode)
         assertEquals(4, st.palette)
         assertFalse(st.coords || st.confirmActions || st.haptics || st.sound)
-        assertTrue(st.kidMode)
+        assertTrue(st.kidMode && st.narration)
         assertEquals("Alice" to "Bob", st.pseudo to st.pseudo2)
     }
 
@@ -83,6 +87,20 @@ class ViewModelsTest {
     }
 
     @Test
+    fun evalBarShowsMateOnceTheGameIsOver() = test {
+        val games = FakeGames()
+        val engine = FakeEngine()
+        val vm = PlayViewModel(FakeSettings(Settings(twoPlayers = true)), games, engine, GameAnalysisService(engine, games, backgroundScope))
+        advanceUntilIdle()
+        for (uci in listOf("f2f3", "e7e5", "g2g4", "d8h4")) { vm.playerMove(Move.fromUci(uci)); advanceUntilIdle() }
+        val s = vm.state.value
+        assertNotNull(s.result)
+        // Position finale évaluée comme un mat des Noirs, et non par la dernière évaluation connue.
+        assertEquals(-MATE, s.analysis[s.line.size]?.eval)
+        assertEquals("#", evalShort(-MATE))
+    }
+
+    @Test
     fun kidMovesBackAndForward() = test {
         val vm = KidViewModel()
         vm.move(Move.fromUci("e2e4"))
@@ -97,7 +115,7 @@ class ViewModelsTest {
     @Test
     fun academyGuidedChallengeAndMastery() = test {
         val lessons = FakeLessons()
-        val vm = AcademyViewModel(FakeSettings(), lessons)
+        val vm = AcademyViewModel(FakeSettings(), lessons, FakeNarrator())
         advanceUntilIdle()
         val l = Lessons.byId(1)
         assertEquals(1, vm.state.value.lessonId)
@@ -120,9 +138,46 @@ class ViewModelsTest {
     }
 
     @Test
+    fun academyReadsGuidedCommentsAloudOnlyWhenEnabled() = test {
+        val prefs = FakeSettings()
+        val voice = FakeNarrator()
+        val vm = AcademyViewModel(prefs, FakeLessons(), voice)
+        advanceUntilIdle()
+        val l = Lessons.byId(1)
+        vm.goTo(1)
+        assertTrue(voice.spoken.isEmpty()) // réglage désactivé par défaut
+        prefs.setNarration(true); runCurrent()
+        vm.goTo(2)
+        assertEquals("${SpokenFr.move(l.line.sans[1])}. ${SpokenFr.text(l.texts[1])}", voice.spoken.single())
+        // Lecture automatique : le coup suivant attend la fin du commentaire.
+        vm.togglePlay()
+        advanceTimeBy(5_000); runCurrent()
+        assertEquals(2, vm.state.value.cursor)
+        voice.finish()
+        advanceTimeBy(601); runCurrent()
+        assertEquals(3, vm.state.value.cursor)
+        // Écran quitté : silence et pause.
+        vm.silence()
+        assertFalse(voice.speaking.value)
+        assertFalse(vm.state.value.playing)
+        // Mode Défi : aucune lecture.
+        voice.spoken.clear()
+        vm.setChallenge(true)
+        advanceUntilIdle()
+        vm.challengeMove(l.line.moves[vm.state.value.cursor])
+        advanceUntilIdle()
+        assertTrue(voice.spoken.isEmpty())
+        // Réglage coupé pendant une lecture : la voix s'arrête.
+        vm.setChallenge(false)
+        assertTrue(voice.speaking.value)
+        prefs.setNarration(false); runCurrent()
+        assertFalse(voice.speaking.value)
+    }
+
+    @Test
     fun academyRestoresFromSavedState() = test {
         val saved = SavedStateHandle(mapOf("academy_lesson" to 5, "academy_challenge" to false, "academy_cursor" to 3))
-        val vm = AcademyViewModel(FakeSettings(), FakeLessons(), saved)
+        val vm = AcademyViewModel(FakeSettings(), FakeLessons(), FakeNarrator(), saved)
         runCurrent()
         assertEquals(5, vm.state.value.lessonId)
         assertEquals(3, vm.state.value.cursor)

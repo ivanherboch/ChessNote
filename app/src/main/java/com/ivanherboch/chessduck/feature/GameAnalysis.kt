@@ -5,7 +5,7 @@ import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.data.GameRecord
 import com.ivanherboch.chessduck.data.GameRepository
 import com.ivanherboch.chessduck.engine.ChessEngine
-import com.ivanherboch.chessduck.engine.MATE
+import com.ivanherboch.chessduck.chess.GameEnd
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -33,7 +33,7 @@ class GameAnalysisService(
 
     /** Évaluation d'une position (point de vue des Blancs) et meilleur coup ; null si le moteur ne répond pas. */
     suspend fun analyse(pos: Position, ms: Int): Analysis? {
-        if (pos.legalMoves.isEmpty()) return Analysis(if (pos.inCheck) (if (pos.whiteToMove) -MATE else MATE) else 0, null, "")
+        if (pos.legalMoves.isEmpty()) return Analysis.decided(pos, if (pos.inCheck) GameEnd.CHECKMATE else GameEnd.STALEMATE)
         val r = engine.search(pos.toFen(), ms, multiPv = 2)
         val first = r.lines.firstOrNull() ?: return null
         val sign = if (pos.whiteToMove) 1 else -1

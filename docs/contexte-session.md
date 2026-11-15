@@ -62,7 +62,7 @@ Paquet racine : `app/src/main/java/com/ivanherboch/chessduck/`
   (atomes : `DuckButton`, `DuckIconButton`, `DuckChip`, `DuckTextField`, `DuckSegmentedRow`, `SectionTitle`, `InfoPill`…),
   `Sheets.kt` (`DuckSheet`, `DuckLazySheet`, `ConfirmDialog`, `EmptyState`, `LoadingState`), `ModuleLayout.kt`
   (`FeedbackCard`, `AlignedLabelRows`, `WholeOrNothing`, `ModuleLayout`), `MoveStrip.kt`, `Board.kt` (échiquier interactif),
-  `BoardGeometry.kt` (géométrie partagée écran / export / mode enfant), `LinePlayback.kt`, `Captured.kt`, `Feedback.kt`,
+  `BoardGeometry.kt` (géométrie partagée écran / export / mode enfant), `LinePlayback.kt`, `Captured.kt`, `Feedback.kt`, `Narrator.kt` (synthèse vocale hors-ligne de l'Académie ; `SpokenFr` prononce la notation),
   `icons/DuckIcons.kt` (**généré** : 40 icônes Material ; l'app n'embarque que `material-icons-core`).
 - `util/` — `runCatchingSuspend` (relance `CancellationException`), `normalizeForSearch`.
 

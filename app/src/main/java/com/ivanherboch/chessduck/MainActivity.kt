@@ -2,6 +2,7 @@ package com.ivanherboch.chessduck
 
 import kotlinx.coroutines.CoroutineScope
 import com.ivanherboch.chessduck.data.SettingsRepository
+import com.ivanherboch.chessduck.ui.Narrator
 import com.ivanherboch.chessduck.ui.DuckPalette
 import com.ivanherboch.chessduck.feature.GameReviewViewModel
 import com.ivanherboch.chessduck.ui.isTwoPane
@@ -147,7 +148,7 @@ class MainActivity : ComponentActivity() {
                         LocalFeedback provides app.feedback, LocalShowCoords provides st.coords,
                         LocalIsTwoPane provides isTwoPane(maxWidth, maxHeight),
                     ) {
-                        MainScreen(st, app.container.settings, app.scope)
+                        MainScreen(st, app.container.settings, app.container.narrator, app.scope)
                     }
                 }
             }
@@ -172,7 +173,7 @@ private fun TabIcon(t: TabSpec, selected: Boolean) = Icon(if (selected) t.select
 private fun TabLabel(t: TabSpec, maxLines: Int = Int.MAX_VALUE) = Text(t.label, style = MaterialTheme.typography.labelMedium, maxLines = maxLines)
 
 @Composable
-fun MainScreen(st: AppChrome, prefs: SettingsRepository, appScope: CoroutineScope) {
+fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, appScope: CoroutineScope) {
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     var tab by rememberSaveable { mutableIntStateOf(0) }
@@ -287,5 +288,5 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, appScope: CoroutineScop
     }
 
     if (showMemo) MemoSheet { showMemo = false }
-    if (showSettings) SettingsSheet(prefs, appScope) { showSettings = false }
+    if (showSettings) SettingsSheet(prefs, narrator, appScope) { showSettings = false }
 }

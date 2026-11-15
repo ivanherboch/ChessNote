@@ -486,7 +486,7 @@ fun describeBoard(p: Position, last: Move?, selected: Int?, flipped: Boolean): S
 
 /** Libellé court d'une évaluation (point de vue des Blancs) : « +1.4 », « −0.3 », « M2 ». */
 fun evalShort(evalWhite: Int): String = when {
-    isMateScore(evalWhite) -> "M${abs(mateIn(evalWhite)).coerceAtLeast(1)}"
+    isMateScore(evalWhite) -> if (mateIn(evalWhite) == 0) "#" else "M${abs(mateIn(evalWhite))}"
     // Au-delà de 10 pions la décimale n'apporte rien et élargirait la jauge.
     else -> (if (evalWhite >= 0) "+" else "−") + String.format(Locale.US, if (abs(evalWhite) >= 1000) "%.0f" else "%.1f", abs(evalWhite) / 100.0)
 }
@@ -506,7 +506,8 @@ fun EvalBar(evalWhite: Int, flipped: Boolean, modifier: Modifier = Modifier) {
     val whiteAhead = evalWhite >= 0
     val label = evalShort(evalWhite)
     val desc = when {
-        isMateScore(evalWhite) -> "Évaluation : mat en ${abs(mateIn(evalWhite)).coerceAtLeast(1)} pour les ${if (evalWhite > 0) "Blancs" else "Noirs"}"
+        isMateScore(evalWhite) && mateIn(evalWhite) == 0 -> "Évaluation : échec et mat, victoire des ${if (evalWhite > 0) "Blancs" else "Noirs"}"
+        isMateScore(evalWhite) -> "Évaluation : mat en ${abs(mateIn(evalWhite))} pour les ${if (evalWhite > 0) "Blancs" else "Noirs"}"
         abs(evalWhite) < 30 -> "Évaluation : position équilibrée"
         else -> "Évaluation : avantage ${if (whiteAhead) "Blancs" else "Noirs"} ${String.format(Locale.FRANCE, "%.1f", abs(evalWhite) / 100.0)}"
     }

@@ -48,6 +48,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.Lifecycle
+import androidx.compose.runtime.DisposableEffect
+import com.ivanherboch.chessduck.ui.icons.VolumeOff
+import com.ivanherboch.chessduck.ui.icons.VolumeUp
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.ui.Arrow
 import com.ivanherboch.chessduck.ui.ChessBoard
@@ -64,6 +69,11 @@ import com.ivanherboch.chessduck.ui.Tone
 fun AcademyScreen(vm: AcademyViewModel) {
     val s by vm.state.collectAsStateWithLifecycle()
     val mastered by vm.mastered.collectAsStateWithLifecycle()
+    val narration by vm.narration.collectAsStateWithLifecycle()
+    val speaking by vm.speaking.collectAsStateWithLifecycle()
+    // La voix se tait dès que l'Académie n'est plus à l'écran (autre onglet, application en arrière-plan).
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { vm.silence() }
+    DisposableEffect(vm) { onDispose { vm.silence() } }
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     val l = Lessons.byId(s.lessonId)
@@ -146,6 +156,12 @@ fun AcademyScreen(vm: AcademyViewModel) {
                 val text = if (cur == 0) l.summary + " Touchez Lecture pour dérouler la leçon coup par coup." else l.texts[cur - 1]
                 FeedbackCard(text, Tone.INFO, Modifier.padding(top = 4.dp).weight(1f), title = title)
                 EqualRow(Modifier.padding(vertical = 6.dp)) {
+                    if (narration) {
+                        DuckIconButton(
+                            if (speaking) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp,
+                            if (speaking) "Arrêter la lecture à voix haute" else "Réécouter le commentaire", vm::toggleSpeech,
+                        )
+                    }
                     DuckButton("Début", vm::rewind, Modifier.weight(1f), enabled = cur > 0, icon = Icons.Rounded.SkipPrevious)
                     DuckButton(
                         if (s.playing) "Pause" else "Lecture", vm::togglePlay, Modifier.weight(1.5f), accent = c.blue, filled = true,

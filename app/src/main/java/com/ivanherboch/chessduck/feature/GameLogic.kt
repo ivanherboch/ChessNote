@@ -7,6 +7,7 @@ import com.ivanherboch.chessduck.chess.PAWN
 import com.ivanherboch.chessduck.chess.PIECE_VALUES
 import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.chess.pieceType
+import com.ivanherboch.chessduck.engine.MATE
 import com.ivanherboch.chessduck.engine.isMateScore
 import com.ivanherboch.chessduck.engine.mateIn
 import com.ivanherboch.chessduck.engine.winPercent
@@ -18,6 +19,9 @@ data class Analysis(val eval: Int, val second: Int?, val best: String) {
     fun encode() = "$eval,${second ?: ""},$best"
 
     companion object {
+        /** Évaluation définitive d'une partie terminée en [pos] : score de mat du vainqueur, ou 0 pour une nulle. */
+        fun decided(pos: Position, end: GameEnd) = Analysis(if (end == GameEnd.CHECKMATE) (if (pos.whiteToMove) -MATE else MATE) else 0, null, "")
+
         fun decodeAll(s: String, n: Int): List<Analysis?> {
             val parts = if (s.isEmpty()) emptyList() else s.split(';')
             return List(n) { i ->

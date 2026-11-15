@@ -8,6 +8,8 @@ import androidx.compose.material.icons.automirrored.rounded.Backspace as Rautomi
 import androidx.compose.material.icons.automirrored.rounded.Logout as Rautomirrored_rounded_Logout
 import androidx.compose.material.icons.automirrored.rounded.MenuBook as Rautomirrored_rounded_MenuBook
 import androidx.compose.material.icons.automirrored.rounded.Undo as Rautomirrored_rounded_Undo
+import androidx.compose.material.icons.automirrored.rounded.VolumeOff as Rautomirrored_rounded_VolumeOff
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp as Rautomirrored_rounded_VolumeUp
 import androidx.compose.material.icons.outlined.Extension as Routlined_Extension
 import androidx.compose.material.icons.outlined.Keyboard as Routlined_Keyboard
 import androidx.compose.material.icons.outlined.School as Routlined_School
@@ -47,6 +49,8 @@ import androidx.compose.material.icons.rounded.VisibilityOff as Rrounded_Visibil
 import com.ivanherboch.chessduck.ui.icons.Analytics
 import com.ivanherboch.chessduck.ui.icons.Backspace
 import com.ivanherboch.chessduck.ui.icons.Casino
+import com.ivanherboch.chessduck.ui.icons.VolumeOff
+import com.ivanherboch.chessduck.ui.icons.VolumeUp
 import com.ivanherboch.chessduck.ui.icons.ChildCare
 import com.ivanherboch.chessduck.ui.icons.Download
 import com.ivanherboch.chessduck.ui.icons.ErrorOutline
@@ -112,6 +116,8 @@ class DuckIconsTest {
         check("automirrored.rounded.Logout", Icons.AutoMirrored.Rounded.Logout, Icons.AutoMirrored.Rounded.Rautomirrored_rounded_Logout)
         check("automirrored.rounded.MenuBook", Icons.AutoMirrored.Rounded.MenuBook, Icons.AutoMirrored.Rounded.Rautomirrored_rounded_MenuBook)
         check("automirrored.rounded.Undo", Icons.AutoMirrored.Rounded.Undo, Icons.AutoMirrored.Rounded.Rautomirrored_rounded_Undo)
+        check("automirrored.rounded.VolumeOff", Icons.AutoMirrored.Rounded.VolumeOff, Icons.AutoMirrored.Rounded.Rautomirrored_rounded_VolumeOff)
+        check("automirrored.rounded.VolumeUp", Icons.AutoMirrored.Rounded.VolumeUp, Icons.AutoMirrored.Rounded.Rautomirrored_rounded_VolumeUp)
         check("outlined.Extension", Icons.Outlined.Extension, Icons.Outlined.Routlined_Extension)
         check("outlined.Keyboard", Icons.Outlined.Keyboard, Icons.Outlined.Routlined_Keyboard)
         check("outlined.School", Icons.Outlined.School, Icons.Outlined.Routlined_School)

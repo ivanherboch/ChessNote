@@ -50,8 +50,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ivanherboch.chessduck.data.SettingsRepository
-import kotlinx.coroutines.CoroutineScope
+import com.ivanherboch.chessduck.ui.Narrator
+import com.ivanherboch.chessduck.ui.ButtonVariant
 import com.ivanherboch.chessduck.ui.DuckButton
+import android.content.Intent
+import android.speech.tts.TextToSpeech
+import kotlinx.coroutines.CoroutineScope
 import com.ivanherboch.chessduck.ui.DuckSegmentedRow
 import com.ivanherboch.chessduck.ui.DuckSheet
 import com.ivanherboch.chessduck.ui.DuckTextField
@@ -127,8 +131,12 @@ internal fun PseudoField(label: String, initial: String, fallback: String, onSav
  * Les réglages sont écrits dans [scope], la portée de l'application : fermer le tiroir n'annule jamais l'écriture.
  */
 @Composable
-fun SettingsSheet(prefs: SettingsRepository, scope: CoroutineScope, onClose: () -> Unit) {
+fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: CoroutineScope, onClose: () -> Unit) {
     val settings by prefs.settings.collectAsStateWithLifecycle(initialValue = null)
+    // Une voix française hors-ligne est-elle installée ? (null tant que le moteur n'a pas répondu)
+    val voice by narrator.available.collectAsStateWithLifecycle()
+    LaunchedEffect(narrator) { narrator.prepare() }
+    val context = LocalContext.current
     val st = settings ?: return
     val c = LocalDuck.current
     DuckSheet("Paramètres", onClose) {
@@ -158,6 +166,19 @@ fun SettingsSheet(prefs: SettingsRepository, scope: CoroutineScope, onClose: () 
         SectionTitle("Sons et vibrations")
         SwitchRow("Bruit des pièces", "Petit bruit de bois quand une pièce se pose.", st.sound) { v -> scope.launch { prefs.setSound(v) } }
         SwitchRow("Vibrations", "Retour haptique au toucher, aux erreurs et aux réussites.", st.haptics) { v -> scope.launch { prefs.setHaptics(v) } }
+        SwitchRow(
+            "Lecture vocale des leçons",
+            if (voice == false) "Aucune voix française hors-ligne n'est installée sur ce téléphone."
+            else "L'Académie lit à voix haute les commentaires du mode Guidé.",
+            st.narration && voice != false, enabled = voice != false,
+        ) { v -> scope.launch { prefs.setNarration(v) } }
+        if (voice == false) {
+            DuckButton(
+                "Installer une voix française",
+                { runCatching { context.startActivity(Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } },
+                Modifier.fillMaxWidth(), variant = ButtonVariant.OUTLINED,
+            )
+        }
 
         SectionTitle("Joueurs")
         PseudoField("Pseudo du joueur", st.pseudo, "Joueur") { v -> scope.launch { prefs.setPseudo(v) } }

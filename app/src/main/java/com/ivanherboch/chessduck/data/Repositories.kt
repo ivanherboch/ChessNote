@@ -27,6 +27,7 @@ interface SettingsRepository {
     suspend fun setConfirmActions(v: Boolean)
     suspend fun setHaptics(v: Boolean)
     suspend fun setSound(v: Boolean)
+    suspend fun setNarration(v: Boolean)
     suspend fun setKidMode(v: Boolean)
     suspend fun setPseudo(v: String)
     suspend fun setPseudo2(v: String)

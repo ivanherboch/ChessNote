@@ -254,6 +254,11 @@ class PlayViewModel(
 
     /** Clôt la partie : résultat, ELO FIDE (K = 32) contre l'ordinateur, enregistrement dans l'historique. */
     private fun finish(end: GameEnd, resignedWhite: Boolean?) {
+        // Mat ou nulle : l'évaluation de la position finale est connue, la jauge ne garde pas une ancienne valeur.
+        if (end != GameEnd.NONE) {
+            analysisJob?.cancel()
+            _state.update { it.copy(analysis = it.analysis + (it.line.size to Analysis.decided(it.line.last, end))) }
+        }
         val s = state.value
         val line = s.line
         // 1 = victoire des Blancs, 0 = nulle, -1 = victoire des Noirs

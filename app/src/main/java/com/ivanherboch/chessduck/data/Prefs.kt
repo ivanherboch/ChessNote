@@ -42,6 +42,8 @@ data class Settings(
     val notationBest: Int = 0,
     val haptics: Boolean = true,
     val sound: Boolean = true,
+    /** Lecture à voix haute des commentaires de l'Académie (mode Guidé). */
+    val narration: Boolean = false,
     val kidMode: Boolean = false,
     /** Identifiants des derniers problèmes joués, du plus récent au plus ancien. */
     val recentPuzzles: List<String> = emptyList(),
@@ -83,6 +85,7 @@ class Prefs(private val context: Context) : SettingsRepository {
         val notationBest = intPreferencesKey("notation_best_streak")
         val haptics = booleanPreferencesKey("haptics")
         val sound = booleanPreferencesKey("sound")
+        val narration = booleanPreferencesKey("narration")
         val kid = booleanPreferencesKey("kid_mode")
         val recent = stringPreferencesKey("recent_puzzles")
         val knownThemes = stringPreferencesKey("recent_known_themes")
@@ -108,6 +111,7 @@ class Prefs(private val context: Context) : SettingsRepository {
             notationBest = p[K.notationBest] ?: 0,
             haptics = p[K.haptics] ?: true,
             sound = p[K.sound] ?: true,
+            narration = p[K.narration] ?: false,
             kidMode = p[K.kid] ?: false,
             recentPuzzles = (p[K.recent] ?: "").split(',').filter { it.isNotBlank() },
             knownThemePuzzles = (p[K.knownThemes] ?: "").split(',').filter { it.isNotBlank() }.toSet(),
@@ -138,6 +142,7 @@ class Prefs(private val context: Context) : SettingsRepository {
     override suspend fun setNotationBest(v: Int) { context.store.edit { if (v > (it[K.notationBest] ?: 0)) it[K.notationBest] = v } }
     override suspend fun setHaptics(v: Boolean) { context.store.edit { it[K.haptics] = v } }
     override suspend fun setSound(v: Boolean) { context.store.edit { it[K.sound] = v } }
+    override suspend fun setNarration(v: Boolean) { context.store.edit { it[K.narration] = v } }
     override suspend fun setKidMode(v: Boolean) { context.store.edit { it[K.kid] = v } }
 
     /** Place [id] en tête de l'historique des problèmes joués (6 conservés : le courant + 5 précédents). */

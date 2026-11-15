@@ -74,7 +74,7 @@ class IconGeneratorTool {
             }
             sb.append("    }.also { $cache = it }\n")
         }
-        out.parentFile.mkdirs()
+        out.parentFile?.mkdirs()
         out.writeText(sb.toString())
     }
 

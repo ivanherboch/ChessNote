@@ -29,6 +29,7 @@ class LinePlaybackController(private val scope: CoroutineScope) {
      * Lecture automatique : avance d'un demi-coup à la fois ([advance] reçoit la cible) jusqu'à la fin de la ligne,
      * puis appelle [onEnd]. [cursor] renvoie null si la ligne n'est plus affichée (arrêt sans [onEnd]).
      * [checkBeforeDelay] : vrai = on vérifie la fin avant d'attendre (Académie), faux = après l'attente (revue).
+     * [awaitReady] est attendu avant chaque pause (ex. fin de la lecture à voix haute du commentaire).
      */
     fun autoplay(
         cursor: () -> Int?,
@@ -37,10 +38,12 @@ class LinePlaybackController(private val scope: CoroutineScope) {
         checkBeforeDelay: Boolean,
         advance: (Int) -> Unit,
         onEnd: () -> Unit,
+        awaitReady: suspend () -> Unit = {},
     ) = launch {
         while (true) {
             val before = cursor() ?: return@launch
             if (checkBeforeDelay && before >= size()) break
+            awaitReady()
             delay(delayFor(before))
             val now = cursor() ?: return@launch
             if (!checkBeforeDelay && now >= size()) break

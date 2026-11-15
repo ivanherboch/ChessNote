@@ -6,6 +6,10 @@ import androidx.lifecycle.ViewModel
 import com.ivanherboch.chessduck.data.LessonProgressRepository
 import com.ivanherboch.chessduck.data.SettingsRepository
 import com.ivanherboch.chessduck.ui.LinePlaybackController
+import com.ivanherboch.chessduck.ui.Narrator
+import com.ivanherboch.chessduck.chess.SpokenFr
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import androidx.lifecycle.viewModelScope
@@ -44,6 +48,7 @@ data class AcademyState(
 class AcademyViewModel(
     private val prefs: SettingsRepository,
     private val lessons: LessonProgressRepository,
+    private val narrator: Narrator,
     /** Leçon, mode et position mémorisés pour survivre à l'arrêt du processus par Android. */
     private val saved: SavedStateHandle = SavedStateHandle(),
 ) : ViewModel() {
@@ -55,6 +60,12 @@ class AcademyViewModel(
     private val playback = LinePlaybackController(viewModelScope)
 
     val lesson: Lesson get() = Lessons.byId(state.value.lessonId)
+
+    /** Lecture à voix haute des commentaires du mode Guidé (réglage), et phrase en cours de lecture. */
+    val narration: StateFlow<Boolean> = prefs.settings.map { it.narration }.distinctUntilChanged()
+        .onEach { if (!it) narrator.stop() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val speaking: StateFlow<Boolean> = narrator.speaking
 
     init {
         viewModelScope.launch {
@@ -91,6 +102,8 @@ class AcademyViewModel(
         }
         if (save) viewModelScope.launch { prefs.setLesson(l.id) }
         if (challenge) startChallenge() else _state.update { it.copy(message = "", tone = Tone.INFO) }
+        // Ouverture choisie par l'utilisateur (pas la restauration au lancement) : on lit l'objectif.
+        if (save) narrate()
     }
 
     fun setFilter(cat: LessonCategory?) {
@@ -104,7 +117,10 @@ class AcademyViewModel(
         if (state.value.challenge == on) return
         playback.cancel()
         _state.update { it.copy(challenge = on, cursor = 0, playing = false, anim = null, hintStage = 0, done = false, message = "", tone = Tone.INFO) }
-        if (on) startChallenge()
+        if (on) {
+            narrator.stop()
+            startChallenge()
+        } else narrate()
     }
 
     // ---- Mode Guidé ----
@@ -115,7 +131,31 @@ class AcademyViewModel(
         if (t == s.cursor) return
         val anim = LinePlaybackController.transition(l.line, s.cursor, t)
         _state.update { it.copy(cursor = t, anim = anim) }
+        narrate()
     }
+
+    // ---- Lecture à voix haute (mode Guidé uniquement) ----
+    /** Ce qui est lu pour la position affichée : l'objectif de la leçon, puis chaque coup et son commentaire. */
+    private fun spokenStep(): String {
+        val l = lesson
+        val c = state.value.cursor
+        return if (c == 0) SpokenFr.text("${l.title}. ${l.summary}") else "${SpokenFr.move(l.line.sans[c - 1])}. ${SpokenFr.text(l.texts[c - 1])}"
+    }
+
+    private fun narrate() {
+        if (narration.value && !state.value.challenge) narrator.speak(spokenStep())
+    }
+
+    /** Bouton haut-parleur : arrête la phrase en cours, ou relit celle de la position affichée. */
+    fun toggleSpeech() = if (speaking.value) narrator.stop() else narrator.speak(spokenStep())
+
+    /** L'écran n'est plus visible (autre onglet, application en arrière-plan) : silence et pause. */
+    fun silence() {
+        pause()
+        narrator.stop()
+    }
+
+    override fun onCleared() = narrator.stop()
 
     fun step(delta: Int) { pause(); goTo(state.value.cursor + delta) }
     fun rewind() { pause(); goTo(0) }
@@ -132,8 +172,10 @@ class AcademyViewModel(
         _state.update { it.copy(playing = true) }
         playback.autoplay(
             cursor = { state.value.cursor }, size = { lesson.line.size },
-            delayFor = { c -> if (c == 0) 700L else 2600L }, checkBeforeDelay = true,
+            // Avec la voix, on attend la fin du commentaire puis on marque une courte pause.
+            delayFor = { c -> if (narration.value) 600L else if (c == 0) 700L else 2600L }, checkBeforeDelay = true,
             advance = ::goTo, onEnd = { _state.update { it.copy(playing = false) } },
+            awaitReady = narrator::awaitIdle,
         )
     }
 

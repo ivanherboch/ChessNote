@@ -26,6 +26,7 @@ import com.ivanherboch.chessduck.feature.NotationViewModel
 import com.ivanherboch.chessduck.feature.PlayViewModel
 import com.ivanherboch.chessduck.feature.PuzzlesViewModel
 import com.ivanherboch.chessduck.ui.Feedback
+import com.ivanherboch.chessduck.ui.TtsNarrator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,6 +47,7 @@ class AppContainer(context: Context, val scope: CoroutineScope) {
     val engine: ChessEngine by lazy { Stockfish(appContext) }
     val analysis: GameAnalysisService by lazy { GameAnalysisService(engine, games, scope) }
     val feedback: Feedback by lazy { Feedback(appContext) }
+    val narrator: TtsNarrator by lazy { TtsNarrator(appContext) }
 }
 
 class ChessDuckApp : Application() {
@@ -65,7 +67,7 @@ object DuckViewModels {
 
     val Factory: ViewModelProvider.Factory = viewModelFactory {
         initializer { container().let { NotationViewModel(it.settings, it.puzzles) } }
-        initializer { container().let { AcademyViewModel(it.settings, it.lessons, createSavedStateHandle()) } }
+        initializer { container().let { AcademyViewModel(it.settings, it.lessons, it.narrator, createSavedStateHandle()) } }
         initializer { container().let { PuzzlesViewModel(it.settings, it.puzzles, it.engine, createSavedStateHandle()) } }
         initializer { container().let { PlayViewModel(it.settings, it.games, it.engine, it.analysis) } }
         initializer { GameReviewViewModel(container().analysis) }

@@ -67,6 +67,26 @@ val Icons.AutoMirrored.Rounded.Undo: ImageVector
         )
     }.also { _automirrored_rounded_Undo = it }
 
+private var _automirrored_rounded_VolumeOff: ImageVector? = null
+
+val Icons.AutoMirrored.Rounded.VolumeOff: ImageVector
+    get() = _automirrored_rounded_VolumeOff ?: materialIcon(name = "AutoMirrored.Rounded.VolumeOff", autoMirror = true) {
+        addPath(
+            addPathNodes("M3.63,3.63 c-0.39,0.39 -0.39,1.02 0,1.41 L7.29,8.7 L7,9 L4,9 c-0.55,0 -1,0.45 -1,1 v4 c0,0.55 0.45,1 1,1 h3 l3.29,3.29 c0.63,0.63 1.71,0.18 1.71,-0.71 v-4.17 l4.18,4.18 c-0.49,0.37 -1.02,0.68 -1.6,0.91 c-0.36,0.15 -0.58,0.53 -0.58,0.92 c0,0.72 0.73,1.18 1.39,0.91 c0.8,-0.33 1.55,-0.77 2.22,-1.31 l1.34,1.34 c0.39,0.39 1.02,0.39 1.41,0 c0.39,-0.39 0.39,-1.02 0,-1.41 L5.05,3.63 c-0.39,-0.39 -1.02,-0.39 -1.42,0 Z M19,12 c0,0.82 -0.15,1.61 -0.41,2.34 l1.53,1.53 c0.56,-1.17 0.88,-2.48 0.88,-3.87 c0,-3.83 -2.4,-7.11 -5.78,-8.4 c-0.59,-0.23 -1.22,0.23 -1.22,0.86 v0.19 c0,0.38 0.25,0.71 0.61,0.85 C17.18,6.54 19,9.06 19,12 Z M10.29,5.71 l-0.17,0.17 L12,7.76 L12,6.41 c0,-0.89 -1.08,-1.33 -1.71,-0.7 Z M16.5,12 c0,-1.77 -1.02,-3.29 -2.5,-4.03 v1.79 l2.48,2.48 c0.01,-0.08 0.02,-0.16 0.02,-0.24 Z"),
+            pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black), fillAlpha = 1.0f,
+        )
+    }.also { _automirrored_rounded_VolumeOff = it }
+
+private var _automirrored_rounded_VolumeUp: ImageVector? = null
+
+val Icons.AutoMirrored.Rounded.VolumeUp: ImageVector
+    get() = _automirrored_rounded_VolumeUp ?: materialIcon(name = "AutoMirrored.Rounded.VolumeUp", autoMirror = true) {
+        addPath(
+            addPathNodes("M3,10 v4 c0,0.55 0.45,1 1,1 h3 l3.29,3.29 c0.63,0.63 1.71,0.18 1.71,-0.71 L12,6.41 c0,-0.89 -1.08,-1.34 -1.71,-0.71 L7,9 L4,9 c-0.55,0 -1,0.45 -1,1 Z M16.5,12 c0,-1.77 -1.02,-3.29 -2.5,-4.03 v8.05 c1.48,-0.73 2.5,-2.25 2.5,-4.02 Z M14,4.45 v0.2 c0,0.38 0.25,0.71 0.6,0.85 C17.18,6.53 19,9.06 19,12 s-1.82,5.47 -4.4,6.5 c-0.36,0.14 -0.6,0.47 -0.6,0.85 v0.2 c0,0.63 0.63,1.07 1.21,0.85 C18.6,19.11 21,15.84 21,12 s-2.4,-7.11 -5.79,-8.4 c-0.58,-0.23 -1.21,0.22 -1.21,0.85 Z"),
+            pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black), fillAlpha = 1.0f,
+        )
+    }.also { _automirrored_rounded_VolumeUp = it }
+
 private var _outlined_Extension: ImageVector? = null
 
 val Icons.Outlined.Extension: ImageVector

@@ -15,6 +15,7 @@ import com.ivanherboch.chessduck.data.ThemeCountRow
 import com.ivanherboch.chessduck.engine.ChessEngine
 import com.ivanherboch.chessduck.engine.PvLine
 import com.ivanherboch.chessduck.engine.SearchResult
+import com.ivanherboch.chessduck.ui.Narrator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -43,6 +44,7 @@ class FakeSettings(initial: Settings = Settings()) : SettingsRepository {
     override suspend fun setConfirmActions(v: Boolean) = flow.update { it.copy(confirmActions = v) }
     override suspend fun setHaptics(v: Boolean) = flow.update { it.copy(haptics = v) }
     override suspend fun setSound(v: Boolean) = flow.update { it.copy(sound = v) }
+    override suspend fun setNarration(v: Boolean) = flow.update { it.copy(narration = v) }
     override suspend fun setKidMode(v: Boolean) = flow.update { it.copy(kidMode = v) }
     override suspend fun setPseudo(v: String) = flow.update { it.copy(pseudo = v) }
     override suspend fun setPseudo2(v: String) = flow.update { it.copy(pseudo2 = v) }
@@ -108,3 +110,14 @@ val PUZZLE_0000D = Puzzle(
     "0000D", "5rk1/1p3ppp/pq3b2/8/8/1P1Q1N2/P4PPP/3R2K1 w - - 2 27", "d3d6 f8d8 d6d8 f6d8",
     1433, 95, 1000, " advantage endgame short ", PuzzleThemes.primary(" advantage endgame short ").key,
 )
+
+/** Narrateur en mémoire : note les phrases lues ; une phrase dure jusqu'à [finish]. */
+class FakeNarrator : Narrator {
+    val spoken = ArrayList<String>()
+    override val available = MutableStateFlow<Boolean?>(true)
+    override val speaking = MutableStateFlow(false)
+    override fun prepare() = Unit
+    override fun speak(text: String) { spoken.add(text); speaking.value = true }
+    override fun stop() { speaking.value = false }
+    fun finish() { speaking.value = false }
+}
