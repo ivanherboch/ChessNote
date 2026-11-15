@@ -37,6 +37,16 @@ class FakeSettings(initial: Settings = Settings()) : SettingsRepository {
         it.copy(recentPuzzles = recent, puzzleId = id, knownThemePuzzles = it.knownThemePuzzles.filter { k -> k in recent }.toSet())
     }
     override suspend fun markThemeKnown(id: String) = flow.update { it.copy(knownThemePuzzles = it.knownThemePuzzles + id) }
+    override suspend fun setThemeMode(v: Int) = flow.update { it.copy(themeMode = v) }
+    override suspend fun setPalette(v: Int) = flow.update { it.copy(palette = v) }
+    override suspend fun setCoords(v: Boolean) = flow.update { it.copy(coords = v) }
+    override suspend fun setConfirmActions(v: Boolean) = flow.update { it.copy(confirmActions = v) }
+    override suspend fun setHaptics(v: Boolean) = flow.update { it.copy(haptics = v) }
+    override suspend fun setSound(v: Boolean) = flow.update { it.copy(sound = v) }
+    override suspend fun setKidMode(v: Boolean) = flow.update { it.copy(kidMode = v) }
+    override suspend fun setPseudo(v: String) = flow.update { it.copy(pseudo = v) }
+    override suspend fun setPseudo2(v: String) = flow.update { it.copy(pseudo2 = v) }
+    override suspend fun setShareStyle(format: String, light: Boolean) = flow.update { it.copy(shareFormat = format, shareLight = light) }
 }
 
 /** Catalogue de problèmes en mémoire (mêmes règles de filtre que la base). */

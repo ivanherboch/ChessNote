@@ -49,7 +49,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.ivanherboch.chessduck.ChessDuckApp
 import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.data.Puzzle
 import com.ivanherboch.chessduck.ui.DuckButton
@@ -59,7 +58,6 @@ import com.ivanherboch.chessduck.ui.LocalDuck
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Choix segmenté d'un réglage d'export (format, fond). */
@@ -126,6 +124,8 @@ internal fun ExportSheet(
     playerWhite: Boolean,
     solved: Boolean,
     exporting: Boolean,
+    loadStyle: suspend () -> ShareStyle,
+    saveStyle: (ShareStyle) -> Unit,
     onExport: (suspend () -> Unit) -> Unit,
     onClose: () -> Unit,
 ) {
@@ -133,12 +133,11 @@ internal fun ExportSheet(
     val context = LocalContext.current
     var status by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
     DuckSheet("Exporter en image", onClose) {
-        val duckApp = context.applicationContext as ChessDuckApp
         var styleOrNull by remember { mutableStateOf<ShareStyle?>(null) }
-        LaunchedEffect(Unit) { if (styleOrNull == null) styleOrNull = ShareStyle.from(duckApp.prefs.settings.first()) }
+        LaunchedEffect(Unit) { if (styleOrNull == null) styleOrNull = loadStyle() }
         val style = styleOrNull ?: ShareStyle()
-        // Écrit dans la portée de l'application : fermer le tiroir n'annule jamais l'enregistrement.
-        val setStyle = { v: ShareStyle -> styleOrNull = v; duckApp.scope.launch { duckApp.prefs.setShareStyle(v.format.name, v.light) }; Unit }
+        // [saveStyle] écrit hors du tiroir : le fermer n'annule jamais l'enregistrement.
+        val setStyle = { v: ShareStyle -> styleOrNull = v; saveStyle(v) }
         // Aperçus calculés hors du fil principal, recalculés à chaque changement de réglage ;
         // la clé (style, problème) permet de réutiliser le bitmap à l'export s'il correspond encore.
         val problemShot by produceState<Pair<Any, Bitmap>?>(null, styleOrNull, p.id) {

@@ -12,6 +12,8 @@ import com.ivanherboch.chessduck.feature.KidViewModel
 import com.ivanherboch.chessduck.feature.NotationViewModel
 import com.ivanherboch.chessduck.feature.PlayViewModel
 import com.ivanherboch.chessduck.feature.PuzzlesViewModel
+import com.ivanherboch.chessduck.feature.ShareFormat
+import com.ivanherboch.chessduck.feature.ShareStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -44,6 +46,38 @@ class ViewModelsTest {
     @After fun tearDown() = Dispatchers.resetMain()
 
     private fun test(block: suspend TestScope.() -> Unit) = runTest(main) { block() }
+
+    @Test
+    fun globalSettingsArePersistedThroughTheRepository() = test {
+        val prefs = FakeSettings()
+        prefs.setThemeMode(1)
+        prefs.setPalette(4)
+        prefs.setCoords(false)
+        prefs.setConfirmActions(false)
+        prefs.setHaptics(false)
+        prefs.setSound(false)
+        prefs.setKidMode(true)
+        prefs.setPseudo("Alice")
+        prefs.setPseudo2("Bob")
+        val st = prefs.settings.first()
+        assertEquals(1, st.themeMode)
+        assertEquals(4, st.palette)
+        assertFalse(st.coords || st.confirmActions || st.haptics || st.sound)
+        assertTrue(st.kidMode)
+        assertEquals("Alice" to "Bob", st.pseudo to st.pseudo2)
+    }
+
+    @Test
+    fun shareStyleIsReadAndSavedByPuzzlesViewModel() = test {
+        val prefs = FakeSettings()
+        val vm = PuzzlesViewModel(prefs, FakePuzzles(listOf(PUZZLE_0000D)), FakeEngine())
+        assertEquals(ShareStyle(), vm.shareStyle())
+        val square = ShareStyle(ShareFormat.SQUARE, light = true)
+        vm.saveShareStyle(square)
+        advanceUntilIdle()
+        assertEquals(ShareFormat.SQUARE.name, prefs.settings.first().shareFormat)
+        assertEquals(square, vm.shareStyle())
+    }
 
     @Test
     fun kidMovesBackAndForward() = test {

@@ -39,6 +39,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** Affichage temporaire d'un mauvais coup puis de sa réfutation (la grille reste dégagée). */
@@ -407,5 +409,13 @@ class PuzzlesViewModel(
 
     private companion object {
         const val KEY_PUZZLE = "puzzles_current"
+    }
+
+    /** Style d'image enregistré (format, fond), lu à l'ouverture du tiroir d'export. */
+    suspend fun shareStyle(): ShareStyle = ShareStyle.from(prefs.settings.first())
+
+    /** Enregistre le style choisi ; l'écriture va à son terme même si l'écran se ferme entre-temps. */
+    fun saveShareStyle(v: ShareStyle) {
+        viewModelScope.launch { withContext(NonCancellable) { prefs.setShareStyle(v.format.name, v.light) } }
     }
 }

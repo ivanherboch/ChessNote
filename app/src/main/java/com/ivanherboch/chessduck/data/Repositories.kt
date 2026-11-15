@@ -17,6 +17,21 @@ interface SettingsRepository {
     suspend fun pushRecentPuzzle(id: String)
     /** Mémorise que le thème de ce problème récent était visible quand il a été joué (anti-spoiler levé). */
     suspend fun markThemeKnown(id: String)
+
+    // Réglages globaux (tiroir Paramètres, mode enfant, style des images partagées).
+    /** 0 = suivre le système, 1 = Jour, 2 = Nuit. */
+    suspend fun setThemeMode(v: Int)
+    /** Index de la palette dans DuckPalette. */
+    suspend fun setPalette(v: Int)
+    suspend fun setCoords(v: Boolean)
+    suspend fun setConfirmActions(v: Boolean)
+    suspend fun setHaptics(v: Boolean)
+    suspend fun setSound(v: Boolean)
+    suspend fun setKidMode(v: Boolean)
+    suspend fun setPseudo(v: String)
+    suspend fun setPseudo2(v: String)
+    /** Format (nom de ShareFormat) et fond clair des images partagées. */
+    suspend fun setShareStyle(format: String, light: Boolean)
 }
 
 /** Catalogue des problèmes embarqués et progression du joueur. */

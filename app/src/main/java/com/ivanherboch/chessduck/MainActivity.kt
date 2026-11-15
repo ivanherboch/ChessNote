@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck
 
+import kotlinx.coroutines.CoroutineScope
+import com.ivanherboch.chessduck.data.SettingsRepository
 import com.ivanherboch.chessduck.ui.DuckPalette
 import com.ivanherboch.chessduck.feature.GameReviewViewModel
 import com.ivanherboch.chessduck.ui.isTwoPane
@@ -10,7 +12,6 @@ import kotlinx.coroutines.flow.map
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import android.content.pm.ActivityInfo
 import android.graphics.Color as AColor
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -44,21 +45,13 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.ui.semantics.Role
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import com.ivanherboch.chessduck.ui.icons.MenuBook
 import com.ivanherboch.chessduck.ui.icons.Extension
 import com.ivanherboch.chessduck.ui.icons.Keyboard
 import com.ivanherboch.chessduck.ui.icons.School
-import com.ivanherboch.chessduck.ui.icons.ChildCare
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -66,13 +59,6 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.NavigationRailItemDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -88,13 +74,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -113,11 +95,9 @@ import com.ivanherboch.chessduck.feature.PuzzlesViewModel
 import com.ivanherboch.chessduck.ui.ChessDuckTheme
 import com.ivanherboch.chessduck.ui.DuckButton
 import com.ivanherboch.chessduck.ui.DuckIconButton
-import com.ivanherboch.chessduck.ui.DuckSheet
 import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.LocalFeedback
 import com.ivanherboch.chessduck.ui.LocalShowCoords
-import com.ivanherboch.chessduck.ui.SectionTitle
 import kotlinx.coroutines.launch
 
 /** Réglages qui habillent toute l'application (thème, retours, mode enfant). */
@@ -167,7 +147,7 @@ class MainActivity : ComponentActivity() {
                         LocalFeedback provides app.feedback, LocalShowCoords provides st.coords,
                         LocalIsTwoPane provides isTwoPane(maxWidth, maxHeight),
                     ) {
-                        MainScreen(st, app)
+                        MainScreen(st, app.container.settings, app.scope)
                     }
                 }
             }
@@ -192,7 +172,7 @@ private fun TabIcon(t: TabSpec, selected: Boolean) = Icon(if (selected) t.select
 private fun TabLabel(t: TabSpec, maxLines: Int = Int.MAX_VALUE) = Text(t.label, style = MaterialTheme.typography.labelMedium, maxLines = maxLines)
 
 @Composable
-fun MainScreen(st: AppChrome, app: ChessDuckApp) {
+fun MainScreen(st: AppChrome, prefs: SettingsRepository, appScope: CoroutineScope) {
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     var tab by rememberSaveable { mutableIntStateOf(0) }
@@ -216,7 +196,7 @@ fun MainScreen(st: AppChrome, app: ChessDuckApp) {
         holder.SaveableStateProvider("kid") {
             Box(Modifier.fillMaxSize().background(c.bg)) {
                 Box(Modifier.fillMaxSize().safeDrawingPadding()) {
-                    KidScreen(kid) { app.scope.launch { app.prefs.setKidMode(false) } }
+                    KidScreen(kid) { appScope.launch { prefs.setKidMode(false) } }
                 }
             }
         }
@@ -307,5 +287,5 @@ fun MainScreen(st: AppChrome, app: ChessDuckApp) {
     }
 
     if (showMemo) MemoSheet { showMemo = false }
-    if (showSettings) SettingsSheet(app) { showSettings = false }
+    if (showSettings) SettingsSheet(prefs, appScope) { showSettings = false }
 }

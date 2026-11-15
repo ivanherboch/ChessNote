@@ -52,20 +52,22 @@ Paquet racine : `app/src/main/java/com/ivanherboch/chessduck/`
 - `feature/` (même paquet `feature`, fichiers séparés) :
   - Notation : `NotationLogic.kt`, `NotationViewModel.kt`, `NotationScreen.kt`, `MemoSheet.kt`
   - Académie : `AcademyViewModel.kt`, `AcademyScreen.kt`, `LessonCatalogSheet.kt`
-  - Problèmes : `PuzzlesViewModel.kt`, `PuzzlesScreen.kt`, `PuzzleCatalogSheet.kt`, `ExportSheet.kt`, `ShareCard.kt`
+  - Problèmes : `PuzzlesViewModel.kt`, `PuzzlesScreen.kt`, `PuzzleCatalogSheet.kt`, `ExportSheet.kt`, `ShareCard.kt` (rendu),
+    `ShareExporter.kt` (cache, FileProvider, MediaStore, partage)
   - Jeu Libre : `GameLogic.kt`, `PlayViewModel.kt` (jeton `gameGeneration` contre les courses), `PlayScreen.kt`,
-    `HistorySheet.kt`, `GameReviewViewModel.kt`, `GameAnalysis.kt` (`GameAnalysisService` partagé), `ReviewComments.kt`
-  - Mode enfant : `KidViewModel.kt`, `KidScreen.kt`
-  - `SettingsSheet.kt` (Paramètres, pseudo avec debounce de 300 ms)
+    `HistorySheet.kt`, `GameSettingsSheet.kt`, `GameReviewViewModel.kt` (+ `Review`), `GameReviewScreen.kt`, `GameAnalysis.kt` (`GameAnalysisService` partagé), `ReviewComments.kt`
+  - Mode enfant : `KidViewModel.kt`, `KidScreen.kt`, `KidDemo.kt` (leçons animées)
+  - `SettingsSheet.kt` (Paramètres, pseudo avec debounce de 300 ms ; reçoit `SettingsRepository` + portée applicative)
 - `ui/` — `Theme.kt` (jetons Nuit/Jour/Enfant, 5 palettes `DuckPalette` au choix dont une adaptée au daltonisme, contrastes WCAG AA, Fredoka, `LocalIsTwoPane`), `Common.kt`
-  (`DuckButton`, `DuckIconButton`, `DuckChip`, `DuckTextField`, `DuckSegmentedRow`, `FeedbackCard`, `ModuleLayout`,
-  `DuckSheet`, `DuckLazySheet`, `EmptyState`, `ConfirmDialog`, `MoveStrip`…), `Board.kt` (échiquier interactif),
+  (atomes : `DuckButton`, `DuckIconButton`, `DuckChip`, `DuckTextField`, `DuckSegmentedRow`, `SectionTitle`, `InfoPill`…),
+  `Sheets.kt` (`DuckSheet`, `DuckLazySheet`, `ConfirmDialog`, `EmptyState`, `LoadingState`), `ModuleLayout.kt`
+  (`FeedbackCard`, `AlignedLabelRows`, `WholeOrNothing`, `ModuleLayout`), `MoveStrip.kt`, `Board.kt` (échiquier interactif),
   `BoardGeometry.kt` (géométrie partagée écran / export / mode enfant), `LinePlayback.kt`, `Captured.kt`, `Feedback.kt`,
   `icons/DuckIcons.kt` (**généré** : 40 icônes Material ; l'app n'embarque que `material-icons-core`).
 - `util/` — `runCatchingSuspend` (relance `CancellationException`), `normalizeForSearch`.
 
 ### Règles d'architecture à respecter
-- Les ViewModels héritent de `ViewModel`, reçoivent des **interfaces** (jamais `ChessDuckApp`) et exposent des `StateFlow` en
+- Les ViewModels héritent de `ViewModel`, reçoivent des **interfaces** (jamais `ChessDuckApp` ; les composables non plus : seul `MainActivity` le touche) et exposent des `StateFlow` en
   lecture seule (`_state` privé). Toute nouvelle dépendance passe par `AppContainer` + `DuckViewModels.Factory`.
 - `stateIn(..., SharingStarted.WhileSubscribed(5_000), ...)` ; lire `prefs.settings.first()` quand l'écran peut ne pas être abonné.
 - Pas de `runCatching` autour d'appels `suspend` : utiliser `runCatchingSuspend`.

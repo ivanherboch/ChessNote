@@ -128,17 +128,17 @@ class Prefs(private val context: Context) : SettingsRepository {
     }
 
     /** 0 = système, 1 = Jour, 2 = Nuit ; la clé historique « dark » reste cohérente. */
-    suspend fun setThemeMode(v: Int) { context.store.edit {
+    override suspend fun setThemeMode(v: Int) { context.store.edit {
         it[K.themeMode] = v
         if (v != 0) it[K.dark] = v == 2
     } }
-    suspend fun setPalette(v: Int) { context.store.edit { it[K.palette] = v } }
-    suspend fun setCoords(v: Boolean) { context.store.edit { it[K.coords] = v } }
-    suspend fun setConfirmActions(v: Boolean) { context.store.edit { it[K.confirm] = v } }
+    override suspend fun setPalette(v: Int) { context.store.edit { it[K.palette] = v } }
+    override suspend fun setCoords(v: Boolean) { context.store.edit { it[K.coords] = v } }
+    override suspend fun setConfirmActions(v: Boolean) { context.store.edit { it[K.confirm] = v } }
     override suspend fun setNotationBest(v: Int) { context.store.edit { if (v > (it[K.notationBest] ?: 0)) it[K.notationBest] = v } }
-    suspend fun setHaptics(v: Boolean) { context.store.edit { it[K.haptics] = v } }
-    suspend fun setSound(v: Boolean) { context.store.edit { it[K.sound] = v } }
-    suspend fun setKidMode(v: Boolean) { context.store.edit { it[K.kid] = v } }
+    override suspend fun setHaptics(v: Boolean) { context.store.edit { it[K.haptics] = v } }
+    override suspend fun setSound(v: Boolean) { context.store.edit { it[K.sound] = v } }
+    override suspend fun setKidMode(v: Boolean) { context.store.edit { it[K.kid] = v } }
 
     /** Place [id] en tête de l'historique des problèmes joués (6 conservés : le courant + 5 précédents). */
     override suspend fun pushRecentPuzzle(id: String) { context.store.edit { p ->
@@ -154,8 +154,8 @@ class Prefs(private val context: Context) : SettingsRepository {
         val known = (p[K.knownThemes] ?: "").split(',').filter { it.isNotBlank() }.toMutableSet()
         if (known.add(id)) p[K.knownThemes] = known.joinToString(",")
     } }
-    suspend fun setPseudo(v: String) { context.store.edit { it[K.pseudo] = v } }
-    suspend fun setPseudo2(v: String) { context.store.edit { it[K.pseudo2] = v } }
+    override suspend fun setPseudo(v: String) { context.store.edit { it[K.pseudo] = v } }
+    override suspend fun setPseudo2(v: String) { context.store.edit { it[K.pseudo2] = v } }
     override suspend fun setElo(v: Int) { context.store.edit { it[K.elo] = v } }
     override suspend fun setGameSettings(twoPlayers: Boolean, color: Int, aiElo: Int) { context.store.edit {
         it[K.twoPlayers] = twoPlayers; it[K.color] = color; it[K.aiElo] = aiElo
@@ -163,5 +163,5 @@ class Prefs(private val context: Context) : SettingsRepository {
     override suspend fun setPuzzleFilter(band: Int, theme: String) { context.store.edit { it[K.band] = band; it[K.theme] = theme } }
     override suspend fun setNotationLevel(v: Int) { context.store.edit { it[K.level] = v } }
     override suspend fun setLesson(v: Int) { context.store.edit { it[K.lesson] = v } }
-    suspend fun setShareStyle(format: String, light: Boolean) { context.store.edit { it[SHARE_FORMAT] = format; it[SHARE_LIGHT] = light } }
+    override suspend fun setShareStyle(format: String, light: Boolean) { context.store.edit { it[SHARE_FORMAT] = format; it[SHARE_LIGHT] = light } }
 }

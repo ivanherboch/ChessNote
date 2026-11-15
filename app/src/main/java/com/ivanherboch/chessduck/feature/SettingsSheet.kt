@@ -49,7 +49,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ivanherboch.chessduck.ChessDuckApp
+import com.ivanherboch.chessduck.data.SettingsRepository
+import kotlinx.coroutines.CoroutineScope
 import com.ivanherboch.chessduck.ui.DuckButton
 import com.ivanherboch.chessduck.ui.DuckSegmentedRow
 import com.ivanherboch.chessduck.ui.DuckSheet
@@ -121,19 +122,20 @@ internal fun PseudoField(label: String, initial: String, fallback: String, onSav
     )
 }
 
-/** Paramètres globaux (persistés via DataStore), collectés uniquement pendant que le tiroir est ouvert. */
+/**
+ * Paramètres globaux (persistés via DataStore), collectés uniquement pendant que le tiroir est ouvert.
+ * Les réglages sont écrits dans [scope], la portée de l'application : fermer le tiroir n'annule jamais l'écriture.
+ */
 @Composable
-fun SettingsSheet(app: ChessDuckApp, onClose: () -> Unit) {
-    val settings by app.prefs.settings.collectAsStateWithLifecycle(initialValue = null)
+fun SettingsSheet(prefs: SettingsRepository, scope: CoroutineScope, onClose: () -> Unit) {
+    val settings by prefs.settings.collectAsStateWithLifecycle(initialValue = null)
     val st = settings ?: return
     val c = LocalDuck.current
-    // Les réglages sont écrits dans la portée de l'application : fermer le tiroir n'annule jamais l'écriture.
-    val scope = app.scope
     DuckSheet("Paramètres", onClose) {
         // Le mode enfant change toute l'application : c'est le premier choix proposé.
         SectionTitle("Mode enfant")
         DuckButton(
-            "Activer le mode enfant", { onClose(); scope.launch { app.prefs.setKidMode(true) } }, Modifier.fillMaxWidth(),
+            "Activer le mode enfant", { onClose(); scope.launch { prefs.setKidMode(true) } }, Modifier.fillMaxWidth(),
             accent = c.green, filled = true, icon = Icons.Rounded.ChildCare,
         )
         Text(
@@ -143,23 +145,23 @@ fun SettingsSheet(app: ChessDuckApp, onClose: () -> Unit) {
         )
 
         SectionTitle("Apparence")
-        DuckSegmentedRow(listOf("Système", "Jour", "Nuit"), st.themeMode, { i -> scope.launch { app.prefs.setThemeMode(i) } }, Modifier.fillMaxWidth())
+        DuckSegmentedRow(listOf("Système", "Jour", "Nuit"), st.themeMode, { i -> scope.launch { prefs.setThemeMode(i) } }, Modifier.fillMaxWidth())
 
         SectionTitle("Échiquier et parties")
         SwitchRow("Afficher les coordonnées", "Lettres a–h et chiffres 1–8 sur l'échiquier. Masquez-les pour vous entraîner à la notation.", st.coords) { v ->
-            scope.launch { app.prefs.setCoords(v) }
+            scope.launch { prefs.setCoords(v) }
         }
         SwitchRow("Confirmer l'abandon et la nouvelle partie", "Demande une confirmation quand une partie est en cours.", st.confirmActions) { v ->
-            scope.launch { app.prefs.setConfirmActions(v) }
+            scope.launch { prefs.setConfirmActions(v) }
         }
 
         SectionTitle("Sons et vibrations")
-        SwitchRow("Bruit des pièces", "Petit bruit de bois quand une pièce se pose.", st.sound) { v -> scope.launch { app.prefs.setSound(v) } }
-        SwitchRow("Vibrations", "Retour haptique au toucher, aux erreurs et aux réussites.", st.haptics) { v -> scope.launch { app.prefs.setHaptics(v) } }
+        SwitchRow("Bruit des pièces", "Petit bruit de bois quand une pièce se pose.", st.sound) { v -> scope.launch { prefs.setSound(v) } }
+        SwitchRow("Vibrations", "Retour haptique au toucher, aux erreurs et aux réussites.", st.haptics) { v -> scope.launch { prefs.setHaptics(v) } }
 
         SectionTitle("Joueurs")
-        PseudoField("Pseudo du joueur", st.pseudo, "Joueur") { v -> scope.launch { app.prefs.setPseudo(v) } }
-        PseudoField("Pseudo du joueur 2 (mode 2 joueurs)", st.pseudo2, "Joueur 2") { v -> scope.launch { app.prefs.setPseudo2(v) } }
+        PseudoField("Pseudo du joueur", st.pseudo, "Joueur") { v -> scope.launch { prefs.setPseudo(v) } }
+        PseudoField("Pseudo du joueur 2 (mode 2 joueurs)", st.pseudo2, "Joueur 2") { v -> scope.launch { prefs.setPseudo2(v) } }
         Text(
             "Classement actuel : ${st.elo} ELO (formule FIDE, K = 32). Les parties à 2 joueurs ne comptent pas.",
             color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp),
@@ -168,7 +170,7 @@ fun SettingsSheet(app: ChessDuckApp, onClose: () -> Unit) {
         SectionTitle("Palette de couleurs")
         Column(Modifier.selectableGroup()) {
             for (palette in DuckPalette.entries) {
-                PaletteOption(palette, selected = st.palette == palette.ordinal) { scope.launch { app.prefs.setPalette(palette.ordinal) } }
+                PaletteOption(palette, selected = st.palette == palette.ordinal) { scope.launch { prefs.setPalette(palette.ordinal) } }
             }
         }
 

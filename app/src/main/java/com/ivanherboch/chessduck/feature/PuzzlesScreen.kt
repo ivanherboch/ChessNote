@@ -214,6 +214,8 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
     if (shareChoice) {
         ExportSheet(
             p, line, s.playerWhite, s.solved, exporting,
+            loadStyle = vm::shareStyle,
+            saveStyle = vm::saveShareStyle,
             onExport = { block ->
                 if (!exporting) {
                     exporting = true
