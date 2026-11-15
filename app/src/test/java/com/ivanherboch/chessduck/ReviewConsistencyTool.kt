@@ -35,6 +35,8 @@ class ReviewConsistencyTool {
         var plies = 0
         var mates = 0
         var noise = 0
+        var missed = 0
+        var conceded = 0
         for (k in 0 until games) {
             val rnd = Random(k)
             val line = Line(START_FEN)
@@ -70,11 +72,13 @@ class ReviewConsistencyTool {
                 if (before == 1 && !san.endsWith("#") && !text.startsWith("⚠️ Mat en 1 manqué")) problems.add("$where : mat en 1 manqué non signalé — $text")
                 // 2. Un mat manqué annoncé doit correspondre à la jauge d'avant le coup.
                 Regex("Mat en (\\d) manqué").find(text)?.let { m ->
+                    missed++
                     if (m.groupValues[1].toInt() != before) problems.add("$where : « ${m.value} » mais la jauge d'avant indiquait ${before ?: "aucun mat"} — $text")
                     if (before == 1 && !Regex("[^ ]+# matait").containsMatchIn(text)) problems.add("$where : le coup qui matait n'est pas un mat — $text")
                 }
                 // 3. Mat concédé : même distance que la jauge d'après, et le coup cité mate bien en 1.
                 Regex("mat en (\\d) \\(([^)]+)\\)").find(text)?.let { m ->
+                    conceded++
                     if (m.groupValues[1].toInt() != against) problems.add("$where : « mat en ${m.groupValues[1]} » concédé mais la jauge indique ${against ?: "aucun mat"} — $text")
                     if ((m.groupValues[1] == "1") != m.groupValues[2].endsWith("#")) problems.add("$where : coup de mat incohérent — $text")
                 }
@@ -88,7 +92,7 @@ class ReviewConsistencyTool {
         }
         engine.close()
         val report = buildString {
-            appendLine("$games parties, $plies coups commentés, $mates mats, $noise distances de mat imprécises (bruit du moteur).")
+            appendLine("$games parties, $plies coups commentés, $mates mats, $missed mats manqués et $conceded mats concédés commentés, $noise distances de mat imprécises (bruit du moteur).")
             appendLine("${problems.size} incohérences :")
             problems.forEach { appendLine("- $it") }
         }
