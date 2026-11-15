@@ -1,586 +1,586 @@
-# Les trois principes de l'ouverture | Occuper le centre, développer ses pièces, mettre son roi à l'abri : le plan de toute ouverture. | w
-e4 : Premier principe : occuper le centre avec un pion. Il libère aussi le fou f1 et la dame.
-e5 : Les Noirs appliquent la même recette et prennent leur part du centre.
-Nf3 : Deuxième principe : développer ses pièces. Le cavalier sort en attaquant le pion e5.
-Nc6 : Les Noirs défendent le pion en développant eux aussi un cavalier.
-Bc4 : Le fou vise f7, le point le plus fragile du camp noir, et libère la case du roque.
-Bc5 : Même idée en miroir : le fou noir vise f2.
-d3 : Un coup solide qui protège e4 et ouvre la diagonale du fou c1.
-Nf6 : Les Noirs sortent leur second cavalier avant de roquer.
-O-O : Troisième principe : mettre le roi à l'abri. Le roque connecte aussi la tour au jeu.
-d6 : Les Noirs consolident leur centre. Les deux camps ont respecté les trois principes.
+# Les trois principes de l'ouverture | Toute ouverture suit trois principes : occuper le centre, sortir ses pièces et mettre son roi à l'abri. Observez-les coup après coup. | w
+e4 : Premier principe : occuper le centre. Le pion avance de deux cases vers le milieu de l'échiquier. Il ouvre aussi la route au fou f1 et à la dame.
+e5 : Les Noirs appliquent la même recette : ils prennent eux aussi leur part du centre.
+Nf3 : Deuxième principe : sortir ses pièces. Le cavalier se développe vers le centre, et il attaque déjà le pion e5.
+Nc6 : Les Noirs protègent leur pion en sortant à leur tour un cavalier. Un bon coup fait souvent deux choses à la fois.
+Bc4 : Le fou sort et vise la case f7. C'est le point faible des Noirs, car seul le roi la protège. La case du roque est aussi libérée.
+Bc5 : Les Noirs font de même : leur fou vise la case f2, le point faible des Blancs.
+d3 : Un coup solide : le pion protège le pion e4 et ouvre la route du second fou.
+Nf6 : Les Noirs sortent leur second cavalier. Leur roi pourra bientôt roquer.
+O-O : Troisième principe : mettre son roi à l'abri. Le roque cache le roi derrière ses pions et rapproche la tour du centre.
+d6 : Les Noirs renforcent leur centre. À retenir : le centre, le développement et le roque. Si vous suivez ces trois principes, votre ouverture sera saine.
 
-# La partie italienne (Giuoco Piano) | Les Blancs préparent d4 par c3 pour bâtir un centre idéal de deux pions. | w
-e4 : Le pion roi occupe le centre.
-e5 : Réponse symétrique.
-Nf3 : Le cavalier attaque e5.
-Nc6 : Défense naturelle.
-Bc4 : Le coup qui définit la partie italienne : le fou vise f7.
-Bc5 : Le Giuoco Piano, « jeu tranquille » en italien.
-c3 : L'idée clé : préparer d4 pour construire un grand centre avec gain de temps sur le fou c5.
-Nf6 : Les Noirs contre-attaquent le pion e4.
-d4 : Le centre avance et attaque le fou.
-exd4 : Les Noirs échangent au centre.
-cxd4 : Les Blancs ont obtenu leur duo de pions centraux e4-d4.
-Bb4+ : L'échec intermédiaire qui sauve le fou sans perdre de temps.
-Bd2 : Le plus simple : on pare l'échec en développant.
+# La partie italienne (Giuoco Piano) | Dans la partie italienne, les Blancs jouent c3 pour préparer d4 et bâtir un centre de deux pions côte à côte. | w
+e4 : Les Blancs occupent le centre avec leur pion roi.
+e5 : Les Noirs répondent de la même façon et prennent leur part du centre.
+Nf3 : Le cavalier se développe et attaque le pion e5.
+Nc6 : Les Noirs protègent le pion e5 en développant leur cavalier.
+Bc4 : Voici le coup qui caractérise la partie italienne : le fou vise la case f7, le point faible des Noirs.
+Bc5 : Les Noirs placent leur fou sur la diagonale symétrique, vers f2. Cette variante s'appelle le Giuoco Piano, ce qui veut dire le jeu tranquille en italien.
+c3 : L'idée clé : le pion c prépare l'avance d4. Les Blancs veulent deux pions au centre, et d4 attaquera en plus le fou c5.
+Nf6 : Les Noirs ne restent pas passifs : leur cavalier attaque le pion e4.
+d4 : Le pion avance au centre et attaque le fou c5.
+exd4 : Les Noirs échangent leur pion e contre le pion d.
+cxd4 : Le pion c reprend. Les Blancs ont obtenu leur duo de pions centraux, en e4 et d4.
+Bb4+ : Le fou s'échappe en donnant échec. Il se met à l'abri sans perdre de temps.
+Bd2 : Les Blancs parent l'échec en développant une pièce. C'est la façon la plus simple.
 Bxd2+ : Les Noirs échangent les fous.
-Nbxd2 : Le cavalier reprend et protège e4.
-d5 : La riposte thématique : les Noirs cassent le centre blanc avant qu'il ne devienne dangereux.
+Nbxd2 : Le cavalier reprend en d2 et protège le pion e4.
+d5 : Les Noirs frappent le centre blanc avant qu'il ne devienne trop fort. À retenir : un centre de pions est puissant, mais l'adversaire cherchera toujours à le casser.
 
-# Le gambit Evans | Un pion sacrifié en b4 pour gagner du temps et bâtir un centre puissant. | w
-e4 : Ouverture classique du pion roi.
-e5 : Symétrie.
-Nf3 : Développement et attaque.
-Nc6 : Défense.
-Bc4 : Position italienne.
-Bc5 : Le fou noir se place sur sa meilleure diagonale.
-b4 : Le gambit Evans ! Un pion est offert pour détourner le fou.
-Bxb4 : Les Noirs acceptent le cadeau.
-c3 : Le pion attaque le fou avec gain de temps et prépare d4.
-Ba5 : Le fou recule en maintenant le clouage sur c3.
-d4 : Le centre s'ouvre : les Blancs ont une avance de développement.
-exd4 : Les Noirs gagnent un second pion mais ouvrent des lignes.
-O-O : Le roi est à l'abri ; les Blancs comptent sur l'initiative plutôt que sur le matériel.
+# Le gambit Evans | Dans le gambit Evans, les Blancs donnent un pion en b4. En échange, ils gagnent du temps pour bâtir leur centre et attaquer. | w
+e4 : Les Blancs ouvrent avec leur pion roi, au centre.
+e5 : Les Noirs prennent leur part du centre.
+Nf3 : Le cavalier se développe en attaquant le pion e5.
+Nc6 : Le cavalier noir protège le pion.
+Bc4 : Le fou vise la case f7. Nous retrouvons la position de la partie italienne.
+Bc5 : Le fou noir s'installe sur sa meilleure diagonale, vers f2.
+b4 : Voici le gambit Evans ! Les Blancs offrent un pion pour attirer le fou loin du centre.
+Bxb4 : Les Noirs acceptent le cadeau et prennent le pion.
+c3 : Le pion attaque le fou, qui doit reculer. Les Blancs gagnent du temps et préparent l'avance d4.
+Ba5 : Le fou recule en a5. Il garde un œil sur le pion c3.
+d4 : Le centre s'ouvre. Les Blancs ont plus de pièces prêtes à jouer que les Noirs.
+exd4 : Les Noirs prennent un deuxième pion, mais les lignes s'ouvrent devant leur roi.
+O-O : Le roi blanc se met à l'abri. Les Blancs ont deux pions de moins, mais une forte initiative. À retenir : dans un gambit, on donne du matériel pour gagner du temps.
 
-# La défense des deux cavaliers | Face à l'attaque Ng5, les Noirs sacrifient un pion pour prendre l'initiative. | b
-e4 : Le pion roi.
-e5 : Réponse classique.
-Nf3 : Attaque du pion e5.
-Nc6 : Défense du pion.
-Bc4 : Le fou italien.
-Nf6 : La défense des deux cavaliers : une contre-attaque immédiate sur e4.
-Ng5 : Les Blancs attaquent f7 deux fois : cavalier et fou.
-d5 : Le seul bon coup : fermer la diagonale du fou c4.
-exd5 : Les Blancs gagnent un pion.
-Na5 : Le coup des connaisseurs : on attaque le fou au lieu de reprendre en d5.
-Bb5+ : Le fou s'échappe avec échec.
-c6 : Les Noirs interposent un pion et offrent un sacrifice.
-dxc6 : Les Blancs acceptent.
-bxc6 : Le fou est de nouveau attaqué.
+# La défense des deux cavaliers | Les Noirs répondent au fou italien par une contre-attaque. Face au cavalier qui vise f7, ils sacrifient un pion pour prendre l'initiative. | b
+e4 : Les Blancs occupent le centre avec leur pion roi.
+e5 : Les Noirs répondent de la même façon.
+Nf3 : Le cavalier blanc attaque le pion e5.
+Nc6 : Le cavalier noir protège le pion.
+Bc4 : Le fou blanc vise la case f7.
+Nf6 : Au lieu de sortir leur fou, les Noirs sortent leur second cavalier et attaquent le pion e4. C'est la défense des deux cavaliers.
+Ng5 : Les Blancs attaquent la case f7 deux fois, avec le cavalier et le fou. Elle n'est défendue que par le roi.
+d5 : Le seul bon coup : le pion ferme la diagonale du fou c4, qui ne voit plus la case f7.
+exd5 : Les Blancs prennent le pion et gagnent du matériel.
+Na5 : Le coup des connaisseurs : au lieu de reprendre en d5, le cavalier attaque le fou c4.
+Bb5+ : Le fou s'échappe en donnant échec.
+c6 : Les Noirs placent un pion entre le fou et leur roi. Ils sont prêts à le sacrifier.
+dxc6 : Les Blancs prennent le pion offert.
+bxc6 : Les Noirs reprennent, et le fou est de nouveau attaqué.
 Be2 : Le fou se replie prudemment.
-h6 : On chasse le cavalier avancé.
+h6 : Les Noirs chassent le cavalier g5, qui s'est avancé trop loin.
 Nf3 : Le cavalier doit reculer.
-e4 : Les Noirs ont un pion de moins, mais gagnent du temps et de l'espace : compensation dynamique.
+e4 : Le pion chasse encore le cavalier. Les Noirs ont un pion de moins, mais ils ont gagné du temps et de l'espace. À retenir : des pièces actives peuvent compenser un pion de moins.
 
-# L'attaque Fegatello (le « foie frit ») | Un sacrifice de cavalier en f7 pour traquer le roi noir au centre. | w
-e4 : Le pion roi.
-e5 : Symétrie.
-Nf3 : Développement.
-Nc6 : Défense.
-Bc4 : Le fou vise f7.
-Nf6 : Défense des deux cavaliers.
-Ng5 : Double attaque sur f7.
-d5 : Les Noirs ferment la diagonale.
-exd5 : Gain d'un pion.
-Nxd5 : Une reprise naturelle… mais risquée : elle autorise un sacrifice célèbre.
-Nxf7 : Le Fegatello ! Le cavalier se sacrifie pour attirer le roi au centre.
-Kxf7 : Le roi doit prendre, sinon la dame et la tour sont en fourchette.
-Qf3+ : Échec, avec une seconde attaque sur le cavalier d5 cloué par le fou c4.
-Ke6 : Le roi doit venir défendre son cavalier, en plein milieu de l'échiquier.
-Nc3 : Une nouvelle pièce attaque d5 : l'assaut contre le roi exposé est très dangereux.
+# L'attaque Fegatello (le « foie frit ») | Si les Noirs reprennent mal en d5, les Blancs sacrifient leur cavalier en f7 pour attirer le roi noir au centre et le traquer. | w
+e4 : Le pion roi occupe le centre.
+e5 : Les Noirs font de même.
+Nf3 : Le cavalier se développe en attaquant le pion e5.
+Nc6 : Le cavalier noir protège le pion.
+Bc4 : Le fou vise la case faible f7.
+Nf6 : Les Noirs choisissent la défense des deux cavaliers.
+Ng5 : Le cavalier rejoint le fou : la case f7 est attaquée deux fois.
+d5 : Les Noirs ferment la diagonale du fou avec leur pion.
+exd5 : Les Blancs prennent le pion.
+Nxd5 : Les Noirs reprennent avec le cavalier. Le coup semble naturel, mais il permet un sacrifice célèbre.
+Nxf7 : Voici le Fegatello, le foie frit ! Le cavalier se sacrifie en f7 pour attirer le roi noir au centre de l'échiquier.
+Kxf7 : Le roi prend le cavalier. Sinon, le cavalier f7 attaquerait la dame et la tour en même temps.
+Qf3+ : La dame donne échec. Elle attaque aussi le cavalier d5, qui ne peut pas bouger : derrière lui, le fou c4 vise le roi.
+Ke6 : Le roi doit venir protéger son cavalier, en plein milieu de l'échiquier.
+Nc3 : Une pièce de plus attaque le cavalier d5. Le roi noir, exposé au centre, est en grand danger. À retenir : un roi resté au centre devient une cible.
 
-# La partie espagnole (variante fermée) | Le fou b5 met la pression sur le défenseur d'e5 : l'ouverture reine des parties ouvertes. | w
-e4 : Le pion roi.
-e5 : Réponse classique.
-Nf3 : Attaque du pion e5.
-Nc6 : Le cavalier défend.
-Bb5 : La partie espagnole : le fou s'en prend au défenseur du pion e5.
-a6 : Les Noirs interrogent le fou tout de suite.
-Ba4 : Le fou recule en gardant la pression.
-Nf6 : Contre-attaque sur e4.
-O-O : Les Blancs roquent sans craindre la prise en e4.
-Be7 : Les Noirs développent prudemment et préparent leur roque.
-Re1 : La tour protège e4 : la menace sur e5 devient réelle.
-b5 : Les Noirs chassent le fou pour soulager le cavalier c6.
-Bb3 : Le fou s'installe sur la diagonale qui mène à f7.
-d6 : Le pion e5 est solidement défendu.
-c3 : Prépare d4 et offre une retraite au fou en c2.
-O-O : Les Noirs achèvent leur développement.
-h3 : Coup de précaution contre le clouage Bg4, avant de jouer d4.
+# La partie espagnole (variante fermée) | Dans la partie espagnole, le fou attaque le cavalier qui défend le pion e5. Les Blancs exercent ainsi une pression durable sur le centre. | w
+e4 : Le pion roi occupe le centre.
+e5 : Les Noirs répondent au centre.
+Nf3 : Le cavalier attaque le pion e5.
+Nc6 : Le cavalier noir protège le pion.
+Bb5 : Voici la partie espagnole. Le fou attaque le cavalier c6, qui est le défenseur du pion e5.
+a6 : Les Noirs posent tout de suite la question au fou : va-t-il prendre le cavalier ou reculer ?
+Ba4 : Le fou recule, mais il garde le cavalier dans sa ligne de mire.
+Nf6 : Les Noirs se développent et attaquent le pion e4.
+O-O : Les Blancs roquent. Ils ne craignent pas la prise en e4, car ils pourraient récupérer le pion.
+Be7 : Les Noirs développent leur fou tranquillement et préparent leur roque.
+Re1 : La tour protège le pion e4. Maintenant, prendre le cavalier c6 puis le pion e5 devient une vraie menace.
+b5 : Les Noirs chassent le fou pour soulager leur cavalier c6.
+Bb3 : Le fou s'installe sur une diagonale qui vise la case f7.
+d6 : Le pion e5 est maintenant solidement protégé.
+c3 : Ce coup prépare l'avance d4 et offre une case de retraite au fou, en c2.
+O-O : Les Noirs mettent leur roi à l'abri.
+h3 : Un coup de précaution : il empêche le fou noir de venir en g4 clouer le cavalier. Les Blancs pourront ensuite jouer d4. À retenir : en ouverture, on prépare ses avances de pions.
 
-# L'espagnole : la défense berlinoise | Le « mur de Berlin » : les Noirs acceptent l'échange des dames pour une finale très solide. | b
-e4 : Le pion roi.
-e5 : Classique.
-Nf3 : Attaque.
-Nc6 : Défense.
-Bb5 : La partie espagnole.
-Nf6 : La défense berlinoise : contre-attaque immédiate sur e4.
-O-O : Les Blancs laissent le pion e4 en prise.
-Nxe4 : Les Noirs le capturent : c'est le cœur de la variante.
-d4 : Les Blancs ouvrent le centre pour récupérer le pion.
-Nd6 : Le cavalier revient en attaquant le fou b5.
-Bxc6 : Le fou s'échange contre le cavalier.
-dxc6 : On reprend vers le centre en ouvrant la diagonale du fou c8.
-dxe5 : Le pion est repris, avec attaque du cavalier.
-Nf5 : Le cavalier trouve une belle case.
-Qxd8+ : Les dames s'échangent.
-Kxd8 : Le roi a perdu le roque, mais sans les dames il ne risque rien : la paire de fous compense.
+# L'espagnole : la défense berlinoise | Dans la défense berlinoise, les Noirs acceptent l'échange des dames très tôt. Ils obtiennent une finale très solide, surnommée le mur de Berlin. | b
+e4 : Les Blancs occupent le centre.
+e5 : Les Noirs répondent au centre.
+Nf3 : Le cavalier attaque le pion e5.
+Nc6 : Le cavalier noir protège le pion.
+Bb5 : C'est la partie espagnole : le fou attaque le défenseur du pion e5.
+Nf6 : Voici la défense berlinoise : les Noirs contre-attaquent tout de suite le pion e4.
+O-O : Les Blancs roquent et laissent le pion e4 sans protection.
+Nxe4 : Les Noirs prennent le pion. C'est le cœur de cette variante.
+d4 : Les Blancs ouvrent le centre pour récupérer leur pion.
+Nd6 : Le cavalier recule en attaquant le fou b5.
+Bxc6 : Le fou s'échange contre le cavalier c6.
+dxc6 : Les Noirs reprennent avec le pion d, ce qui ouvre la route de leur fou c8.
+dxe5 : Les Blancs récupèrent le pion et attaquent le cavalier d6.
+Nf5 : Le cavalier trouve une belle case en f5.
+Qxd8+ : Les dames s'échangent, avec échec.
+Kxd8 : Le roi reprend. Il ne peut plus roquer, mais sans les dames il ne risque presque rien, et les deux fous compensent. À retenir : échanger les dames réduit les dangers pour un roi resté au centre.
 
-# L'espagnole : la variante d'échange | Les Blancs abîment la structure de pions noire pour viser une finale favorable. | w
-e4 : Le pion roi.
-e5 : Classique.
-Nf3 : Attaque.
-Nc6 : Défense.
-Bb5 : L'espagnole.
-a6 : Les Noirs questionnent le fou.
-Bxc6 : La variante d'échange : le fou prend le cavalier pour doubler les pions noirs.
-dxc6 : Reprise naturelle qui ouvre des lignes aux pièces noires.
-O-O : Les Blancs roquent et menacent maintenant réellement Nxe5.
-f6 : Défense solide du pion e5.
-d4 : Les Blancs ouvrent le centre pour échanger et simplifier.
-exd4 : Échange au centre.
-Nxd4 : Le cavalier se centralise.
-c5 : Le cavalier est chassé.
-Nb3 : Retraite, en acceptant l'échange des dames.
-Qxd1 : Les Noirs échangent.
-Rxd1 : En finale, la majorité de pions blanche à l'aile roi peut créer un pion passé ; les pions doublés noirs, non.
+# L'espagnole : la variante d'échange | Les Blancs échangent leur fou contre le cavalier pour abîmer les pions noirs. Ils visent une finale où leurs pions seront mieux placés. | w
+e4 : Les Blancs occupent le centre.
+e5 : Les Noirs répondent au centre.
+Nf3 : Le cavalier attaque le pion e5.
+Nc6 : Le cavalier noir protège le pion.
+Bb5 : Le fou attaque le défenseur du pion e5.
+a6 : Les Noirs demandent au fou ce qu'il compte faire.
+Bxc6 : C'est la variante d'échange : le fou prend le cavalier. Les Noirs vont se retrouver avec deux pions sur la même colonne.
+dxc6 : Les Noirs reprennent avec le pion d. Cela ouvre des lignes à leurs pièces.
+O-O : Les Blancs roquent. Prendre le pion e5 avec le cavalier devient maintenant une vraie menace.
+f6 : Les Noirs protègent le pion e5 de façon solide.
+d4 : Les Blancs ouvrent le centre pour échanger des pièces et simplifier la position.
+exd4 : Les Noirs échangent au centre.
+Nxd4 : Le cavalier reprend et s'installe au centre.
+c5 : Le pion chasse le cavalier.
+Nb3 : Le cavalier recule. Les Blancs acceptent l'échange des dames.
+Qxd1 : Les Noirs échangent les dames.
+Rxd1 : La tour reprend. Les Blancs ont quatre pions contre trois à l'aile roi et pourront créer un pion passé. Les pions doublés des Noirs, eux, ne le peuvent pas. À retenir : en finale, la structure des pions compte beaucoup.
 
-# La partie écossaise | Les Blancs ouvrent le centre dès le troisième coup pour un jeu de pièces actif. | w
-e4 : Le pion roi.
-e5 : Classique.
-Nf3 : Attaque.
-Nc6 : Défense.
-d4 : La partie écossaise : le centre est ouvert immédiatement.
-exd4 : Les Noirs prennent.
-Nxd4 : Le cavalier s'installe au centre.
-Nf6 : Attaque du pion e4.
-Nxc6 : Les Blancs échangent pour pouvoir avancer leur pion e.
-bxc6 : Reprise vers le centre.
-e5 : Le pion attaque le cavalier.
-Qe7 : Clouage du pion e5 sur le roi blanc.
-Qe2 : Les Blancs déclouent en défendant le pion.
-Nd5 : Le cavalier se centralise.
-c4 : Le pion attaque le cavalier : une position riche et déséquilibrée.
+# La partie écossaise | Dans la partie écossaise, les Blancs ouvrent le centre dès le troisième coup pour jouer avec des pièces actives. | w
+e4 : Les Blancs occupent le centre.
+e5 : Les Noirs répondent au centre.
+Nf3 : Le cavalier attaque le pion e5.
+Nc6 : Le cavalier noir protège le pion.
+d4 : Voici la partie écossaise : les Blancs attaquent tout de suite le centre noir avec leur pion d.
+exd4 : Les Noirs prennent le pion.
+Nxd4 : Le cavalier reprend et s'installe au centre.
+Nf6 : Les Noirs se développent et attaquent le pion e4.
+Nxc6 : Les Blancs échangent les cavaliers. Ils veulent pouvoir avancer leur pion e.
+bxc6 : Les Noirs reprennent avec le pion b, vers le centre.
+e5 : Le pion avance et chasse le cavalier f6.
+Qe7 : La dame attaque le pion e5. Elle se place aussi face au roi blanc, sur la colonne e.
+Qe2 : La dame blanche protège le pion e5 et se place devant son roi.
+Nd5 : Le cavalier noir s'installe au centre, en d5.
+c4 : Le pion chasse le cavalier. La position est riche et déséquilibrée. À retenir : ouvrir le centre tôt donne un jeu actif aux deux camps.
 
-# La partie des quatre cavaliers | Un développement symétrique et solide, idéal pour apprendre les bons réflexes. | w
-e4 : Le pion roi.
-e5 : Symétrie.
-Nf3 : Premier cavalier.
-Nc6 : Réponse.
-Nc3 : Deuxième cavalier blanc.
-Nf6 : Les quatre cavaliers sont sortis.
-Bb5 : Variante espagnole : pression sur le défenseur d'e5.
-Bb4 : Les Noirs imitent.
-O-O : Roque.
-O-O : Roque aussi.
-d3 : Solide : le pion e4 est protégé, le fou c1 est libéré.
-d6 : Même structure pour les Noirs.
-Bg5 : Clouage du cavalier f6, avec l'idée Nd5.
-Bxc3 : Les Noirs éliminent le cavalier avant qu'il ne saute en d5.
-bxc3 : Les Blancs ont la paire de fous et un centre renforcé.
+# La partie des quatre cavaliers | Les deux camps sortent leurs quatre cavaliers. Une ouverture symétrique et solide, idéale pour apprendre les bons réflexes. | w
+e4 : Les Blancs occupent le centre.
+e5 : Les Noirs font de même.
+Nf3 : Premier cavalier blanc. Il attaque le pion e5.
+Nc6 : Le cavalier noir protège le pion.
+Nc3 : Deuxième cavalier blanc. Il protège le pion e4.
+Nf6 : Les quatre cavaliers sont sortis. Chacun vise le centre.
+Bb5 : Le fou attaque le cavalier qui défend le pion e5, comme dans la partie espagnole.
+Bb4 : Les Noirs imitent les Blancs avec leur propre fou.
+O-O : Les Blancs mettent leur roi à l'abri.
+O-O : Les Noirs roquent aussi.
+d3 : Un coup solide : le pion e4 est protégé, et le fou c1 peut sortir.
+d6 : Les Noirs choisissent la même structure de pions.
+Bg5 : Le fou cloue le cavalier f6. Les Blancs pensent à faire sauter leur cavalier en d5.
+Bxc3 : Les Noirs prennent le cavalier avant qu'il n'aille en d5.
+bxc3 : Les Blancs reprennent avec un pion. Ils ont les deux fous et un centre renforcé. À retenir : la paire de fous est un petit avantage durable.
 
-# La défense Petrov (russe) | Les Noirs contre-attaquent e4 au lieu de défendre e5 : une ouverture symétrique et très solide. | b
-e4 : Le pion roi.
-e5 : Classique.
-Nf3 : Attaque du pion e5.
-Nf6 : La défense Petrov : œil pour œil, on attaque e4.
-Nxe5 : Les Blancs prennent.
-d6 : Coup essentiel : on chasse d'abord le cavalier. (Prendre tout de suite en e4 perdrait du matériel après Qe2.)
+# La défense Petrov (russe) | Au lieu de défendre leur pion e5, les Noirs attaquent le pion e4. Une ouverture symétrique et très solide. | b
+e4 : Les Blancs occupent le centre.
+e5 : Les Noirs répondent au centre.
+Nf3 : Le cavalier attaque le pion e5.
+Nf6 : Voici la défense Petrov. Au lieu de défendre leur pion, les Noirs attaquent celui des Blancs.
+Nxe5 : Les Blancs prennent le pion e5.
+d6 : Coup essentiel : on chasse d'abord le cavalier. Prendre tout de suite en e4 serait une erreur, car la dame blanche viendrait en e2 attaquer le cavalier, face au roi noir.
 Nf3 : Le cavalier recule.
-Nxe4 : Maintenant, le pion peut être repris sans danger.
+Nxe4 : Maintenant, les Noirs reprennent le pion sans danger. L'égalité de matériel est rétablie.
 d4 : Les Blancs occupent le centre.
 d5 : Les Noirs soutiennent leur cavalier avancé.
-Bd3 : Le fou se développe en attaquant le cavalier.
-Be7 : Développement tranquille.
-O-O : Roque blanc.
-O-O : Roque noir : position équilibrée et symétrique.
+Bd3 : Le fou se développe et attaque le cavalier e4.
+Be7 : Les Noirs se développent tranquillement.
+O-O : Les Blancs roquent.
+O-O : Les Noirs roquent aussi. La position est équilibrée. À retenir : dans la Petrov, on chasse le cavalier avant de reprendre le pion.
 
-# La défense Philidor | Une défense compacte : le pion d6 soutient e5 et les pièces se regroupent derrière. | b
-e4 : Le pion roi.
-e5 : Classique.
-Nf3 : Attaque.
-d6 : La défense Philidor : le pion protège e5.
-d4 : Les Blancs attaquent le centre.
-Nf6 : Contre-attaque sur e4.
-Nc3 : Défense du pion.
-Nbd7 : Le cavalier soutient e5 sans gêner le pion c.
-Bc4 : Le fou vise f7.
-Be7 : Développement modeste mais solide.
-O-O : Roque blanc.
-O-O : Les Noirs ont une position resserrée, sans faiblesse.
+# La défense Philidor | Le pion d6 soutient le pion e5, et les pièces noires se regroupent derrière lui. Une défense compacte et solide. | b
+e4 : Les Blancs occupent le centre.
+e5 : Les Noirs répondent au centre.
+Nf3 : Le cavalier attaque le pion e5.
+d6 : Voici la défense Philidor : le pion d6 protège le pion e5. Il ouvre aussi la route du fou c8.
+d4 : Les Blancs attaquent le centre noir.
+Nf6 : Les Noirs contre-attaquent le pion e4.
+Nc3 : Les Blancs protègent leur pion en développant une pièce.
+Nbd7 : Le cavalier vient en d7 pour soutenir le pion e5, sans bloquer le pion c.
+Bc4 : Le fou blanc vise la case f7.
+Be7 : Les Noirs se développent modestement, mais solidement.
+O-O : Les Blancs roquent.
+O-O : Les Noirs roquent aussi. Leur position est un peu serrée, mais sans faiblesse. À retenir : une défense solide n'a pas besoin d'être active tout de suite.
 
-# Le gambit du roi | L'ouverture romantique par excellence : un pion offert pour ouvrir la colonne f. | w
-e4 : Le pion roi.
-e5 : Classique.
-f4 : Le gambit du roi : le pion f est offert pour détourner le pion e5 du centre.
-exf4 : Gambit accepté.
-Nf3 : Empêche l'échec gênant de la dame en h4.
+# Le gambit du roi | Les Blancs offrent leur pion f pour détourner le pion e5 du centre et ouvrir la colonne f. C'est l'ouverture romantique par excellence. | w
+e4 : Les Blancs occupent le centre.
+e5 : Les Noirs répondent au centre.
+f4 : Voici le gambit du roi. Le pion f est offert pour détourner le pion e5 du centre.
+exf4 : Les Noirs acceptent le gambit et prennent le pion.
+Nf3 : Le cavalier se développe. Il empêche aussi la dame noire de donner un échec gênant en h4.
 g5 : Les Noirs protègent leur pion de plus.
-h4 : Les Blancs attaquent aussitôt la chaîne de pions.
-g4 : Le pion avance en attaquant le cavalier.
-Ne5 : Le gambit Kieseritzky : le cavalier se centralise et vise g4 et f7.
-Nf6 : Les Noirs se développent en attaquant e4.
-d4 : Le centre s'installe et le fou c1 vise f4.
+h4 : Les Blancs attaquent aussitôt la chaîne de pions noirs.
+g4 : Le pion avance et attaque le cavalier.
+Ne5 : Le cavalier s'installe au centre et vise les cases g4 et f7. C'est le gambit Kieseritzky.
+Nf6 : Les Noirs se développent et attaquent le pion e4.
+d4 : Les Blancs occupent le centre, et leur fou c1 vise le pion f4. À retenir : dans un gambit, on donne un pion pour un centre fort et un développement rapide.
 
-# La partie viennoise | Le cavalier c3 d'abord, puis f4 : un gambit du roi préparé. | w
-e4 : Le pion roi.
-e5 : Classique.
-Nc3 : La partie viennoise : on protège e4 avant de jouer f4.
-Nf6 : Développement naturel.
-f4 : Le gambit viennois.
-d5 : La meilleure réponse : contre-attaquer au centre.
-fxe5 : Le pion prend en attaquant le cavalier.
-Nxe4 : Le cavalier s'installe en e4.
-Nf3 : Développement et contrôle de la case h4.
-Be7 : Les Noirs préparent le roque.
-d4 : Le centre est consolidé.
-O-O : Roque noir.
-Bd3 : Le fou se développe en attaquant le cavalier e4.
+# La partie viennoise | Les Blancs sortent d'abord le cavalier en c3, puis avancent leur pion f. C'est un gambit du roi bien préparé. | w
+e4 : Les Blancs occupent le centre.
+e5 : Les Noirs répondent au centre.
+Nc3 : Voici la partie viennoise : le cavalier protège le pion e4 avant l'avance du pion f.
+Nf6 : Les Noirs se développent naturellement.
+f4 : C'est le gambit viennois : le pion f attaque le pion e5.
+d5 : La meilleure réponse : les Noirs contre-attaquent au centre au lieu de prendre.
+fxe5 : Le pion prend en e5 et attaque le cavalier.
+Nxe4 : Le cavalier saute en e4 en prenant le pion. Il est bien placé au centre.
+Nf3 : Le cavalier se développe et surveille la case h4.
+Be7 : Les Noirs préparent leur roque.
+d4 : Les Blancs renforcent leur centre.
+O-O : Les Noirs mettent leur roi à l'abri.
+Bd3 : Le fou se développe et attaque le cavalier e4. À retenir : préparez vos avances de pions avec vos pièces.
 
-# La défense sicilienne (variante ouverte) | Les Noirs échangent leur pion c contre le pion d : un combat déséquilibré dès le premier coup. | b
-e4 : Le pion roi.
-c5 : La défense sicilienne : on contrôle d4 sans symétrie.
-Nf3 : Prépare d4.
-d6 : Contrôle e5 et ouvre la diagonale du fou c8.
-d4 : Les Blancs ouvrent le jeu.
-cxd4 : L'échange clé : un pion de l'aile contre un pion central.
-Nxd4 : Les Blancs ont un cavalier centralisé et plus d'espace.
-Nf6 : Attaque de e4 : le cavalier blanc devra venir en c3.
-Nc3 : Le pion est défendu.
-Nc6 : La Sicilienne classique. Les Noirs disposent de la colonne c semi-ouverte et de deux pions centraux.
+# La défense sicilienne (variante ouverte) | Les Noirs répondent avec le pion c, sans symétrie, puis l'échangent contre le pion d blanc. Le combat est déséquilibré dès le début. | b
+e4 : Les Blancs occupent le centre.
+c5 : Voici la défense sicilienne. Le pion c contrôle la case d4, sans copier le coup des Blancs.
+Nf3 : Le cavalier se développe et prépare l'avance d4.
+d6 : Le pion contrôle la case e5 et ouvre la route du fou c8.
+d4 : Les Blancs ouvrent le centre.
+cxd4 : C'est l'échange clé : les Noirs donnent un pion du bord contre un pion central.
+Nxd4 : Le cavalier reprend. Les Blancs ont un cavalier au centre et plus d'espace.
+Nf6 : Le cavalier noir attaque le pion e4. Les Blancs vont devoir le protéger.
+Nc3 : Le pion e4 est protégé.
+Nc6 : Voici la sicilienne classique. Les Noirs ont deux pions au centre et la colonne c à moitié ouverte pour leurs tours. À retenir : un échange déséquilibré donne à chaque camp ses propres atouts.
 
-# La sicilienne Najdorf | Le petit coup a6 prépare e5 et l'expansion à l'aile dame : l'arme favorite de Fischer et Kasparov. | b
-e4 : Le pion roi.
-c5 : Sicilienne.
-Nf3 : Développement.
-d6 : Prépare Nf6.
-d4 : Ouverture du centre.
-cxd4 : Échange.
-Nxd4 : Cavalier centralisé.
-Nf6 : Attaque de e4.
-Nc3 : Défense.
-a6 : La Najdorf : on enlève la case b5 aux pièces blanches et on prépare b5.
-Be3 : L'attaque anglaise.
-e5 : Le coup thématique : le cavalier est chassé du centre.
-Nb3 : Retraite.
-Be6 : Le fou surveille la case d5.
-f3 : Soutient e4 et prépare g4.
-Be7 : Développement.
+# La sicilienne Najdorf | Le petit coup a6 prépare l'avance e5 et l'attaque à l'aile dame. C'est l'arme favorite de champions du monde comme Fischer et Kasparov. | b
+e4 : Les Blancs occupent le centre.
+c5 : La défense sicilienne : le pion c contrôle la case d4.
+Nf3 : Le cavalier se développe vers le centre.
+d6 : Le pion contrôle la case e5 et prépare la sortie du cavalier en f6.
+d4 : Les Blancs ouvrent le centre.
+cxd4 : Les Noirs échangent leur pion c contre le pion d.
+Nxd4 : Le cavalier reprend au centre.
+Nf6 : Le cavalier noir attaque le pion e4.
+Nc3 : Le pion e4 est protégé.
+a6 : Voici la Najdorf. Ce petit coup interdit la case b5 aux pièces blanches et prépare l'avance b5.
+Be3 : Les Blancs choisissent l'attaque anglaise : le fou se développe et protège le cavalier d4.
+e5 : Le coup typique : le pion chasse le cavalier du centre.
+Nb3 : Le cavalier recule.
+Be6 : Le fou surveille la case d5, le point sensible de la position noire.
+f3 : Le pion soutient le pion e4 et prépare l'avance g4.
+Be7 : Les Noirs se développent.
 Qd2 : Les Blancs préparent le grand roque.
-O-O : Roques opposés en vue : une course à l'attaque s'annonce.
+O-O : Les Noirs roquent. Les rois seront de côtés opposés, et chacun attaquera le roi de l'autre. À retenir : avec des roques opposés, la vitesse de l'attaque décide de tout.
 
-# La sicilienne Dragon | Le fou en fianchetto en g7 crache le feu sur la grande diagonale. | b
-e4 : Le pion roi.
-c5 : Sicilienne.
-Nf3 : Développement.
-d6 : Prépare Nf6.
-d4 : Ouverture.
-cxd4 : Échange.
-Nxd4 : Centralisation.
-Nf6 : Attaque de e4.
-Nc3 : Défense.
-g6 : La variante du Dragon : le fou ira en g7.
-Be3 : Les Blancs préparent l'attaque yougoslave.
-Bg7 : Le « dragon » est en place sur la grande diagonale.
-f3 : Verrouille g4 et soutient e4.
-O-O : Le roi se met à l'abri derrière le fou.
-Qd2 : Batterie dame-fou pour échanger le fou g7 par Bh6.
-Nc6 : Développement et pression sur d4.
+# La sicilienne Dragon | Les Noirs placent leur fou en g7, sur la grande diagonale. Comme un dragon, ce fou crache le feu vers le centre et l'aile dame. | b
+e4 : Les Blancs occupent le centre.
+c5 : La défense sicilienne : le pion c contrôle la case d4.
+Nf3 : Le cavalier se développe vers le centre.
+d6 : Le pion contrôle la case e5 et prépare la sortie du cavalier.
+d4 : Les Blancs ouvrent le centre.
+cxd4 : Les Noirs échangent leur pion c contre le pion d.
+Nxd4 : Le cavalier reprend au centre.
+Nf6 : Le cavalier noir attaque le pion e4.
+Nc3 : Le pion e4 est protégé.
+g6 : Voici la variante du Dragon : le pion g avance pour que le fou puisse venir en g7.
+Be3 : Les Blancs préparent l'attaque yougoslave, la plus dangereuse contre le Dragon.
+Bg7 : Le dragon est en place : le fou contrôle toute la grande diagonale.
+f3 : Le pion empêche une pièce noire de venir en g4, et il soutient le pion e4.
+O-O : Le roi noir se met à l'abri derrière son fou.
+Qd2 : La dame et le fou sont alignés. Les Blancs veulent jouer leur fou en h6 pour échanger le dragon.
+Nc6 : Les Noirs se développent et attaquent le cavalier d4. À retenir : un fou en fianchetto attaque et protège le roi en même temps.
 
-# La sicilienne Sveshnikov | Les Noirs acceptent un trou en d5 en échange d'un jeu de pièces très actif. | b
-e4 : Le pion roi.
-c5 : Sicilienne.
-Nf3 : Développement.
-Nc6 : Le cavalier sort d'abord.
-d4 : Ouverture.
-cxd4 : Échange.
-Nxd4 : Centralisation.
-Nf6 : Attaque de e4.
-Nc3 : Défense.
-e5 : La Sveshnikov : le cavalier est chassé, au prix d'une faiblesse en d5.
-Ndb5 : Le cavalier vise la case d6.
-d6 : La case est couverte.
-Bg5 : Clouage du cavalier qui contrôle d5.
-a6 : Le cavalier b5 est repoussé.
-Na3 : Sur la bande, il mettra du temps à revenir.
-b5 : Gain d'espace, avec la menace b4.
+# La sicilienne Sveshnikov | Les Noirs acceptent une case faible en d5. En échange, leurs pièces deviennent très actives. | b
+e4 : Les Blancs occupent le centre.
+c5 : La défense sicilienne : le pion c contrôle la case d4.
+Nf3 : Le cavalier se développe vers le centre.
+Nc6 : Cette fois, les Noirs sortent d'abord leur cavalier.
+d4 : Les Blancs ouvrent le centre.
+cxd4 : Les Noirs échangent leur pion c contre le pion d.
+Nxd4 : Le cavalier reprend au centre.
+Nf6 : Le cavalier noir attaque le pion e4.
+Nc3 : Le pion e4 est protégé.
+e5 : Voici la Sveshnikov : le pion chasse le cavalier. En contrepartie, aucun pion noir ne pourra plus surveiller la case d5.
+Ndb5 : Le cavalier saute en b5 et vise la case d6.
+d6 : Le pion couvre la case d6.
+Bg5 : Le fou cloue le cavalier f6, qui surveille la case d5.
+a6 : Le pion repousse le cavalier b5.
+Na3 : Le cavalier recule sur le bord. De là, il lui faudra du temps pour revenir au jeu.
+b5 : Les Noirs gagnent de l'espace et menacent d'avancer encore en b4. À retenir : une faiblesse est acceptable si l'on obtient beaucoup d'activité en échange.
 
-# La sicilienne Alapine | Avec c3, les Blancs évitent la théorie et préparent un centre de pions. | w
-e4 : Le pion roi.
-c5 : Sicilienne.
-c3 : La variante Alapine : on prépare d4 en reprenant avec un pion.
-Nf6 : La réponse critique : attaquer e4.
-e5 : Le pion avance avec gain de temps.
-Nd5 : Le cavalier se centralise.
-d4 : Le centre s'installe.
-cxd4 : Échange.
-Nf3 : Développement d'abord : le pion d4 sera repris ensuite.
-Nc6 : Pression sur e5 et d4.
-cxd4 : Le centre e5-d4 est en place.
-d6 : Les Noirs l'attaquent immédiatement.
-Bc4 : Le fou se développe en attaquant le cavalier d5.
+# La sicilienne Alapine | Avec c3, les Blancs évitent les grandes théories de la sicilienne. Ils préparent d4 pour garder un centre de pions solide. | w
+e4 : Les Blancs occupent le centre.
+c5 : La défense sicilienne : le pion c contrôle la case d4.
+c3 : Voici la variante Alapine : le pion c prépare l'avance d4. Si les Noirs prennent, les Blancs reprendront avec un pion.
+Nf6 : La réponse la plus directe : le cavalier attaque le pion e4.
+e5 : Le pion avance et chasse le cavalier.
+Nd5 : Le cavalier s'installe au centre.
+d4 : Les Blancs construisent leur centre.
+cxd4 : Les Noirs échangent.
+Nf3 : Les Blancs se développent d'abord. Ils reprendront le pion d4 au coup suivant.
+Nc6 : Le cavalier noir attaque les pions e5 et d4.
+cxd4 : Le pion reprend. Les Blancs ont leurs deux pions centraux, en e5 et d4.
+d6 : Les Noirs attaquent tout de suite ce centre.
+Bc4 : Le fou se développe et attaque le cavalier d5. À retenir : un centre de pions doit être soutenu par les pièces.
 
-# La sicilienne fermée | Pas de d4 : les Blancs gardent le centre fermé et attaquent à l'aile roi. | w
-e4 : Le pion roi.
-c5 : Sicilienne.
-Nc3 : La Sicilienne fermée : le pion d reste à la maison.
-Nc6 : Développement.
-g3 : Fianchetto.
-g6 : Les Noirs imitent.
+# La sicilienne fermée | Les Blancs n'avancent pas leur pion d en d4. Ils gardent le centre fermé et préparent une attaque à l'aile roi. | w
+e4 : Les Blancs occupent le centre.
+c5 : La défense sicilienne : le pion c contrôle la case d4.
+Nc3 : Voici la sicilienne fermée. Le cavalier protège le pion e4, et le pion d restera en arrière.
+Nc6 : Les Noirs se développent.
+g3 : Les Blancs préparent un fianchetto : le fou viendra en g2.
+g6 : Les Noirs font de même.
 Bg2 : Le fou contrôle la grande diagonale.
-Bg7 : Même chose en face.
-d3 : Structure solide.
-d6 : Symétrie.
-f4 : Le plan des Blancs : expansion à l'aile roi.
-e6 : Prépare Nge7 sans bloquer le fou g7.
-Nf3 : Développement.
-Nge7 : Le cavalier laisse la diagonale du fou ouverte.
-O-O : Roque blanc.
-O-O : Les Blancs attaqueront à l'aile roi, les Noirs à l'aile dame.
+Bg7 : Même chose de l'autre côté.
+d3 : Un coup solide qui protège le pion e4.
+d6 : Les Noirs gardent une structure symétrique.
+f4 : Voici le plan des Blancs : gagner de l'espace à l'aile roi pour attaquer.
+e6 : Ce pion prépare la sortie du cavalier en e7, sans gêner le fou g7.
+Nf3 : Le cavalier se développe.
+Nge7 : Le cavalier sort en e7 et laisse la diagonale du fou ouverte.
+O-O : Les Blancs roquent.
+O-O : Les Noirs roquent. Les Blancs attaqueront à l'aile roi, les Noirs à l'aile dame. À retenir : chaque camp attaque du côté où il a le plus d'espace.
 
-# La défense française : variante d'avance | Les Noirs attaquent la base de la chaîne de pions blanche en d4. | b
-e4 : Le pion roi.
-e6 : La défense française : on prépare d5.
-d4 : Centre idéal.
-d5 : Les Noirs attaquent e4.
-e5 : La variante d'avance : les Blancs gagnent de l'espace.
-c5 : Coup thématique : on attaque la chaîne de pions à sa base.
-c3 : Le pion d4 est soutenu.
-Nc6 : Pression sur d4.
-Nf3 : Défense.
-Qb6 : Encore un attaquant sur d4, et un œil sur b2.
-Be2 : Développement.
-cxd4 : Échange.
-cxd4 : La chaîne tient.
-Nh6 : Le cavalier se dirige vers f5 pour attaquer une fois de plus d4.
+# La défense française : variante d'avance | Les pions blancs forment une chaîne en diagonale. Les Noirs attaquent sa base, le pion d4. | b
+e4 : Les Blancs occupent le centre.
+e6 : Voici la défense française : ce petit pas prépare l'avance d5.
+d4 : Les Blancs construisent un centre idéal de deux pions.
+d5 : Les Noirs attaquent le pion e4.
+e5 : La variante d'avance : le pion avance et gagne de l'espace. Les pions blancs forment une chaîne en diagonale.
+c5 : Le coup typique : on attaque la chaîne de pions à sa base, le pion d4.
+c3 : Le pion c protège le pion d4.
+Nc6 : Le cavalier attaque le pion d4 une deuxième fois.
+Nf3 : Le cavalier blanc protège le pion d4.
+Qb6 : La dame attaque le pion d4 une troisième fois, et elle vise aussi le pion b2.
+Be2 : Les Blancs se développent.
+cxd4 : Les Noirs échangent leur pion c.
+cxd4 : Les Blancs reprennent : la chaîne tient toujours.
+Nh6 : Le cavalier se dirige vers f5, d'où il attaquera le pion d4 une fois de plus. À retenir : pour affaiblir une chaîne de pions, attaquez sa base.
 
-# La défense française : variante Winawer | Le fou b4 cloue le cavalier : une lutte stratégique aiguë. | b
-e4 : Le pion roi.
-e6 : Française.
-d4 : Centre.
-d5 : Attaque de e4.
-Nc3 : Défense par développement.
-Bb4 : La Winawer : le clouage renouvelle la menace sur e4.
-e5 : Les Blancs avancent.
-c5 : Attaque de la base d4.
-a3 : Les Blancs interrogent le fou.
-Bxc3+ : Le fou s'échange en abîmant les pions blancs.
-bxc3 : Pions doublés, mais paire de fous et centre renforcé.
-Ne7 : Le cavalier ira en f5 ou g6. Structure contre dynamisme : tout le charme de la Winawer.
+# La défense française : variante Winawer | Le fou noir cloue le cavalier c3 et met la pression sur le pion e4. Une lutte stratégique et tranchante. | b
+e4 : Les Blancs occupent le centre.
+e6 : La défense française : ce pion prépare l'avance d5.
+d4 : Les Blancs construisent un centre de deux pions.
+d5 : Les Noirs attaquent le pion e4.
+Nc3 : Le cavalier protège le pion e4 en se développant.
+Bb4 : Voici la Winawer. Le fou cloue le cavalier, qui ne protège plus vraiment le pion e4.
+e5 : Les Blancs avancent leur pion et gagnent de l'espace.
+c5 : Les Noirs attaquent la base de la chaîne, le pion d4.
+a3 : Les Blancs posent la question au fou.
+Bxc3+ : Le fou s'échange contre le cavalier, avec échec, et abîme les pions blancs.
+bxc3 : Les Blancs ont des pions doublés, mais ils gardent les deux fous et un centre renforcé.
+Ne7 : Le cavalier ira en f5 ou en g6. À retenir : on peut échanger une bonne structure de pions contre des pièces plus actives, ou l'inverse.
 
-# La défense française : variante Tarrasch | Le cavalier en d2 évite le clouage et garde une structure saine. | w
-e4 : Le pion roi.
-e6 : Française.
-d4 : Centre.
-d5 : Attaque de e4.
-Nd2 : La variante Tarrasch : pas de clouage possible par Bb4.
-Nf6 : Attaque de e4.
-e5 : Gain d'espace avec tempo.
+# La défense française : variante Tarrasch | Le cavalier va en d2 au lieu de c3. Il évite ainsi d'être cloué par le fou noir et garde des pions bien placés. | w
+e4 : Les Blancs occupent le centre.
+e6 : La défense française : ce pion prépare l'avance d5.
+d4 : Les Blancs construisent un centre de deux pions.
+d5 : Les Noirs attaquent le pion e4.
+Nd2 : Voici la variante Tarrasch. Le cavalier protège le pion e4 depuis d2, où le fou noir ne peut pas le clouer.
+Nf6 : Le cavalier noir attaque le pion e4.
+e5 : Le pion avance avec gain de temps : il chasse le cavalier.
 Nfd7 : Le cavalier recule.
-Bd3 : Le fou sur sa meilleure diagonale, pointé vers h7.
-c5 : Attaque de la chaîne.
-c3 : Soutien de d4.
-Nc6 : Pression.
-Ne2 : Le cavalier soutient d4 en laissant f3 à son collègue.
+Bd3 : Le fou se place sur sa meilleure diagonale, pointée vers le roque noir.
+c5 : Les Noirs attaquent la chaîne de pions.
+c3 : Le pion c protège le pion d4.
+Nc6 : Le cavalier attaque le pion d4 à son tour.
+Ne2 : Le cavalier protège le pion d4 et laisse la case f3 à l'autre cavalier. À retenir : choisissez la case de chaque pièce pour qu'elle ne gêne pas les autres.
 
-# La défense Caro-Kann | Comme la Française, mais le fou c8 sort avant e6 : solidité à toute épreuve. | b
-e4 : Le pion roi.
-c6 : La Caro-Kann : on prépare d5 en gardant la diagonale c8-h3 ouverte.
-d4 : Centre.
-d5 : Attaque de e4.
-Nc3 : Défense.
-dxe4 : Échange au centre.
+# La défense Caro-Kann | Comme dans la française, les Noirs préparent d5. Mais ici, leur fou c8 sort avant de jouer e6 : une défense très solide. | b
+e4 : Les Blancs occupent le centre.
+c6 : Voici la Caro-Kann. Le pion c prépare l'avance d5, sans enfermer le fou c8.
+d4 : Les Blancs construisent un centre de deux pions.
+d5 : Les Noirs attaquent le pion e4.
+Nc3 : Le cavalier protège le pion e4.
+dxe4 : Les Noirs échangent au centre.
 Nxe4 : Le cavalier reprend.
-Bf5 : Variante classique : le fou sort avec gain de temps.
-Ng3 : Le cavalier attaque le fou.
-Bg6 : Retraite sûre.
-h4 : Menace h5 pour piéger le fou.
-h6 : Une case de fuite en h7.
-Nf3 : Développement.
-Nd7 : Empêche Ne5 et prépare Ngf6.
+Bf5 : Le fou sort en attaquant le cavalier. C'est la variante classique.
+Ng3 : Le cavalier attaque le fou à son tour.
+Bg6 : Le fou recule sur une case sûre.
+h4 : Les Blancs menacent d'avancer en h5 pour piéger le fou.
+h6 : Les Noirs offrent une case de fuite au fou, en h7.
+Nf3 : Les Blancs se développent.
+Nd7 : Ce cavalier empêche le cavalier blanc de venir en e5, et prépare la sortie de l'autre cavalier en f6. À retenir : sortez votre fou avant de l'enfermer derrière vos pions.
 
-# La défense hollandaise | Le pion f5 contrôle e4 et annonce une attaque à l'aile roi. | b
-d4 : Le pion dame.
-f5 : La défense hollandaise : on contrôle e4 de façon asymétrique.
-g3 : Le fianchetto, meilleur antidote.
-Nf6 : Développement et contrôle de e4.
-Bg2 : Le fou sur la grande diagonale.
-e6 : La Hollandaise classique.
-Nf3 : Développement.
-Be7 : Prépare le roque.
-O-O : Roque blanc.
-O-O : Roque noir.
-c4 : Gain d'espace au centre.
-d6 : Prépare e5 ; la dame pourra passer par e8 vers h5 pour attaquer.
+# La défense hollandaise | Le pion f5 contrôle la case e4 et annonce une future attaque à l'aile roi. | b
+d4 : Les Blancs occupent le centre avec leur pion dame.
+f5 : Voici la défense hollandaise. Le pion f contrôle la case e4, sans symétrie.
+g3 : Les Blancs préparent un fianchetto, la réponse la plus solide.
+Nf6 : Le cavalier se développe et contrôle lui aussi la case e4.
+Bg2 : Le fou se place sur la grande diagonale.
+e6 : Voici la hollandaise classique : ce pion ouvre la route au fou f8.
+Nf3 : Les Blancs se développent.
+Be7 : Les Noirs préparent leur roque.
+O-O : Les Blancs roquent.
+O-O : Les Noirs roquent aussi.
+c4 : Les Blancs gagnent de l'espace au centre.
+d6 : Ce pion prépare l'avance e5. La dame noire pourra passer par e8 pour aller attaquer en h5. À retenir : la structure des pions indique de quel côté attaquer.
 
-# La défense scandinave | Les Noirs frappent le centre dès le premier coup et sortent leur dame très tôt. | b
-e4 : Le pion roi.
-d5 : La Scandinave : confrontation immédiate.
-exd5 : Les Blancs prennent.
-Qxd5 : La dame reprend.
-Nc3 : Développement avec gain de temps sur la dame.
-Qa5 : La meilleure case : la dame reste active et à l'abri.
-d4 : Centre.
-Nf6 : Développement.
-Nf3 : Développement.
-c6 : Une retraite pour la dame et un contrôle de d5.
-Bc4 : Le fou vise f7.
-Bf5 : Le fou sort avant e6 : structure type Caro-Kann.
+# La défense scandinave | Les Noirs attaquent le centre dès le premier coup, et leur dame sort très tôt. Il faut alors bien la placer. | b
+e4 : Les Blancs occupent le centre.
+d5 : Voici la défense scandinave : les Noirs attaquent le pion e4 tout de suite.
+exd5 : Les Blancs prennent le pion.
+Qxd5 : La dame reprend. Elle sort très tôt, ce qui est rare.
+Nc3 : Le cavalier se développe en attaquant la dame. Les Blancs gagnent du temps.
+Qa5 : La meilleure case : la dame reste active, à l'abri des attaques.
+d4 : Les Blancs occupent le centre.
+Nf6 : Les Noirs se développent.
+Nf3 : Les Blancs se développent aussi.
+c6 : Ce pion offre une retraite à la dame et contrôle la case d5.
+Bc4 : Le fou vise la case f7.
+Bf5 : Le fou sort avant de jouer e6. À retenir : quand la dame sort tôt, trouvez-lui une case où elle ne se fera pas chasser.
 
-# La défense Alekhine | Le cavalier provoque l'avance des pions blancs pour mieux les attaquer ensuite. | b
-e4 : Le pion roi.
-Nf6 : La défense Alekhine : le cavalier provoque le pion e.
-e5 : Le pion attaque le cavalier.
-Nd5 : Le cavalier se centralise.
-d4 : Les Blancs bâtissent un grand centre.
-d6 : Attaque immédiate de la pointe e5.
-Nf3 : Soutien du centre.
-Bg4 : Clouage du défenseur de e5.
-Be2 : Déclouage.
-e6 : Libère le fou f8.
-O-O : Roque blanc.
-Be7 : Les Noirs complètent leur développement en visant le centre.
+# La défense Alekhine | Le cavalier pousse les pions blancs à avancer. Plus ils avancent, plus ils deviennent des cibles. | b
+e4 : Les Blancs occupent le centre.
+Nf6 : Voici la défense Alekhine : le cavalier attaque tout de suite le pion e4.
+e5 : Le pion avance et chasse le cavalier.
+Nd5 : Le cavalier s'installe au centre.
+d4 : Les Blancs construisent un grand centre.
+d6 : Les Noirs attaquent tout de suite la pointe de ce centre, le pion e5.
+Nf3 : Le cavalier protège le centre.
+Bg4 : Le fou cloue le cavalier f3, qui défend le pion e5.
+Be2 : Les Blancs déclouent leur cavalier.
+e6 : Ce pion ouvre la route au fou f8.
+O-O : Les Blancs roquent.
+Be7 : Les Noirs terminent leur développement et visent le centre blanc. À retenir : des pions trop avancés peuvent devenir des cibles.
 
-# La défense Pirc | Les Noirs laissent le centre aux Blancs pour le miner à distance. | b
-e4 : Le pion roi.
-d6 : La Pirc : modeste et flexible.
+# La défense Pirc | Les Noirs laissent le centre aux Blancs. Ils l'attaqueront plus tard, à distance, avec leurs pièces. | b
+e4 : Les Blancs occupent le centre.
+d6 : Voici la défense Pirc : un coup modeste et souple.
 d4 : Les Blancs prennent tout le centre.
-Nf6 : Attaque de e4.
-Nc3 : Défense.
-g6 : Prépare le fianchetto.
-Nf3 : Variante classique.
-Bg7 : Le fou vise le centre blanc.
-Be2 : Développement calme.
-O-O : Roque noir.
-O-O : Roque blanc.
-c6 : Coup souple qui prépare b5 ou Qc7, puis e5.
+Nf6 : Le cavalier attaque le pion e4.
+Nc3 : Le cavalier protège le pion e4.
+g6 : Les Noirs préparent un fianchetto.
+Nf3 : Les Blancs se développent.
+Bg7 : Le fou vise le centre blanc depuis la grande diagonale.
+Be2 : Un développement calme.
+O-O : Les Noirs roquent.
+O-O : Les Blancs roquent aussi.
+c6 : Un coup souple qui prépare l'avance b5, ou la dame en c7 suivie de l'avance e5. À retenir : on peut laisser le centre à l'adversaire, à condition de l'attaquer ensuite.
 
-# Le gambit dame refusé | Les Noirs soutiennent d5 par e6 : la forteresse classique des parties fermées. | w
-d4 : Le pion dame.
-d5 : Réponse symétrique.
-c4 : Le gambit dame : on attaque d5 pour dominer le centre.
-e6 : Gambit refusé : le pion d5 est soutenu.
-Nc3 : Pression sur d5.
-Nf6 : Défense.
-Bg5 : Clouage du cavalier qui défend d5.
-Be7 : Déclouage.
-e3 : Libère le fou f1.
-O-O : Roque noir.
-Nf3 : Développement.
-Nbd7 : Soutient le cavalier f6.
-Rc1 : La tour se place sur la colonne c, qui va s'ouvrir.
+# Le gambit dame refusé | Les Noirs soutiennent leur pion d5 avec le pion e6. C'est la forteresse classique des parties fermées. | w
+d4 : Les Blancs occupent le centre avec leur pion dame.
+d5 : Les Noirs répondent de la même façon.
+c4 : Voici le gambit dame : le pion c attaque le pion d5 pour dominer le centre.
+e6 : Le gambit est refusé : le pion e6 protège le pion d5.
+Nc3 : Le cavalier attaque le pion d5 une fois de plus.
+Nf6 : Le cavalier noir protège le pion d5.
+Bg5 : Le fou cloue le cavalier qui défend le pion d5.
+Be7 : Les Noirs déclouent leur cavalier.
+e3 : Ce pion ouvre la route au fou f1.
+O-O : Les Noirs roquent.
+Nf3 : Les Blancs se développent.
+Nbd7 : Le cavalier soutient le cavalier f6.
+Rc1 : La tour se place sur la colonne c, qui va bientôt s'ouvrir. À retenir : placez vos tours sur les colonnes qui vont s'ouvrir.
 
-# Le gambit dame accepté | Les Noirs prennent c4, mais ne peuvent pas garder le pion : les Blancs obtiennent un jeu libre. | w
-d4 : Le pion dame.
-d5 : Symétrie.
-c4 : Gambit dame.
-dxc4 : Gambit accepté.
-Nf3 : Empêche e5.
-Nf6 : Développement.
-e3 : Le fou f1 attaque le pion c4.
+# Le gambit dame accepté | Les Noirs prennent le pion c4, mais ils ne peuvent pas le garder. Les Blancs le récupèrent et obtiennent un jeu libre. | w
+d4 : Les Blancs occupent le centre avec leur pion dame.
+d5 : Les Noirs répondent de la même façon.
+c4 : Le gambit dame : le pion c attaque le pion d5.
+dxc4 : Le gambit est accepté : les Noirs prennent le pion.
+Nf3 : Le cavalier se développe et empêche le pion noir d'avancer en e5.
+Nf6 : Les Noirs se développent.
+e3 : Ce pion ouvre la route au fou f1, qui va attaquer le pion c4.
 e6 : Les Noirs n'essaient pas de garder le pion : ils se développent.
-Bxc4 : Le pion est repris avec un beau fou actif.
-c5 : Attaque du centre blanc.
-O-O : Roque.
-a6 : Prépare b5 avec gain de temps sur le fou.
+Bxc4 : Le fou reprend le pion. Il est très actif.
+c5 : Les Noirs attaquent le centre blanc.
+O-O : Les Blancs roquent.
+a6 : Ce pion prépare l'avance b5, qui chassera le fou. À retenir : il vaut mieux se développer que s'accrocher à un pion qu'on ne peut pas garder.
 
-# La défense slave | Le pion c6 soutient d5 sans enfermer le fou c8. | b
-d4 : Le pion dame.
-d5 : Symétrie.
-c4 : Gambit dame.
-c6 : La Slave : soutien de d5, diagonale c8-h3 ouverte.
-Nf3 : Développement.
-Nf6 : Développement.
-Nc3 : Pression sur d5.
-dxc4 : Les Noirs prennent maintenant, avec l'idée b5.
-a4 : Empêche b5.
-Bf5 : Le fou sort sur sa meilleure diagonale.
-e3 : Prépare la reprise du pion.
-e6 : Structure solide.
-Bxc4 : Pion repris.
-Bb4 : Clouage et contrôle de e4.
+# La défense slave | Le pion c6 soutient le pion d5 sans enfermer le fou c8. | b
+d4 : Les Blancs occupent le centre avec leur pion dame.
+d5 : Les Noirs répondent de la même façon.
+c4 : Le gambit dame : le pion c attaque le pion d5.
+c6 : Voici la défense slave : le pion c6 protège le pion d5, et la route du fou c8 reste ouverte.
+Nf3 : Les Blancs se développent.
+Nf6 : Les Noirs se développent aussi.
+Nc3 : Le cavalier attaque le pion d5 une fois de plus.
+dxc4 : Maintenant, les Noirs prennent le pion. Ils pensent à le protéger avec l'avance b5.
+a4 : Ce pion empêche l'avance b5.
+Bf5 : Le fou sort sur sa meilleure diagonale, avant de jouer e6.
+e3 : Ce pion prépare la reprise du pion c4.
+e6 : Les Noirs gardent une structure solide.
+Bxc4 : Le fou reprend le pion.
+Bb4 : Le fou cloue le cavalier c3 et contrôle la case e4. À retenir : sortez le fou avant de fermer sa diagonale avec vos pions.
 
-# Le système de Londres | Un schéma de développement universel et facile à retenir. | w
-d4 : Le pion dame.
-d5 : Symétrie.
-Bf4 : Le système de Londres : le fou sort avant e3.
-Nf6 : Développement.
-e3 : Pyramide solide d4-e3.
-c5 : Attaque du centre.
-c3 : Soutien : la pyramide est complète.
-Nc6 : Développement.
-Nd2 : Le cavalier soutient e4 et laisse c3 au pion.
-e6 : Libère le fou f8.
-Ngf3 : Développement.
-Bd6 : Les Noirs proposent l'échange du fou de Londres.
-Bg3 : On maintient la diagonale.
-O-O : Roque noir.
-Bd3 : Le fou vise h7 ; le cavalier pourra bondir en e5.
+# Le système de Londres | Le système de Londres est un plan de développement simple, qu'on peut jouer contre presque toutes les défenses. | w
+d4 : Les Blancs occupent le centre avec leur pion dame.
+d5 : Les Noirs répondent de la même façon.
+Bf4 : Voici le système de Londres : le fou sort avant de jouer e3. Sinon, il serait enfermé derrière ses pions.
+Nf6 : Les Noirs se développent.
+e3 : Les pions d4 et e3 forment une base solide.
+c5 : Les Noirs attaquent le centre.
+c3 : Le pion c protège le pion d4. Les pions forment une petite pyramide.
+Nc6 : Les Noirs se développent.
+Nd2 : Le cavalier se place en d2 pour soutenir une future avance e4, en laissant la case c3 au pion.
+e6 : Ce pion ouvre la route au fou f8.
+Ngf3 : L'autre cavalier se développe.
+Bd6 : Les Noirs proposent l'échange des fous.
+Bg3 : Le fou recule et garde sa diagonale.
+O-O : Les Noirs roquent.
+Bd3 : Le fou vise le pion h7. Le cavalier pourra ensuite sauter en e5. À retenir : un plan simple et répété permet de bien jouer sans tout mémoriser.
 
-# La défense nimzo-indienne | Le fou b4 cloue le cavalier c3 pour contrôler la case e4. | b
-d4 : Le pion dame.
-Nf6 : Défense indienne : on empêche e4.
-c4 : Gain d'espace.
-e6 : Ouvre la diagonale du fou f8.
-Nc3 : Menace e4.
-Bb4 : La Nimzo-indienne : le clouage empêche e4.
-e3 : Variante Rubinstein : développement solide.
-O-O : Roque.
-Bd3 : Le fou surveille e4.
-d5 : Prise de position au centre.
-Nf3 : Développement.
-c5 : Attaque du centre blanc.
-O-O : Les deux camps sont développés : lutte complexe pour les cases centrales.
+# La défense nimzo-indienne | Le fou noir cloue le cavalier c3 pour l'empêcher de soutenir l'avance e4. | b
+d4 : Les Blancs occupent le centre avec leur pion dame.
+Nf6 : Le cavalier empêche le pion blanc d'avancer en e4. C'est le début d'une défense indienne.
+c4 : Les Blancs gagnent de l'espace.
+e6 : Ce pion ouvre la diagonale du fou f8.
+Nc3 : Le cavalier prépare l'avance e4.
+Bb4 : Voici la nimzo-indienne : le fou cloue le cavalier, qui ne peut plus soutenir l'avance e4.
+e3 : C'est la variante Rubinstein : un développement solide.
+O-O : Les Noirs roquent.
+Bd3 : Le fou surveille la case e4.
+d5 : Les Noirs prennent position au centre.
+Nf3 : Les Blancs se développent.
+c5 : Les Noirs attaquent le centre blanc.
+O-O : Les Blancs roquent. Les deux camps sont développés, et la lutte pour les cases centrales commence. À retenir : un clouage peut servir à contrôler une case importante.
 
-# La défense est-indienne | Les Noirs laissent le centre aux Blancs puis contre-attaquent par e5 et une attaque à l'aile roi. | b
-d4 : Le pion dame.
-Nf6 : Défense indienne.
-c4 : Gain d'espace.
-g6 : Prépare le fianchetto.
-Nc3 : Prépare e4.
-Bg7 : Le fou sur la grande diagonale.
+# La défense est-indienne | Les Noirs laissent d'abord le centre aux Blancs, puis le frappent avec e5 et lancent une attaque à l'aile roi. | b
+d4 : Les Blancs occupent le centre avec leur pion dame.
+Nf6 : Le cavalier contrôle la case e4. C'est une défense indienne.
+c4 : Les Blancs gagnent de l'espace.
+g6 : Les Noirs préparent un fianchetto.
+Nc3 : Le cavalier prépare l'avance e4.
+Bg7 : Le fou se place sur la grande diagonale.
 e4 : Les Blancs occupent tout le centre.
-d6 : Contrôle de e5.
-Nf3 : Variante classique.
-O-O : Roque.
-Be2 : Développement.
-e5 : Le coup libérateur : les Noirs frappent le centre.
-O-O : Roque blanc.
-Nc6 : Pression sur d4 pour forcer une décision.
-d5 : Les Blancs ferment le centre.
-Ne7 : Le cavalier part vers l'aile roi : les Noirs préparent f5.
+d6 : Ce pion contrôle la case e5.
+Nf3 : Les Blancs se développent. C'est la variante classique.
+O-O : Les Noirs roquent.
+Be2 : Les Blancs se développent.
+e5 : Le coup libérateur : les Noirs frappent enfin le centre.
+O-O : Les Blancs roquent.
+Nc6 : Le cavalier attaque le pion d4 pour obliger les Blancs à prendre une décision.
+d5 : Les Blancs ferment le centre en avançant leur pion.
+Ne7 : Le cavalier se dirige vers l'aile roi. Les Noirs préparent l'avance f5. À retenir : quand le centre est fermé, on attaque sur une aile.
 
-# La défense Grünfeld | Les Noirs offrent le centre aux Blancs… pour le bombarder avec leurs pièces. | b
-d4 : Le pion dame.
-Nf6 : Défense indienne.
-c4 : Gain d'espace.
-g6 : Fianchetto en vue.
-Nc3 : Prépare e4.
-d5 : La Grünfeld : frappe immédiate au centre.
-cxd5 : Variante d'échange.
+# La défense Grünfeld | Les Noirs laissent les Blancs construire un grand centre de pions, puis le bombardent avec leurs pièces. | b
+d4 : Les Blancs occupent le centre avec leur pion dame.
+Nf6 : Le cavalier contrôle la case e4. C'est une défense indienne.
+c4 : Les Blancs gagnent de l'espace.
+g6 : Les Noirs préparent un fianchetto.
+Nc3 : Le cavalier prépare l'avance e4.
+d5 : Voici la Grünfeld : les Noirs frappent tout de suite au centre.
+cxd5 : Les Blancs prennent : c'est la variante d'échange.
 Nxd5 : Le cavalier reprend.
-e4 : Grand centre avec gain de temps.
-Nxc3 : Échange des cavaliers.
-bxc3 : Centre imposant e4-d4-c3.
-Bg7 : Le fou prend d4 pour cible.
-Nf3 : Soutien de d4.
-c5 : L'attaque du centre commence : toute la stratégie de la Grünfeld.
+e4 : Les Blancs construisent un grand centre en chassant le cavalier.
+Nxc3 : Les Noirs échangent les cavaliers.
+bxc3 : Les Blancs reprennent. Leur centre de pions, en c3, d4 et e4, est impressionnant.
+Bg7 : Le fou vise le pion d4 depuis la grande diagonale.
+Nf3 : Le cavalier protège le pion d4.
+c5 : L'attaque du centre commence : c'est toute l'idée de la Grünfeld. À retenir : un grand centre de pions peut devenir une cible.
 
-# L'ouverture anglaise | Une « Sicilienne en premier » : contrôle de d5 par l'aile. | w
-c4 : L'ouverture anglaise : contrôle de d5 depuis l'aile.
-e5 : Une Sicilienne aux couleurs inversées.
-Nc3 : Renfort sur d5.
-Nf6 : Développement.
-g3 : Fianchetto.
+# L'ouverture anglaise | Les Blancs commencent par le pion c pour contrôler la case d5 depuis le côté. C'est une sicilienne avec les couleurs inversées. | w
+c4 : Voici l'ouverture anglaise : le pion c contrôle la case d5 depuis le côté.
+e5 : Les Noirs occupent le centre. C'est comme une sicilienne, mais avec les couleurs inversées.
+Nc3 : Le cavalier contrôle lui aussi la case d5.
+Nf6 : Les Noirs se développent.
+g3 : Les Blancs préparent un fianchetto.
 d5 : Les Noirs ouvrent le centre.
-cxd5 : Échange.
-Nxd5 : Cavalier centralisé.
-Bg2 : Le fou attaque le cavalier d5.
-Nb6 : Retraite prudente.
-Nf3 : Développement et attaque de e5.
-Nc6 : Défense.
-O-O : Roque.
-Be7 : Les Noirs vont roquer : position de Dragon inversé avec un temps de plus pour les Blancs.
+cxd5 : Les Blancs prennent.
+Nxd5 : Le cavalier reprend et s'installe au centre.
+Bg2 : Le fou attaque le cavalier d5 depuis la grande diagonale.
+Nb6 : Le cavalier recule prudemment.
+Nf3 : Le cavalier se développe et attaque le pion e5.
+Nc6 : Le cavalier noir protège le pion.
+O-O : Les Blancs roquent.
+Be7 : Les Noirs préparent leur roque. Les Blancs jouent une sicilienne Dragon inversée, avec un coup de plus. À retenir : un coup d'avance rend une ouverture connue encore plus forte.
 
-# Le mat du berger et sa parade | Reconnaître l'attaque dame + fou sur f7 et la repousser en gagnant du temps. | b
-e4 : Le pion roi.
-e5 : Classique.
-Qh5 : Une sortie précoce de la dame, qui attaque e5 et vise f7.
-Nc6 : On défend d'abord le pion e5 en se développant.
-Bc4 : La menace est maintenant Qxf7 mat : le fameux mat du berger.
-g6 : La parade : le pion bloque la dame et l'attaque.
-Qf3 : La dame renouvelle la menace sur f7.
-Nf6 : Le cavalier ferme la colonne f en se développant.
-Ne2 : Les Blancs doivent enfin développer leurs pièces.
-Bg7 : Les Noirs ont paré toutes les menaces en gagnant du temps sur la dame.
+# Le mat du berger et sa parade | Apprenez à reconnaître le mat du berger, une attaque de la dame et du fou sur f7, et à le repousser en gagnant du temps. | b
+e4 : Les Blancs occupent le centre.
+e5 : Les Noirs répondent au centre.
+Qh5 : La dame blanche sort très tôt. Elle attaque le pion e5 et vise déjà la case f7.
+Nc6 : Les Noirs protègent d'abord le pion e5 en développant un cavalier.
+Bc4 : Attention : la dame et le fou visent tous les deux la case f7. Les Blancs menacent d'y prendre le pion avec échec et mat. C'est le mat du berger.
+g6 : La parade : le pion bloque la dame et l'attaque en même temps.
+Qf3 : La dame recule, mais elle vise encore la case f7.
+Nf6 : Le cavalier se développe et ferme la route de la dame vers f7.
+Ne2 : Les Blancs doivent enfin sortir leurs pièces.
+Bg7 : Les Noirs ont paré toutes les menaces et gagné du temps sur la dame. À retenir : face à une dame sortie trop tôt, développez vos pièces en la chassant.

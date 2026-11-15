@@ -1,3 +1,12 @@
+## ChessDuck 2.4.1 — des leçons réécrites comme par un professeur
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Académie : les 113 leçons ont été réécrites, de l'objectif à chaque commentaire. Chaque coup est expliqué par son idée et sa raison, et chaque leçon se termine par une règle « À retenir ».
+- Les coups de l'adversaire sont eux aussi expliqués, au lieu de simples mentions comme « Seul coup » ou « Symétrie ».
+- Des phrases complètes et claires, sans abréviations ni notation anglaise : idéal pour la lecture vocale.
+- Les coups des leçons ne changent pas : votre progression est conservée.
+
 ## ChessDuck 2.4.0 — lecture vocale des leçons
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
