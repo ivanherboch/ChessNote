@@ -1,3 +1,10 @@
+## ChessDuck 2.4.2 — revue : jauge et commentaires concordants
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Revue de partie : un « mat manqué » précise désormais où en est le mat après le coup joué, comme la jauge (« Après Qe5+, il lui faut encore 2 coups pour mater »). La jauge montre toujours la position affichée ; le commentaire juge le coup qui y a mené.
+- Cohérence vérifiée sur 40 parties simulées avec Stockfish (3 470 coups commentés, 64 mats manqués) : aucune contradiction entre la jauge et les commentaires.
+
 ## ChessDuck 2.4.1 — des leçons réécrites comme par un professeur
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
