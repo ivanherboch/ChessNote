@@ -1,3 +1,12 @@
+## ChessDuck 2.3.1 — fiabilité et fluidité
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Jeu Libre : un clic sur un coup éloigné dans la liste affiche directement la position, sans animation trompeuse ; avancer ou reculer d'un coup reste animé.
+- Images de partage générées plus rapidement (pièces chargées une seule fois).
+- Mémoire mieux maîtrisée : seules les analyses des 20 dernières parties sont gardées en mémoire, les autres sont relues depuis l'historique.
+- Réorganisation interne du code (aucun changement de vos données, réglages ou progression).
+
 ## ChessDuck 2.3.0 — palettes de couleurs
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
