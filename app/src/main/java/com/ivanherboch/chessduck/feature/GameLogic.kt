@@ -7,6 +7,8 @@ import com.ivanherboch.chessduck.chess.PAWN
 import com.ivanherboch.chessduck.chess.PIECE_VALUES
 import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.chess.pieceType
+import com.ivanherboch.chessduck.chess.sqName
+import com.ivanherboch.chessduck.chess.PieceLexiconFr
 import com.ivanherboch.chessduck.engine.MATE
 import com.ivanherboch.chessduck.engine.mateFor
 import com.ivanherboch.chessduck.engine.winPercent
@@ -35,6 +37,25 @@ data class Analysis(val eval: Int, val second: Int?, val best: String) {
 }
 
 object GameLogic {
+    /**
+     * Pourquoi la pièce en [sq] (au camp qui a le trait) ne peut pas bouger, en une phrase : roi en échec,
+     * pièce clouée sur son roi, ou simplement aucune case libre.
+     */
+    fun whyStuck(p: Position, sq: Int): String {
+        val t = pieceType(p[sq])
+        val name = "${PieceLexiconFr.definiteCapitalized(t)} en ${sqName(sq)}"
+        val f = PieceLexiconFr.isFeminine(t)
+        if (p.inCheck) return "Votre roi est en échec : ${PieceLexiconFr.definite(t)} en ${sqName(sq)} ne peut pas parer l'échec. Protégez d'abord votre roi."
+        if (t != KING) {
+            val king = p.kingSquare(p.whiteToMove)
+            val without = Position(p.board.copyOf().also { it[sq] = 0 }, p.whiteToMove, p.castling, p.ep, p.halfmove, p.fullmove)
+            if (king >= 0 && without.isAttacked(king, !p.whiteToMove)) {
+                return "$name est ${if (f) "clouée" else "cloué"} : ${if (f) "si elle bougeait" else "s'il bougeait"}, votre roi serait en échec."
+            }
+        }
+        return "$name n'a aucune case libre pour l'instant."
+    }
+
     /** Nouvel ELO selon la formule FIDE (K = 32). [score] : 1 victoire, 0,5 nulle, 0 défaite. */
     fun newElo(elo: Int, opponent: Int, score: Double, k: Int = 32): Int {
         val expected = 1.0 / (1.0 + 10.0.pow((opponent - elo) / 400.0))

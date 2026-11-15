@@ -34,6 +34,8 @@ data class Settings(
     val themeMode: Int = 2,
     /** Palette de couleurs choisie (indice de DuckPalette ; 0 = Ardoise & Or). */
     val palette: Int = 0,
+    /** Index de la matière d'échiquier dans BoardTheme. */
+    val boardTheme: Int = 0,
     /** Coordonnées a–h / 1–8 affichées sur l'échiquier. */
     val coords: Boolean = true,
     /** Confirmation avant d'abandonner ou de recommencer une partie en cours. */
@@ -82,6 +84,7 @@ class Prefs(private val context: Context) : SettingsRepository {
         val dark = booleanPreferencesKey("dark")
         val themeMode = intPreferencesKey("theme_mode")
         val palette = intPreferencesKey("palette")
+        val boardTheme = intPreferencesKey("board_theme")
         val coords = booleanPreferencesKey("show_coords")
         val confirm = booleanPreferencesKey("confirm_actions")
         val notationBest = intPreferencesKey("notation_best_streak")
@@ -109,6 +112,7 @@ class Prefs(private val context: Context) : SettingsRepository {
         Settings(
             themeMode = p[K.themeMode] ?: if (p[K.dark] ?: true) 2 else 1,
             palette = p[K.palette] ?: 0,
+            boardTheme = p[K.boardTheme] ?: 0,
             coords = p[K.coords] ?: true,
             confirmActions = p[K.confirm] ?: true,
             notationBest = p[K.notationBest] ?: 0,
@@ -141,6 +145,7 @@ class Prefs(private val context: Context) : SettingsRepository {
         if (v != 0) it[K.dark] = v == 2
     } }
     override suspend fun setPalette(v: Int) { context.store.edit { it[K.palette] = v } }
+    override suspend fun setBoardTheme(v: Int) { context.store.edit { it[K.boardTheme] = v } }
     override suspend fun setCoords(v: Boolean) { context.store.edit { it[K.coords] = v } }
     override suspend fun setConfirmActions(v: Boolean) { context.store.edit { it[K.confirm] = v } }
     override suspend fun setNotationBest(v: Int) { context.store.edit { if (v > (it[K.notationBest] ?: 0)) it[K.notationBest] = v } }

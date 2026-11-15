@@ -54,6 +54,8 @@ import com.ivanherboch.chessduck.data.SettingsRepository
 import com.ivanherboch.chessduck.ui.Narrator
 import com.ivanherboch.chessduck.ui.ButtonVariant
 import com.ivanherboch.chessduck.ui.DuckButton
+import androidx.compose.foundation.layout.fillMaxHeight
+import com.ivanherboch.chessduck.ui.BoardTheme
 import android.content.Intent
 import android.speech.tts.TextToSpeech
 import kotlinx.coroutines.CoroutineScope
@@ -169,6 +171,7 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
         DuckSegmentedRow(listOf("Système", "Jour", "Nuit"), st.themeMode, { i -> scope.launch { prefs.setThemeMode(i) } }, Modifier.fillMaxWidth())
 
         SectionTitle("Échiquier et parties")
+        BoardThemePicker(BoardTheme.of(st.boardTheme)) { t -> scope.launch { prefs.setBoardTheme(t.ordinal) } }
         SwitchRow("Afficher les coordonnées", "Lettres a–h et chiffres 1–8 sur l'échiquier. Masquez-les pour vous entraîner à la notation.", st.coords) { v ->
             scope.launch { prefs.setCoords(v) }
         }
@@ -225,6 +228,32 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
  * Choix d'une palette : aperçu fidèle (fond, carte, accent principal, réussite, information, erreur et cases de
  * l'échiquier) dans le mode d'affichage courant (Jour ou Nuit), nom et description ; toute la ligne est sélectionnable.
  */
+/** Matière de l'échiquier : quatre aperçus de 2 × 2 cases, sélection unique. */
+@Composable
+private fun BoardThemePicker(current: BoardTheme, onSelect: (BoardTheme) -> Unit) {
+    val c = LocalDuck.current
+    Row(Modifier.fillMaxWidth().selectableGroup().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        for (t in BoardTheme.entries) {
+            val selected = t == current
+            val shape = RoundedCornerShape(DuckRadius.M)
+            Column(
+                Modifier.weight(1f).clip(shape).background(if (selected) c.surfaceHi else c.surface)
+                    .border(if (selected) 2.dp else 1.dp, if (selected) c.goldRole.fill else c.outline, shape)
+                    .selectable(selected = selected, role = Role.RadioButton) { onSelect(t) }
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Column(Modifier.size(44.dp).clip(RoundedCornerShape(DuckRadius.S))) {
+                    for (r in 0..1) Row(Modifier.weight(1f)) {
+                        for (f in 0..1) Box(Modifier.weight(1f).fillMaxHeight().background(if ((r + f) % 2 == 0) t.light else t.dark))
+                    }
+                }
+                Text(t.label, color = c.text, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
+            }
+        }
+    }
+}
+
 @Composable
 private fun PaletteOption(palette: DuckPalette, selected: Boolean, onSelect: () -> Unit) {
     val c = LocalDuck.current

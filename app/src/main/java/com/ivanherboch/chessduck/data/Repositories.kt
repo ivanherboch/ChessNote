@@ -23,6 +23,8 @@ interface SettingsRepository {
     suspend fun setThemeMode(v: Int)
     /** Index de la palette dans DuckPalette. */
     suspend fun setPalette(v: Int)
+    /** Index de la matière d'échiquier dans BoardTheme. */
+    suspend fun setBoardTheme(v: Int)
     suspend fun setCoords(v: Boolean)
     suspend fun setConfirmActions(v: Boolean)
     suspend fun setHaptics(v: Boolean)

@@ -62,6 +62,19 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.ivanherboch.chessduck.chess.PieceLexiconFr
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.unit.sp
 import com.ivanherboch.chessduck.R
 import com.ivanherboch.chessduck.chess.BISHOP
@@ -83,7 +96,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import com.ivanherboch.chessduck.chess.PIECE_NAMES_FR
-import com.ivanherboch.chessduck.chess.PIECE_VALUES
 import com.ivanherboch.chessduck.chess.pieceType
 import com.ivanherboch.chessduck.chess.sqName
 import com.ivanherboch.chessduck.engine.isMateScore
@@ -99,9 +111,12 @@ data class Arrow(val from: Int, val to: Int, val color: Color)
 @Immutable
 data class Slide(val from: Int, val to: Int)
 
-/** Glissement de pièce(s) à animer : les pièces présentes en [Slide.to] arrivent de [Slide.from]. */
+/**
+ * Glissement de pièce(s) à animer : les pièces présentes en [Slide.to] arrivent de [Slide.from].
+ * [capture] et [promotion] nuancent le retour haptique au moment où la pièce se pose.
+ */
 @Immutable
-data class BoardAnim(val id: Int, val slides: List<Slide>)
+data class BoardAnim(val id: Int, val slides: List<Slide>, val capture: Boolean = false, val promotion: Boolean = false)
 @Immutable
 data class Badge(val sq: Int, val text: String, val color: Color)
 
@@ -114,7 +129,7 @@ fun moveAnim(before: Position, m: Move): BoardAnim {
     if (before.isCastle(m)) {
         if (fileOf(m.to) == 6) slides.add(Slide(m.to + 1, m.to - 1)) else slides.add(Slide(m.to - 2, m.to + 1))
     }
-    return BoardAnim(nextAnimId(), slides)
+    return BoardAnim(nextAnimId(), slides, capture = before.isCapture(m), promotion = m.promo != 0)
 }
 
 /** Animation inverse (retour en arrière d'un coup). */
@@ -232,7 +247,8 @@ fun ChessBoard(
             runningId = a.id
             progress.animateTo(1f, tween(180, easing = FastOutSlowInEasing))
         }
-        fb?.move()
+        // Retour au moment où la pièce se pose (fin du glissement), nuancé selon le coup.
+        fb?.move(capture = a.capture, check = position.inCheck, promotion = a.promotion)
     }
     // La progression de l'animation n'est lue que pendant le dessin (phase Draw) : l'animation
     // de 180 ms ne provoque aucune recomposition de l'échiquier ni de sa description TalkBack.
@@ -255,15 +271,31 @@ fun ChessBoard(
         return true
     }
 
-    val targets = if (selected >= 0 && interactive) position.legalFrom(selected) else emptyList()
+    /** Toucher (ou activation TalkBack) d'une case : jouer vers elle, sélectionner une de ses pièces, ou désélectionner. */
+    fun tap(sq: Int) {
+        if (selected >= 0 && selected != sq && tryMove(selected, sq, false)) return
+        val piece = position[sq]
+        if (piece != 0 && isWhite(piece) == position.whiteToMove) {
+            if (position.legalFrom(sq).isEmpty()) { selected = -1; refuse(sq) }
+            else selected = if (selected == sq) -1 else sq
+        } else {
+            selected = -1
+        }
+    }
 
-    Box(modifier.clip(RoundedCornerShape(4.dp))) {
+    val targets = if (selected >= 0 && interactive) position.legalFrom(selected) else emptyList()
+    val boardClip = remember { Path() }
+
+    // Pas de découpe sur la boîte : la pièce glissée peut dépasser en haut de l'échiquier (8e rangée) sans être rognée.
+    Box(modifier) {
         Canvas(
             Modifier
                 .fillMaxSize()
                 .semantics {
-                    contentDescription = describeBoard(position, lastMove, selected.takeIf { interactive && it >= 0 }, flipped)
-                    if (interactive) stateDescription = if (position.whiteToMove) "À vous de jouer avec les Blancs" else "À vous de jouer avec les Noirs"
+                    // Résumé du plateau ; le détail est porté par les 64 cases (voir BoardCells).
+                    contentDescription = "Échiquier, vue des ${if (flipped) "Noirs" else "Blancs"}"
+                    stateDescription = "Trait aux ${if (position.whiteToMove) "Blancs" else "Noirs"}" +
+                        if (position.isCheckmate) ", échec et mat" else if (position.inCheck) ", échec au roi" else ""
                 }
                 .pointerInput(position, flipped, interactive) {
                     if (!interactive) return@pointerInput
@@ -301,13 +333,8 @@ fun ChessBoard(
                             val target = at(last)
                             dragFrom = -1
                             if (inside && target != sqDown) tryMove(sqDown, target, true)
-                        } else if (selected >= 0 && selected != sqDown && tryMove(selected, sqDown, false)) {
-                            // coup joué par toucher-relâcher
-                        } else if (own) {
-                            if (position.legalFrom(sqDown).isEmpty()) { selected = -1; refuse(sqDown) }
-                            else selected = if (selected == sqDown) -1 else sqDown
                         } else {
-                            selected = -1
+                            tap(sqDown)
                         }
                     }
                 }
@@ -316,7 +343,19 @@ fun ChessBoard(
             fun topLeft(q: Int): Offset = Offset(BoardGeometry.column(q, flipped) * s, BoardGeometry.row(q, flipped) * s)
             fun center(q: Int) = topLeft(q) + Offset(s / 2, s / 2)
             val cell = Size(s, s)
-
+            boardClip.rewind()
+            boardClip.addRoundRect(RoundRect(0f, 0f, size.width, size.height, CornerRadius(4.dp.toPx())))
+            fun drawPiece(piece: Int, at: Offset, scale: Float = 1f) {
+                val img = images[piece] ?: return
+                val d = (s * scale).roundToInt()
+                drawImage(
+                    img,
+                    dstOffset = IntOffset((at.x - (d - s) / 2).roundToInt(), (at.y - (d - s) / 2).roundToInt()),
+                    dstSize = IntSize(d, d),
+                    filterQuality = FilterQuality.High,
+                )
+            }
+            clipPath(boardClip) {
             // Cases
             for (q in 0 until 64) {
                 val light = (fileOf(q) + rankOf(q)) % 2 == 1
@@ -324,15 +363,15 @@ fun ChessBoard(
             }
             // Dernier coup
             lastMove?.let {
-                drawRect(Color(0x66F7EC5E), topLeft(it.from), cell)
-                drawRect(Color(0x66F7EC5E), topLeft(it.to), cell)
+                drawRect(c.lastMoveTint, topLeft(it.from), cell)
+                drawRect(c.lastMoveTint, topLeft(it.to), cell)
             }
             for ((q, col) in marks) drawRect(col.copy(alpha = 0.62f), topLeft(q), cell)
             // Roi en échec
             if (position.inCheck) {
                 val k = position.kingSquare(position.whiteToMove)
                 if (k >= 0) drawRect(
-                    Brush.radialGradient(listOf(Color(0xE6EF4444), Color(0x00EF4444)), center(k), s * 0.62f), topLeft(k), cell,
+                    Brush.radialGradient(listOf(c.checkGlow.copy(alpha = 0.9f), c.checkGlow.copy(alpha = 0f)), center(k), s * 0.62f), topLeft(k), cell,
                 )
             }
             // Sélection et case survolée
@@ -345,16 +384,6 @@ fun ChessBoard(
                 }
             }
             // Pièces
-            fun drawPiece(piece: Int, at: Offset, scale: Float = 1f) {
-                val img = images[piece] ?: return
-                val d = (s * scale).roundToInt()
-                drawImage(
-                    img,
-                    dstOffset = IntOffset((at.x - (d - s) / 2).roundToInt(), (at.y - (d - s) / 2).roundToInt()),
-                    dstSize = IntSize(d, d),
-                    filterQuality = FilterQuality.High,
-                )
-            }
             val t = animT()
             val sliding = if (anim != null && t < 1f) anim.slides else emptyList()
             for (q in 0 until 64) {
@@ -365,15 +394,16 @@ fun ChessBoard(
             // Coordonnées, dessinées par-dessus les pièces sur une pastille discrète : jamais masquées.
             if (showCoords) {
                 val coordStyle = TextStyle(fontSize = (s * 0.19f).toSp(), fontWeight = FontWeight.Bold, fontFamily = font)
-                // Pastille dans un coin de la case : lettres en bas à droite, chiffres en haut à gauche.
-                fun label(text: String, cell: Offset, bottomRight: Boolean) {
+                // Pastille dans un coin haut de la case (chiffres à gauche, lettres à droite) : le haut des pièces est
+                // étroit, la pastille ne masque jamais leur base (tours et pièces d'angle comprises).
+                fun label(text: String, cell: Offset, right: Boolean) {
                     val l = texts.get(text, coordStyle)
                     val pad = s * 0.035f
                     val w = l.size.width + pad * 2
                     val h = l.size.height.toFloat()
                     val m = s * 0.03f
-                    val x = if (bottomRight) cell.x + s - m - w else cell.x + m
-                    val y = if (bottomRight) cell.y + s - m - h else cell.y + m
+                    val x = if (right) cell.x + s - m - w else cell.x + m
+                    val y = cell.y + m
                     drawRoundRect(c.coordPill, Offset(x, y), Size(w, h), CornerRadius(h / 3, h / 3))
                     drawText(l, c.coordInk, Offset(x + pad, y))
                 }
@@ -400,6 +430,7 @@ fun ChessBoard(
                 val right = seen.add(b.sq)
                 drawBadge(texts, b, topLeft(b.sq) + Offset(if (right) s * 0.80f else s * 0.20f, s * 0.20f), s)
             }
+            }
             // Pièce en cours de glissement : surélevée au-dessus du doigt, avec ombre portée
             if (dragFrom >= 0) {
                 val piece = position[dragFrom]
@@ -408,26 +439,91 @@ fun ChessBoard(
                 drawPiece(piece, at, 1.3f)
             }
         }
-        promo?.let { (from, to) ->
-            val white = position.whiteToMove
-            Box(
-                Modifier.fillMaxSize().background(Color(0x99000000)).clickable { promo = null },
-                contentAlignment = Alignment.Center,
-            ) {
-                Row(
-                    Modifier.clip(RoundedCornerShape(DuckRadius.L)).background(c.surface).padding(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    for (type in intArrayOf(QUEEN, ROOK, BISHOP, KNIGHT)) {
-                        val res = (if (kid) KID_PIECE_RES else PIECE_RES).getValue(if (white) type else type + BLACK)
-                        Image(
-                            painterResource(res), "Promouvoir en ${PIECE_NAMES_FR[type]}",
-                            Modifier.size(58.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.squareLight)
-                                .clickable(role = Role.Button) { promo = null; selected = -1; onMove(Move(from, to, type)) },
-                        )
-                    }
-                }
+        // Grille sémantique : 64 cases explorables et activables par TalkBack (le dessin reste dans le Canvas).
+        BoardCells(position, flipped, lastMove, selected.takeIf { interactive }, targets, if (interactive) ::tap else null)
+        promo?.let { (from, to) -> PromotionPicker(position.whiteToMove, to, flipped, kid, onCancel = { promo = null }) { type ->
+            promo = null; selected = -1; onMove(Move(from, to, type))
+        } }
+    }
+}
+
+/**
+ * Sélecteur de promotion ancré sur la colonne d'arrivée, contre le bord où arrive le pion : la Dame est la plus
+ * proche. Annulable par le bouton Retour ou en touchant le voile. Habillage clair et ludique en mode enfant.
+ */
+@Composable
+private fun PromotionPicker(white: Boolean, to: Int, flipped: Boolean, kid: Boolean, onCancel: () -> Unit, onPick: (Int) -> Unit) {
+    val c = LocalDuck.current
+    BackHandler(onBack = onCancel)
+    BoxWithConstraints(
+        Modifier.fillMaxSize().clip(RoundedCornerShape(4.dp)).background(if (kid) Color(0xB3FFFFFF) else Color(0x99000000))
+            .clickable(onClickLabel = "Annuler la promotion", onClick = onCancel),
+    ) {
+        val cell = maxOf(maxWidth / 8, 48.dp)
+        val atTop = BoardGeometry.row(to, flipped) == 0
+        val x = minOf(maxWidth / 8 * BoardGeometry.column(to, flipped), maxWidth - cell)
+        val shape = RoundedCornerShape(if (kid) DuckRadius.M else DuckRadius.S)
+        val types = intArrayOf(QUEEN, ROOK, BISHOP, KNIGHT).let { if (atTop) it else it.reversedArray() }
+        Column(
+            Modifier.offset(x = x, y = if (atTop) 0.dp else maxHeight - cell * 4).width(cell).shadow(8.dp, shape).clip(shape).background(c.surface)
+                .then(if (kid) Modifier.border(3.dp, c.goldRole.fill, shape) else Modifier),
+        ) {
+            for (type in types) {
+                val res = (if (kid) KID_PIECE_RES else PIECE_RES).getValue(if (white) type else type + BLACK)
+                Image(
+                    painterResource(res), "Promouvoir en ${PIECE_NAMES_FR[type]}",
+                    Modifier.size(cell).clickable(role = Role.Button) { onPick(type) }.padding(4.dp),
+                )
             }
+        }
+    }
+}
+
+/** Nom TalkBack d'une pièce : « Cavalier blanc », « Tour noire » ; « case vide » sinon. */
+private fun spokenPiece(piece: Int): String {
+    if (piece == 0) return "case vide"
+    val t = pieceType(piece)
+    val f = PieceLexiconFr.isFeminine(t)
+    return PIECE_NAMES_FR[t] + if (isWhite(piece)) (if (f) " blanche" else " blanc") else (if (f) " noire" else " noir")
+}
+
+/**
+ * 64 cases accessibles, posées sur le dessin de l'échiquier (sans intercepter les gestes) : chacune annonce
+ * sa coordonnée, son occupant et son état, dans l'ordre visuel (qui suit l'orientation). [onActivate] permet
+ * de sélectionner une pièce puis de jouer par double toucher TalkBack ou au clavier.
+ */
+@Composable
+private fun BoardCells(position: Position, flipped: Boolean, lastMove: Move?, selected: Int?, targets: List<Move>, onActivate: ((Int) -> Unit)?) {
+    val checked = if (position.inCheck) position.kingSquare(position.whiteToMove) else -1
+    Layout(
+        modifier = Modifier.fillMaxSize(),
+        content = {
+            for (q in 0 until 64) {
+                val move = targets.firstOrNull { it.to == q }
+                val states = listOfNotNull(
+                    "sélectionnée".takeIf { q == selected },
+                    move?.let { if (position.isCapture(it)) "prise possible" else "destination légale" },
+                    "dernier coup".takeIf { lastMove != null && (q == lastMove.from || q == lastMove.to) },
+                    "roi en échec".takeIf { q == checked },
+                )
+                Box(
+                    Modifier.semantics {
+                        contentDescription = "${sqName(q)}, ${spokenPiece(position[q])}"
+                        if (states.isNotEmpty()) stateDescription = states.joinToString(", ")
+                        if (onActivate != null) {
+                            role = Role.Button
+                            this.selected = q == selected
+                            onClick { onActivate(q); true }
+                        }
+                    },
+                )
+            }
+        },
+    ) { measurables, constraints ->
+        val s = constraints.maxWidth / 8
+        val cells = measurables.map { it.measure(Constraints.fixed(s, s)) }
+        layout(constraints.maxWidth, constraints.maxHeight) {
+            cells.forEachIndexed { q, p -> p.place(BoardGeometry.column(q, flipped) * s, BoardGeometry.row(q, flipped) * s) }
         }
     }
 }
@@ -460,24 +556,6 @@ private fun DrawScope.drawArrow(a: Arrow, s: Float, center: (Int) -> Offset) {
         close()
     }
     drawPath(headPath, color)
-}
-
-/** Description TalkBack de l'échiquier : trait, échec, dernier coup, sélection et pièces de chaque camp. */
-fun describeBoard(p: Position, last: Move?, selected: Int?, flipped: Boolean): String {
-    val sb = StringBuilder("Échiquier, vue des ${if (flipped) "Noirs" else "Blancs"}. Trait aux ${if (p.whiteToMove) "Blancs" else "Noirs"}.")
-    if (p.isCheckmate) sb.append(" Échec et mat.") else if (p.inCheck) sb.append(" Échec au roi.")
-    if (last != null) sb.append(" Dernier coup : ${sqName(last.from)} vers ${sqName(last.to)}.")
-    if (selected != null && p[selected] != 0) {
-        val n = p.legalFrom(selected).distinctBy { it.to }.size
-        sb.append(" Sélection : ${PIECE_NAMES_FR[pieceType(p[selected])]} en ${sqName(selected)}, $n coup${if (n > 1) "s" else ""} possible${if (n > 1) "s" else ""}.")
-    }
-    for (white in listOf(true, false)) {
-        val list = (0 until 64).filter { p[it] != 0 && isWhite(p[it]) == white }
-            .sortedByDescending { PIECE_VALUES[pieceType(p[it])] }
-            .joinToString(", ") { "${PIECE_NAMES_FR[pieceType(p[it])]} ${sqName(it)}" }
-        sb.append(" ${if (white) "Blancs" else "Noirs"} : $list.")
-    }
-    return sb.toString()
 }
 
 /** Libellé court d'une évaluation (point de vue des Blancs) : « +1.4 », « −0.3 », « M2 ». */

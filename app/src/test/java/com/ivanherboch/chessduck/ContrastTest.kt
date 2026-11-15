@@ -60,6 +60,12 @@ class ContrastTest {
             palette("${p.label} Nuit", p.night)
             palette("${p.label} Jour", p.day)
         }
+        // Matières d'échiquier : coordonnées lisibles sur les deux couleurs de cases.
+        for (t in com.ivanherboch.chessduck.ui.BoardTheme.entries) {
+            val c = t.applyTo(NightColors)
+            check("${t.label} coordonnées/case claire", c.coordInk, c.coordPill.over(c.squareLight))
+            check("${t.label} coordonnées/case foncée", c.coordInk, c.coordPill.over(c.squareDark))
+        }
         palette("Enfant", KidColors)
         for ((n, pair) in mapOf("bleu" to KidBlue, "orange" to KidOrange, "corail" to KidCoral, "vert" to KidGreen)) {
             check("Enfant bouton $n", Color.White, pair.first)

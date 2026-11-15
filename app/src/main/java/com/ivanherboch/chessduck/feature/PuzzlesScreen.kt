@@ -106,6 +106,8 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
     val type = PuzzleThemes.primary(p.themes)
     val visible = s.themeVisible
 
+    // Explication brève quand on touche une pièce qui ne peut pas bouger ; effacée au coup suivant.
+    var stuck by remember(s.puzzle?.id, s.cursor, s.refute) { mutableStateOf<String?>(null) }
     ModuleLayout(
         bottomMin = 170.dp,
         top = {
@@ -149,6 +151,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                 anim = s.anim,
                 arrows = listOfNotNull(r?.arrow?.copy(color = c.red), if (next != null && s.hintStage >= 2) Arrow(next.from, next.to, c.green) else null),
                 marks = if (next != null && s.hintStage >= 1) listOf(next.from to c.green) else emptyList(),
+                onIllegalTouch = { stuck = GameLogic.whyStuck(pos, it) },
                 onMove = { m ->
                     when (vm.onMove(m)) {
                         2 -> fb?.success()
@@ -170,8 +173,8 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                 // restent masqués jusqu'à la résolution, sauf demande explicite.
                 val showTip = visible && s.refute == null && !s.solved && s.tone == Tone.INFO
                 FeedbackCard(
-                    s.message + if (showTip) "\n\nConseil : ${type.tip}" else "",
-                    s.tone, Modifier.padding(top = 6.dp).weight(1f),
+                    stuck ?: (s.message + if (showTip) "\n\nConseil : ${type.tip}" else ""),
+                    if (stuck != null) Tone.GOLD else s.tone, Modifier.padding(top = 6.dp).weight(1f),
                     title = if (visible) "Type de problème : ${type.name}" else "Thème masqué (mode libre)",
                     action = if (!visible) ({
                         DuckButton("Révéler le thème", vm::revealTheme, icon = Icons.Rounded.Visibility, accent = c.blue, variant = ButtonVariant.OUTLINED)

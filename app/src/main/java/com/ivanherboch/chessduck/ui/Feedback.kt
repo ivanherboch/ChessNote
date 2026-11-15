@@ -41,10 +41,20 @@ class Feedback(context: Context) : Closeable {
         runCatching { vibrator?.takeIf { it.hasVibrator() }?.vibrate(effect) }
     }
 
-    /** Pièce posée sur l'échiquier : bruit de bois discret + légère vibration. */
-    fun move() {
-        if (soundEnabled) pool.play(wood, 0.2f, 0.2f, 1, 0, 1f)
-        buzz(VibrationEffect.createOneShot(12, 70))
+    /**
+     * Pièce posée sur l'échiquier : bruit de bois discret + légère vibration, un peu plus marquée pour une prise,
+     * doublée pour un échec et montante pour une promotion (différences subtiles, jamais d'alarme).
+     */
+    fun move(capture: Boolean = false, check: Boolean = false, promotion: Boolean = false) {
+        if (soundEnabled) pool.play(wood, if (capture) 0.28f else 0.2f, if (capture) 0.28f else 0.2f, 1, 0, 1f)
+        buzz(
+            when {
+                promotion -> VibrationEffect.createWaveform(longArrayOf(0, 12, 40, 18), intArrayOf(0, 60, 0, 120), -1)
+                check -> VibrationEffect.createWaveform(longArrayOf(0, 14, 50, 14), intArrayOf(0, 90, 0, 90), -1)
+                capture -> VibrationEffect.createOneShot(18, 110)
+                else -> VibrationEffect.createOneShot(12, 70)
+            },
+        )
     }
 
     fun key() = buzz(VibrationEffect.createOneShot(8, 45))

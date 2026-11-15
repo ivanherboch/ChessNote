@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import com.ivanherboch.chessduck.data.SettingsRepository
 import com.ivanherboch.chessduck.ui.Narrator
 import com.ivanherboch.chessduck.ui.DuckPalette
+import com.ivanherboch.chessduck.ui.BoardTheme
 import com.ivanherboch.chessduck.feature.GameReviewViewModel
 import com.ivanherboch.chessduck.ui.isTwoPane
 import com.ivanherboch.chessduck.ui.LocalIsTwoPane
@@ -104,6 +105,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 data class AppChrome(
     val themeMode: Int,
     val palette: Int,
+    val boardTheme: Int,
     val coords: Boolean,
     val haptics: Boolean,
     val sound: Boolean,
@@ -122,7 +124,7 @@ class MainActivity : ComponentActivity() {
         // d'ELO ou de série ne recomposent plus tout l'arbre de l'application.
         val chrome = MutableStateFlow<AppChrome?>(null)
         lifecycleScope.launch {
-            app.prefs.settings.map { AppChrome(it.themeMode, it.palette, it.coords, it.haptics, it.sound, it.kidMode) }
+            app.prefs.settings.map { AppChrome(it.themeMode, it.palette, it.boardTheme, it.coords, it.haptics, it.sound, it.kidMode) }
                 .distinctUntilChanged().collect { chrome.value = it }
         }
         splash.setKeepOnScreenCondition { chrome.value == null }
@@ -144,7 +146,7 @@ class MainActivity : ComponentActivity() {
                 app.feedback.hapticsEnabled = st.haptics
                 app.feedback.soundEnabled = st.sound
             }
-            ChessDuckTheme(dark = dark, kid = st.kidMode, palette = DuckPalette.of(st.palette)) {
+            ChessDuckTheme(dark = dark, kid = st.kidMode, palette = DuckPalette.of(st.palette), board = BoardTheme.of(st.boardTheme)) {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
                     CompositionLocalProvider(
                         LocalFeedback provides app.feedback, LocalShowCoords provides st.coords,

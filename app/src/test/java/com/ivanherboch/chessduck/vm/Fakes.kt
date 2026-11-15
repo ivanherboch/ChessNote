@@ -40,6 +40,7 @@ class FakeSettings(initial: Settings = Settings()) : SettingsRepository {
     override suspend fun markThemeKnown(id: String) = flow.update { it.copy(knownThemePuzzles = it.knownThemePuzzles + id) }
     override suspend fun setThemeMode(v: Int) = flow.update { it.copy(themeMode = v) }
     override suspend fun setPalette(v: Int) = flow.update { it.copy(palette = v) }
+    override suspend fun setBoardTheme(v: Int) = flow.update { it.copy(boardTheme = v) }
     override suspend fun setCoords(v: Boolean) = flow.update { it.copy(coords = v) }
     override suspend fun setConfirmActions(v: Boolean) = flow.update { it.copy(confirmActions = v) }
     override suspend fun setHaptics(v: Boolean) = flow.update { it.copy(haptics = v) }

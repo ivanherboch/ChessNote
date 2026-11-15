@@ -84,6 +84,8 @@ fun AcademyScreen(vm: AcademyViewModel) {
     val total = Lessons.all.size
     val cur = s.cursor.coerceIn(0, line.size)
 
+    // Explication brève quand on touche une pièce qui ne peut pas bouger ; effacée au coup suivant.
+    var stuck by remember(s.lessonId, s.cursor, s.challenge) { mutableStateOf<String?>(null) }
     ModuleLayout(
         bottomMin = 190.dp,
         top = {
@@ -141,6 +143,7 @@ fun AcademyScreen(vm: AcademyViewModel) {
                     else -> emptyList()
                 },
                 marks = if (heroTurn && s.hintStage >= 1 && next != null) listOf(next.from to c.green) else emptyList(),
+                onIllegalTouch = { stuck = GameLogic.whyStuck(pos, it) },
                 onMove = { m -> if (vm.challengeMove(m)) fb?.success() else fb?.error() },
             )
         },
@@ -175,7 +178,7 @@ fun AcademyScreen(vm: AcademyViewModel) {
                 }
             } else {
                 val title = if (s.done) "Défi réussi" else "Défi : jouez les ${if (l.heroWhite) "Blancs" else "Noirs"} · coup $cur / ${line.size}"
-                FeedbackCard(s.message, s.tone, Modifier.padding(top = 4.dp).weight(1f), title = title)
+                FeedbackCard(stuck ?: s.message, if (stuck != null) Tone.GOLD else s.tone, Modifier.padding(top = 4.dp).weight(1f), title = title)
                 EqualRow(Modifier.padding(vertical = 6.dp)) {
                     DuckButton("Recommencer", vm::restartChallenge, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt)
                     if (s.done) DuckButton("Leçon suivante", vm::nextLesson, Modifier.weight(1.4f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)

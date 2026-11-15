@@ -61,6 +61,9 @@ data class DuckColors(
     val coordPill: Color = Color(0xD9F0D9B5),
     /** Couleur de sélection et des destinations légales. */
     val select: Color = Color(0xFF10B981),
+    /** Surlignage du dernier coup et halo du roi en échec. */
+    val lastMoveTint: Color = Color(0x66F7EC5E),
+    val checkGlow: Color = Color(0xFFEF4444),
     val kid: Boolean = false,
 ) {
     val goldText get() = goldRole.text
@@ -125,6 +128,23 @@ val DayColors = DuckColors(
  * à l'échiquier en bois ; toutes respectent les contrastes WCAG AA (ContrastTest). [BLUE_ORANGE] remplace le couple
  * vert / rouge (réussite / erreur) par bleu / vermillon (palette Okabe-Ito), lisible avec un daltonisme rouge-vert.
  */
+/**
+ * Matières d'échiquier au choix (Paramètres) : cases claires et foncées, encre et pastille des coordonnées.
+ * Les coordonnées restent lisibles (≥ 4,5:1) sur les deux couleurs de cases (ContrastTest).
+ */
+enum class BoardTheme(val label: String, val light: Color, val dark: Color, val coordInk: Color) {
+    WOOD("Bois classique", Color(0xFFF0D9B5), Color(0xFFB58863), Color(0xFF5C3D24)),
+    SLATE("Ardoise", Color(0xFFDEE3E6), Color(0xFF8CA2AD), Color(0xFF2B3A42)),
+    TOURNAMENT("Vert tournoi", Color(0xFFEEEED2), Color(0xFF769656), Color(0xFF34481F)),
+    AMETHYST("Améthyste et lin", Color(0xFFF1E9DC), Color(0xFF9F86C0), Color(0xFF45305F));
+
+    fun applyTo(c: DuckColors) = c.copy(squareLight = light, squareDark = dark, coordInk = coordInk, coordPill = light.copy(alpha = 0.85f))
+
+    companion object {
+        fun of(index: Int): BoardTheme = entries.getOrElse(index) { WOOD }
+    }
+}
+
 enum class DuckPalette(val label: String, val description: String, val night: DuckColors, val day: DuckColors) {
     SLATE_GOLD("Ardoise & Or", "La charte ChessDuck : ardoise et or.", NightColors, DayColors),
     AMETHYST(
@@ -287,8 +307,15 @@ private fun Color.compositeOver(bg: Color): Color {
  * [palette] palette choisie dans les Paramètres (sans effet en mode enfant).
  */
 @Composable
-fun ChessDuckTheme(dark: Boolean, kid: Boolean = false, palette: DuckPalette = DuckPalette.SLATE_GOLD, content: @Composable () -> Unit) {
-    val c = if (kid) KidColors else palette.colors(dark)
+fun ChessDuckTheme(
+    dark: Boolean,
+    kid: Boolean = false,
+    palette: DuckPalette = DuckPalette.SLATE_GOLD,
+    board: BoardTheme = BoardTheme.WOOD,
+    content: @Composable () -> Unit,
+) {
+    // Le mode enfant garde son échiquier ; ailleurs, la matière choisie remplace les cases et les coordonnées.
+    val c = if (kid) KidColors else board.applyTo(palette.colors(dark))
     val font = if (kid) Fredoka else null
     CompositionLocalProvider(LocalDuck provides c, LocalDuckFont provides font) {
         MaterialTheme(colorScheme = schemeOf(c), typography = duckTypography(font), content = content)

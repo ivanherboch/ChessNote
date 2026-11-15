@@ -103,6 +103,8 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
     }
     val undo = vm.undoTarget(s)
 
+    // Explication brève quand on touche une pièce qui ne peut pas bouger ; effacée au coup suivant.
+    var stuck by remember(pos) { mutableStateOf<String?>(null) }
     ModuleLayout(
         bottomMin = 170.dp,
         top = {
@@ -143,6 +145,7 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                     anim = s.anim,
                     arrows = if (hint != null && s.hintStage >= 2) listOf(Arrow(hint.from, hint.to, c.green)) else emptyList(),
                     marks = if (hint != null && s.hintStage >= 1) listOf(hint.from to c.green) else emptyList(),
+                    onIllegalTouch = { stuck = GameLogic.whyStuck(pos, it) },
                     onMove = vm::playerMove,
                 )
             }
@@ -154,7 +157,7 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                 prevEnabled = s.cursor > 0 && !s.thinking, nextEnabled = s.cursor < s.line.size && !s.thinking,
             )
             val (msg, tone) = liveStatus(s, st.pseudo, st.pseudo2)
-            FeedbackCard(msg, tone, Modifier.padding(top = 4.dp).weight(1f))
+            FeedbackCard(stuck ?: msg, if (stuck != null) Tone.GOLD else tone, Modifier.padding(top = 4.dp).weight(1f))
             EqualRow(Modifier.padding(vertical = 6.dp), gap = 6.dp) {
                 if (s.result != null) {
                     // Fin de partie : l'analyse est à un geste.

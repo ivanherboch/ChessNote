@@ -13,7 +13,6 @@ import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -39,6 +38,10 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
@@ -351,6 +354,17 @@ class AppRobolectricTest {
         assertTrue("effacer : $erase dp", erase >= 47.5f)
     }
 
+    /** Échiquier accessible : chaque case s'annonce, et un coup se joue par les seules actions TalkBack. */
+    @Test
+    fun boardCanBePlayedWithTalkBack() {
+        settle(2500)
+        rule.onNodeWithText("Jeu Libre").performClick(); settle(2000)
+        rule.onNodeWithContentDescription("e2, Pion blanc").performSemanticsAction(SemanticsActions.OnClick); settle(300)
+        rule.onNodeWithContentDescription("e4, case vide").assertExists().assertStateDescriptionContains("destination légale")
+        rule.onNodeWithContentDescription("e4, case vide").performSemanticsAction(SemanticsActions.OnClick); settle(1500)
+        rule.onNodeWithContentDescription("e4, Pion blanc").assertExists()
+    }
+
     @Test
     fun screens() {
         settle(2500)
@@ -374,6 +388,9 @@ class AppRobolectricTest {
         rule.onNodeWithContentDescription("Paramètres").performClick(); settle(800); shot("5_parametres")
         // Le mode enfant est le premier réglage du tiroir.
         rule.onNodeWithText("Activer le mode enfant").performScrollTo(); settle(500); shot("5a_parametres_haut")
+        // Matières d'échiquier : sélecteur visible et applicable, puis retour au bois classique.
+        rule.onNodeWithText("Ardoise").performScrollTo().performClick(); settle(800); shot("5d_matieres")
+        rule.onNodeWithText("Bois classique").performClick(); settle(500)
         rule.onNodeWithText("Vibrations").performScrollTo().performClick(); settle(500)
         rule.onNodeWithText("Bruit des pièces").performScrollTo().performClick(); settle(500)
         rule.onNodeWithText("Jour").performScrollTo().performClick(); settle(800)
@@ -474,3 +491,8 @@ class AppRobolectricTest {
 
 /** Durée pendant laquelle l'interface doit rester identique pour être considérée comme stable. */
 private const val STABLE_WINDOW_MS = 250L
+
+private fun androidx.compose.ui.test.SemanticsNodeInteraction.assertStateDescriptionContains(text: String) =
+    this.assert(androidx.compose.ui.test.SemanticsMatcher("état contient « $text »") { node ->
+        node.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.StateDescription)?.contains(text) == true
+    })

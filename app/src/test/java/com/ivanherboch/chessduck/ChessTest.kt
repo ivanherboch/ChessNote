@@ -178,4 +178,17 @@ class ChessTest {
         assertEquals("pat", GameLogic.endText(GameEnd.STALEMATE))
         assertEquals(0, Analysis.decided(l.last, GameEnd.STALEMATE).eval)
     }
+
+    @Test
+    fun stuckPiecesAreExplained() {
+        // Cavalier e2 cloué par la dame e7 sur le roi e1.
+        val pinned = Position.fromFen("4k3/4q3/8/8/8/8/4N3/4K3 w - - 0 1")
+        assertEquals("Le cavalier en e2 est cloué : s'il bougeait, votre roi serait en échec.", GameLogic.whyStuck(pinned, 12))
+        // Roi en échec : la tour a1 ne peut pas parer.
+        val check = Position.fromFen("4k3/8/8/8/8/8/4q3/R3K3 w - - 0 1")
+        assertTrue(GameLogic.whyStuck(check, 0).startsWith("Votre roi est en échec : la tour en a1"))
+        // Pion bloqué, sans clouage.
+        val blocked = Position.fromFen("4k3/8/8/8/8/4p3/4P3/K7 w - - 0 1")
+        assertEquals("Le pion en e2 n'a aucune case libre pour l'instant.", GameLogic.whyStuck(blocked, 12))
+    }
 }
