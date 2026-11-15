@@ -45,6 +45,7 @@ class FakeSettings(initial: Settings = Settings()) : SettingsRepository {
     override suspend fun setHaptics(v: Boolean) = flow.update { it.copy(haptics = v) }
     override suspend fun setSound(v: Boolean) = flow.update { it.copy(sound = v) }
     override suspend fun setNarration(v: Boolean) = flow.update { it.copy(narration = v) }
+    override suspend fun setKidNarration(v: Boolean) = flow.update { it.copy(kidNarration = v) }
     override suspend fun setKidMode(v: Boolean) = flow.update { it.copy(kidMode = v) }
     override suspend fun setPseudo(v: String) = flow.update { it.copy(pseudo = v) }
     override suspend fun setPseudo2(v: String) = flow.update { it.copy(pseudo2 = v) }

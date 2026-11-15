@@ -44,6 +44,8 @@ data class Settings(
     val sound: Boolean = true,
     /** Lecture à voix haute des commentaires de l'Académie (mode Guidé). */
     val narration: Boolean = false,
+    /** Lecture à voix haute des fiches de pièces du mode enfant (réglage parental). */
+    val kidNarration: Boolean = false,
     val kidMode: Boolean = false,
     /** Identifiants des derniers problèmes joués, du plus récent au plus ancien. */
     val recentPuzzles: List<String> = emptyList(),
@@ -86,6 +88,7 @@ class Prefs(private val context: Context) : SettingsRepository {
         val haptics = booleanPreferencesKey("haptics")
         val sound = booleanPreferencesKey("sound")
         val narration = booleanPreferencesKey("narration")
+        val kidNarration = booleanPreferencesKey("kid_narration")
         val kid = booleanPreferencesKey("kid_mode")
         val recent = stringPreferencesKey("recent_puzzles")
         val knownThemes = stringPreferencesKey("recent_known_themes")
@@ -112,6 +115,7 @@ class Prefs(private val context: Context) : SettingsRepository {
             haptics = p[K.haptics] ?: true,
             sound = p[K.sound] ?: true,
             narration = p[K.narration] ?: false,
+            kidNarration = p[K.kidNarration] ?: false,
             kidMode = p[K.kid] ?: false,
             recentPuzzles = (p[K.recent] ?: "").split(',').filter { it.isNotBlank() },
             knownThemePuzzles = (p[K.knownThemes] ?: "").split(',').filter { it.isNotBlank() }.toSet(),
@@ -143,6 +147,7 @@ class Prefs(private val context: Context) : SettingsRepository {
     override suspend fun setHaptics(v: Boolean) { context.store.edit { it[K.haptics] = v } }
     override suspend fun setSound(v: Boolean) { context.store.edit { it[K.sound] = v } }
     override suspend fun setNarration(v: Boolean) { context.store.edit { it[K.narration] = v } }
+    override suspend fun setKidNarration(v: Boolean) { context.store.edit { it[K.kidNarration] = v } }
     override suspend fun setKidMode(v: Boolean) { context.store.edit { it[K.kid] = v } }
 
     /** Place [id] en tête de l'historique des problèmes joués (6 conservés : le courant + 5 précédents). */

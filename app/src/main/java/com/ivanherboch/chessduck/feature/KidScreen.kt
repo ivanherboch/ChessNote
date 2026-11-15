@@ -54,6 +54,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -230,6 +233,10 @@ private fun KidGame(vm: KidViewModel, onQuit: () -> Unit) {
     val whiteTurn = pos.whiteToMove
     // Leçon animée ouverte en touchant une carte ; la partie en cours est conservée.
     var demo by rememberSaveable { mutableIntStateOf(0) }
+    // Voix des fiches : lue à l'ouverture, coupée à la fermeture et dès que l'écran n'est plus visible.
+    LaunchedEffect(demo) { KID_LEGEND.firstOrNull { it.type == demo }?.let { vm.pieceShown(it.type, it.text) } ?: vm.pieceClosed() }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { vm.pieceClosed() }
+    DisposableEffect(vm) { onDispose { vm.pieceClosed() } }
     // Message bref quand l'enfant touche une pièce qui ne peut pas bouger.
     var blocked by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(blocked) { if (blocked != null) { delay(2600); blocked = null } }

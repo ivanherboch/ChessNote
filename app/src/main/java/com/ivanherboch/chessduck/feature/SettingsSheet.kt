@@ -151,6 +151,12 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
                 "animations qui montrent comment chaque pièce bouge, sans ordinateur ni historique.",
             color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp),
         )
+        SwitchRow(
+            "Voix en mode enfant",
+            if (voice == false) "Aucune voix française hors-ligne n'est installée sur ce téléphone."
+            else "Lit une seule fois la présentation d'une pièce quand l'enfant l'ouvre. Rien n'est lu pendant les parties.",
+            st.kidNarration && voice != false, enabled = voice != false,
+        ) { v -> scope.launch { prefs.setKidNarration(v) } }
 
         SectionTitle("Apparence")
         DuckSegmentedRow(listOf("Système", "Jour", "Nuit"), st.themeMode, { i -> scope.launch { prefs.setThemeMode(i) } }, Modifier.fillMaxWidth())

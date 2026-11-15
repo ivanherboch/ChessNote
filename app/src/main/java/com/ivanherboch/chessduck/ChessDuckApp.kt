@@ -71,6 +71,6 @@ object DuckViewModels {
         initializer { container().let { PuzzlesViewModel(it.settings, it.puzzles, it.engine, createSavedStateHandle()) } }
         initializer { container().let { PlayViewModel(it.settings, it.games, it.engine, it.analysis) } }
         initializer { GameReviewViewModel(container().analysis) }
-        initializer { KidViewModel() }
+        initializer { container().let { KidViewModel(it.settings, it.narrator) } }
     }
 }

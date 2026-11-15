@@ -4,6 +4,15 @@ import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.SharingStarted
+import androidx.lifecycle.viewModelScope
+import com.ivanherboch.chessduck.chess.SpokenFr
+import com.ivanherboch.chessduck.ui.Narrator
+import com.ivanherboch.chessduck.data.SettingsRepository
 import com.ivanherboch.chessduck.chess.GameEnd
 import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.chess.Move
@@ -30,9 +39,43 @@ data class KidState(
  * Mode enfant : une partie à 2 joueurs sur le même écran, sans ordinateur,
  * sans évaluation et sans enregistrement dans l'historique.
  */
-class KidViewModel : ViewModel() {
+class KidViewModel(
+    prefs: SettingsRepository,
+    private val narrator: Narrator,
+    /** Horloge monotone en millisecondes (remplaçable dans les tests). */
+    private val clock: () -> Long = { System.nanoTime() / 1_000_000 },
+) : ViewModel() {
     private val _state = MutableStateFlow(KidState())
     val state: StateFlow<KidState> = _state.asStateFlow()
+
+    // ---- Voix des fiches de pièces : réglage parental, une seule lecture par ouverture, jamais en partie ----
+    private val kidNarration = prefs.settings.map { it.kidNarration }.distinctUntilChanged()
+        .onEach { if (!it) narrator.stop() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    private var lastPiece = 0
+    private var lastSpokenAt = 0L
+
+    /**
+     * Fiche d'une pièce ouverte : son explication est lue une fois. Rouvrir la même pièce dans les
+     * [REPEAT_COOLDOWN_MS] qui suivent ne relance pas la voix ; une autre pièce coupe la précédente.
+     */
+    fun pieceShown(type: Int, text: String) {
+        if (!kidNarration.value) return
+        val now = clock()
+        if (type == lastPiece && now - lastSpokenAt < REPEAT_COOLDOWN_MS) return
+        lastPiece = type
+        lastSpokenAt = now
+        narrator.speak(SpokenFr.text(text))
+    }
+
+    /** Fiche fermée, écran quitté ou application en arrière-plan : la voix se tait aussitôt. */
+    fun pieceClosed() = narrator.stop()
+
+    override fun onCleared() = narrator.stop()
+
+    private companion object {
+        const val REPEAT_COOLDOWN_MS = 30_000L
+    }
 
     fun reset() = _state.update { KidState() }
 

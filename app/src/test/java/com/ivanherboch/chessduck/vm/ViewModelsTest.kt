@@ -101,8 +101,32 @@ class ViewModelsTest {
     }
 
     @Test
+    fun kidPieceCardsAreReadOnceWhenParentsAllowIt() = test {
+        val prefs = FakeSettings()
+        val voice = FakeNarrator()
+        var now = 0L
+        val vm = KidViewModel(prefs, voice) { now }
+        runCurrent()
+        vm.pieceShown(6, "Le **Roi** avance d'une case.")
+        assertTrue(voice.spoken.isEmpty()) // désactivé par défaut
+        prefs.setKidNarration(true); runCurrent()
+        vm.pieceShown(6, "Le **Roi** avance d'une case.")
+        assertEquals(listOf("Le Roi avance d'une case."), voice.spoken)
+        vm.pieceClosed()
+        assertFalse(voice.speaking.value) // fermer la fiche coupe la voix
+        now += 10_000
+        vm.pieceShown(6, "Le **Roi** avance d'une case.")
+        assertEquals(1, voice.spoken.size) // la même pièce rouverte tout de suite : pas de nouvelle lecture
+        vm.pieceShown(5, "La **Dame** va partout.")
+        assertEquals(2, voice.spoken.size) // une autre pièce est lue
+        now += 30_000
+        vm.pieceShown(5, "La **Dame** va partout.")
+        assertEquals(3, voice.spoken.size) // après le temps de calme, elle peut être relue
+    }
+
+    @Test
     fun kidMovesBackAndForward() = test {
-        val vm = KidViewModel()
+        val vm = KidViewModel(FakeSettings(), FakeNarrator())
         vm.move(Move.fromUci("e2e4"))
         assertEquals(1, vm.state.value.cursor)
         vm.move(Move.fromUci("e2e4")) // illégal pour les Noirs : ignoré

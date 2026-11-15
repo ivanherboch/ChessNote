@@ -1,3 +1,10 @@
+## ChessDuck 2.4.6 — une voix douce pour le mode enfant
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Mode enfant : la présentation d'une pièce peut être lue à voix haute quand l'enfant ouvre sa fiche. Réglage « Voix en mode enfant » dans Paramètres › Mode enfant, désactivé par défaut.
+- Pensé pour les oreilles des parents : une seule lecture par ouverture, pas de bouton pour la répéter, la même pièce n'est pas relue avant 30 secondes, une autre pièce coupe la précédente, et la voix se tait dès que la fiche se ferme. Rien n'est lu pendant les parties.
+
 ## ChessDuck 2.4.5 — pause de la lecture vocale
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
