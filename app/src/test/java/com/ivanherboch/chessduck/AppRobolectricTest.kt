@@ -198,6 +198,13 @@ class AppRobolectricTest {
                 }
             }
             for (i in shots.indices) for (j in i + 1 until shots.size) assertFalse(shots[i].sameAs(shots[j]))
+            // … et les couleurs d'échiquier choisies : chaque matière donne une image différente.
+            val boards = com.ivanherboch.chessduck.ui.BoardTheme.entries.map { b ->
+                com.ivanherboch.chessduck.feature.ShareCard.render(ctx, pz, l.positions[1], l.positions[1].whiteToMove, l.moves[0], com.ivanherboch.chessduck.feature.ShareStyle(board = b)).also { img ->
+                    File(dir, "share_board_${b.name.lowercase()}.png").outputStream().use { img.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+                }
+            }
+            for (i in boards.indices) for (j in i + 1 until boards.size) assertFalse(boards[i].sameAs(boards[j]))
         }
         assertNotNull(db.puzzles().byIdIgnoreCase("0000d"))
         db.close()
@@ -398,8 +405,9 @@ class AppRobolectricTest {
         close(); settle(800); shot("4c_jeu_jour")
         // Mode enfant : écran épuré à deux joueurs, puis retour au Jeu Libre.
         rule.onNodeWithContentDescription("Paramètres").performClick(); settle(800); shot("5b_parametres_jour")
-        // Section « Palette de couleurs » (sous les pseudos) : 5 palettes avec aperçu.
+        // Section « Couleurs de l'application » (sous les pseudos) : 5 palettes avec aperçu, puis les couleurs de l'échiquier.
         rule.onNodeWithText("Bleu-Orange").performScrollTo(); settle(600); shot("5c_palettes_jour")
+        rule.onNodeWithText("Réinitialiser mon ELO").performScrollTo(); settle(600); shot("5e_parametres_bas")
         rule.onNodeWithText("Activer le mode enfant").performScrollTo().performClick(); settle(1500); shot("9_enfant")
         // Leçons animées du mode enfant
         desc("Cavalier :").performClick(); settle(1400); shot("9b_lecon_cavalier")

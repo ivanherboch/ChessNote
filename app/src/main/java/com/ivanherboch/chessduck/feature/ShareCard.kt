@@ -30,6 +30,7 @@ import com.ivanherboch.chessduck.chess.sq
 import com.ivanherboch.chessduck.chess.sqName
 import com.ivanherboch.chessduck.content.PuzzleThemes
 import com.ivanherboch.chessduck.data.Puzzle
+import com.ivanherboch.chessduck.ui.BoardTheme
 import com.ivanherboch.chessduck.ui.DuckColors
 import com.ivanherboch.chessduck.ui.DuckPalette
 import com.ivanherboch.chessduck.ui.PIECE_RES
@@ -41,15 +42,25 @@ enum class ShareFormat(val height: Int, val label: String) { PORTRAIT(1350, "Por
 
 /**
  * Réglages d'une image partagée : format et fond clair ou sombre (persistés dans DataStore, voir Prefs),
- * dans la palette choisie dans les Paramètres.
+ * dans la palette et les couleurs d'échiquier choisies dans les Paramètres.
  */
-data class ShareStyle(val format: ShareFormat = ShareFormat.PORTRAIT, val light: Boolean = false, val palette: DuckPalette = DuckPalette.SLATE_GOLD) {
+data class ShareStyle(
+    val format: ShareFormat = ShareFormat.PORTRAIT,
+    val light: Boolean = false,
+    val palette: DuckPalette = DuckPalette.SLATE_GOLD,
+    /** Couleurs des cases : celles de l'échiquier choisies dans les Paramètres. */
+    val board: BoardTheme = BoardTheme.WOOD,
+) {
+    /** Jetons de couleur de l'image : palette (fond sombre ou clair) et cases de l'échiquier choisi. */
+    val colors: DuckColors get() = board.applyTo(palette.colors(dark = !light))
+
     companion object {
         /** Style enregistré dans les réglages (format inconnu : portrait). */
         fun from(settings: Settings) = ShareStyle(
             ShareFormat.entries.firstOrNull { it.name == settings.shareFormat } ?: ShareFormat.PORTRAIT,
             settings.shareLight,
             DuckPalette.of(settings.palette),
+            BoardTheme.of(settings.boardTheme),
         )
     }
 }
@@ -400,7 +411,7 @@ object ShareCard {
      * (avec le thème) dans une carte compacte, puis un pied de page discret.
      */
     fun render(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle()): Bitmap {
-        val pal = Pal(style.palette.colors(dark = !style.light))
+        val pal = Pal(style.colors)
         val square = style.format == ShareFormat.SQUARE
         val h = style.format.height
         val line = Line.fromUci(puzzle.fen, puzzle.moves)
@@ -472,7 +483,7 @@ object ShareCard {
      * Flèche verte = coup à jouer, flèche rouge = réponse adverse, badges + et #, roi maté mis en lumière.
      */
     fun renderSolution(context: Context, puzzle: Puzzle, style: ShareStyle = ShareStyle()): Bitmap {
-        val pal = Pal(style.palette.colors(dark = !style.light))
+        val pal = Pal(style.colors)
         val square = style.format == ShareFormat.SQUARE
         val h = style.format.height
         val line = Line.fromUci(puzzle.fen, puzzle.moves)

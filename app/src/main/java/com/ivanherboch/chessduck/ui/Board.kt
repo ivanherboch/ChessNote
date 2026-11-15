@@ -394,16 +394,15 @@ fun ChessBoard(
             // Coordonnées, dessinées par-dessus les pièces sur une pastille discrète : jamais masquées.
             if (showCoords) {
                 val coordStyle = TextStyle(fontSize = (s * 0.19f).toSp(), fontWeight = FontWeight.Bold, fontFamily = font)
-                // Pastille dans un coin haut de la case (chiffres à gauche, lettres à droite) : le haut des pièces est
-                // étroit, la pastille ne masque jamais leur base (tours et pièces d'angle comprises).
-                fun label(text: String, cell: Offset, right: Boolean) {
+                // Pastille dans un coin de la case : lettres en bas à droite, chiffres en haut à gauche.
+                fun label(text: String, cell: Offset, bottomRight: Boolean) {
                     val l = texts.get(text, coordStyle)
                     val pad = s * 0.035f
                     val w = l.size.width + pad * 2
                     val h = l.size.height.toFloat()
                     val m = s * 0.03f
-                    val x = if (right) cell.x + s - m - w else cell.x + m
-                    val y = cell.y + m
+                    val x = if (bottomRight) cell.x + s - m - w else cell.x + m
+                    val y = if (bottomRight) cell.y + s - m - h else cell.y + m
                     drawRoundRect(c.coordPill, Offset(x, y), Size(w, h), CornerRadius(h / 3, h / 3))
                     drawText(l, c.coordInk, Offset(x + pad, y))
                 }

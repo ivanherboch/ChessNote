@@ -1,3 +1,20 @@
+## ChessDuck 2.5.1 — couleurs d'échiquier partout
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Images exportées (problème et solution) : les cases reprennent les couleurs d'échiquier choisies dans les Paramètres.
+- Lettres des colonnes de nouveau en bas à droite des cases, sur tous les échiquiers.
+- Paramètres réorganisés :
+  - « Mode d'affichage » ;
+  - « Aides pendant le jeu » ;
+  - « Audio, voix et retours » ;
+  - « Joueurs » ;
+  - « Couleurs de l'application », suivie de « Couleurs de l'échiquier » ;
+  - « À propos » ;
+  - « Réinitialisation » tout en bas.
+- Couleurs de l'échiquier : les quatre choix ont la même hauteur.
+- Aperçus des palettes : chacun montre ses propres couleurs. Les pastilles reprises d'« Ardoise & Or » et les cases d'échiquier ont disparu.
+
 ## ChessDuck 2.5.0 — refonte de l'ergonomie
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

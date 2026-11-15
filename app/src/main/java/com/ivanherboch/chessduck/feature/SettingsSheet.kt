@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.layout.IntrinsicSize
 import com.ivanherboch.chessduck.ui.icons.Replay
 import com.ivanherboch.chessduck.ui.ConfirmDialog
 import com.ivanherboch.chessduck.data.DEFAULT_ELO
@@ -16,7 +17,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
@@ -179,11 +179,10 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
             st.kidNarration, voice,
         ) { v -> scope.launch { prefs.setKidNarration(v) } }
 
-        SectionTitle("Apparence")
+        SectionTitle("Mode d'affichage")
         DuckSegmentedRow(listOf("Système", "Jour", "Nuit"), st.themeMode, { i -> scope.launch { prefs.setThemeMode(i) } }, Modifier.fillMaxWidth())
 
-        SectionTitle("Échiquier et parties")
-        BoardThemePicker(BoardTheme.of(st.boardTheme)) { t -> scope.launch { prefs.setBoardTheme(t.ordinal) } }
+        SectionTitle("Aides pendant le jeu")
         SwitchRow("Afficher les coordonnées", "Lettres a–h et chiffres 1–8 sur l'échiquier. Masquez-les pour vous entraîner à la notation.", st.coords) { v ->
             scope.launch { prefs.setCoords(v) }
         }
@@ -212,17 +211,15 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
             "Classement actuel : ${st.elo} ELO (formule FIDE, K = 32). Les parties à 2 joueurs ne comptent pas.",
             color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp),
         )
-        DuckButton(
-            "Réinitialiser mon ELO", { resetElo = true }, Modifier.fillMaxWidth().padding(top = 6.dp),
-            enabled = st.elo != DEFAULT_ELO, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Replay,
-        )
 
-        SectionTitle("Palette de couleurs")
+        SectionTitle("Couleurs de l'application")
         Column(Modifier.selectableGroup()) {
             for (palette in DuckPalette.entries) {
                 PaletteOption(palette, selected = st.palette == palette.ordinal) { scope.launch { prefs.setPalette(palette.ordinal) } }
             }
         }
+        SectionTitle("Couleurs de l'échiquier")
+        BoardThemePicker(BoardTheme.of(st.boardTheme)) { t -> scope.launch { prefs.setBoardTheme(t.ordinal) } }
 
         SectionTitle("À propos")
         Text(
@@ -230,6 +227,13 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
                 "Pièces : série classique de Cburnett et pièce féerique Girafe, Wikimedia Commons (CC BY-SA 3.0). " +
                 "Icônes : Material Icons (Apache 2.0). Police du mode enfant : Fredoka (OFL).",
             color = c.muted, style = MaterialTheme.typography.bodySmall,
+        )
+
+        // Action irréversible : tout en bas, à l'écart des réglages courants.
+        SectionTitle("Réinitialisation")
+        DuckButton(
+            "Réinitialiser mon ELO", { resetElo = true }, Modifier.fillMaxWidth(),
+            enabled = st.elo != DEFAULT_ELO, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Replay,
         )
         val context = LocalContext.current
         val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "" }
@@ -244,20 +248,17 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
     )
 }
 
-/**
- * Choix d'une palette : aperçu fidèle (fond, carte, accent principal, réussite, information, erreur et cases de
- * l'échiquier) dans le mode d'affichage courant (Jour ou Nuit), nom et description ; toute la ligne est sélectionnable.
- */
 /** Matière de l'échiquier : quatre aperçus de 2 × 2 cases, sélection unique. */
 @Composable
 private fun BoardThemePicker(current: BoardTheme, onSelect: (BoardTheme) -> Unit) {
     val c = LocalDuck.current
-    Row(Modifier.fillMaxWidth().selectableGroup().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    // Hauteur commune : toutes les boîtes s'alignent sur la plus haute (libellé sur deux lignes).
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).selectableGroup().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         for (t in BoardTheme.entries) {
             val selected = t == current
             val shape = RoundedCornerShape(DuckRadius.M)
             Column(
-                Modifier.weight(1f).clip(shape).background(if (selected) c.surfaceHi else c.surface)
+                Modifier.weight(1f).fillMaxHeight().clip(shape).background(if (selected) c.surfaceHi else c.surface)
                     .border(if (selected) 2.dp else 1.dp, if (selected) c.goldRole.fill else c.outline, shape)
                     .selectable(selected = selected, role = Role.RadioButton) { onSelect(t) }
                     .padding(8.dp),
@@ -274,6 +275,10 @@ private fun BoardThemePicker(current: BoardTheme, onSelect: (BoardTheme) -> Unit
     }
 }
 
+/**
+ * Choix d'une palette : aperçu fidèle (fond, carte, accent principal et pastilles propres à la palette) dans le mode
+ * d'affichage courant (Jour ou Nuit), nom et description ; toute la ligne est sélectionnable.
+ */
 @Composable
 private fun PaletteOption(palette: DuckPalette, selected: Boolean, onSelect: () -> Unit) {
     val c = LocalDuck.current
@@ -291,12 +296,14 @@ private fun PaletteOption(palette: DuckPalette, selected: Boolean, onSelect: () 
         Box(Modifier.size(width = 92.dp, height = 60.dp).clip(RoundedCornerShape(DuckRadius.M)).background(p.bg).border(1.dp, p.outline, RoundedCornerShape(DuckRadius.M)).padding(6.dp)) {
             Column(Modifier.fillMaxSize().clip(RoundedCornerShape(DuckRadius.S)).background(p.surface).padding(5.dp), verticalArrangement = Arrangement.SpaceBetween) {
                 Box(Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(DuckRadius.S)).background(p.goldRole.fill))
+                // Pastilles propres à la palette : ses couleurs de réussite / information / erreur si elle les redéfinit
+                // (Bleu-Orange), sinon les nuances de son accent. Les cases d'échiquier se choisissent à part.
+                val base = DuckPalette.SLATE_GOLD.colors(c.dark)
+                val own = listOf(p.greenRole.fill, p.blueRole.fill, p.redRole.fill)
+                val dots = if (palette == DuckPalette.SLATE_GOLD || own != listOf(base.greenRole.fill, base.blueRole.fill, base.redRole.fill)) own
+                else listOf(p.goldRole.text, p.surfaceHi, p.outlineStrong)
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    for (col in listOf(p.greenRole.fill, p.blueRole.fill, p.redRole.fill)) Box(Modifier.size(10.dp).clip(CircleShape).background(col))
-                    Spacer(Modifier.weight(1f))
-                    Row {
-                        Box(Modifier.size(9.dp).background(p.squareLight)); Box(Modifier.size(9.dp).background(p.squareDark))
-                    }
+                    for (col in dots) Box(Modifier.size(10.dp).clip(CircleShape).background(col).border(0.5.dp, p.outline, CircleShape))
                 }
             }
         }
