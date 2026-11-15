@@ -95,7 +95,8 @@ fun NotationScreen(vm: NotationViewModel) {
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
                 DuckIconButton(Icons.Rounded.Replay, "Revoir le coup", vm::replay)
                 HintIconButton(s.hintStage, vm::hint, enabled = !s.solved)
-                DuckIconButton(Icons.Rounded.SkipNext, "Exercice suivant", vm::next, accent = c.gold, filled = s.solved)
+                // Une fois la réponse trouvée, le bouton « Suivant » du bas suffit : pas de doublon en haut.
+                if (!s.solved) DuckIconButton(Icons.Rounded.SkipNext, "Passer à l'exercice suivant", vm::next, accent = c.gold)
             }
         },
         board = {
@@ -128,7 +129,7 @@ fun NotationScreen(vm: NotationViewModel) {
         },
         bottom = {
             FeedbackCard(s.message, s.tone, Modifier.padding(top = 6.dp).weight(1f))
-            // Barre de saisie : « Tout effacer » à gauche, ⌫ (appui long = tout effacer) et Valider à droite.
+            // Barre de saisie stable : le texte ne bouge jamais ; Effacer (appui long = tout effacer) et Valider à droite.
             Row(Modifier.fillMaxWidth().padding(top = 6.dp).height(48.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Row(
                     Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
@@ -138,11 +139,7 @@ fun NotationScreen(vm: NotationViewModel) {
                         },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (s.input.isNotEmpty() && !s.solved) {
-                        DuckIconButton(Icons.Rounded.Close, "Tout effacer", vm::clear)
-                    } else {
-                        Spacer(Modifier.width(12.dp))
-                    }
+                    Spacer(Modifier.width(12.dp))
                     Text(
                         s.input.ifEmpty { "Votre réponse…" },
                         color = if (s.input.isEmpty()) c.muted else if (s.solved) c.greenText else c.text,

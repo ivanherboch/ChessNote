@@ -24,7 +24,7 @@ import com.ivanherboch.chessduck.ui.Tone
 /**
  * Commentaires de revue en langage naturel.
  *
- * Chaque commentaire nomme explicitement le joueur concerné, puis s'adresse à lui : « tu » pour un joueur
+ * Chaque commentaire nomme explicitement le joueur concerné, puis s'adresse à lui : « vous » pour un joueur
  * humain, « il » pour l'ordinateur. Aucune évaluation chiffrée : on explique ce qui se passe sur l'échiquier.
  * Tout est calculé instantanément à partir des analyses déjà stockées (aucune recherche supplémentaire).
  */
@@ -32,7 +32,7 @@ object ReviewComments {
     /** Le joueur dont on commente le coup. */
     class Voice(val name: String, val human: Boolean, val white: Boolean) {
         val label: String get() = "$name (${if (white) "Blancs" else "Noirs"})"
-        fun f(tu: String, il: String) = if (human) tu else il
+        fun f(vous: String, il: String) = if (human) vous else il
     }
 
     fun voice(g: GameRecord, white: Boolean): Voice {
@@ -50,7 +50,7 @@ object ReviewComments {
     // Formes grammaticales des pièces : lexique français partagé par toute l'application.
     private fun the(t: Int) = PieceLexiconFr.definite(t)
     private fun it(t: Int) = PieceLexiconFr.pronoun(t)
-    private fun poss(v: Voice, t: Int) = v.f(PieceLexiconFr.possessive(t, true), PieceLexiconFr.possessive(t, false))
+    private fun poss(v: Voice, t: Int) = v.f("votre " + PieceLexiconFr.name(t), PieceLexiconFr.possessive(t))
 
     /** Tendance de la partie, du point de vue des Blancs : -2 … +2. */
     private fun bucket(evalWhite: Int): Int {
@@ -83,10 +83,10 @@ object ReviewComments {
                 val victim = p.capturedType(m)
                 (if (prev != null && prev.to == m.to) "reprend en capturant " else "capture ") + the(victim) + " en ${sqName(m.to)}"
             }
-            p.fullmove <= 12 && (t == KNIGHT || t == BISHOP) && rankOf(m.from) == (if (v.white) 0 else 7) -> "développe ${PieceLexiconFr.possessive(t, false)}"
+            p.fullmove <= 12 && (t == KNIGHT || t == BISHOP) && rankOf(m.from) == (if (v.white) 0 else 7) -> "développe ${PieceLexiconFr.possessive(t)}"
             t == PAWN && fileOf(m.to) in 3..4 && rankOf(m.to) in 3..4 -> "avance un pion au centre"
             t == PAWN -> "avance son pion en ${sqName(m.to)}"
-            else -> "joue ${PieceLexiconFr.possessive(t, false)} en ${sqName(m.to)}"
+            else -> "joue ${PieceLexiconFr.possessive(t)} en ${sqName(m.to)}"
         }
         val tail = when {
             san.endsWith("#") -> " et fait échec et mat !"
@@ -105,8 +105,8 @@ object ReviewComments {
         // 1. Le coup autorise un mat rapide.
         val n = mateFor(a1.eval, !p.whiteToMove)
         if (n != null && reply != null) {
-            return if (n <= 2) "en jouant $san, ${v.f("tu permets", "il permet")} à l'adversaire de faire échec et mat en $n (${after.san(reply)})."
-            else "$san laisse l'adversaire lancer une attaque décisive contre ${v.f("ton", "son")} roi."
+            return if (n <= 2) "en jouant $san, ${v.f("vous permettez", "il permet")} à l'adversaire de faire échec et mat en $n (${after.san(reply)})."
+            else "$san laisse l'adversaire lancer une attaque décisive contre ${v.f("votre", "son")} roi."
         }
         // 2. Une pièce est laissée en prise.
         if (reply != null && after.isCapture(reply)) {
@@ -114,7 +114,7 @@ object ReviewComments {
             val gained = if (p.isCapture(m)) PIECE_VALUES[p.capturedType(m)] else 0
             if (PIECE_VALUES[victim] > gained) {
                 val rs = after.san(reply)
-                return if (reply.to == m.to) "en jouant $san, ${v.f("tu exposes", "il expose")} ${poss(v, victim)} : $rs peut ${it(victim)} capturer."
+                return if (reply.to == m.to) "en jouant $san, ${v.f("vous exposez", "il expose")} ${poss(v, victim)} : $rs peut ${it(victim)} capturer."
                 else "$san laisse ${poss(v, victim)} en ${sqName(reply.to)} sans protection suffisante : $rs ${it(victim)} capture."
             }
         }
@@ -126,7 +126,7 @@ object ReviewComments {
                 val victim = p.capturedType(best)
                 val free = p.attackers(best.to, !p.whiteToMove).isEmpty()
                 if (free || PIECE_VALUES[victim] >= PIECE_VALUES[bt]) {
-                    return "${v.f("tu as", "il a")} manqué l'occasion de capturer ${the(victim)} en ${sqName(best.to)} avec $bs : cela ${v.f("t'", "lui ")}aurait donné l'avantage."
+                    return "${v.f("vous avez", "il a")} manqué l'occasion de capturer ${the(victim)} en ${sqName(best.to)} avec $bs : cela ${v.f("vous ", "lui ")}aurait donné l'avantage."
                 }
             }
             // 4. Une pièce attaquée n'a pas été mise à l'abri.
@@ -134,20 +134,20 @@ object ReviewComments {
                 return "${poss(v, bt)} en ${sqName(best.from)} était attaqué${if (PieceLexiconFr.isFeminine(bt)) "e" else ""} : il fallait ${it(bt)} mettre à l'abri avec $bs."
             }
             // 5. Un échec fort a été manqué.
-            if (bs.endsWith("+")) return "${v.f("tu aurais dû", "il aurait dû")} donner échec avec $bs pour garder l'initiative."
+            if (bs.endsWith("+")) return "${v.f("vous auriez dû", "il aurait dû")} donner échec avec $bs pour garder l'initiative."
             // 6. Principes d'ouverture.
-            if (p.isCastle(best)) return "${v.f("tu aurais dû", "il aurait dû")} mettre ${v.f("ton", "son")} roi à l'abri en roquant ($bs)."
+            if (p.isCastle(best)) return "${v.f("vous auriez dû", "il aurait dû")} mettre ${v.f("votre", "son")} roi à l'abri en roquant ($bs)."
             if (p.fullmove <= 14) {
                 if ((bt == KNIGHT || bt == BISHOP) && rankOf(best.from) == (if (p.whiteToMove) 0 else 7)) {
-                    return "${v.f("tu aurais dû", "il aurait dû")} développer ${poss(v, bt)} avec $bs pour prendre part à la bataille du centre."
+                    return "${v.f("vous auriez dû", "il aurait dû")} développer ${poss(v, bt)} avec $bs pour prendre part à la bataille du centre."
                 }
                 if (bt == PAWN && fileOf(best.to) in 3..4 && rankOf(best.to) in 2..5) {
-                    return "${v.f("tu aurais dû", "il aurait dû")} occuper le centre avec $bs."
+                    return "${v.f("vous auriez dû", "il aurait dû")} occuper le centre avec $bs."
                 }
             }
             return "$bs était plus fort que $san."
         }
-        return "$san affaiblit ${v.f("ta", "sa")} position."
+        return "$san affaiblit ${v.f("votre", "sa")} position."
     }
 
     /**
@@ -188,9 +188,9 @@ object ReviewComments {
             val left = mateFor(a1.eval, p.whiteToMove)
             val now = when (left) {
                 null -> " Après $san, le mat n'est plus forcé."
-                else -> " Après $san, ${v.f("il te faut", "il lui faut")} encore $left ${if (left > 1) "coups" else "coup"} pour mater."
+                else -> " Après $san, ${v.f("il vous faut", "il lui faut")} encore $left ${if (left > 1) "coups" else "coup"} pour mater."
             }
-            return "⚠️ Mat en $k manqué · ${v.label} : ${v.f("tu pouvais", "il pouvait")} gagner tout de suite" + (if (best != null) ", $best $how." else ".") + now + trend to Tone.BAD
+            return "⚠️ Mat en $k manqué · ${v.label} : ${v.f("vous pouviez", "il pouvait")} gagner tout de suite" + (if (best != null) ", $best $how." else ".") + now + trend to Tone.BAD
         }
         return when (GameLogic.annotate(p, m, a0, a1, prev)) {
             "??" -> "Gaffe · ${v.label} : ${explain(v, p, m, san, a0, a1)}$trend" to Tone.BAD

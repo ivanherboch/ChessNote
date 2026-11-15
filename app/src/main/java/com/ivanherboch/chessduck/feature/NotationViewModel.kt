@@ -139,7 +139,7 @@ class NotationViewModel(
         if (key.startsWith("O-O")) {
             // Le roque s'écrit seul : il ne doit jamais écraser en silence une saisie commencée.
             if (s.input.isNotEmpty() && !s.input.startsWith("O-O")) {
-                _state.update { it.copy(tone = Tone.GOLD, message = "Le roque s'écrit seul (O-O ou O-O-O). Effacez d'abord la saisie : touche « Tout effacer » ou appui long sur ⌫.") }
+                _state.update { it.copy(tone = Tone.GOLD, message = "Le roque s'écrit seul (O-O ou O-O-O). Effacez d'abord la saisie : appui long sur la touche Effacer.") }
                 return false
             }
             _state.update { it.copy(input = key) }
@@ -149,7 +149,10 @@ class NotationViewModel(
             _state.update { it.copy(tone = Tone.GOLD, message = "Après un roque, seuls « + » (échec) ou « # » (mat) peuvent suivre.") }
             return false
         }
-        if (s.input.length + key.length > 9) return false
+        if (s.input.length + key.length > 9) {
+            _state.update { it.copy(tone = Tone.GOLD, message = "Votre réponse est déjà complète : un coup s'écrit en 9 signes au plus. Validez-la ou effacez un caractère.") }
+            return false
+        }
         _state.update { it.copy(input = it.input + key) }
         return true
     }

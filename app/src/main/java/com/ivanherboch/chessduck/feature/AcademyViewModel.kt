@@ -66,6 +66,10 @@ class AcademyViewModel(
         .onEach { if (!it) narrator.stop() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
     val speaking: StateFlow<Boolean> = narrator.speaking
+    /** Voix française hors-ligne installée (null : pas encore vérifié, voir [checkVoice]). */
+    val voice: StateFlow<Boolean?> = narrator.available
+
+    fun checkVoice() = narrator.prepare()
 
     init {
         viewModelScope.launch {

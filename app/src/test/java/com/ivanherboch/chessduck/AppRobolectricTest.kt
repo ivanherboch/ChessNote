@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck
 
+import androidx.compose.ui.test.onFirst
 import android.os.Looper
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -372,7 +373,7 @@ class AppRobolectricTest {
         desc("Mémo anglais").performClick(); settle(800); shot("1b_memo")
         close(); settle(800)
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("2_academie")
-        rule.onNodeWithText("Défi (pratique)").performClick(); settle(1500); shot("2b_defi")
+        rule.onNodeWithText("Défi").performClick(); settle(1500); shot("2b_defi")
         desc("Ouvrir le catalogue des leçons").performClick(); settle(1200); shot("2c_catalogue_lecons")
         close(); settle(800)
         rule.onNodeWithText("Problèmes").performClick(); settle(2500); shot("3_problemes")
@@ -433,7 +434,7 @@ class AppRobolectricTest {
         close(); settle(800)
         // Thème choisi : chaque tirage aléatoire affiche ce thème (visible : le joueur l'a choisi).
         desc("Catalogue des problèmes").performClick(); settle(1500)
-        desc("Déplier les thèmes : Mats").performClick(); settle(800)
+        rule.onNodeWithText("Mats").performClick(); settle(800) // la ligne déplie la famille
         rule.onNodeWithText("Mat en 1").performScrollTo().performClick(); settle(2500)
         repeat(8) {
             rule.onNodeWithText("Type de problème : Mat en 1").assertExists()
@@ -442,7 +443,8 @@ class AppRobolectricTest {
         shot("3f_theme_choisi")
         // Famille « Mats » : thème masqué (anti-spoiler) jusqu'à ce qu'on le révèle ; chaque tirage est un mat.
         desc("Catalogue des problèmes").performClick(); settle(1500); shot("3g_familles")
-        rule.onNodeWithText("Mats").performClick(); settle(2500)
+        // La famille du thème en cours est dépliée d'office : « Toute la famille » la choisit en bloc.
+        rule.onNodeWithText("Toute la famille").performScrollTo().performClick(); settle(2500)
         rule.onNodeWithText("Thème masqué (mode libre)").assertExists()
         shot("3h_theme_masque")
         val mates = com.ivanherboch.chessduck.content.PuzzleThemes.all.filter { it.group == com.ivanherboch.chessduck.content.PuzzleThemes.G_MATE }.map { it.name }
@@ -467,8 +469,8 @@ class AppRobolectricTest {
         seedGame()
         rule.onNodeWithText("Jeu Libre").performClick(); settle(1200)
         rule.onNodeWithContentDescription("Historique des parties").performClick(); settle(1200); shot("4d_historique")
-        rule.onNodeWithText("Rejouer sur l’échiquier").performClick(); settle(400); shot("4e_revue")
-        rule.onNodeWithText("Pause").performClick(); settle(400)
+        rule.onAllNodesWithText("Revue commentée").onFirst().performClick(); settle(400); shot("4e_revue")
+        rule.onNodeWithText("Lecture").assertExists() // ouverte en pause
         rule.onNodeWithContentDescription("Coup suivant").performClick(); settle(600); shot("4f_revue_coup")
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1000)
         rule.onNodeWithContentDescription("Annuler mon dernier coup", substring = false).assertExists()

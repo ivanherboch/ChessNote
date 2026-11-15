@@ -263,10 +263,11 @@ object ShareCard {
                 cv.drawRect(cx - s, cy - s, cx + s, cy + s, paint)
                 paint.shader = null
             }
-            // Coordonnées : seulement si les cases sont assez grandes pour rester lisibles après compression.
-            if (s >= 70f) {
+            // Coordonnées : discrètes sur les grands échiquiers, un peu plus grosses (en proportion) sur les
+            // mini-échiquiers de la solution ; omises seulement quand les cases sont trop petites pour être lues.
+            if (s >= 40f) {
                 paint.typeface = BOLD
-                paint.textSize = s * 0.2f
+                paint.textSize = if (s >= 70f) s * 0.2f else s * 0.25f
                 for (i in 0..7) {
                     val fq = if (flipped) sq(7 - i, 7) else sq(i, 0)
                     paint.color = if ((fileOf(fq) + rankOf(fq)) % 2 == 1) pal.sqDark else pal.sqLight
@@ -417,7 +418,7 @@ object ShareCard {
         val tipH = if (tip.isEmpty()) 0f else 28f + tip.size * tipLineH
         val top = headerHeight(title.size, titleSize) + 6f
         val bottom = (if (tip.isEmpty()) 0f else tipH + 16f) + FOOTER_H + 4f
-        val side = minOf(W - 2 * 20f, h - top - 16f - bottom)
+        val side = minOf(W - 2 * M, h - top - 16f - bottom)
 
         val bmp = Bitmap.createBitmap(W, h, Bitmap.Config.ARGB_8888)
         val g = Painter(context, Canvas(bmp), pal)
@@ -561,13 +562,19 @@ object ShareCard {
                 g.badge("${k + 1}", bx + br, ty0 - titleSz * 0.34f, br, pal.greenFill, pal.onGreen)
                 val sanX = bx + 2 * br + 10f
                 g.text(st.san, sanX, ty0, titleSz, pal.text, bold = true)
-                if (!detailed && st.replySan != null) {
-                    g.text("— ${st.replySan}", sanX + g.width(st.san, titleSz, bold = true) + 12f, ty0, titleSz * 0.85f, pal.redText, bold = true)
-                }
                 // Pièce prise, colorée à l'opposé de celle qui joue.
                 val victim = st.before.capturedType(st.move).let { t -> if (t == 0) 0 else t + if (isWhite(st.before[st.move.from])) BLACK else 0 }
+                val ps = titleSz * 1.05f
+                if (!detailed && st.replySan != null) {
+                    // La réponse rétrécit pour ne jamais chevaucher la vignette de la pièce prise.
+                    val rx = sanX + g.width(st.san, titleSz, bold = true) + 12f
+                    val room = bx + textW - (if (victim != 0) ps + 8f else 0f) - rx
+                    val reply = "— ${st.replySan}"
+                    val full = titleSz * 0.85f
+                    val size = (full * room / g.width(reply, full, bold = true)).coerceAtMost(full)
+                    if (size >= titleSz * 0.5f) g.text(reply, rx, ty0, size, pal.redText, bold = true)
+                }
                 if (victim != 0) {
-                    val ps = titleSz * 1.05f
                     val px = bx + textW - ps
                     val py = ty0 - ps * 0.8f
                     g.paint.style = Paint.Style.FILL

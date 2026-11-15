@@ -26,11 +26,9 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
-import com.ivanherboch.chessduck.ui.DuckIconButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -78,7 +76,7 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
     var query by remember { mutableStateOf("") }
     var notFound by remember { mutableStateOf(false) }
     val sugg by vm.suggestions.collectAsStateWithLifecycle()
-    val open = { vm.openById(query) { ok -> if (ok) onClose() else notFound = true } }
+
     // Familles dépliées : par défaut, celle du thème en cours.
     val expanded = remember {
         androidx.compose.runtime.mutableStateListOf<String>().apply { PuzzleThemes.byKey[s.theme]?.group?.let { add(it) } }
@@ -86,6 +84,18 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
     val q = normalizeForSearch(query.trim().removePrefix("#"))
     val themeMatches = remember(q) {
         if (q.length >= 2) PuzzleThemes.all.filter { normalizeForSearch(it.name).contains(q) || normalizeForSearch(it.goal).contains(q) } else emptyList()
+    }
+    // « Ouvrir » : l'identifiant exact, sinon l'unique suggestion, sinon le thème reconnu.
+    val open = {
+        vm.openById(query) { ok ->
+            val only = sugg.items.singleOrNull()
+            when {
+                ok -> onClose()
+                only != null -> vm.openSuggestion(only.id) { onClose() }
+                themeMatches.isNotEmpty() -> { vm.setFilter(s.band, themeMatches.first().key); onClose() }
+                else -> notFound = true
+            }
+        }
     }
     DuckLazySheet("Catalogue des problèmes", onClose) {
       item(key = "recherche") {
@@ -116,7 +126,10 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
                         Text("${item.rating}", color = c.muted, style = MaterialTheme.typography.labelMedium)
                     }
                 }
-                if (sugg.more) Text("…", color = c.muted, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 12.dp, bottom = 6.dp))
+                if (sugg.more > 0) Text(
+                    "Affinez l'identifiant pour voir ${if (sugg.more > 1) "les ${fr(sugg.more)} autres résultats" else "l'autre résultat"}.",
+                    color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 8.dp),
+                )
             }
         }
         if (themeMatches.isNotEmpty()) {
@@ -145,23 +158,19 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
         }
        }
       }
-        // Familles en accordéon : toucher la ligne choisit toute la famille, la flèche déplie ses thèmes.
+        // Familles en accordéon : toucher la ligne déplie ses thèmes ; « Toute la famille » la choisit en bloc.
         items(PuzzleThemes.groups, key = { it }) { g ->
           Column {
             val key = PuzzleThemes.groupKey(g)
             val isOpen = g in expanded
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.weight(1f)) {
-                    ThemeRow(g, PuzzleThemes.GROUP_GOALS[g] ?: "", counts[key], s.theme == key, Icons.Rounded.Folder) { vm.setFilter(s.band, key); onClose() }
-                }
-                DuckIconButton(
-                    if (isOpen) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
-                    if (isOpen) "Replier les thèmes : $g" else "Déplier les thèmes : $g",
-                    { if (isOpen) expanded.remove(g) else expanded.add(g) },
-                )
-            }
+            ThemeRow(
+                g, PuzzleThemes.GROUP_GOALS[g] ?: "", counts[key], s.theme == key, Icons.Rounded.Folder,
+                trailing = if (isOpen) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                expanded = isOpen,
+            ) { if (isOpen) expanded.remove(g) else expanded.add(g) }
             AnimatedVisibility(isOpen) {
                 Column(Modifier.padding(start = 16.dp)) {
+                    DuckChip("Toute la famille", s.theme == key, { vm.setFilter(s.band, key); onClose() }, Modifier.padding(vertical = 4.dp), accent = c.gold)
                     for (t in PuzzleThemes.all.filter { it.group == g }) {
                         ThemeRow(t.name, t.goal, counts[t.key], s.theme == t.key) { vm.setFilter(s.band, t.key); onClose() }
                     }
@@ -173,7 +182,14 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
 }
 
 @Composable
-private fun ThemeRow(name: String, goal: String, count: ThemeCount?, selected: Boolean, icon: androidx.compose.ui.graphics.vector.ImageVector? = null, onClick: () -> Unit) {
+private fun ThemeRow(
+    name: String, goal: String, count: ThemeCount?, selected: Boolean,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    /** Flèche d'accordéon : la ligne déplie alors son contenu au lieu de choisir le thème. */
+    trailing: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    expanded: Boolean? = null,
+    onClick: () -> Unit,
+) {
     val c = LocalDuck.current
     val enabled = count == null || count.total > 0
     Row(
@@ -181,7 +197,13 @@ private fun ThemeRow(name: String, goal: String, count: ThemeCount?, selected: B
             .background(if (selected) c.surfaceHi else c.surface)
             .then(if (selected) Modifier.border(1.dp, c.goldText, RoundedCornerShape(DuckRadius.M)) else Modifier)
             .clickable(enabled = enabled, role = Role.Button) { onClick() }
-            .semantics { this.selected = selected; if (count != null) stateDescription = "${count.solved} résolus sur ${count.total}" }
+            .semantics {
+                this.selected = selected
+                stateDescription = listOfNotNull(
+                    expanded?.let { if (it) "déplié" else "replié" },
+                    count?.let { "${it.solved} résolus sur ${it.total}" },
+                ).joinToString(", ")
+            }
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -193,5 +215,6 @@ private fun ThemeRow(name: String, goal: String, count: ThemeCount?, selected: B
         if (count != null) {
             Text("${fr(count.solved)} / ${fr(count.total)}", color = if (count.solved > 0) c.greenText else c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 8.dp))
         }
+        if (trailing != null) Icon(trailing, contentDescription = null, tint = c.muted, modifier = Modifier.padding(start = 8.dp))
     }
 }

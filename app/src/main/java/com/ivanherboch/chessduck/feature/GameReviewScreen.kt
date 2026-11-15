@@ -131,7 +131,8 @@ internal fun ReviewLayout(vm: GameReviewViewModel, r: Review) {
             if (!wide) MoveStrip(line, cur, Modifier.padding(top = 2.dp), onSelect = vm::jump, onPrev = { vm.step(-1) }, onNext = { vm.step(1) })
             val ready = r.analysis.count { it != null }
             if (cur == 0) {
-                ReviewSummary(g, line, r.analysis, notes, ready, Modifier.padding(top = 4.dp).weight(1f))
+                // Résumé à la taille de son contenu ; la place restante reste libre, les boutons ne bougent pas.
+                Box(Modifier.padding(top = 4.dp).weight(1f).fillMaxWidth()) { ReviewSummary(g, line, r.analysis, notes, ready, Modifier) }
             } else {
                 // Commentaire en langage naturel : aucune évaluation chiffrée, le joueur concerné est toujours nommé.
                 val (c0, t0) = ReviewComments.comment(g, line, cur - 1, r.analysis)
@@ -174,7 +175,7 @@ private fun ReviewSummary(g: GameRecord, line: Line, analysis: List<Analysis?>, 
     Column(modifier.fillMaxWidth().clip(RoundedCornerShape(DuckRadius.M)).background(c.surface).padding(12.dp)) {
         Text("Résumé de la partie", color = c.text, style = MaterialTheme.typography.titleSmall)
         if (ready < total) {
-            Text("Analyse des coups : $ready / $total…", color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+            Text("Analyse : ${fr(ready)} position${if (ready > 1) "s" else ""} sur ${fr(total)}…", color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
             LinearProgressIndicator(
                 progress = { ready.toFloat() / total }, color = c.blueRole.fill, trackColor = c.surfaceHi,
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(4.dp).clip(RoundedCornerShape(2.dp)),
@@ -216,9 +217,9 @@ private fun NoteCount(note: String, n: Int) {
     }
 }
 
-/** Tableau algébrique complet sur deux colonnes (Blancs | Noirs), cliquable — affiché sur tablette. */
+/** Tableau algébrique complet sur deux colonnes (Blancs | Noirs), cliquable — affiché sur tablette (revue et partie). */
 @Composable
-private fun MoveTable(line: Line, cursor: Int, notes: List<String?>, onSelect: (Int) -> Unit, modifier: Modifier) {
+internal fun MoveTable(line: Line, cursor: Int, notes: List<String?>, onSelect: (Int) -> Unit, modifier: Modifier) {
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     val state = rememberLazyListState()

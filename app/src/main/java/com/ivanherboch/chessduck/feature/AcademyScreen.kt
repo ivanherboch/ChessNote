@@ -40,6 +40,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import com.ivanherboch.chessduck.ui.turnOf
+import android.speech.tts.TextToSpeech
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -86,6 +92,11 @@ fun AcademyScreen(vm: AcademyViewModel) {
 
     // Explication brève quand on touche une pièce qui ne peut pas bouger ; effacée au coup suivant.
     var stuck by remember(s.lessonId, s.cursor, s.challenge) { mutableStateOf<String?>(null) }
+    // Haut-parleur touché alors que la voix est coupée ou absente : explication à la place du commentaire.
+    var voiceTip by remember(s.lessonId, s.cursor) { mutableStateOf<String?>(null) }
+    val voice by vm.voice.collectAsStateWithLifecycle()
+    var catalogStatus by rememberSaveable { mutableIntStateOf(0) }
+    val context = LocalContext.current
     ModuleLayout(
         bottomMin = 190.dp,
         top = {
@@ -117,9 +128,9 @@ fun AcademyScreen(vm: AcademyViewModel) {
                 }
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Leçon suivante", vm::nextLesson)
             }
-            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                 DuckSegmentedRow(
-                    listOf("Guidé (démo)", "Défi (pratique)"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) },
+                    listOf("Guidé", "Défi"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) },
                     Modifier.weight(1f), icons = listOf(Icons.Rounded.Visibility, Icons.Rounded.SportsScore),
                 )
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
@@ -148,36 +159,51 @@ fun AcademyScreen(vm: AcademyViewModel) {
             )
         },
         bottom = {
-            // Progression dans la leçon : chaque coup est cliquable en mode Guidé.
-            MoveStrip(
-                line, cur, Modifier.padding(top = 4.dp),
-                onSelect = if (!s.challenge) vm::jump else null,
-                onPrev = if (!s.challenge) ({ vm.step(-1) }) else null,
-                onNext = if (!s.challenge) ({ vm.step(1) }) else null,
-                emptyText = "Les coups de la leçon s'afficheront ici.",
-                firstTurn = 1,
-            )
             if (!s.challenge) {
+                // Progression dans la leçon : chaque coup est cliquable (masquée en Défi, où elle ne sert pas).
+                MoveStrip(
+                    line, cur, Modifier.padding(top = 4.dp), onSelect = vm::jump, onPrev = { vm.step(-1) }, onNext = { vm.step(1) },
+                    emptyText = "Les coups de la leçon s'afficheront ici.", firstTurn = 1,
+                )
                 // Dans une leçon, les tours sont numérotés depuis son début, quelle que soit la partie d'origine.
                 val title = if (cur == 0) "Objectif de la leçon" else line.stepTitle(cur, first = 1)
                 val text = if (cur == 0) l.summary + " Touchez Lecture pour dérouler la leçon coup par coup." else l.texts[cur - 1]
-                FeedbackCard(text, Tone.INFO, Modifier.padding(top = 4.dp).weight(1f), title = title)
+                FeedbackCard(voiceTip ?: text, if (voiceTip != null) Tone.GOLD else Tone.INFO, Modifier.padding(top = 4.dp).weight(1f), title = title)
                 EqualRow(Modifier.padding(vertical = 6.dp)) {
-                    if (narration) {
-                        DuckIconButton(
-                            if (speaking) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp,
-                            if (speaking) "Arrêter la lecture à voix haute" else "Réécouter le commentaire", vm::toggleSpeech,
-                        )
-                    }
-                    DuckButton("Début", vm::rewind, Modifier.weight(1f), enabled = cur > 0, icon = Icons.Rounded.SkipPrevious)
+                    // Toujours visible : relit ou arrête la voix, ou explique comment l'activer.
+                    DuckIconButton(
+                        if (speaking) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp,
+                        when {
+                            !narration -> "Lecture vocale : comment l'activer"
+                            speaking -> "Arrêter la lecture à voix haute"
+                            else -> "Réécouter le commentaire"
+                        },
+                        {
+                            when {
+                                narration -> vm.toggleSpeech()
+                                voice == false -> {
+                                    voiceTip = "Aucune voix française n'est installée sur ce téléphone : choisissez-en une dans les réglages vocaux d'Android qui s'ouvrent."
+                                    runCatching { context.startActivity(Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                                }
+                                else -> {
+                                    vm.checkVoice()
+                                    voiceTip = "La lecture vocale est désactivée : activez-la dans Paramètres, section Audio, voix et retours."
+                                }
+                            }
+                        },
+                    )
+                    // Avec le haut-parleur, quatre boutons : Début et Fin en icônes pour que rien ne se coupe sur 360 dp.
+                    DuckIconButton(Icons.Rounded.SkipPrevious, "Revenir au début", vm::rewind, enabled = cur > 0)
                     DuckButton(
-                        if (s.playing) "Pause" else "Lecture", vm::togglePlay, Modifier.weight(1.5f), accent = c.blue, filled = true,
+                        if (s.playing) "Pause" else "Lecture", vm::togglePlay, Modifier.weight(1f), accent = c.blue, filled = true,
                         icon = if (s.playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                     )
-                    DuckButton("Fin", vm::last, Modifier.weight(1f), enabled = cur < line.size, icon = Icons.Rounded.SkipNext)
+                    DuckIconButton(Icons.Rounded.SkipNext, "Aller à la fin", vm::last, enabled = cur < line.size)
                 }
             } else {
-                val title = if (s.done) "Défi réussi" else "Défi : jouez les ${if (l.heroWhite) "Blancs" else "Noirs"} · coup $cur / ${line.size}"
+                // Même numérotation par tour que le mode Guidé (depuis le début de la leçon).
+                val turn = line.turnOf(cur.coerceAtMost(line.size - 1), first = 1)
+                val title = if (s.done) "Défi réussi" else "Défi : jouez les ${if (l.heroWhite) "Blancs" else "Noirs"} · coup $turn sur ${line.turnOf(line.size - 1, first = 1)}"
                 FeedbackCard(stuck ?: s.message, if (stuck != null) Tone.GOLD else s.tone, Modifier.padding(top = 4.dp).weight(1f), title = title)
                 EqualRow(Modifier.padding(vertical = 6.dp)) {
                     DuckButton("Recommencer", vm::restartChallenge, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt)
@@ -188,6 +214,6 @@ fun AcademyScreen(vm: AcademyViewModel) {
         },
     )
 
-    if (catalog) LessonCatalog(vm, s, mastered) { catalog = false }
+    if (catalog) LessonCatalog(vm, s, mastered, catalogStatus, { catalogStatus = it }) { catalog = false }
 }
 

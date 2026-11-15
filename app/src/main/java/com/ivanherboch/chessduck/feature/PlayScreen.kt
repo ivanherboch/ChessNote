@@ -1,5 +1,13 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.ivanherboch.chessduck.ui.DuckRadius
+import androidx.compose.ui.semantics.Role
+import com.ivanherboch.chessduck.ui.LocalIsTwoPane
+import com.ivanherboch.chessduck.ui.turnOf
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -89,6 +97,7 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
     var history by remember { mutableStateOf(false) }
     var gameSettings by remember { mutableStateOf(false) }
     var confirm by remember { mutableStateOf<ConfirmAction?>(null) }
+    var pendingSettings by remember { mutableStateOf<Triple<Boolean, Int, Int>?>(null) }
     val players = if (s.twoPlayers) Players(st.pseudo to null, st.pseudo2 to null)
     else {
         val me = st.pseudo to "${st.elo}"
@@ -109,6 +118,12 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
         bottomMin = 170.dp,
         top = {
             Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                // Adversaire et bilan : toucher ouvre les réglages de partie (adversaire, couleur, niveau).
+                Row(
+                    Modifier.weight(1f).heightIn(min = 48.dp).clip(RoundedCornerShape(DuckRadius.M))
+                        .clickable(role = Role.Button, onClickLabel = "Modifier les réglages de partie") { gameSettings = true },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                 Icon(if (s.twoPlayers) Icons.Rounded.People else Icons.Rounded.SmartToy, contentDescription = null, tint = c.muted, modifier = Modifier.size(20.dp))
                 Column(Modifier.padding(start = 8.dp).weight(1f)) {
                     Text(
@@ -122,6 +137,7 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                         if (s.twoPlayers) "Hors classement ELO" else "Bilan $w V · $d N · $l D",
                         color = c.muted, style = MaterialTheme.typography.labelMedium,
                     )
+                }
                 }
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
                 DuckIconButton(Icons.Rounded.Insights, "Jauge d'évaluation", vm::toggleEval, accent = c.blue, selected = s.evalOn)
@@ -152,12 +168,15 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
         },
         underBoard = { Box(Modifier.padding(start = if (s.evalOn) evalBarSpace() else 0.dp)) { bar(!s.flipped) } },
         bottom = {
-            MoveStrip(
+            val wide = LocalIsTwoPane.current
+            if (!wide) MoveStrip(
                 s.line, s.cursor, Modifier.padding(top = 2.dp), onSelect = vm::goTo, onPrev = vm::back, onNext = vm::forward,
                 prevEnabled = s.cursor > 0 && !s.thinking, nextEnabled = s.cursor < s.line.size && !s.thinking,
             )
             val (msg, tone) = liveStatus(s, st.pseudo, st.pseudo2)
-            FeedbackCard(stuck ?: msg, if (stuck != null) Tone.GOLD else tone, Modifier.padding(top = 4.dp).weight(1f))
+            // Tablette : message compact puis tableau complet des coups, comme dans la revue.
+            FeedbackCard(stuck ?: msg, if (stuck != null) Tone.GOLD else tone, Modifier.padding(top = 4.dp).then(if (wide) Modifier.heightIn(max = 180.dp) else Modifier.weight(1f)))
+            if (wide) MoveTable(s.line, s.cursor, emptyList(), { if (!s.thinking) vm.goTo(it) }, Modifier.padding(top = 6.dp).weight(1f))
             EqualRow(Modifier.padding(vertical = 6.dp), gap = 6.dp) {
                 if (s.result != null) {
                     // Fin de partie : l'analyse est à un geste.
@@ -176,10 +195,8 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                         Icons.Rounded.Flag, "Abandonner", { if (st.confirmActions && s.inProgress) confirm = ConfirmAction.RESIGN else vm.resign() },
                         enabled = s.line.size > 0, accent = c.red,
                     )
-                    DuckIconButton(
-                        Icons.Rounded.Add, "Nouvelle partie", { if (st.confirmActions && s.inProgress) confirm = ConfirmAction.NEW_GAME else vm.newGame() },
-                        accent = c.gold,
-                    )
+                    // Neutre pendant la partie : l'action principale reste de jouer.
+                    DuckIconButton(Icons.Rounded.Add, "Nouvelle partie", { if (st.confirmActions && s.inProgress) confirm = ConfirmAction.NEW_GAME else vm.newGame() })
                 }
             }
         },
@@ -197,22 +214,31 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
         )
         null -> Unit
     }
+    // Nouveaux réglages : ils relancent une partie, donc confirmation si une partie est en cours.
+    pendingSettings?.let { (two, color, elo) ->
+        ConfirmDialog(
+            "Appliquer les nouveaux réglages ?", "Une nouvelle partie commencera : la partie en cours sera perdue (elle n'est pas enregistrée).",
+            "Nouvelle partie", { pendingSettings = null; vm.applySettings(two, color, elo) }, { pendingSettings = null },
+        )
+    }
     if (history) HistorySheet(games, onClose = { history = false }, onDelete = vm::deleteGame) { g ->
-        // Fermeture instantanée du tiroir, puis lecture automatique sur l'échiquier.
+        // Fermeture instantanée du tiroir, puis revue ouverte sur son résumé.
         history = false
         openReview(g)
     }
     if (gameSettings) GameSettingsSheet(st.twoPlayers, st.colorChoice, st.aiElo, onClose = { gameSettings = false }) { two, color, elo ->
         gameSettings = false
-        vm.applySettings(two, color, elo)
+        if (st.confirmActions && s.inProgress) pendingSettings = Triple(two, color, elo) else vm.applySettings(two, color, elo)
     }
 }
 
 private fun liveStatus(s: PlayState, p1: String, p2: String): Pair<String, Tone> {
     val pos = s.position
     val side = if (pos.whiteToMove) "Blancs" else "Noirs"
+    // Numérotation par coup complet (Blancs puis Noirs), comme sur une feuille de partie.
+    val at = if (s.cursor == 0) "Position de départ" else "Coup ${s.line.turnOf(s.cursor - 1)} sur ${s.line.turnOf(s.line.size - 1)}"
     s.result?.let { r ->
-        return (if (s.cursor < s.line.size) "Coup ${s.cursor} / ${s.line.size}. " else "") + r.text +
+        return (if (s.cursor < s.line.size) "$at. " else "") + r.text +
             (if (s.lastRecord != null) " Touchez « Analyser la partie » pour la revue commentée." else "") to r.tone
     }
     if (s.thinking) return "L'ordinateur (${s.aiElo} ELO) réfléchit…" to Tone.NEUTRAL
@@ -222,8 +248,8 @@ private fun liveStatus(s: PlayState, p1: String, p2: String): Pair<String, Tone>
         else "Indice 2/2 : coup suggéré ${pos.san(h)}." to Tone.GOLD
     }
     if (s.cursor < s.line.size) {
-        return if (s.canPlay) "Coup ${s.cursor} / ${s.line.size}, trait aux $side. Jouez un autre coup ici pour reprendre la partie depuis cette position." to Tone.INFO
-        else "Coup ${s.cursor} / ${s.line.size}. Reculez ou avancez jusqu'à votre tour pour rejouer depuis ce moment." to Tone.INFO
+        return if (s.canPlay) "$at, trait aux $side. Jouez un autre coup ici pour reprendre la partie depuis cette position." to Tone.INFO
+        else "$at. Reculez ou avancez jusqu'à votre tour pour rejouer depuis ce moment." to Tone.INFO
     }
     val check = if (pos.inCheck) "Échec ! " else ""
     return if (s.twoPlayers) "${check}À ${if (pos.whiteToMove) p1 else p2} de jouer (les $side)." to Tone.INFO

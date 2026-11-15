@@ -1,5 +1,13 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.Icon
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.CheckCircle
+import com.ivanherboch.chessduck.ui.icons.Analytics
 import androidx.compose.foundation.lazy.items
 import com.ivanherboch.chessduck.ui.DuckRadius
 import com.ivanherboch.chessduck.ui.DuckLazySheet
@@ -12,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import com.ivanherboch.chessduck.ui.icons.History
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,7 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.ivanherboch.chessduck.data.GameRecord
 import com.ivanherboch.chessduck.ui.ConfirmDialog
-import com.ivanherboch.chessduck.ui.DuckButton
+import com.ivanherboch.chessduck.ui.InfoPill
 import com.ivanherboch.chessduck.ui.DuckIconButton
 import com.ivanherboch.chessduck.ui.EmptyState
 import com.ivanherboch.chessduck.ui.LocalDuck
@@ -44,7 +51,15 @@ internal fun HistorySheet(games: List<GameRecord>, onClose: () -> Unit, onDelete
             )
         }
         items(games, key = { it.id }) { g ->
-            Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface).padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 10.dp)) {
+            val half = if (g.moves.isBlank()) 0 else g.moves.trim().split(' ').size
+            // Analyse complète enregistrée : la revue commentée s'ouvre sans attente.
+            val analysed = remember(g.analysis, half) { Analysis.decodeAll(g.analysis, half + 1).none { it == null } }
+            // Toute la carte ouvre la revue ; seule la corbeille a sa propre action.
+            Column(
+                Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
+                    .clickable(role = Role.Button, onClickLabel = "Ouvrir la revue commentée") { onReplay(g) }
+                    .padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 10.dp),
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val (label, col) = when {
                         !g.vsComputer -> (if (g.outcome == 1) "Victoire de ${g.whiteName.ifEmpty { "Blancs" }}" else if (g.outcome == -1) "Victoire de ${g.blackName.ifEmpty { "Noirs" }}" else "Nulle") to c.goldText
@@ -74,7 +89,13 @@ internal fun HistorySheet(games: List<GameRecord>, onClose: () -> Unit, onDelete
                     "${formatDate(g.date)} · ${g.result} par ${g.reason} · $nbMoves coups",
                     color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 4.dp),
                 )
-                DuckButton("Rejouer sur l’échiquier", { onReplay(g) }, Modifier.fillMaxWidth().padding(end = 8.dp), accent = c.blue, filled = true, icon = Icons.Rounded.PlayArrow)
+                Row(Modifier.padding(end = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    InfoPill("Revue commentée", icon = Icons.Rounded.Analytics, accent = c.blue)
+                    if (analysed) InfoPill("Analyse prête", icon = Icons.Rounded.CheckCircle, accent = c.green)
+                    else InfoPill("Analyse à l'ouverture", accent = c.gold)
+                    Spacer(Modifier.weight(1f))
+                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = c.muted)
+                }
             }
         }
     }

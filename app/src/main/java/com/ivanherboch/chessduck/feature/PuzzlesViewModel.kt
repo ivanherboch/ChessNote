@@ -82,10 +82,12 @@ class ThemeCount(val total: Int, val solved: Int)
 data class Suggestion(val id: String, val type: String, val rating: Int)
 
 @Immutable
-data class Suggestions(val query: String = "", val items: List<Suggestion> = emptyList(), val more: Boolean = false)
+/** [more] : nombre de résultats au-delà de ceux affichés. */
+data class Suggestions(val query: String = "", val items: List<Suggestion> = emptyList(), val more: Int = 0)
 
 /** Durée d'affichage de la réfutation avant l'annulation automatique. */
 const val REFUTE_HOLD = 4000L
+private const val AUTO_UNDO = " Le coup sera annulé automatiquement."
 
 class PuzzlesViewModel(
     private val prefs: SettingsRepository,
@@ -148,7 +150,7 @@ class PuzzlesViewModel(
             _suggestions.value = Suggestions(
                 raw.trim().removePrefix("#"),
                 hits.map { Suggestion(it.id, (PuzzleThemes.byKey[it.primaryTheme] ?: PuzzleThemes.primary("")).name, it.rating) },
-                total > hits.size,
+                (total - hits.size).coerceAtLeast(0),
             )
         }
     }
@@ -390,12 +392,19 @@ class PuzzlesViewModel(
                     anim = moveAnim(after, reply),
                     refute = Refutation(after2, reply, Arrow(reply.from, reply.to, Color(0xFFEF4444))),
                     refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD,
-                    message = "Réfutation : après $san, les $oppName répondent $replySan$detail Le coup sera annulé automatiquement.",
+                    message = "Réfutation : après $san, les $oppName répondent $replySan$detail$AUTO_UNDO",
                 )
             }
             delay(REFUTE_HOLD)
             retry()
         }
+    }
+
+    /** Suspend l'annulation automatique : la réfutation reste affichée jusqu'à « Réessayer ». */
+    fun holdRefutation() {
+        if (state.value.refute == null || state.value.refuteUntil == 0L) return
+        job?.cancel()
+        _state.update { it.copy(refuteUntil = 0L, message = it.message.removeSuffix(AUTO_UNDO) + " Prenez votre temps, puis touchez Réessayer.") }
     }
 
     /** Annule immédiatement le mauvais coup (bouton ↩️ Réessayer ou fin de la temporisation). */

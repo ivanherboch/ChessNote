@@ -5,7 +5,6 @@ import com.ivanherboch.chessduck.ui.DuckRadius
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
@@ -14,6 +13,7 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import com.ivanherboch.chessduck.ui.icons.Undo
 import com.ivanherboch.chessduck.ui.icons.Casino
+import com.ivanherboch.chessduck.ui.icons.Pause
 import androidx.compose.material.icons.rounded.CheckCircle
 import com.ivanherboch.chessduck.ui.icons.Extension
 import com.ivanherboch.chessduck.ui.icons.History
@@ -92,7 +92,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
     val line = s.line
     val p = s.puzzle
 
-    if (p == null || line == null) {
+    if (p == null || line == null || s.empty) {
         if (s.empty) Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
             EmptyState(
                 Icons.Rounded.SearchOff, "Aucun problème trouvé", "Aucun problème ne correspond à ces filtres.",
@@ -112,12 +112,14 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         bottomMin = 170.dp,
         top = {
             Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                // Le filtre actif plutôt qu'un compteur « 0 / 150 000 » décourageant.
+                val filter = filterLabel(s.band, s.theme, solved.size)
                 DuckButton(
-                    "${fr(solved.size)} / ${fr(DuckDatabase.PUZZLE_COUNT)}", { catalog = true }, Modifier.weight(1f),
+                    filter, { catalog = true }, Modifier.weight(1f),
                     accent = c.blue, icon = Icons.Rounded.Extension,
-                    contentDescription = "Catalogue des problèmes : ${fr(solved.size)} résolus sur ${fr(DuckDatabase.PUZZLE_COUNT)}",
+                    contentDescription = "Catalogue des problèmes : $filter, ${fr(solved.size)} résolus sur ${fr(DuckDatabase.PUZZLE_COUNT)}",
                 )
-                DuckIconButton(Icons.Rounded.Casino, "Problème aléatoire", vm::random, accent = c.gold, filled = s.solved || s.empty)
+                DuckIconButton(Icons.Rounded.Casino, "Problème aléatoire", vm::random, accent = c.gold, filled = s.solved)
                 DuckIconButton(Icons.Rounded.History, "Problèmes récents", { recentSheet = true }, enabled = recents.isNotEmpty())
                 DuckIconButton(Icons.Rounded.IosShare, "Exporter en image", { shareChoice = true })
             }
@@ -161,33 +163,24 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
             )
         },
         bottom = {
-            if (s.empty) {
-                EmptyState(
-                    Icons.Rounded.SearchOff, "Plus aucun problème", "Aucun problème ne correspond à ces filtres.",
-                    Modifier.padding(top = 6.dp), actionLabel = "Ouvrir le catalogue", onAction = { catalog = true },
-                    secondaryLabel = "Réinitialiser les filtres", onSecondary = { vm.setFilter(0, "") },
-                )
-                Spacer(Modifier.weight(1f))
-            } else {
-                // Anti-spoiler : en mode libre (tous les thèmes ou une famille), le thème et son conseil
-                // restent masqués jusqu'à la résolution, sauf demande explicite.
-                val showTip = visible && s.refute == null && !s.solved && s.tone == Tone.INFO
-                FeedbackCard(
-                    stuck ?: (s.message + if (showTip) "\n\nConseil : ${type.tip}" else ""),
-                    if (stuck != null) Tone.GOLD else s.tone, Modifier.padding(top = 6.dp).weight(1f),
-                    title = if (visible) "Type de problème : ${type.name}" else "Thème masqué (mode libre)",
-                    action = if (!visible) ({
-                        DuckButton("Révéler le thème", vm::revealTheme, icon = Icons.Rounded.Visibility, accent = c.blue, variant = ButtonVariant.OUTLINED)
-                    }) else null,
-                )
-                if (s.refute != null && s.refuteUntil > 0) RefuteCountdown(s.refuteUntil, s.refuteHold)
-                EqualRow(Modifier.padding(vertical = 6.dp)) {
-                    DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Coup précédent", vm::back, enabled = s.refute == null && s.cursor > 0)
-                    if (s.refute != null) DuckButton("Réessayer", vm::retry, Modifier.weight(1f), accent = c.red, filled = true, icon = Icons.AutoMirrored.Rounded.Undo)
-                    else if (s.solved) DuckButton("Problème aléatoire", vm::random, Modifier.weight(1f), accent = c.gold, filled = true, icon = Icons.Rounded.Casino)
-                    else HintButton(s.hintStage, vm::hint, Modifier.weight(1f), enabled = vm.canPlay(s))
-                    DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Coup suivant", vm::forward, enabled = s.refute == null && s.cursor < s.progress)
-                }
+            // Anti-spoiler : en mode libre (tous les thèmes ou une famille), le thème et son conseil
+            // restent masqués jusqu'à la résolution, sauf demande explicite.
+            val showTip = visible && s.refute == null && !s.solved && s.tone == Tone.INFO
+            FeedbackCard(
+                stuck ?: (s.message + if (showTip) "\n\nConseil : ${type.tip}" else ""),
+                if (stuck != null) Tone.GOLD else s.tone, Modifier.padding(top = 6.dp).weight(1f),
+                title = if (visible) "Type de problème : ${type.name}" else "Thème masqué (mode libre)",
+                action = if (!visible) ({
+                    DuckButton("Révéler le thème", vm::revealTheme, icon = Icons.Rounded.Visibility, accent = c.blue, variant = ButtonVariant.OUTLINED)
+                }) else null,
+            )
+            if (s.refute != null && s.refuteUntil > 0) RefuteCountdown(s.refuteUntil, s.refuteHold, vm::holdRefutation)
+            EqualRow(Modifier.padding(vertical = 6.dp)) {
+                DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Coup précédent", vm::back, enabled = s.refute == null && s.cursor > 0)
+                if (s.refute != null) DuckButton("Réessayer", vm::retry, Modifier.weight(1f), accent = c.red, filled = true, icon = Icons.AutoMirrored.Rounded.Undo)
+                else if (s.solved) DuckButton("Problème aléatoire", vm::random, Modifier.weight(1f), accent = c.gold, filled = true, icon = Icons.Rounded.Casino)
+                else HintButton(s.hintStage, vm::hint, Modifier.weight(1f), enabled = vm.canPlay(s))
+                DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Coup suivant", vm::forward, enabled = s.refute == null && s.cursor < s.progress)
             }
         },
     )
@@ -231,18 +224,28 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
     }
 }
 
-/** Compte à rebours visuel avant l'annulation automatique d'une réfutation. */
+/** Filtre actif du catalogue, en clair : « Intermédiaire · Clouage », « Libre · 12 résolus »… */
+private fun filterLabel(band: Int, theme: String, solved: Int): String {
+    val name = PuzzleThemes.byKey[theme]?.name ?: PuzzleThemes.groupOf(theme)
+    return if (name == null && band == 0) "Libre · ${fr(solved)} résolu${if (solved > 1) "s" else ""}"
+    else listOfNotNull(PuzzleThemes.BANDS[band].takeIf { band > 0 }, name ?: "Tous les thèmes").joinToString(" · ")
+}
+
+/** Compte à rebours visuel avant l'annulation automatique d'une réfutation ; le bouton pause le suspend. */
 @Composable
-private fun RefuteCountdown(until: Long, hold: Long) {
+private fun RefuteCountdown(until: Long, hold: Long, onHold: () -> Unit) {
     val c = LocalDuck.current
     val progress = remember(until) { Animatable(((until - System.currentTimeMillis()).toFloat() / hold).coerceIn(0f, 1f)) }
     LaunchedEffect(until) {
         val left = (until - System.currentTimeMillis()).coerceAtLeast(0)
         progress.animateTo(0f, tween(left.toInt(), easing = LinearEasing))
     }
-    LinearProgressIndicator(
-        progress = { progress.value }, color = c.redRole.fill, trackColor = c.surfaceHi,
-        modifier = Modifier.fillMaxWidth().padding(top = 6.dp).height(4.dp).clip(RoundedCornerShape(2.dp))
-            .semantics { contentDescription = "Annulation automatique du coup imminente" },
-    )
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        LinearProgressIndicator(
+            progress = { progress.value }, color = c.redRole.fill, trackColor = c.surfaceHi,
+            modifier = Modifier.weight(1f).height(4.dp).clip(RoundedCornerShape(2.dp))
+                .semantics { contentDescription = "Annulation automatique du coup imminente" },
+        )
+        DuckIconButton(Icons.Rounded.Pause, "Garder la position affichée", onHold, Modifier.padding(start = 8.dp))
+    }
 }

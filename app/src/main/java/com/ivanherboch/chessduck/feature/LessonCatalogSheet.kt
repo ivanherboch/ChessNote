@@ -47,16 +47,24 @@ import androidx.compose.ui.unit.dp
 import com.ivanherboch.chessduck.content.LessonCategory
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.ui.DuckChip
+import com.ivanherboch.chessduck.ui.InfoPill
 import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.SectionTitle
 
 /** Catalogue des leçons : recherche, statut (toutes / à maîtriser / maîtrisées) et catégorie. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun LessonCatalog(vm: AcademyViewModel, s: AcademyState, mastered: Set<Int>, onClose: () -> Unit) {
+internal fun LessonCatalog(
+    vm: AcademyViewModel,
+    s: AcademyState,
+    mastered: Set<Int>,
+    /** Filtre d'état (0 toutes, 1 à maîtriser, 2 maîtrisées), conservé par l'écran entre deux ouvertures. */
+    status: Int,
+    onStatus: (Int) -> Unit,
+    onClose: () -> Unit,
+) {
     val c = LocalDuck.current
     var query by remember { mutableStateOf("") }
-    var status by remember { mutableIntStateOf(0) }
     var cat by remember { mutableStateOf(s.filter) }
     val total = Lessons.all.size
     val q = normalizeForSearch(query.trim())
@@ -84,7 +92,7 @@ internal fun LessonCatalog(vm: AcademyViewModel, s: AcademyState, mastered: Set<
                 )
                 SectionTitle("Statut")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("Toutes", "À maîtriser", "Maîtrisées").forEachIndexed { i, label -> DuckChip(label, status == i, { status = i }, accent = c.blue) }
+                    listOf("Toutes", "À maîtriser", "Maîtrisées").forEachIndexed { i, label -> DuckChip(label, status == i, { onStatus(i) }, accent = c.blue) }
                 }
                 SectionTitle("Catégorie")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -98,7 +106,7 @@ internal fun LessonCatalog(vm: AcademyViewModel, s: AcademyState, mastered: Set<
                 if (items.isEmpty()) {
                     EmptyState(
                         Icons.Rounded.SearchOff, "Aucune leçon trouvée", "Essayez un autre mot ou retirez des filtres.",
-                        actionLabel = "Réinitialiser les filtres", onAction = { query = ""; status = 0; cat = null; vm.setFilter(null) },
+                        actionLabel = "Réinitialiser les filtres", onAction = { query = ""; onStatus(0); cat = null; vm.setFilter(null) },
                     )
                 }
             }
@@ -119,6 +127,7 @@ internal fun LessonCatalog(vm: AcademyViewModel, s: AcademyState, mastered: Set<
                     else Text("${item.id}", color = c.goldText, style = MaterialTheme.typography.labelLarge)
                 }
                 Column(Modifier.padding(start = 8.dp).weight(1f)) {
+                    if (current) InfoPill("En cours", accent = c.blue, modifier = Modifier.padding(bottom = 2.dp))
                     Text(item.title, color = c.text, style = MaterialTheme.typography.titleSmall)
                     Text(item.summary, color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }

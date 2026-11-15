@@ -346,8 +346,9 @@ class ViewModelsTest {
             reason = "abandon", eloBefore = 1200, eloAfter = 1216, moves = "e2e4 e7e5 g1f3",
         )
         vm.openReview(g)
-        assertTrue(vm.review.value!!.playing)
+        assertFalse(vm.review.value!!.playing) // la revue s'ouvre en pause, sur le résumé
         assertTrue(vm.review.value!!.flipped) // le joueur avait les Noirs
+        vm.toggle(); assertTrue(vm.review.value!!.playing)
         advanceTimeBy(1151); runCurrent()
         assertEquals(1, vm.review.value!!.cursor)
         vm.jump(3); assertEquals(3, vm.review.value!!.cursor); assertFalse(vm.review.value!!.playing)

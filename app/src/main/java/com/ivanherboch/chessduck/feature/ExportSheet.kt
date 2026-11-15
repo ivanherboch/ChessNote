@@ -60,6 +60,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import com.ivanherboch.chessduck.util.runCatchingSuspend
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.Dialog
 
 /** Choix segmenté d'un réglage d'export (format, fond). */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,11 +80,17 @@ internal fun ExportOption(label: String, options: List<Pair<String, Boolean>>, o
 @Composable
 internal fun ExportCard(
     title: String, description: String, accent: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, preview: ImageBitmap?,
-    masked: Boolean = false, enabled: Boolean = true, onShare: () -> Unit, onSave: () -> Unit,
+    masked: Boolean = false, enabled: Boolean = true,
+    /** Aperçu impossible à générer : message à la place du chargement. */
+    failed: Boolean = false,
+    /** Cette image est en cours de préparation pour le partage. */
+    busy: Boolean = false,
+    onShare: () -> Unit, onSave: () -> Unit,
 ) {
     val c = LocalDuck.current
     // Anti-spoiler : l'aperçu de la solution reste caché tant que le problème n'est pas résolu.
     var reveal by remember { mutableStateOf(false) }
+    var zoom by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().padding(vertical = 5.dp).clip(RoundedCornerShape(DuckRadius.L)).background(c.surface).padding(12.dp)) {
         Row(verticalAlignment = Alignment.Top) {
             Box(Modifier.width(96.dp).height(120.dp).clip(RoundedCornerShape(DuckRadius.S)).background(c.surfaceHi), contentAlignment = Alignment.Center) {
@@ -93,7 +103,15 @@ internal fun ExportCard(
                         Text("Toucher pour voir", color = c.muted, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 4.dp, start = 4.dp, end = 4.dp))
                     }
                 } else if (preview != null) {
-                    androidx.compose.foundation.Image(preview, contentDescription = "Aperçu : $title", contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize())
+                    androidx.compose.foundation.Image(
+                        preview, contentDescription = "Aperçu : $title", contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize().clickable(onClickLabel = "Agrandir l'aperçu") { zoom = true },
+                    )
+                } else if (failed) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Rounded.ErrorOutline, contentDescription = null, tint = c.redText, modifier = Modifier.size(24.dp))
+                        Text("Aperçu indisponible", color = c.muted, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, modifier = Modifier.padding(4.dp))
+                    }
                 } else {
                     CircularProgressIndicator(Modifier.size(22.dp), color = c.role(accent).fill, strokeWidth = 2.dp)
                 }
@@ -107,8 +125,22 @@ internal fun ExportCard(
             }
         }
         EqualRow(gap = 8.dp, modifier = Modifier.padding(top = 10.dp)) {
-            DuckButton("Partager", onShare, Modifier.weight(1f), enabled = enabled, accent = accent, filled = true, icon = Icons.Rounded.Share, contentDescription = "Partager : $title")
+            DuckButton(
+                if (busy) "Préparation…" else "Partager", onShare, Modifier.weight(1f), enabled = enabled, accent = accent, filled = true,
+                icon = Icons.Rounded.Share, contentDescription = if (busy) "Préparation de l'image : $title" else "Partager : $title",
+            )
             DuckButton("Enregistrer", onSave, Modifier.weight(1f), enabled = enabled, accent = accent, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Download, contentDescription = "Enregistrer dans la galerie : $title")
+        }
+    }
+    // Aperçu plein écran : toucher n'importe où le referme.
+    if (zoom && preview != null) {
+        Dialog({ zoom = false }, DialogProperties(usePlatformDefaultWidth = false)) {
+            Box(
+                Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.85f)).clickable(onClickLabel = "Fermer l'aperçu") { zoom = false }.padding(16.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                androidx.compose.foundation.Image(preview, contentDescription = "Aperçu agrandi : $title", contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize())
+            }
         }
     }
 }
@@ -141,24 +173,34 @@ internal fun ExportSheet(
         val setStyle = { v: ShareStyle -> styleOrNull = v; saveStyle(v) }
         // Aperçus calculés hors du fil principal, recalculés à chaque changement de réglage ;
         // la clé (style, problème) permet de réutiliser le bitmap à l'export s'il correspond encore.
-        val problemShot by produceState<Pair<Any, Bitmap>?>(null, styleOrNull, p.id) {
+        // Un rendu en échec donne (clé, null) : l'aperçu affiche alors « indisponible » au lieu de tourner sans fin.
+        val problemShot by produceState<Pair<Any, Bitmap?>?>(null, styleOrNull, p.id) {
             if (styleOrNull == null) return@produceState
             val key = style to p.id
-            value = key to withContext(Dispatchers.Default) { ShareCard.render(context, p, line.positions[1], playerWhite, line.moves[0], style) }
+            value = key to withContext(Dispatchers.Default) { runCatching { ShareCard.render(context, p, line.positions[1], playerWhite, line.moves[0], style) }.getOrNull() }
         }
-        val solutionShot by produceState<Pair<Any, Bitmap>?>(null, styleOrNull, p.id) {
+        val solutionShot by produceState<Pair<Any, Bitmap?>?>(null, styleOrNull, p.id) {
             if (styleOrNull == null) return@produceState
             val key = style to p.id
-            value = key to withContext(Dispatchers.Default) { ShareCard.renderSolution(context, p, style) }
+            value = key to withContext(Dispatchers.Default) { runCatching { ShareCard.renderSolution(context, p, style) }.getOrNull() }
         }
         val key = style to p.id
-        val problemReady = problemShot?.takeIf { it.first == key }?.second
-        val solutionReady = solutionShot?.takeIf { it.first == key }?.second
+        val problemDone = problemShot?.takeIf { it.first == key }
+        val solutionDone = solutionShot?.takeIf { it.first == key }
+        val problemReady = problemDone?.second
+        val solutionReady = solutionDone?.second
         val problemPreview = remember(problemReady) { problemReady?.asImageBitmap() }
         val solutionPreview = remember(solutionReady) { solutionReady?.asImageBitmap() }
         val failed = false to "L'image n'a pas pu être enregistrée."
+        val shareFailed = false to "L'image n'a pas pu être préparée pour le partage. Réessayez."
+        // Image en cours de partage (0 aucune, 1 problème, 2 solution) : le tiroir reste ouvert jusqu'au sélecteur.
+        var sharing by remember { mutableIntStateOf(0) }
         // Export lancé dans la portée de l'écran (survit à la fermeture du tiroir), un seul à la fois.
         fun export(block: suspend () -> Unit) = onExport(block)
+        fun share(which: Int, send: suspend () -> Boolean) {
+            status = null; sharing = which
+            export { val ok = runCatchingSuspend { send() }.getOrDefault(false); sharing = 0; if (ok) onClose() else status = shareFailed }
+        }
         ExportOption("Format", listOf("Portrait 4:5" to (style.format == ShareFormat.PORTRAIT), "Carré 1:1" to (style.format == ShareFormat.SQUARE))) { i ->
             setStyle(style.copy(format = if (i == 0) ShareFormat.PORTRAIT else ShareFormat.SQUARE))
         }
@@ -170,15 +212,15 @@ internal fun ExportSheet(
         ExportOption("Fond", listOf("Sombre" to !style.light, "Clair" to style.light)) { i -> setStyle(style.copy(light = i == 1)) }
         ExportCard(
             "Le problème", "L'énoncé seul : le défi, l'échiquier, la difficulté et un indice — sans la solution.", c.blue, Icons.Rounded.Extension, problemPreview,
-            enabled = !exporting,
-            onShare = { onClose(); export { ShareCard.share(context, p, line.positions[1], playerWhite, line.moves[0], style, problemReady) } },
-            onSave = { export { status = ShareCard.saveProblem(context, p, line.positions[1], playerWhite, line.moves[0], style, problemReady)?.let { true to it } ?: failed } },
+            enabled = !exporting, failed = problemDone != null && problemReady == null, busy = exporting && sharing == 1,
+            onShare = { share(1) { ShareCard.share(context, p, line.positions[1], playerWhite, line.moves[0], style, problemReady) } },
+            onSave = { status = null; export { status = ShareCard.saveProblem(context, p, line.positions[1], playerWhite, line.moves[0], style, problemReady)?.let { true to it } ?: failed } },
         )
         ExportCard(
             "La solution", "Une carte par coup : flèches, échecs (+), mat (#), pièces prises et conclusion.", c.green, Icons.Rounded.CheckCircle, solutionPreview, masked = !solved,
-            enabled = !exporting,
-            onShare = { onClose(); export { ShareCard.shareSolution(context, p, style, solutionReady) } },
-            onSave = { export { status = ShareCard.saveSolution(context, p, style, solutionReady)?.let { true to it } ?: failed } },
+            enabled = !exporting, failed = solutionDone != null && solutionReady == null, busy = exporting && sharing == 2,
+            onShare = { share(2) { ShareCard.shareSolution(context, p, style, solutionReady) } },
+            onSave = { status = null; export { status = ShareCard.saveSolution(context, p, style, solutionReady)?.let { true to it } ?: failed } },
         )
         status?.let { (ok, msg) ->
             Row(Modifier.padding(top = 4.dp, bottom = 6.dp).semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }, verticalAlignment = Alignment.CenterVertically) {

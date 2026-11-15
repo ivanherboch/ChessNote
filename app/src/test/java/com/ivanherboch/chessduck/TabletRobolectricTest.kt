@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck
 
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onAllNodesWithText
 import android.os.Looper
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.hasProgressBarRangeInfo
@@ -102,8 +104,8 @@ class TabletRobolectricTest {
         rule.onNodeWithText("Jeu Libre").performClick(); settle(2000); shot("t4_jeu")
         seedGame()
         rule.onNodeWithContentDescription("Historique des parties").performClick(); settle(1200)
-        rule.onNodeWithText("Rejouer sur l’échiquier").performClick(); settle(400)
-        rule.onNodeWithText("Pause").performClick(); settle(400)
+        rule.onAllNodesWithText("Revue commentée").onFirst().performClick(); settle(400)
+        rule.onNodeWithText("Lecture").assertExists() // ouverte en pause
         rule.onNodeWithText("Bc4").performClick(); settle(800); shot("t8_revue")
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1000)
         rule.onNodeWithContentDescription("Paramètres").performClick(); settle(800); shot("t7_parametres")

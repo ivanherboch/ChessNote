@@ -35,7 +35,6 @@ object PieceLexiconFr {
     /** Pronom complément : « le », « la ». */
     fun pronoun(type: Int): String = if (isFeminine(type)) "la" else "le"
 
-    /** Possessif à la 2ᵉ personne (« ta dame ») ou à la 3ᵉ (« son fou »). */
-    fun possessive(type: Int, secondPerson: Boolean): String =
-        (if (secondPerson) (if (isFeminine(type)) "ta " else "ton ") else (if (isFeminine(type)) "sa " else "son ")) + name(type)
+    /** Possessif à la 3ᵉ personne : « sa dame », « son fou ». */
+    fun possessive(type: Int): String = (if (isFeminine(type)) "sa " else "son ") + name(type)
 }

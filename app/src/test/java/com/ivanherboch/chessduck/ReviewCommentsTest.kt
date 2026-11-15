@@ -31,7 +31,7 @@ class ReviewCommentsTest {
         val (text, tone) = ReviewComments.comment(record(true, true, "Ivan", "🤖 Ordinateur"), line, 4, analysis)
         assertEquals(Tone.BAD, tone)
         assertTrue(text, text.startsWith("Gaffe · Ivan (Blancs)"))
-        assertTrue(text, "tu exposes ta dame" in text && "Kxf7" in text)
+        assertTrue(text, "vous exposez votre dame" in text && "Kxf7" in text)
         assertTrue(text, "L'ordinateur (Noirs) a maintenant un avantage décisif" in text)
         // Aucune évaluation chiffrée, aucune référence à ce que « l'ordinateur préférait ».
         assertFalse(text, "Évaluation" in text || "préférait" in text)
@@ -42,7 +42,7 @@ class ReviewCommentsTest {
         val (text, _) = ReviewComments.comment(record(true, false, "🤖 Ordinateur", "Ivan"), line, 4, analysis)
         assertTrue(text, text.startsWith("Gaffe · L'ordinateur (Blancs)"))
         assertTrue(text, "il expose sa dame" in text)
-        assertFalse(text, " tu " in text)
+        assertFalse(text, " vous " in text)
     }
 
     @Test
@@ -66,7 +66,7 @@ class ReviewCommentsTest {
         val m = Line.fromSan("6k1/5ppp/8/8/8/8/8/3R2K1 w - - 0 1", listOf("Kf2"))
         val (mate, tone) = ReviewComments.comment(record(false, true, "Ivan", "Léa"), m, 0, listOf(Analysis(100000 - 1, null, "d1d8"), Analysis(500, null, "g7g6")))
         assertEquals(Tone.BAD, tone)
-        assertTrue(mate, mate.startsWith("⚠️ Mat en 1 manqué · Ivan (Blancs) : tu pouvais") && "Rd8#" in mate)
+        assertTrue(mate, mate.startsWith("⚠️ Mat en 1 manqué · Ivan (Blancs) : vous pouviez") && "Rd8#" in mate)
         val (far, _) = ReviewComments.comment(record(false, true, "Ivan", "Léa"), m, 0, listOf(Analysis(100000 - 5, null, "d1d8"), Analysis(500, null, "g7g6")))
         assertFalse(far, "Mat en" in far)
     }
