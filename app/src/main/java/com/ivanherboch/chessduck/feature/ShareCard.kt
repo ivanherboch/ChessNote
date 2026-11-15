@@ -3,15 +3,9 @@ package com.ivanherboch.chessduck.feature
 import com.ivanherboch.chessduck.ui.BoardGeometry
 import com.ivanherboch.chessduck.data.Settings
 import com.ivanherboch.chessduck.chess.PieceLexiconFr
-import com.ivanherboch.chessduck.util.runCatchingSuspend
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
-import android.content.ContentValues
 import android.content.Context
-import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -23,7 +17,6 @@ import android.graphics.RadialGradient
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
-import androidx.core.content.FileProvider
 import com.ivanherboch.chessduck.R
 import com.ivanherboch.chessduck.chess.BLACK
 import com.ivanherboch.chessduck.chess.Line
@@ -38,13 +31,7 @@ import com.ivanherboch.chessduck.chess.sqName
 import com.ivanherboch.chessduck.content.PuzzleThemes
 import com.ivanherboch.chessduck.data.Puzzle
 import com.ivanherboch.chessduck.ui.PIECE_RES
-import java.io.File
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.abs
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.sqrt
 
 /** Format de l'image : portrait 4:5 (WhatsApp, fil Instagram) ou carré 1:1 (publication Instagram). */
 enum class ShareFormat(val height: Int, val label: String) { PORTRAIT(1350, "Portrait 4:5"), SQUARE(1080, "Carré 1:1") }
@@ -463,7 +450,6 @@ object ShareCard {
 
     // ---------------------------------------------------------------- Solution
 
-
     /** Phrase décrivant un coup : pièce, prise éventuelle, case, promotion, échec ou mat. */
     fun describe(p: Position, m: Move, san: String): String {
         val sb = StringBuilder()
@@ -636,71 +622,7 @@ object ShareCard {
     private fun replyText(st: Step) =
         "Réponse : ${st.replySan} — ${describe(st.before.play(st.move), st.reply!!, st.replySan!!).replaceFirstChar { it.lowercase() }}"
 
-    // ---------------------------------------------------------------- Envoi
-
-    /** Durée de vie des PNG temporaires de partage (le temps que l'application destinataire les lise). */
-    private const val SHARE_CACHE_TTL_MS = 60 * 60 * 1000L
-
-    /** Supprime les PNG de partage périmés pour éviter que le cache ne grossisse indéfiniment. */
-    private fun purgeShareCache(dir: File, now: Long = System.currentTimeMillis()) {
-        dir.listFiles()?.forEach { f -> if (now - f.lastModified() > SHARE_CACHE_TTL_MS) f.delete() }
-    }
-
-    /**
-     * Compression PNG et écriture sur Dispatchers.IO, puis ouverture du sélecteur de partage sur le fil principal.
-     * Renvoie faux si l'image n'a pas pu être préparée.
-     */
-    private suspend fun send(context: Context, bmp: Bitmap, name: String, text: String, chooser: String): Boolean {
-        val uri = withContext(Dispatchers.IO) {
-            runCatchingSuspend {
-                val dir = File(context.cacheDir, "share").apply { mkdirs() }
-                purgeShareCache(dir)
-                val file = File(dir, name)
-                file.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
-                FileProvider.getUriForFile(context, "${context.packageName}.share", file)
-            }.getOrNull()
-        } ?: return false
-        return withContext(Dispatchers.Main) {
-            runCatching {
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "image/png"
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    putExtra(Intent.EXTRA_TEXT, text)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                context.startActivity(Intent.createChooser(intent, chooser).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            }.isSuccess
-        }
-    }
-
-    /**
-     * Enregistre l'image dans la galerie (Images/ChessDuck), sur Dispatchers.IO.
-     * Renvoie un message de confirmation, ou null en cas d'échec.
-     * Android 10+ : MediaStore, sans aucune permission. Versions antérieures : dossier d'images de l'application.
-     */
-    private suspend fun save(context: Context, bmp: Bitmap, name: String): String? = withContext(Dispatchers.IO) {
-        runCatchingSuspend {
-            if (Build.VERSION.SDK_INT >= 29) {
-                val values = ContentValues().apply {
-                    put(MediaStore.Images.Media.DISPLAY_NAME, name)
-                    put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-                    put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/ChessDuck")
-                    put(MediaStore.Images.Media.IS_PENDING, 1)
-                }
-                val resolver = context.contentResolver
-                val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return@runCatchingSuspend null
-                resolver.openOutputStream(uri)?.use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) } ?: return@runCatchingSuspend null
-                values.clear(); values.put(MediaStore.Images.Media.IS_PENDING, 0)
-                resolver.update(uri, values, null, null)
-                "Image enregistrée dans la galerie (Images/ChessDuck)."
-            } else {
-                val dir = File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "ChessDuck").apply { mkdirs() }
-                val file = File(dir, name)
-                file.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
-                "Image enregistrée : ${file.absolutePath}"
-            }
-        }.getOrNull()
-    }
+    // ---------------------------------------------------------------- Envoi (voir ShareExporter)
 
     /** Image de l'énoncé : réutilise [ready] (aperçu déjà calculé) sinon la génère sur Dispatchers.Default. */
     private suspend fun problemBitmap(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle, ready: Bitmap?) =
@@ -710,17 +632,17 @@ object ShareCard {
         ready ?: withContext(Dispatchers.Default) { renderSolution(context, puzzle, style) }
 
     suspend fun saveProblem(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle(), ready: Bitmap? = null): String? =
-        save(context, problemBitmap(context, puzzle, position, playerWhite, lastMove, style, ready), "chessduck-${puzzle.id}.png")
+        ShareExporter.save(context, problemBitmap(context, puzzle, position, playerWhite, lastMove, style, ready), "chessduck-${puzzle.id}.png")
 
     suspend fun saveSolution(context: Context, puzzle: Puzzle, style: ShareStyle = ShareStyle(), ready: Bitmap? = null): String? =
-        save(context, solutionBitmap(context, puzzle, style, ready), "chessduck-${puzzle.id}-solution.png")
+        ShareExporter.save(context, solutionBitmap(context, puzzle, style, ready), "chessduck-${puzzle.id}-solution.png")
 
     suspend fun share(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle(), ready: Bitmap? = null): Boolean =
-        send(
+        ShareExporter.send(
             context, problemBitmap(context, puzzle, position, playerWhite, lastMove, style, ready), "chessduck-${puzzle.id}.png",
             challenge(puzzle, Line.fromUci(puzzle.fen, puzzle.moves), playerWhite) + ". Saurez-vous trouver la solution ?", "Partager le problème",
         )
 
     suspend fun shareSolution(context: Context, puzzle: Puzzle, style: ShareStyle = ShareStyle(), ready: Bitmap? = null): Boolean =
-        send(context, solutionBitmap(context, puzzle, style, ready), "chessduck-${puzzle.id}-solution.png", "Solution du problème Lichess #${puzzle.id}", "Partager la solution")
+        ShareExporter.send(context, solutionBitmap(context, puzzle, style, ready), "chessduck-${puzzle.id}-solution.png", "Solution du problème Lichess #${puzzle.id}", "Partager la solution")
 }

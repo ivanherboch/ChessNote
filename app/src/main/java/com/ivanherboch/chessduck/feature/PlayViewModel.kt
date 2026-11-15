@@ -36,18 +36,6 @@ data class GameResult(val text: String, val tone: Tone)
 const val COMPUTER = "🤖 Ordinateur"
 
 @Immutable
-data class Review(
-    val record: GameRecord,
-    val line: Line,
-    val cursor: Int = 0,
-    val playing: Boolean = true,
-    val analysis: List<Analysis?>,
-    val flipped: Boolean,
-    val evalOn: Boolean = true,
-    val anim: BoardAnim? = null,
-)
-
-@Immutable
 data class PlayState(
     val line: Line = Line(START_FEN),
     val cursor: Int = 0,

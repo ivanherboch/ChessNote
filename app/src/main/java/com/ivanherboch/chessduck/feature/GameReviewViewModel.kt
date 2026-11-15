@@ -11,6 +11,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.Immutable
+import com.ivanherboch.chessduck.ui.BoardAnim
+import kotlinx.coroutines.flow.first
+
+@Immutable
+data class Review(
+    val record: GameRecord,
+    val line: Line,
+    val cursor: Int = 0,
+    val playing: Boolean = true,
+    val analysis: List<Analysis?>,
+    val flipped: Boolean,
+    val evalOn: Boolean = true,
+    val anim: BoardAnim? = null,
+)
 
 /**
  * Revue commentée d'une partie de l'historique : lecture automatique, navigation coup par coup,
