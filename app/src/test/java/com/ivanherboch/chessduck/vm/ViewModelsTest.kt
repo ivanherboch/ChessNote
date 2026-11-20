@@ -490,11 +490,38 @@ class ViewModelsTest {
         assertEquals(com.ivanherboch.chessduck.chess.PAWN, com.ivanherboch.chessduck.chess.pieceType(vm.state.value.tentative!!.position[com.ivanherboch.chessduck.chess.sqFromName("d4")]))
         advanceUntilIdle()
         assertNull(vm.state.value.tentative)
-        // … mais aussi bon : accepté, la leçon poursuit avec son propre coup, puis la réponse adverse est commentée.
+        // … mais aussi bon : pas d'erreur, et rien n'est joué à la place de l'élève. La position revient et une flèche
+        // verte montre le coup de la leçon, que l'élève joue lui-même.
         assertEquals(0, vm.state.value.errors)
-        assertTrue(vm.state.value.message.startsWith("Bon coup aussi ! La leçon poursuit avec ${l.line.sans[0]}"))
+        assertEquals(0, vm.state.value.cursor)
+        assertEquals(l.line.moves[0], vm.state.value.suggest)
+        assertTrue(vm.state.value.message.contains("aussi bon"))
+        assertTrue(vm.challengeMove(l.line.moves[0]))
+        advanceUntilIdle()
+        assertNull(vm.state.value.suggest)
         assertTrue(vm.state.value.message.contains("Réponse ${l.line.sans[1]} : ${l.texts[1]}"))
         assertEquals(2, vm.state.value.cursor)
+    }
+
+    /** Cas signalé : Rh5+ au lieu de Ra5+ (même escalier, de l'autre côté) ; la tour ne doit pas revenir pendant que l'autre joue. */
+    @Test
+    fun academyMirroredMoveIsPraisedThenTheLessonMoveIsAsked() = test {
+        val engine = FakeEngine()
+        val vm = academy(engine = engine)
+        advanceUntilIdle()
+        val l = Lessons.all.first { it.drill == "KRRK" }
+        vm.open(l.id)
+        vm.setChallenge(true)
+        advanceUntilIdle()
+        val pos = l.line.positions[0]
+        val rh5 = Move.fromUci("h1h5")
+        engine.scripted[pos.toFen().split(' ').take(4).joinToString(" ")] =
+            SearchResult(l.line.moves[0], listOf(PvLine(l.line.moves[0], com.ivanherboch.chessduck.engine.MATE - 9), PvLine(rh5, com.ivanherboch.chessduck.engine.MATE - 9)))
+        assertFalse(vm.challengeMove(rh5))
+        advanceUntilIdle()
+        assertEquals(0, vm.state.value.cursor) // la tour a1 n'a pas été jouée à la place de l'élève
+        assertEquals(0, vm.state.value.errors)
+        assertEquals(l.line.moves[0], vm.state.value.suggest)
     }
 
     @Test

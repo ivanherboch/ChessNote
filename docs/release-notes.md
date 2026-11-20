@@ -1,3 +1,9 @@
+## ChessDuck 2.7.2 — un bon coup différent n'est plus remplacé en silence
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Défi et arrêts « À vous » : un coup aussi bon que celui de la leçon, mais différent (par exemple Rh5+ au lieu de Ra5+ dans le mat avec deux tours), est félicité, sans erreur ni étoile perdue. Puis la position revient : une flèche verte montre le coup de la leçon, et c'est vous qui le jouez. L'application ne joue plus le coup de la leçon à votre place.
+
 ## ChessDuck 2.7.1 — le Défi suit la méthode de la leçon
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

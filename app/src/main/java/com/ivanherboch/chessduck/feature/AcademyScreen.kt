@@ -230,6 +230,7 @@ fun AcademyScreen(
                         anim = s.anim,
                         arrows = when {
                             r?.arrow != null -> listOf(r.arrow.copy(color = c.red))
+                            (heroTurn || asking) && s.suggest != null -> s.suggest!!.let { listOf(Arrow(it.from, it.to, c.green)) }
                             heroTurn && s.hintStage >= 2 && next != null -> listOf(Arrow(next.from, next.to, c.green))
                             !s.challenge -> listOfNotNull(last?.let { Arrow(it.from, it.to, c.blue) }) +
                                 (visuals?.arrows ?: emptyList()).map { (f, t) -> Arrow(f, t, c.red) }
