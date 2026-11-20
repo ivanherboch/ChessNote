@@ -289,3 +289,119 @@ Re1+ : La tour noire donne échec sur la première rangée.
 -? La dame va en a7 et donne échec au roi h7 le long de la septième rangée. En même temps, elle attaque le cavalier b8 : c'est une fourchette.
 - Le roi doit s'échapper. Les Noirs n'ont pas le temps de sauver leur cavalier.
 -? La dame prend le cavalier, avec échec. À retenir : cherchez les coups qui donnent échec tout en attaquant une pièce non protégée.
+
+# Contre-exemple : la reprise automatique punie | Reprendre une pièce semble souvent obligatoire. Pourtant, un coup plus fort existe parfois, par exemple un échec. Voici le coup naturel puni. | PUZZLE fOrC3 | id=139 theme=intermezzo level=3 order=3139
+- Les Blancs prennent le fou e7 avec leur fou : un échange naturel. Mais ils ont oublié la case f2, attaquée par la dame b6 et par le cavalier g4.
+-? Au lieu de reprendre le fou, la dame prend le pion f2 avec échec. Elle est protégée par le cavalier g4.
+- Le roi blanc est obligé de monter en d2.
+-? La dame donne encore échec en e3. Le roi blanc est pris dans un filet et les Noirs récupèreront largement leur fou. À retenir : avant de reprendre par réflexe, cherchez s'il existe un coup plus fort, surtout un échec.
+
+# Contre-exemple : la prise qui ouvre une ligne | Une prise peut libérer une ligne pour une pièce adverse. Avant de prendre, regardez quelle pièce reprendra et ce qu'elle attaquera ensuite. | PUZZLE 5WG2H | id=140 theme=fork level=3 order=3140
+- Les Noirs prennent le fou d5 avec leur cavalier. La prise semble gagner une pièce.
+-? La dame reprend en d5. Depuis cette case, elle attaque la tour a8, restée sans protection.
+- Les Noirs prennent le cavalier f3 pour compenser.
+-? La dame prend la tour a8 avec échec. Les Blancs gagnent une tour entière. À retenir : avant chaque prise, demandez-vous quelle pièce adverse va reprendre et ce qu'elle attaquera depuis sa nouvelle case.
+
+# Le pion empoisonné | Un pion offert loin de chez soi peut être un piège : la dame qui le prend risque de se retrouver enfermée. | PUZZLE tm8fT | id=141 theme=trappedPiece level=3 order=3141
+- La dame blanche prend le pion b7. Elle s'aventure au fond du camp noir, avec peu de cases de retraite.
+-? La tour a6 se place en b6 et attaque la dame. Toutes les cases de fuite de la dame sont contrôlées : elle est enfermée.
+- Faute de mieux, la dame prend la tour.
+-? Le pion c7 reprend la dame. Les Noirs gagnent la dame contre une tour. À retenir : avant d'envoyer votre dame chercher un pion dans le camp adverse, vérifiez qu'elle pourra revenir.
+
+# La surcharge | Une pièce surchargée doit défendre deux choses à la fois. Attaquez l'une : elle ne pourra plus protéger l'autre. | w | id=142 theme=deflection level=3 order=3142
+FEN: 4r1k1/pp3ppp/8/Q3b3/1n6/7P/PP3PP1/4R1K1 w - - 0 1
+SHOW 0: marks=e8,e5,d8
+?Rxe5 : La tour e8 a deux missions : protéger le fou e5 et garder la dernière rangée. La tour blanche prend le fou.
+Rxe5 : Si la tour reprend, elle abandonne la dernière rangée.
+?Qd8+ : La dame donne échec sur la huitième rangée, devenue sans défense.
+Re8 : La tour revient s'interposer, trop tard.
+?Qxe8# : La dame prend la tour : échec et mat. À retenir : repérez les pièces adverses qui défendent deux choses à la fois. Forcez-les à choisir.
+
+# Le moulin | Une tour et un fou alternent échec simple et échec à la découverte. À chaque tour du moulin, la tour prend une pièce sans que l'adversaire ne puisse réagir. | w | id=143 theme=discoveredCheck level=4 order=4143
+FEN: r4nk1/pp3pR1/5B2/7q/8/8/PP3PPP/6K1 b - - 0 1
+SHOW 0: marks=f6,g7 arrows=f6h8
+Kh8 : La tour g7 donne échec, protégée par le fou f6. Le roi n'a qu'une case : h8.
+?Rxf7+ : La tour prend le pion f7. En quittant la case g7, elle démasque le fou f6 : échec à la découverte.
+Kg8 : Le roi doit revenir en g8.
+?Rg7+ : La tour revient en g7 avec échec. Le moulin recommence.
+Kh8 : Le roi retourne en h8.
+?Rxb7+ : Nouvel échec à la découverte : la tour prend le pion b7.
+Kg8 : Le roi revient.
+?Rg7+ : La tour retourne en g7.
+Kh8 : Le roi n'a toujours qu'une case.
+?Rg5+ : Cette fois, la tour descend en g5 : échec à la découverte, et elle attaque la dame h5.
+Kh7 : Le roi s'échappe en h7.
+?Rxh5+ : La tour prend la dame. À retenir : le moulin fonctionne quand une pièce peut donner échec à la découverte encore et encore. Chaque tour de moulin gagne du matériel.
+
+# Le desperado | Quand une pièce attaquée risque d'être perdue, faites-la payer le plus cher possible : prenez quelque chose avec elle avant qu'elle ne disparaisse. | PUZZLE 1rnyc | id=144 theme=attackingF2F7 level=4 order=4144
+- Le pion b avance et attaque le fou c4. Avant de le reculer, regardez si ce fou peut se vendre cher.
+-? Le fou prend le pion f7 avec échec. Il se sacrifie pour attirer la dame noire sur la case f7.
+- La dame f8 reprend le fou.
+-? La dame b3 prend la dame f7 avec échec : le fou a libéré la diagonale. Après la reprise du roi, les Blancs auront échangé les dames, gagné un pion et privé le roi noir du roque. À retenir : une pièce attaquée peut parfois rapporter plus en prenant qu'en reculant. C'est le desperado.
+
+# L'échec perpétuel | Quand on est en grand danger, une série d'échecs sans fin peut sauver la partie : la position se répète et la partie est nulle. | w | id=145 theme=defensiveMove level=3 order=3145
+FEN: 8/5ppk/6p1/8/3Q4/8/rrq3PP/7K w - - 0 1
+SHOW 0: marks=g2,b1
+?Qh4+ : Les Noirs menacent de mater en g2 ou en b1, et ils ont beaucoup plus de matériel. La seule chance des Blancs : donner échec sans arrêt. La dame donne échec sur la colonne h.
+Kg8 : Le roi s'échappe en g8.
+?Qd8+ : La dame donne échec sur la huitième rangée. Le roi n'a que la case h7.
+Kh7 : Le roi revient en h7.
+?Qh4+ : Encore un échec : la même position revient.
+Kg8 : Le roi ne peut pas s'échapper.
+?Qd8+ : La position se répète une troisième fois : la partie est nulle. À retenir : quand vous êtes perdu, cherchez un échec perpétuel. Si le roi adverse ne peut pas échapper aux échecs, la partie est nulle.
+
+# Le pat sauveur | Un camp qui n'a plus aucun coup légal, sans être en échec, est pat. Celui qui perd peut chercher à se débarrasser de ses dernières pièces pour obtenir la nulle. | b | id=146 theme=defensiveMove level=4 order=4146
+FEN: k7/p1K5/P7/8/q7/8/8/2Q5 b - - 0 1
+SHOW 0: marks=a8,b8,b7
+?Qc4+ : Le roi noir n'a aucune case et son pion est bloqué. Si la dame disparaît, les Noirs n'auront plus aucun coup. La dame se sacrifie donc avec échec.
+Qxc4 : Les Blancs prennent la dame. Le roi noir n'est pas en échec, mais il n'a plus aucun coup légal : c'est pat, la partie est nulle. À retenir : dans une position perdue, cherchez à vous débarrasser de vos dernières pièces mobiles. Le pat transforme une défaite en nulle.
+
+# Le sacrifice grec | Le fou se sacrifie en h7 pour ouvrir le roque. Le cavalier en g5 et la dame en h5 arrivent ensuite pour l'attaque de mat. | PUZZLE 33fsU | id=147 theme=kingsideAttack level=4 order=4147
+- Les Noirs attaquent le fou d3 avec leur pion c. Mais ce fou a une meilleure case : h7, au cœur du roque noir.
+-? Le sacrifice grec ! Le fou prend le pion h7 avec échec.
+- Le roi prend le fou.
+-? Le cavalier saute en g5 avec échec. Il contrôle la case h7.
+- Le roi recule en g8, la retraite la plus prudente.
+-? La dame arrive en h5 et menace le mat en h7. Les Noirs n'ont pas de défense suffisante. À retenir : le sacrifice grec réussit quand le cavalier peut venir en g5 et la dame en h5, et qu'aucune pièce noire ne défend la case h7.
+
+# Le double sacrifice des fous | Deux fous sacrifiés de suite démolissent l'abri du roi. Lasker inventa ce motif en 1889 contre Bauer. | PUZZLE b2Wyq | id=148 theme=sacrifice level=5 order=5148
+- Le cavalier blanc saute en d4. Mais en quittant la case f3, il ne protège plus le pion h2 et libère la grande diagonale vers le pion g2.
+-? Premier sacrifice : le fou d6 prend le pion h2 avec échec.
+- Le roi blanc s'écarte en h1.
+-? Second sacrifice : le fou c6 prend le pion g2 avec échec. En quittant c6, il ouvre aussi la colonne c entre la dame noire et la dame blanche.
+- Le roi prend le fou.
+-? La dame prend la dame c4. Les Noirs ont donné deux fous contre une dame et deux pions, et le roi blanc est à découvert. À retenir : deux fous qui visent le roque peuvent se sacrifier l'un après l'autre pour détruire la protection du roi.
+
+# Le mat de Greco | Un fou contrôle la case de fuite du roi en coin ; une pièce lourde donne le mat sur la colonne ouverte. | w | id=149 theme=mateIn2 level=3 order=3149
+FEN: 5r1k/6pp/8/8/2B5/7R/q4PPP/3Q2K1 w - - 0 1
+SHOW 0: marks=g8 arrows=c4g8
+?Rxh7+ : La tour se sacrifie en prenant le pion h7 avec échec. Le fou c4 interdit déjà la case g8 au roi.
+Kxh7 : Le roi est obligé de prendre la tour.
+?Qh5# : La dame donne échec sur la colonne h. La case g8 est tenue par le fou, la case g6 par la dame : c'est mat. À retenir : un fou sur la diagonale qui mène à g8 et une colonne h ouverte suffisent pour mater un roi réfugié dans le coin.
+
+# Le mat de Damiano | La dame mate en h7, protégée par un pion en g6. Souvent, une tour se sacrifie d'abord pour ouvrir la colonne h. | w | id=150 theme=mateIn3 level=3 order=3150
+FEN: rq3rk1/5p2/5PP1/8/8/7R/4QPPP/6K1 w - - 0 1
+SHOW 0: marks=h7,g7
+?Rh8+ : La tour se sacrifie en h8 pour attirer le roi dans le coin.
+Kxh8 : Le roi est obligé de prendre : la case g7 est tenue par le pion f6, la case h7 par le pion g6.
+?Qh5+ : La dame arrive sur la colonne h avec échec.
+Kg8 : Le roi revient en g8.
+?Qh7# : La dame se pose en h7, protégée par le pion g6 : c'est le mat de Damiano. À retenir : un pion avancé en g6 soutient la dame en h7. Une colonne h ouverte suffit alors pour mater.
+
+# Le mat de Lolli | La dame mate en g7, protégée par un pion en f6. Ce pion avancé est un poignard planté dans le roque adverse. | PUZZLE Lui0p | id=151 theme=mateIn2 level=3 order=3151
+- Les Noirs prennent la tour c6 avec leur dame. Mais leur roi g8 n'est plus défendu que par le fou g7.
+-? La tour prend le fou g7 avec échec et ouvre la route à la dame h6.
+- La tour noire reprend en g7.
+-? La dame prend la tour g7 : elle est protégée par le pion f6, et le roi n'a aucune case. C'est le mat de Lolli. À retenir : un pion en f6 et une dame qui atteint la case g7 forment un filet de mat classique.
+
+# Le mat de Pillsbury | Une tour mate sur une colonne ouverte pendant qu'un fou contrôle les cases de fuite du roi. | PUZZLE yDIXu | id=152 theme=mateIn2 level=4 order=4152
+- Les Blancs placent leur dame en h2 pour fermer la colonne h. Mais regardez les fous noirs : l'un vise la case g1, l'autre la case g2.
+-? La tour prend la dame avec échec.
+- Le roi est obligé de reprendre.
+-? La seconde tour arrive en h8 : échec et mat. Le fou c5 tient la case g1 et le fou f1 la case g2. C'est le mat de Pillsbury. À retenir : quand vos fous contrôlent les cases de fuite, une colonne ouverte suffit pour mater avec une tour.
+
+# Le mat de Morphy | Un fou mate le roi réfugié dans le coin, pendant qu'une tour lui coupe la retraite sur la colonne voisine. À ne pas confondre avec le mat de l'Opéra. | PUZZLE WI0QR | id=153 theme=mateIn2 level=4 order=4153
+- Le roi blanc se cache en h1, dans le coin. Mais la colonne g est tenue par la tour g8.
+-? Le fou donne échec sur la grande diagonale, depuis la case d5.
+- Les Blancs n'ont qu'une parade : avancer le pion f pour s'interposer.
+-? Le fou prend le pion f3 : échec et mat. Le roi ne peut aller ni en g1 ni en g2, tenues par la tour g8. C'est le mat de Morphy : le fou mate, la tour coupe. Dans le mat de l'Opéra, c'est au contraire la tour qui mate sur la dernière rangée, protégée par un fou. À retenir : un fou sur la grande diagonale et une tour sur la colonne g forment un piège mortel pour un roi en h1.

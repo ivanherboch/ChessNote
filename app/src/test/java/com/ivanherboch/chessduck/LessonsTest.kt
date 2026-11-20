@@ -14,7 +14,7 @@ class LessonsTest {
     fun catalogueHasLegalDistinctLessons() {
         val all = Lessons.all
         val counts = mapOf(
-            LessonCategory.BASICS to 16, LessonCategory.OPENING to 37, LessonCategory.MIDDLEGAME to 46,
+            LessonCategory.BASICS to 16, LessonCategory.OPENING to 37, LessonCategory.MIDDLEGAME to 61,
             LessonCategory.STRATEGY to 0, LessonCategory.ENDGAME to 38, LessonCategory.MODEL_GAMES to 1,
         )
         for ((cat, n) in counts) assertEquals(cat.label, n, all.count { it.category == cat })
