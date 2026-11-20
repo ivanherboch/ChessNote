@@ -21,6 +21,7 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.printToString
 import androidx.test.core.app.ApplicationProvider
@@ -35,6 +36,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import androidx.compose.ui.test.assertIsDisplayed
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -420,6 +422,29 @@ class AppRobolectricTest {
         rule.onNodeWithContentDescription("e4, case vide").assertExists().assertStateDescriptionContains("destination légale")
         rule.onNodeWithContentDescription("e4, case vide").performSemanticsAction(SemanticsActions.OnClick); settle(1500)
         rule.onNodeWithContentDescription("e4, Pion blanc").assertExists()
+    }
+
+    /** Grande police : les puces du bandeau de l'Académie passent à la ligne sans chevaucher « Entraînements ». */
+    @Test
+    @Config(fontScale = 1.6f)
+    fun academyBannerChipsDoNotOverlapWithLargeFont() {
+        settle(2500)
+        rule.onNodeWithText("Académie").performClick(); settle(1500)
+        desc("Ouvrir le catalogue des leçons").performClick(); settle(1200)
+        rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("Opéra"); settle(1000)
+        val opera = androidx.compose.ui.test.hasText("Morphy, Paris", substring = true)
+        rule.onAllNodes(androidx.compose.ui.test.hasScrollToNodeAction()).fetchSemanticsNodes().indices.forEach { i ->
+            runCatching { rule.onAllNodes(androidx.compose.ui.test.hasScrollToNodeAction())[i].performScrollToNode(opera) }
+        }; settle(600)
+        rule.onAllNodes(opera)[0].performClick(); settle(1200)
+        shot("2p_bandeau_grande_police")
+        val trainings = rule.onNodeWithText("Entraînements").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val root = rule.onRoot().fetchSemanticsNode().boundsInRoot
+        assertTrue("« Entraînements » dépasse de l'écran", trainings.right <= root.right + 0.5f)
+        val advised = rule.onNodeWithText("Conseillée", substring = true).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        assertTrue("La puce « Conseillée » chevauche « Entraînements »", advised.right <= trainings.left + 0.5f || !advised.overlaps(trainings))
+        // On revient à la leçon conseillée (la leçon 1) : la leçon ouverte est mémorisée pour les tests suivants.
+        rule.onNodeWithText("Conseillée", substring = true).performClick(); settle(1200)
     }
 
     @Test

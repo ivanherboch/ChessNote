@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `2.7.0` (`versionCode = 45`), publiée en release GitHub `v2.7.0`.
+- **Version actuelle** : `2.7.4` (`versionCode = 49`), publiée en release GitHub `v2.7.4`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -172,6 +172,9 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
   mode enfant et paramètres). Interface adulte et commentaires de revue au vouvoiement ; mode enfant au tutoiement.
 - **2.7.0** : refonte de l'Académie, étape 2 sur 3 : finales jouables, réflexes, révisions espacées, paliers,
   placement et examens, variantes, QCM, répertoire, partie modèle et « Devinez le coup ».
+- **2.7.1 → 2.7.4** : correctifs de l'Académie (coup du joueur montré pendant le jugement, mat plus lent refusé,
+  coup équivalent ramené avec flèche verte, bouton « Entraînements » et en-tête d'entraînement, bandeau de puces
+  qui passe à la ligne au lieu de défiler sous « Entraînements » avec une grande police).
 - **2.6.0** : refonte de l'Académie, étape 1 sur 3 (plan `plan_academie_claude_etapes.md`) : identifiants fixes,
   Room v4, juge de coups, Guidé actif, Défi intelligent avec étoiles, validation sur 5 problèmes, passerelles.
 

@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -69,10 +71,13 @@ internal fun StarRow(stars: Int, modifier: Modifier = Modifier, size: Dp = 16.dp
  * entraînements. Pendant une séance (révisions, répertoire), il en montre l'avancement et permet de la quitter.
  */
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 internal fun AcademyBanner(vm: AcademyViewModel, s: AcademyState, home: AcademyHome, onTrainings: () -> Unit) {
     val c = LocalDuck.current
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    // Une seule rangée qui passe à la ligne (grandes polices) : aucune puce ne défile sous « Entraînements » ni ne le
+    // pousse hors de l'écran ; un titre plus large que l'écran est abrégé avec des points de suspension.
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        run {
             val r = s.review
             val rep = s.repertoire
             when {
@@ -96,7 +101,7 @@ internal fun AcademyBanner(vm: AcademyViewModel, s: AcademyState, home: AcademyH
                 }
             }
         }
-        DuckChip("Entraînements", false, onTrainings, Modifier.padding(start = 6.dp), accent = c.gold, icon = Icons.Rounded.School)
+        DuckChip("Entraînements", false, onTrainings, accent = c.gold, icon = Icons.Rounded.School)
     }
 }
 

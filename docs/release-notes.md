@@ -1,3 +1,9 @@
+## ChessDuck 2.7.4 — un bandeau lisible avec une grande police
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Académie : les puces du bandeau (« Conseillée : … », « Continuer : … », « Révisions du jour », « Entraînements ») passent à la ligne au lieu de défiler les unes sous les autres. Avec une grande taille de police, la puce « Conseillée » ne chevauche plus « Entraînements », qui reste entièrement visible. Un titre plus large que l'écran est abrégé par des points de suspension.
+
 ## ChessDuck 2.7.3 — des entraînements clairement annoncés
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
