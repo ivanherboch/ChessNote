@@ -11,6 +11,7 @@ APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v
 - **Tests** : test de placement facultatif (12 positions) et examen de palier (10 positions mélangées, réussite à 8), tous deux dans le tiroir « Entraînements ».
 - **Ouvertures** : variantes (« Si 3… Nf6 »), fiche des idées et des pièges, QCM final « Quel est le plan ? » (pilote : la partie italienne), et « Réviser mon répertoire » avec les Blancs ou les Noirs.
 - **Partie modèle** : « La partie de l'Opéra » de Morphy (Paris, 1858), commentée coup par coup, et le mode « Devinez le coup » (3 points pour le coup du maître, 1 ou 2 pour un coup presque aussi bon).
+- **Défi corrigé** : un coup différent de celui de la leçon s'affiche d'abord là où vous l'avez joué, pendant que l'Ordinateur le juge. S'il est aussi bon, la leçon reprend ensuite son propre coup ; sinon, la réfutation part de votre coup.
 - **Voix** : la fiche complète de la leçon est lue à l'ouverture, ainsi que les variantes ; la voix se tait pendant les exercices. Morphy, Brunswick et Isouard sont bien prononcés.
 
 ## ChessDuck 2.6.0 — une Académie qui fait vraiment apprendre (étape 1)
