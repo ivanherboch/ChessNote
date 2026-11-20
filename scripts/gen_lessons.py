@@ -16,7 +16,8 @@ Format d'une leçon :
   VARIANT 5 | Titre                        (variante qui part de la position après 5 demi-coups de la ligne principale)
   > Nf6 : commentaire                      (coups de la variante, à la suite de VARIANT)
 Métadonnées de l'en-tête : id (obligatoire), level 1–5, order, theme (clé Lichess), kind (line, model_game),
-drill (finale jouable : KQK, KRRK, KRK, KBBK, KPK_WIN, LUCENA, PHILIDOR_DRAW, ROOK_PAWN_DRAW).
+drill (finale jouable : KQK, KRRK, KRK, KBBK, KPK_WIN, LUCENA, PHILIDOR_DRAW, ROOK_PAWN_DRAW, KQKP,
+QUEEN_BISHOP_PAWN_DRAW, VANCURA_DRAW).
 
 L'identifiant id= est fixe : il ne change jamais (la progression enregistrée en dépend), même si l'on insère,
 déplace ou supprime des leçons. Les autres métadonnées sont facultatives (niveau 2, ordre = id, type « line »).
@@ -35,7 +36,8 @@ SRC = os.path.join(ROOT, "lessons")
 PUZ = json.load(open(os.path.join(SRC, "puzzles.json")))
 START = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 KINDS = {"line", "model_game"}
-DRILLS = {"KQK", "KRRK", "KRK", "KBBK", "KPK_WIN", "LUCENA", "PHILIDOR_DRAW", "ROOK_PAWN_DRAW"}
+DRILLS = {"KQK", "KRRK", "KRK", "KBBK", "KPK_WIN", "LUCENA", "PHILIDOR_DRAW", "ROOK_PAWN_DRAW", "KQKP",
+          "QUEEN_BISHOP_PAWN_DRAW", "VANCURA_DRAW"}
 SQUARE = re.compile(r"^[a-h][1-8]$")
 TAKEAWAY = re.compile(r"À retenir : (.+)$")
 

@@ -2,7 +2,10 @@ package com.ivanherboch.chessduck.feature
 
 import androidx.compose.runtime.Immutable
 import com.ivanherboch.chessduck.chess.Move
+import com.ivanherboch.chessduck.chess.KING
 import com.ivanherboch.chessduck.chess.PAWN
+import com.ivanherboch.chessduck.chess.QUEEN
+import com.ivanherboch.chessduck.chess.isWhite
 import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.chess.fileOf
 import com.ivanherboch.chessduck.chess.pieceType
@@ -43,6 +46,9 @@ enum class EndgameFamily(val label: String, val goal: EndgameGoal, val maxMoves:
     LUCENA("Position de Lucena", EndgameGoal.WIN, 25, "menez votre pion à dame"),
     PHILIDOR_DRAW("Défense de Philidor", EndgameGoal.DRAW, 15, "tenez la nulle"),
     ROOK_PAWN_DRAW("Pion tour : la nulle", EndgameGoal.DRAW, 15, "tenez la nulle"),
+    KQKP("Dame contre pion en septième", EndgameGoal.WIN, 25, "gagnez le pion ou matez"),
+    QUEEN_BISHOP_PAWN_DRAW("Dame contre pion fou : le pat", EndgameGoal.DRAW, 15, "tenez la nulle"),
+    VANCURA_DRAW("Défense Vancura", EndgameGoal.DRAW, 15, "tenez la nulle"),
     ;
 
     val heroWhite: Boolean get() = goal == EndgameGoal.WIN
@@ -165,6 +171,38 @@ object EndgamePositions {
                 val wk = m(sq(4 + rnd.nextInt(3), pr - 1 + rnd.nextInt(3)))
                 valid(fen(listOf(pawn to 'P', bk to 'k', wk to 'K'), false), f)
             }
+            EndgameFamily.KQKP -> {
+                // Pion central ou pion cavalier en 7e (pour les Blancs : 2e rangée), roi noir à côté sans le bloquer ;
+                // la dame tient la case de promotion depuis la première rangée, le roi blanc est loin.
+                val pf = listOf(1, 3, 4, 6).random(rnd)
+                val pawn = sq(pf, 1)
+                val bkFile = pf + listOf(-1, 1).random(rnd)
+                if (bkFile !in 0..7) return null
+                val bk = sq(bkFile, 1 + rnd.nextInt(2))
+                val qf = generateSequence { rnd.nextInt(8) }.first { abs(it - pf) >= 3 }
+                val queen = sq(qf, 0)
+                val wk = sq(rnd.nextInt(8), 3 + rnd.nextInt(5))
+                if (dist(queen, bk) < 2 || dist(wk, pawn) < 4) return null
+                valid(fen(listOf(pawn to 'p', bk to 'k', queen to 'Q', wk to 'K'), true), f)
+            }
+            EndgameFamily.QUEEN_BISHOP_PAWN_DRAW -> {
+                // Pion fou en 7e soutenu par le roi côté coin ; roi blanc loin : la prise du pion donnerait un pat.
+                val pawn = m(sq(2, 1))
+                val bk = m(listOf(sq(1, 1), sq(1, 0)).random(rnd))
+                val queen = any()
+                val wk = sq(rnd.nextInt(8), 4 + rnd.nextInt(4))
+                if (dist(queen, bk) < 2 || dist(wk, pawn) < 5 || queen == m(sq(2, 0))) return null
+                valid(fen(listOf(pawn to 'p', bk to 'k', queen to 'Q', wk to 'K'), false), f)
+            }
+            EndgameFamily.VANCURA_DRAW -> {
+                // Pion tour en 6e, tour blanche devant lui ; tour noire sur la 6e rangée qui l'attaque de côté,
+                // roi noir près de la case g7 ; roi blanc encore loin du pion.
+                val pieces = listOf(
+                    m(sq(0, 5)) to 'P', m(sq(0, 7)) to 'R', m(sq(5, 5)) to 'r',
+                    m(listOf(sq(6, 6), sq(7, 6)).random(rnd)) to 'k', m(sq(2 + rnd.nextInt(6), rnd.nextInt(4))) to 'K',
+                )
+                valid(fen(pieces, false), f)
+            }
         }
     }
 }
@@ -269,7 +307,8 @@ class EndgameTrainer(
                 after.isCheckmate -> return@launch end(true, "Échec et mat ! Position gagnée en $moves coup${if (moves > 1) "s" else ""}.")
                 after.legalMoves.isEmpty() -> return@launch if (f.goal == EndgameGoal.WIN) end(false, "Pat ! La partie est nulle : laissez toujours une case au roi adverse.")
                 else end(true, "Pat : la nulle est acquise.")
-                f.goal == EndgameGoal.DRAW && after.noPawns() -> return@launch end(true, "Le pion a disparu : la nulle est acquise.")
+                f.goal == EndgameGoal.DRAW && after.noPawns() -> return@launch pawnGone(after)
+                f == EndgameFamily.KQKP && after.noPawns() -> return@launch end(true, "Le pion est tombé : avec la dame contre le roi seul, le gain est assuré.")
                 f.goal == EndgameGoal.WIN && after.noPawns() && f in PAWN_FAMILIES && !promoted -> return@launch end(false, "Le pion est perdu : le gain s'est envolé.")
             }
             val res = runCatchingSuspend { withTimeoutOrNull(movetimeMs * 5L + 1000) { engine.search(after.toFen(), movetimeMs) } }.getOrNull()
@@ -289,7 +328,7 @@ class EndgameTrainer(
             when {
                 next.isCheckmate -> end(false, "Échec et mat : l'Ordinateur a gagné.")
                 next.legalMoves.isEmpty() -> end(f.goal == EndgameGoal.DRAW, if (f.goal == EndgameGoal.DRAW) "Pat : la nulle est acquise." else "Pat : la partie est nulle.")
-                f.goal == EndgameGoal.DRAW && next.noPawns() -> end(true, "Le pion a disparu : la nulle est acquise.")
+                f.goal == EndgameGoal.DRAW && next.noPawns() -> pawnGone(next)
                 f.goal == EndgameGoal.DRAW && moves >= f.maxMoves -> end(true, "Vous avez tenu $moves coups : la nulle est acquise.")
                 f.goal == EndgameGoal.WIN && moves >= f.maxMoves -> end(false, "Trop lent : il fallait conclure en ${f.maxMoves} coups. Cherchez une méthode plus directe.")
                 else -> _state.update {
@@ -306,6 +345,17 @@ class EndgameTrainer(
     }
 
     private fun Position.noPawns(): Boolean = (0 until 64).none { pieceType(this[it]) == PAWN }
+
+    /**
+     * Nulle à tenir et plus aucun pion : nulle acquise, sauf si l'attaquant garde une dame contre le roi seul
+     * (le pion fou du défenseur a été pris au lieu d'aller à dame).
+     */
+    private fun pawnGone(p: Position) {
+        val queenLeft = (0 until 64).any { p[it] != 0 && pieceType(p[it]) == QUEEN && isWhite(p[it]) }
+        val defenderPieces = (0 until 64).any { p[it] != 0 && !isWhite(p[it]) && pieceType(p[it]) != KING }
+        if (queenLeft && !defenderPieces) end(false, "Le pion est tombé : la dame gagne contre le roi seul.")
+        else end(true, "Le pion a disparu : la nulle est acquise.")
+    }
 
     companion object {
         /** Positions réussies (sur 5) pour valider une finale. */

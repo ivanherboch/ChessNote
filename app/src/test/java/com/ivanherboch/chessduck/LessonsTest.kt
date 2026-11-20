@@ -15,7 +15,7 @@ class LessonsTest {
         val all = Lessons.all
         val counts = mapOf(
             LessonCategory.BASICS to 16, LessonCategory.OPENING to 37, LessonCategory.MIDDLEGAME to 61,
-            LessonCategory.STRATEGY to 18, LessonCategory.ENDGAME to 38, LessonCategory.MODEL_GAMES to 1,
+            LessonCategory.STRATEGY to 18, LessonCategory.ENDGAME to 54, LessonCategory.MODEL_GAMES to 1,
         )
         for ((cat, n) in counts) assertEquals(cat.label, n, all.count { it.category == cat })
         assertEquals(counts.values.sum(), all.size)
@@ -44,7 +44,7 @@ class LessonsTest {
         assertEquals(3, italian.ideas.size)
         assertEquals(2, italian.traps.size)
         assertTrue(italian.quiz != null)
-        assertEquals(9, all.count { it.drill.isNotEmpty() })
+        assertEquals(12, all.count { it.drill.isNotEmpty() })
         for (l in all) {
             val line = l.line // lève une exception si un coup est illégal
             assertEquals(l.title, line.size, l.texts.size)

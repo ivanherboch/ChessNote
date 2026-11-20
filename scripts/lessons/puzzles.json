@@ -266,5 +266,13 @@
 "1rnyc": {
 "fen": "r1b1kqnr/pp3p2/2pb2pp/4p3/2B1PPnN/1QP3N1/PP1B2PP/R4RK1 b kq - 2 15",
 "moves": "b7b5 c4f7 f8f7 b3f7"
+},
+"pQF4g": {
+"fen": "8/8/1p1k4/p4p1p/P1PK1P1P/8/8/8 w - - 4 51",
+"moves": "d4c3 d6c5 c3d3 c5b4 d3d4 b4a4"
+},
+"cHCBN": {
+"fen": "8/8/p7/Pp1pkp1p/1P4pP/2PK2P1/5P2/8 b - - 6 45",
+"moves": "e5d6 d3d4 d6e6 d4c5 e6e5 c5b6 e5e4 b6a6"
 }
 }
