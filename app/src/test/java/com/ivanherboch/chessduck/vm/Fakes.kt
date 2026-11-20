@@ -2,7 +2,9 @@ package com.ivanherboch.chessduck.vm
 
 import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.content.PuzzleThemes
+import com.ivanherboch.chessduck.data.AcademyAssessment
 import com.ivanherboch.chessduck.data.GameRecord
+import com.ivanherboch.chessduck.data.LessonProgress
 import com.ivanherboch.chessduck.data.GameRepository
 import com.ivanherboch.chessduck.data.LessonProgressRepository
 import com.ivanherboch.chessduck.data.Puzzle
@@ -29,6 +31,8 @@ class FakeSettings(initial: Settings = Settings()) : SettingsRepository {
     override suspend fun setNotationBest(v: Int) = flow.update { if (v > it.notationBest) it.copy(notationBest = v) else it }
     override suspend fun setNotationLevel(v: Int) = flow.update { it.copy(notationLevel = v) }
     override suspend fun setLesson(v: Int) = flow.update { it.copy(lessonId = v) }
+    override suspend fun setAcademyLevel(v: Int) = flow.update { it.copy(academyLevel = v) }
+    override suspend fun setPlacementDone(v: Boolean) = flow.update { it.copy(placementDone = v) }
     override suspend fun setElo(v: Int) = flow.update { it.copy(elo = v) }
     override suspend fun setGameSettings(twoPlayers: Boolean, color: Int, aiElo: Int) =
         flow.update { it.copy(twoPlayers = twoPlayers, colorChoice = color, aiElo = aiElo) }
@@ -92,16 +96,25 @@ class FakeGames : GameRepository {
 }
 
 class FakeLessons : LessonProgressRepository {
-    val mastered = MutableStateFlow<List<Int>>(emptyList())
-    override fun masteredLessons(): Flow<List<Int>> = mastered
-    override suspend fun markLesson(id: Int, at: Long) = mastered.update { (it + id).distinct() }
+    val rows = MutableStateFlow<Map<Int, LessonProgress>>(emptyMap())
+    val tests = MutableStateFlow<List<AcademyAssessment>>(emptyList())
+    override fun masteredLessons(): Flow<List<Int>> = rows.map { m -> m.values.filter { it.mastered }.map { it.lessonId } }
+    override fun progress(): Flow<List<LessonProgress>> = rows.map { it.values.toList() }
+    override suspend fun progress(id: Int): LessonProgress? = rows.value[id]
+    override suspend fun save(p: LessonProgress) = rows.update { it + (p.lessonId to p) }
+    override suspend fun saveAssessment(a: AcademyAssessment): Long { tests.update { it + a }; return tests.value.size.toLong() }
+    override fun assessments(): Flow<List<AcademyAssessment>> = tests
 }
 
 /** Faux moteur : joue toujours le premier coup légal, évaluation nulle ; compte les recherches. */
 class FakeEngine : ChessEngine {
     var searches = 0
+    /** Réponses imposées, par position (les 4 premiers champs de la FEN) ; null : moteur indisponible. */
+    val scripted = HashMap<String, SearchResult?>()
     override suspend fun search(fen: String, movetimeMs: Int, multiPv: Int, elo: Int?, depth: Int?): SearchResult {
         searches++
+        val key = fen.split(' ').take(4).joinToString(" ")
+        if (scripted.containsKey(key)) return scripted[key] ?: SearchResult(null, emptyList())
         val best = Position.fromFen(fen).legalMoves.firstOrNull() ?: return SearchResult(null, emptyList())
         return SearchResult(best, listOf(PvLine(best, 0)))
     }

@@ -1,30 +1,74 @@
 #!/usr/bin/env python3
-"""Prépare les 113 leçons à partir de scripts/lessons/*.txt (étape 1 sur 2).
+"""Prépare les leçons de l'Académie à partir de scripts/lessons/*.txt (étape 1 sur 2).
 
-Les leçons « PUZZLE id » reprennent une position réelle de la base Lichess (puzzles.json) :
-le premier coup est la faute adverse, le joueur joue ensuite la combinaison.
+Format d'une leçon :
+  # Titre | Résumé | w, b ou « PUZZLE id » | id=12 level=2 order=12 theme=fork kind=line
+  FEN: …                                   (facultatif ; position de départ, sinon position initiale)
+  TAKEAWAY: …                              (facultatif ; sinon la phrase « À retenir : … » du commentaire)
+  CONDITIONS: …                            (facultatif ; comment reconnaître une position théorique)
+  SHOW 3: marks=e4,d5 arrows=f3e5,g5d8     (facultatif ; repères affichés en mode Guidé après 3 demi-coups)
+  e4 : commentaire du coup                 (coup SAN ou UCI, puis son commentaire)
+  ?Nf3 : commentaire                       (« ? » : arrêt « À vous » du mode Guidé avant ce coup)
+  - commentaire                            (leçon « PUZZLE » : coups lus dans puzzles.json ; « -? » pour un arrêt)
 
-Étape 1 : python3 scripts/gen_lessons.py   → app/build/lessons/lessons.tsv (coups SAN ou UCI, textes)
+L'identifiant id= est fixe : il ne change jamais (la progression enregistrée en dépend), même si l'on insère,
+déplace ou supprime des leçons. Les autres métadonnées sont facultatives (niveau 2, ordre = id, type « line »).
+Les leçons « PUZZLE id » reprennent une position réelle de la base Lichess (puzzles.json) : le premier coup est
+la faute adverse, le joueur joue ensuite la combinaison.
+
+Étape 1 : python3 scripts/gen_lessons.py   → app/build/lessons/lessons.tsv
 Étape 2 : LESSON_COMPILE=app/build/lessons/lessons.tsv ./gradlew :app:testDebugUnitTest --tests '*LessonCompilerTool*'
-          → content/Lessons{Openings,Middlegames,Endgames}.kt : structures Kotlin typées, coups convertis en UCI
-          (validés) par le moteur de l'application lui-même. Aucun analyse de texte ni de SAN au démarrage.
+          → content/Lessons*.kt : structures Kotlin typées, coups convertis en UCI (validés) par le moteur de
+          l'application lui-même. Aucune analyse de texte ni de SAN au démarrage.
 Option : --tool fichier  (export pour LessonToolTest)
 """
-import json, os, sys
+import json, os, re, sys
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, "lessons")
-OUT = os.path.join(ROOT, "..", "app/src/main/java/com/ivanherboch/chessduck/content")
 PUZ = json.load(open(os.path.join(SRC, "puzzles.json")))
 START = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+KINDS = {"line"}
+SQUARE = re.compile(r"^[a-h][1-8]$")
+TAKEAWAY = re.compile(r"À retenir : (.+)$")
+
+
+def meta(field, title):
+    out = {}
+    for kv in field.split():
+        k, v = kv.split("=", 1)
+        assert k in ("id", "level", "order", "theme", "kind"), (title, k)
+        out[k] = v
+    assert "id" in out, "id= manquant : " + title
+    assert out.get("kind", "line") in KINDS, (title, out["kind"])
+    assert 1 <= int(out.get("level", "2")) <= 5, title
+    return out
+
+
+def visuals(spec, title):
+    marks, arrows = [], []
+    for part in spec.split():
+        k, v = part.split("=", 1)
+        items = [x for x in v.split(",") if x]
+        if k == "marks":
+            assert all(SQUARE.match(x) for x in items), (title, v); marks += items
+        elif k == "arrows":
+            assert all(len(x) == 4 and SQUARE.match(x[:2]) and SQUARE.match(x[2:]) for x in items), (title, v); arrows += items
+        else:
+            raise AssertionError((title, k))
+    return ",".join(marks) + "/" + ",".join(arrows)
+
 
 def parse(name):
     lessons, cur = [], None
     for raw in open(os.path.join(SRC, name), encoding="utf-8"):
         l = raw.strip()
         if not l: continue
-        if l.startswith("#"):
-            title, summary, third = [x.strip() for x in l[1:].split("|")]
-            cur = {"title": title, "summary": summary, "fen": START, "moves": [], "texts": []}
+        if l.startswith("# "):
+            parts = [x.strip() for x in l[2:].split("|")]
+            assert len(parts) == 4, "en-tête invalide : " + l
+            title, summary, third, fields = parts
+            cur = {"title": title, "summary": summary, "fen": START, "moves": [], "texts": [], "pauses": [],
+                   "visuals": [], "takeaway": "", "conditions": "", "meta": meta(fields, title)}
             if third.startswith("PUZZLE"):
                 p = PUZ[third.split()[1]]
                 cur["fen"] = p["fen"]; cur["pending"] = p["moves"].split()
@@ -32,37 +76,57 @@ def parse(name):
             else: cur["hero"] = third
             lessons.append(cur)
         elif l.startswith("FEN:"): cur["fen"] = l[4:].strip()
-        elif l.startswith("- "):
-            cur["moves"].append(cur["pending"].pop(0)); cur["texts"].append(l[2:].strip())
+        elif l.startswith("TAKEAWAY:"): cur["takeaway"] = l[9:].strip()
+        elif l.startswith("CONDITIONS:"): cur["conditions"] = l[11:].strip()
+        elif l.startswith("SHOW "):
+            n, spec = l[5:].split(":", 1)
+            cur["visuals"].append(n.strip() + ":" + visuals(spec, cur["title"]))
+        elif l.startswith("- ") or l.startswith("-? "):
+            if l.startswith("-?"): cur["pauses"].append(len(cur["moves"]))
+            cur["moves"].append(cur["pending"].pop(0)); cur["texts"].append(l[l.index(" ") + 1:].strip())
         else:
+            if l.startswith("?"): cur["pauses"].append(len(cur["moves"])); l = l[1:]
             san, text = l.split(" : ", 1)
             cur["moves"].append(san.strip()); cur["texts"].append(text.strip())
     for c in lessons:
         assert not c.get("pending"), "commentaires manquants : " + c["title"]
         assert c["moves"], c["title"]
+        if not c["takeaway"]:
+            found = [m.group(1) for t in c["texts"] for m in [TAKEAWAY.search(t)] if m]
+            assert found, "« À retenir » manquant : " + c["title"]
+            c["takeaway"] = found[-1][0].upper() + found[-1][1:]
+        for v in c["visuals"]:
+            assert 0 <= int(v.split(":")[0]) <= len(c["moves"]), (c["title"], v)
     return lessons
 
-SEP = "\x1f"  # séparateur des commentaires dans le fichier intermédiaire
+SEP = "\x1f"  # séparateur des listes dans le fichier intermédiaire
 
 def emit(lessons, var, fname, rows):
     for c in lessons:
-        for field in (c["title"], c["summary"], *c["texts"]):
+        for field in (c["title"], c["summary"], c["takeaway"], c["conditions"], *c["texts"]):
             assert "|" not in field and SEP not in field and "\n" not in field, field
-        rows.append("|".join([var, fname, c["title"], c["summary"], c["hero"], c["fen"], " ".join(c["moves"]), SEP.join(c["texts"])]))
+        m = c["meta"]
+        rows.append("|".join([
+            var, fname, c["title"], c["summary"], c["hero"], c["fen"], " ".join(c["moves"]), SEP.join(c["texts"]),
+            m["id"], m.get("level", "2"), m.get("order", m["id"]), m.get("theme", ""), m.get("kind", "line"),
+            ",".join(map(str, c["pauses"])), c["takeaway"], c["conditions"], SEP.join(c["visuals"]),
+        ]))
 
-sets = [("openings.txt", "OPENING_LESSONS", "LessonsOpenings.kt", 37),
-        ("middlegames.txt", "MIDDLEGAME_LESSONS", "LessonsMiddlegames.kt", 38),
-        ("endgames.txt", "ENDGAME_LESSONS", "LessonsEndgames.kt", 38)]
+sets = [("openings.txt", "OPENING_LESSONS", "LessonsOpenings.kt"),
+        ("middlegames.txt", "MIDDLEGAME_LESSONS", "LessonsMiddlegames.kt"),
+        ("endgames.txt", "ENDGAME_LESSONS", "LessonsEndgames.kt")]
 allL = []
 rows = []
-for src, var, fname, n in sets:
-    ls = parse(src); assert len(ls) == n, (src, len(ls)); emit(ls, var, fname, rows); allL += ls
-assert len({c["title"] for c in allL}) == 113
+for src, var, fname in sets:
+    ls = parse(src); emit(ls, var, fname, rows); allL += ls
+ids = [int(c["meta"]["id"]) for c in allL]
+assert len(set(ids)) == len(ids), "identifiants en double"
+assert len({c["title"] for c in allL}) == len(allL), "titres en double"
 if "--tool" in sys.argv:
     with open(sys.argv[sys.argv.index("--tool") + 1], "w") as f:
         for c in allL: f.write(f'{c["title"]}|{c["hero"]}|{c["fen"]}|{" ".join(c["moves"])}\n')
 tsv = os.path.join(ROOT, "..", "app", "build", "lessons", "lessons.tsv")
 os.makedirs(os.path.dirname(tsv), exist_ok=True)
 open(tsv, "w", encoding="utf-8").write("\n".join(rows) + "\n")
-print("113 leçons préparées :", os.path.normpath(tsv))
+print(len(allL), "leçons préparées :", os.path.normpath(tsv))
 print("Étape 2 : LESSON_COMPILE=app/build/lessons/lessons.tsv ./gradlew :app:testDebugUnitTest --tests '*LessonCompilerTool*'")

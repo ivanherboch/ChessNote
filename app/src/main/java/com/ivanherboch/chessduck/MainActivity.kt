@@ -228,6 +228,9 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
             DuckIconButton(Icons.Rounded.Settings, "Paramètres", { showSettings = true })
         }
     }
+    // Passerelles de l'Académie : thème à travailler dans Problèmes, position à jouer dans le Jeu Libre.
+    var trainTheme by remember { mutableStateOf<Pair<String, Int>?>(null) }
+    var playPosition by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     val content: @Composable (Modifier) -> Unit = { m ->
         AnimatedContent(
             targetState = tab, modifier = m, label = "onglet",
@@ -237,12 +240,26 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
             holder.SaveableStateProvider(t) {
                 when (t) {
                     0 -> NotationScreen(viewModel<NotationViewModel>(factory = DuckViewModels.Factory))
-                    1 -> AcademyScreen(viewModel<AcademyViewModel>(factory = DuckViewModels.Factory))
-                    2 -> PuzzlesScreen(viewModel<PuzzlesViewModel>(factory = DuckViewModels.Factory))
-                    else -> PlayScreen(
-                        viewModel<PlayViewModel>(factory = DuckViewModels.Factory),
-                        viewModel<GameReviewViewModel>(factory = DuckViewModels.Factory),
+                    1 -> AcademyScreen(
+                        viewModel<AcademyViewModel>(factory = DuckViewModels.Factory),
+                        onTrainTheme = { theme, level -> trainTheme = theme to level; select(2) },
+                        onPlayPosition = { fen, white -> playPosition = fen to white; select(3) },
                     )
+                    2 -> {
+                        val pvm = viewModel<PuzzlesViewModel>(factory = DuckViewModels.Factory)
+                        LaunchedEffect(trainTheme) {
+                            trainTheme?.let { (theme, level) -> pvm.train(theme, (level - 1).coerceIn(1, 4)); trainTheme = null }
+                        }
+                        PuzzlesScreen(pvm)
+                    }
+                    else -> {
+                        val play = viewModel<PlayViewModel>(factory = DuckViewModels.Factory)
+                        val review = viewModel<GameReviewViewModel>(factory = DuckViewModels.Factory)
+                        LaunchedEffect(playPosition) {
+                            playPosition?.let { (fen, white) -> review.close(); play.startFromPosition(fen, white); playPosition = null }
+                        }
+                        PlayScreen(play, review)
+                    }
                 }
             }
         }

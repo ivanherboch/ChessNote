@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.SkipPrevious as Rrounded_SkipPrev
 import androidx.compose.material.icons.rounded.SmartToy as Rrounded_SmartToy
 import androidx.compose.material.icons.rounded.SportsEsports as Rrounded_SportsEsports
 import androidx.compose.material.icons.rounded.SportsScore as Rrounded_SportsScore
+import androidx.compose.material.icons.rounded.StarOutline as Rrounded_StarOutline
 import androidx.compose.material.icons.rounded.SwapVert as Rrounded_SwapVert
 import androidx.compose.material.icons.rounded.Tune as Rrounded_Tune
 import androidx.compose.material.icons.rounded.Visibility as Rrounded_Visibility
@@ -80,6 +81,7 @@ import com.ivanherboch.chessduck.ui.icons.SkipPrevious
 import com.ivanherboch.chessduck.ui.icons.SmartToy
 import com.ivanherboch.chessduck.ui.icons.SportsEsports
 import com.ivanherboch.chessduck.ui.icons.SportsScore
+import com.ivanherboch.chessduck.ui.icons.StarOutline
 import com.ivanherboch.chessduck.ui.icons.SwapVert
 import com.ivanherboch.chessduck.ui.icons.Tune
 import com.ivanherboch.chessduck.ui.icons.Undo
@@ -150,6 +152,7 @@ class DuckIconsTest {
         check("rounded.SmartToy", Icons.Rounded.SmartToy, Icons.Rounded.Rrounded_SmartToy)
         check("rounded.SportsEsports", Icons.Rounded.SportsEsports, Icons.Rounded.Rrounded_SportsEsports)
         check("rounded.SportsScore", Icons.Rounded.SportsScore, Icons.Rounded.Rrounded_SportsScore)
+        check("rounded.StarOutline", Icons.Rounded.StarOutline, Icons.Rounded.Rrounded_StarOutline)
         check("rounded.SwapVert", Icons.Rounded.SwapVert, Icons.Rounded.Rrounded_SwapVert)
         check("rounded.Tune", Icons.Rounded.Tune, Icons.Rounded.Rrounded_Tune)
         check("rounded.Visibility", Icons.Rounded.Visibility, Icons.Rounded.Rrounded_Visibility)

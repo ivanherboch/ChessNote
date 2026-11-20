@@ -52,6 +52,9 @@ data class PlayState(
     /** Partie qui vient de se terminer, enregistrée dans l'historique : « Analyser la partie » l'ouvre en revue. */
     val lastRecord: GameRecord? = null,
 ) {
+    /** Partie d'entraînement lancée depuis une position de l'Académie : elle ne compte pas pour l'ELO. */
+    val fromPosition: Boolean get() = line.startFen != START_FEN
+
     /** Une partie est en cours (au moins un échange joué, pas encore de résultat). */
     val inProgress: Boolean get() = result == null && line.size >= 2
 
@@ -114,6 +117,24 @@ class PlayViewModel(
             )
         }
         if (!st.twoPlayers && !playerWhite) aiMove() else precompute()
+    }
+
+    /**
+     * « Jouer cette position » (Académie) : partie contre l'Ordinateur depuis [fen], le joueur ayant les Blancs si
+     * [playerWhite]. C'est une partie d'entraînement : elle est enregistrée avec sa position de départ, sans changer l'ELO.
+     */
+    fun startFromPosition(fen: String, playerWhite: Boolean) {
+        val start = runCatching { Line(fen) }.getOrNull() ?: return
+        applyJob?.cancel()
+        applyJob = viewModelScope.launch {
+            val st = prefs.settings.first()
+            gameGeneration++
+            aiJob?.cancel(); analysisJob?.cancel()
+            _state.update {
+                PlayState(line = start, playerWhite = playerWhite, twoPlayers = false, aiElo = st.aiElo, flipped = !playerWhite, evalOn = it.evalOn)
+            }
+            if (start.last.whiteToMove != playerWhite) aiMove() else precompute()
+        }
     }
 
     fun flip() = _state.update { it.copy(flipped = !it.flipped) }
@@ -297,7 +318,7 @@ class PlayViewModel(
                 analyzer.start(record, line)
             } else {
                 val outcome = if (s.playerWhite) whiteResult else -whiteResult
-                val newElo = GameLogic.newElo(st.elo, s.aiElo, (outcome + 1) / 2.0)
+                val newElo = if (s.fromPosition) st.elo else GameLogic.newElo(st.elo, s.aiElo, (outcome + 1) / 2.0)
                 val diff = newElo - st.elo
                 val delta = if (diff >= 0) "+$diff" else "−${-diff}"
                 val head = when (outcome) {
@@ -308,14 +329,18 @@ class PlayViewModel(
                 show {
                     it.copy(
                         thinking = false,
-                        result = GameResult("$head ELO ${st.elo} → $newElo ($delta).", if (outcome == 1) Tone.GOOD else if (outcome == 0) Tone.GOLD else Tone.BAD),
+                        result = GameResult(
+                            head + if (s.fromPosition) " Partie d'entraînement depuis une leçon : l'ELO ne change pas." else " ELO ${st.elo} → $newElo ($delta).",
+                            if (outcome == 1) Tone.GOOD else if (outcome == 0) Tone.GOLD else Tone.BAD,
+                        ),
                     )
                 }
-                prefs.setElo(newElo)
+                if (!s.fromPosition) prefs.setElo(newElo)
                 var record = GameRecord(
                         date = System.currentTimeMillis(), opponent = "Ordinateur ${s.aiElo}", vsComputer = true, playerWhite = s.playerWhite,
                         result = resultStr, outcome = outcome, reason = reason, eloBefore = st.elo, eloAfter = newElo, moves = line.uciMoves(), analysis = analysis,
                         whiteName = if (s.playerWhite) st.pseudo else COMPUTER, blackName = if (s.playerWhite) COMPUTER else st.pseudo, opponentElo = s.aiElo,
+                        startFen = if (s.fromPosition) line.startFen else "",
                     )
                 record = record.copy(id = gamesRepo.insertGame(record))
                 show { it.copy(lastRecord = record) }

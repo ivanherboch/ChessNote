@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `2.2.0` (`versionCode = 21`), publiée en release GitHub `v2.2.0`.
+- **Version actuelle** : `2.6.0` (`versionCode = 44`), publiée en release GitHub `v2.6.0`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -43,8 +43,9 @@ Paquet racine : `app/src/main/java/com/ivanherboch/chessduck/`
   SAN/FEN/UCI, `hasAttacker`, `key` en cache, `sanBody`), `PieceFr.kt` (`PieceLexiconFr` : noms, genres, articles, possessifs).
 - `content/` — `PuzzleThemes.kt` (50 thèmes, `PRIORITY`, `primary`, `primaryIndex`, `primarySql`), `Lessons.kt` +
   `LessonsOpenings/Middlegames/Endgames.kt` (**générés**, coups en UCI, voir §5).
-- `data/` — `Db.kt` (Room **v3** : entités `Puzzle` avec colonne indexée `primaryTheme`, `PuzzleProgress`, `LessonProgress`,
-  `GameRecord` ; migrations 1→2→3 ; `syncPuzzles` par `ATTACH` + `INSERT OR IGNORE`), `Prefs.kt` (DataStore « chessduck »,
+- `data/` — `Db.kt` (Room **v4** : entités `Puzzle` avec colonne indexée `primaryTheme`, `PuzzleProgress`, `LessonProgress`
+  (étoiles, erreurs, indices, exercices, champs de révision), `GameRecord` (+ `startFen`), `AcademyAssessment` ;
+  migrations 1→2→3→4 ; `syncPuzzles` par `ATTACH` + `INSERT OR IGNORE`), `Prefs.kt` (DataStore « chessduck »,
   migration depuis les SharedPreferences `share_style`), `Repositories.kt` (interfaces `SettingsRepository`,
   `PuzzleRepository`, `GameRepository`, `LessonProgressRepository` et implémentations Room).
 - `engine/Stockfish.kt` — interface `ChessEngine` ; `Stockfish` (UCI, recherches sérialisées et annulables,
@@ -101,7 +102,7 @@ Paquet racine : `app/src/main/java/com/ivanherboch/chessduck/`
 
 ### Commandes
 ```bash
-./gradlew :app:testDebugUnitTest      # 59 tests : règles, leçons, base Room, contrastes, ViewModels, captures d'écran
+./gradlew :app:testDebugUnitTest      # 75 tests : règles, leçons, base Room, contrastes, ViewModels, captures d'écran
 ./gradlew :app:assembleRelease        # APK signé : app/build/outputs/apk/release/app-release.apk (R8 + réduction des ressources)
 ```
 - Le dépôt Maven renvoie parfois **HTTP 429** : relancer la commande (boucle de 3 essais).
@@ -144,10 +145,12 @@ Paquet racine : `app/src/main/java/com/ivanherboch/chessduck/`
 | `LessonToolTest` | Outil d'auteur pour brouillons de leçons avec un Stockfish hôte (`LESSON_TOOL_IN`, `LESSON_TOOL_SF`) |
 | `scripts/build_puzzle_db.py` | Reconstruit la base des problèmes depuis le CSV Lichess (non versionné) au schéma Room v3 |
 | `scripts/migrate_asset_v3.py` | Migre sur place `assets/chessduck.db` au schéma v3 (sans le CSV) |
+| `scripts/migrate_asset_v4.py` | Migre sur place `assets/chessduck.db` du v3 au v4 (tables de l'utilisateur recréées d'après `4.json`) |
+| `LessonAuditTool` | Toujours actif : identifiants uniques, « À retenir » partout, thèmes connus, arrêts du Guidé sur un coup du joueur, cohérence texte/échiquier (« le cavalier g7 »…). Avec `REVIEW_SF=/usr/games/stockfish` : chaque coup du joueur vérifié par le moteur (rapport `app/build/lesson-audit.txt`) |
 | `IconGeneratorTool` | `ICON_GEN="rounded.Flag …"` : régénère `ui/icons/DuckIcons.kt` ; ajouter une icône étendue = l'ajouter ici (pas de dépendance `material-icons-extended` dans l'app) ; `DuckIconsTest` vérifie l'égalité avec Material |
 | `scripts/build_stockfish.sh` | Recompile Stockfish 11 (NDK requis) |
 
-Base embarquée : `app/src/main/assets/chessduck.db` (v3, 150 000 problèmes, `PRAGMA user_version = 3`,
+Base embarquée : `app/src/main/assets/chessduck.db` (v4, 150 000 problèmes, `PRAGMA user_version = 4`,
 `room_master_table` renseignée). Schémas Room exportés dans `app/schemas/`.
 Toute évolution du schéma : nouvelle version Room + migration + mise à jour de la base embarquée + tests.
 
@@ -167,6 +170,25 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
   lexique de prononciation, cohérence jauge / commentaires de revue, bandeau de coups par tour, nulles expliquées.
 - **2.5.0** : refonte ergonomique en 4 étapes (shell et design system, échiquier accessible, écrans adultes,
   mode enfant et paramètres). Interface adulte et commentaires de revue au vouvoiement ; mode enfant au tutoiement.
+- **2.6.0** : refonte de l'Académie, étape 1 sur 3 (plan `plan_academie_claude_etapes.md`) : identifiants fixes,
+  Room v4, juge de coups, Guidé actif, Défi intelligent avec étoiles, validation sur 5 problèmes, passerelles.
+
+### Relais refonte Académie (état après l'étape 1, v2.6.0)
+- Sources : en-tête `# Titre | Résumé | w/b/PUZZLE id | id=N level= order= theme= kind=line` ; `?SAN : …` / `-? …` =
+  arrêt « À vous » ; lignes `TAKEAWAY:`, `CONDITIONS:`, `SHOW n: marks=e4,d5 arrows=f3e5`. Ids figés 1–37 / 38–75 / 76–113.
+- `content/Lessons.kt` : `Lesson(id, category, …, level, order, theme, kind: LessonKind, pauseSteps, takeaway, conditions,
+  stepVisuals: Map<Int, StepVisuals>)` ; `LessonCategory` = BASICS, OPENING, MIDDLEGAME, STRATEGY, ENDGAME ;
+  `Lessons.categories` = catégories non vides ; tri par catégorie puis `order`.
+- `feature/MoveJudge.kt` : `judge(position, played, expected, endgame)` → `Verdict` EXACT / EQUIVALENT / WORSE /
+  UNAVAILABLE ; règle isolée `MoveJudge.acceptable(mine, target, endgame)`.
+- `AcademyViewModel(prefs, lessons, narrator, engine, puzzles, saved, random)` : `asking()`, `guideMove`, `challengeMove`,
+  `resumeAtMiss`, `holdRefutation`, `startPractice` / `practiceMove` / `practiceHint` / `nextPractice` / `closePractice` ;
+  `AcademyState.practice: Practice?`, `stars`, `errors`, `maxHint`, `refute`, `pulse`. Constante `ASK`.
+- Room v4 : `LessonProgress(lessonId, masteredAt>0 = maîtrisée, stars, errors, hintsUsed, practicePassed, practiceTotal,
+  srsStage, nextReviewAt, lastReviewedAt)`, table `academy_assessments` (`AcademyAssessment`), `GameRecord.startFen` ;
+  `LessonProgressRepository` : `masteredLessons`, `progress()`, `progress(id)`, `save`, `saveAssessment`, `assessments`.
+- Réglages : `Settings.academyLevel` (1–5, défaut 2), `placementDone` ; passerelles : `PuzzlesViewModel.train(theme, band)`,
+  `PlayViewModel.startFromPosition(fen, playerWhite)` (partie d'entraînement sans ELO), câblées dans `MainActivity`.
 
 Les détails de chaque version sont dans `docs/release-notes.md` ; les exemples d'images partagées dans `docs/screenshots/`.
 

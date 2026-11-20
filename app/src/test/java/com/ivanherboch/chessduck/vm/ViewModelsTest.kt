@@ -8,6 +8,7 @@ import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.chess.SpokenFr
 import com.ivanherboch.chessduck.data.GameRecord
 import com.ivanherboch.chessduck.data.Settings
+import com.ivanherboch.chessduck.feature.ASK
 import com.ivanherboch.chessduck.feature.AcademyViewModel
 import com.ivanherboch.chessduck.feature.GameAnalysisService
 import com.ivanherboch.chessduck.feature.GameReviewViewModel
@@ -40,6 +41,10 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import kotlin.random.Random
+import com.ivanherboch.chessduck.engine.SearchResult
+import com.ivanherboch.chessduck.engine.PvLine
+import com.ivanherboch.chessduck.chess.Position
 
 /**
  * Tests unitaires purs (JVM, sans Android ni Robolectric) des ViewModels, avec des faux moteur et dépôts
@@ -166,10 +171,23 @@ class ViewModelsTest {
         vm.reset(); assertEquals(0, vm.state.value.line.size)
     }
 
+    private fun academy(
+        lessons: FakeLessons = FakeLessons(), voice: FakeNarrator = FakeNarrator(), engine: FakeEngine = FakeEngine(),
+        puzzles: FakePuzzles = FakePuzzles(listOf(PUZZLE_0000D)), prefs: FakeSettings = FakeSettings(),
+        saved: SavedStateHandle = SavedStateHandle(),
+    ) = AcademyViewModel(prefs, lessons, voice, engine, puzzles, saved, Random(1))
+
+    /** Réponse imposée au faux moteur : la position obtenue après [m] vaut [score] pour le camp au trait. */
+    private fun FakeEngine.after(pos: Position, m: Move, score: Int) {
+        val after = pos.play(m)
+        scripted[after.toFen().split(' ').take(4).joinToString(" ")] = SearchResult(after.legalMoves.first(), listOf(PvLine(after.legalMoves.first(), score)))
+    }
+
     @Test
-    fun academyGuidedChallengeAndMastery() = test {
+    fun academyGuidedChallengeStarsAndMastery() = test {
         val lessons = FakeLessons()
-        val vm = AcademyViewModel(FakeSettings(), lessons, FakeNarrator())
+        val engine = FakeEngine()
+        val vm = academy(lessons, engine = engine)
         advanceUntilIdle()
         val l = Lessons.byId(1)
         assertEquals(1, vm.state.value.lessonId)
@@ -179,23 +197,168 @@ class ViewModelsTest {
         advanceTimeBy(701); runCurrent()
         assertEquals(1, vm.state.value.cursor) // premier coup après 700 ms
         vm.pause()
-        // Mode Défi : un mauvais coup est refusé, la ligne exacte maîtrise la leçon.
+        // Mode Défi : un mauvais coup (jugé nettement moins bon) est réfuté puis annulé ; il coûte une étoile.
         vm.setChallenge(true)
         advanceUntilIdle()
-        assertFalse(vm.challengeMove(Move.fromUci("a2a3")))
+        val wrong = Move.fromUci("a2a3")
+        engine.after(l.line.positions[0], wrong, 400)
+        assertFalse(vm.challengeMove(wrong))
+        runCurrent()
+        assertNotNull(vm.state.value.refute)
+        advanceUntilIdle() // réponse adverse, compte à rebours, puis retour à la position d'avant l'erreur
+        assertNull(vm.state.value.refute)
+        assertEquals(0, vm.state.value.cursor)
+        assertEquals(1, vm.state.value.errors)
         while (!vm.state.value.done) {
             val c = vm.state.value.cursor
             assertTrue(vm.challengeMove(l.line.moves[c]))
             advanceUntilIdle()
         }
-        assertEquals(listOf(1), lessons.mastered.value)
+        // Le dernier commentaire et sa règle « À retenir » restent affichés, avec le bilan.
+        assertTrue(vm.state.value.message, vm.state.value.message.contains("À retenir"))
+        assertEquals(2, vm.state.value.stars)
+        assertEquals(listOf(1), lessons.masteredLessons().first()) // leçon sans thème : le Défi suffit (au moins 2 étoiles)
+        assertEquals(2, lessons.progress(1)?.stars)
+        // Retour au Guidé : la position atteinte est conservée.
+        val end = vm.state.value.cursor
+        vm.setChallenge(false)
+        assertEquals(end, vm.state.value.cursor)
+    }
+
+    @Test
+    fun academyAcceptsEquivalentMovesAndShowsReplies() = test {
+        val vm = academy() // faux moteur : toutes les positions se valent
+        advanceUntilIdle()
+        val l = Lessons.byId(1)
+        vm.setChallenge(true)
+        advanceUntilIdle()
+        assertFalse(vm.challengeMove(Move.fromUci("d2d4"))) // pas le coup de la leçon…
+        advanceUntilIdle()
+        // … mais aussi bon : accepté, la leçon poursuit avec son propre coup, puis la réponse adverse est commentée.
+        assertEquals(0, vm.state.value.errors)
+        assertTrue(vm.state.value.message.startsWith("Bon coup aussi ! La leçon poursuit avec ${l.line.sans[0]}"))
+        assertTrue(vm.state.value.message.contains("Réponse ${l.line.sans[1]} : ${l.texts[1]}"))
+        assertEquals(2, vm.state.value.cursor)
+    }
+
+    @Test
+    fun academyGuidedPausesAskForTheMove() = test {
+        val engine = FakeEngine()
+        val vm = academy(engine = engine)
+        advanceUntilIdle()
+        val l = Lessons.byId(1)
+        val p = l.pauseSteps.first()
+        // La lecture automatique s'arrête à l'arrêt « À vous ».
+        vm.togglePlay()
+        advanceTimeBy(60_000); runCurrent()
+        assertEquals(p, vm.state.value.cursor)
+        assertFalse(vm.state.value.playing)
+        assertTrue(vm.asking())
+        // Un coup moins bon : on peut réessayer ; le bon coup : bravo, et la leçon avance.
+        val pos = l.line.positions[p]
+        val wrong = pos.legalMoves.first { it != l.line.moves[p] }
+        engine.after(pos, wrong, 500)
+        vm.guideMove(wrong); advanceUntilIdle()
+        assertTrue(vm.asking())
+        assertTrue(vm.state.value.note!!.contains("n'est pas le coup de la leçon"))
+        vm.guideMove(l.line.moves[p]); advanceUntilIdle()
+        assertEquals(p + 1, vm.state.value.cursor)
+        assertFalse(vm.asking())
+        assertTrue(vm.state.value.note!!.startsWith("Bravo"))
+        // Revenir sur l'arrêt déjà résolu ne redemande rien.
+        vm.goTo(p); assertFalse(vm.asking())
+    }
+
+    @Test
+    fun academyPracticeValidatesOnFreshPuzzles() = test {
+        val lessons = FakeLessons()
+        val l = Lessons.all.first { it.theme.isNotEmpty() }
+        // Cinq problèmes du thème (copies du #0000D sous d'autres identifiants).
+        val set = (1..5).map { PUZZLE_0000D.copy(id = "P$it", primaryTheme = l.theme, rating = 1000) }
+        val puzzles = FakePuzzles(set)
+        lessons.save(com.ivanherboch.chessduck.data.LessonProgress(l.id, 0, stars = 3))
+        val vm = academy(lessons, puzzles = puzzles)
+        advanceUntilIdle()
+        vm.open(l.id)
+        vm.startPractice()
+        advanceUntilIdle()
+        repeat(5) { k ->
+            val pr = vm.state.value.practice!!
+            assertEquals(k, pr.index)
+            val line = pr.line!!
+            if (k == 0) {
+                vm.practiceMove(line.positions[1].legalMoves.first { it != line.moves[1] && !line.positions[1].play(it).isCheckmate }) // raté : la solution est montrée
+                assertTrue(vm.state.value.practice!!.failed)
+            } else {
+                vm.practiceMove(line.moves[1]); advanceUntilIdle()
+                vm.practiceMove(line.moves[3]); advanceUntilIdle()
+                assertTrue(vm.state.value.practice!!.solved)
+            }
+            vm.nextPractice(); advanceUntilIdle()
+        }
+        val pr = vm.state.value.practice!!
+        assertTrue(pr.finished)
+        assertEquals(4, pr.score)
+        assertEquals(listOf(l.id), lessons.masteredLessons().first())
+        assertEquals(4, lessons.progress(l.id)?.practicePassed)
+        assertEquals(4, puzzles.solved.value.size)
+        vm.closePractice()
+        assertNull(vm.state.value.practice)
+    }
+
+    @Test
+    fun academyThemedLessonNeedsPracticeToBeMastered() = test {
+        val lessons = FakeLessons()
+        val vm = academy(lessons)
+        advanceUntilIdle()
+        val l = Lessons.all.first { it.theme.isNotEmpty() }
+        vm.open(l.id)
+        vm.setChallenge(true)
+        advanceUntilIdle()
+        while (!vm.state.value.done) {
+            assertTrue(vm.challengeMove(l.line.moves[vm.state.value.cursor]))
+            advanceUntilIdle()
+        }
+        assertEquals(3, vm.state.value.stars)
+        assertTrue(lessons.masteredLessons().first().isEmpty()) // Défi parfait, mais exercices à valider
+        assertTrue(vm.state.value.message.contains("problèmes inédits"))
+    }
+
+    /** « Jouer cette position » : partie d'entraînement sans ELO, enregistrée avec sa position de départ et relue en revue. */
+    @Test
+    fun playFromLessonPositionIsUnratedAndReviewable() = test {
+        val games = FakeGames()
+        val engine = FakeEngine()
+        val prefs = FakeSettings()
+        val analysis = GameAnalysisService(engine, games, backgroundScope)
+        val vm = PlayViewModel(prefs, games, engine, analysis)
+        advanceUntilIdle()
+        val fen = "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1"
+        vm.startFromPosition(fen, playerWhite = true)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.fromPosition)
+        assertEquals(0, vm.state.value.line.size)
+        vm.playerMove(Move.fromUci("d1d8")) // mat du couloir
+        advanceUntilIdle()
+        val record = games.stored.value.single()
+        assertEquals(fen, record.startFen)
+        assertEquals(record.eloBefore, record.eloAfter)
+        assertEquals(1200, prefs.settings.first().elo)
+        assertTrue(vm.state.value.result!!.text.contains("l'ELO ne change pas"))
+        val rv = GameReviewViewModel(analysis)
+        rv.openReview(record)
+        assertEquals(fen, rv.review.value!!.line.startFen)
+        assertEquals(1, rv.review.value!!.line.size)
+        // « Nouvelle partie » revient à la position initiale, partie classée.
+        vm.newGame(); advanceUntilIdle()
+        assertFalse(vm.state.value.fromPosition)
     }
 
     @Test
     fun academyReadsGuidedCommentsAloudOnlyWhenEnabled() = test {
         val prefs = FakeSettings()
         val voice = FakeNarrator()
-        val vm = AcademyViewModel(prefs, FakeLessons(), voice)
+        val vm = academy(voice = voice, prefs = prefs)
         advanceUntilIdle()
         val l = Lessons.byId(1)
         vm.goTo(1)
@@ -210,9 +373,19 @@ class ViewModelsTest {
         voice.finish()
         advanceTimeBy(601); runCurrent()
         assertEquals(3, vm.state.value.cursor)
+        // Arrêt « À vous » (leçon 1 : avant le 5e demi-coup) : la question est lue après le commentaire, et la lecture
+        // automatique s'arrête pour laisser l'élève chercher.
+        voice.finish()
+        advanceTimeBy(601); runCurrent()
+        assertEquals(4, vm.state.value.cursor)
+        assertFalse(vm.state.value.playing)
+        assertTrue(voice.spoken.last().endsWith(SpokenFr.text(ASK)))
         // Pause pendant un commentaire : la voix s'arrête, puis reprend (au début de sa phrase) avec la lecture.
+        vm.goTo(6)
+        voice.finish()
+        vm.togglePlay()
         voice.spoken.clear()
-        vm.goTo(4) // la lecture automatique est toujours en cours
+        vm.goTo(7) // la lecture automatique est toujours en cours
         assertTrue(vm.state.value.playing)
         vm.togglePlay()
         assertFalse(voice.speaking.value)
@@ -220,10 +393,10 @@ class ViewModelsTest {
         vm.togglePlay()
         assertTrue(voice.speaking.value)
         assertEquals(2, voice.spoken.size)
-        assertEquals(4, vm.state.value.cursor) // le coup suivant attend toujours la fin du commentaire
+        assertEquals(7, vm.state.value.cursor) // le coup suivant attend toujours la fin du commentaire
         voice.finish()
         advanceTimeBy(601); runCurrent()
-        assertEquals(5, vm.state.value.cursor)
+        assertEquals(8, vm.state.value.cursor)
         // Écran quitté : silence et pause.
         vm.silence()
         assertFalse(voice.speaking.value)
@@ -245,7 +418,7 @@ class ViewModelsTest {
     @Test
     fun academyRestoresFromSavedState() = test {
         val saved = SavedStateHandle(mapOf("academy_lesson" to 5, "academy_challenge" to false, "academy_cursor" to 3))
-        val vm = AcademyViewModel(FakeSettings(), FakeLessons(), FakeNarrator(), saved)
+        val vm = academy(saved = saved)
         runCurrent()
         assertEquals(5, vm.state.value.lessonId)
         assertEquals(3, vm.state.value.cursor)

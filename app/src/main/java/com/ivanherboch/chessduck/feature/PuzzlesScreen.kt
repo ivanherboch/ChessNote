@@ -233,7 +233,7 @@ private fun filterLabel(band: Int, theme: String, solved: Int): String {
 
 /** Compte à rebours visuel avant l'annulation automatique d'une réfutation ; le bouton pause le suspend. */
 @Composable
-private fun RefuteCountdown(until: Long, hold: Long, onHold: () -> Unit) {
+internal fun RefuteCountdown(until: Long, hold: Long, onHold: () -> Unit) {
     val c = LocalDuck.current
     val progress = remember(until) { Animatable(((until - System.currentTimeMillis()).toFloat() / hold).coerceIn(0f, 1f)) }
     LaunchedEffect(until) {

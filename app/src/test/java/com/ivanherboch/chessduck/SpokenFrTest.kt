@@ -32,8 +32,12 @@ class SpokenFrTest {
     @Test
     fun noLessonTextKeepsEnglishNotation() {
         val english = Regex("""(?<!\w)[KQRBN][a-h1-8]?x?[a-h][1-8]""")
-        for (l in Lessons.all) for (t in l.texts + l.summary + l.title) assertFalse(t, english.containsMatchIn(SpokenFr.text(t)))
+        for (l in Lessons.all) for (t in spoken(l)) assertFalse(t, english.containsMatchIn(SpokenFr.text(t)))
     }
+
+    /** Tout ce que la voix peut lire d'une leçon : titre, résumé, règle à retenir, conditions, commentaires, question. */
+    private fun spoken(l: com.ivanherboch.chessduck.content.Lesson) =
+        l.texts + l.summary + l.title + l.takeaway + l.conditions + com.ivanherboch.chessduck.feature.ASK
 
     @Test
     fun chessTermsArePronounced() {
@@ -41,6 +45,8 @@ class SpokenFrTest {
         assertEquals("Le gambitte Évanse.", SpokenFr.text("Le gambit Evans."))
         assertEquals("Fou h2, échec et matte.", SpokenFr.text("Fou h2, échec et mat."))
         assertEquals("dame h4, matte", SpokenFr.text(SpokenFr.move("Qh4#")))
+        assertEquals("L'étude de Rétti et la défense Filidor.", SpokenFr.text("L'étude de Réti et la défense Philidor."))
+        assertEquals("La défense Nimmzo-indienne, la Skandinave, le matte d'Anastazie.", SpokenFr.text("La défense nimzo-indienne, la scandinave, le mat d'Anastasie."))
         // Les mots qui ne font que ressembler restent intacts.
         val same = "Il faut mater sans perdre de matériel, avec patience."
         assertEquals(same, SpokenFr.text(same))
@@ -48,8 +54,8 @@ class SpokenFrTest {
 
     @Test
     fun noLessonKeepsAHardWordForTheVoice() {
-        val hard = Regex("(?<![\\p{L}-])(pat|mat|gambit|fianchetto|zugzwang|Giuoco|Kieseritzky|Najdorf|Winawer|Tarrasch|Grünfeld)(?![\\p{L}-])", RegexOption.IGNORE_CASE)
-        for (l in Lessons.all) for (t in l.texts + l.summary + l.title) assertFalse(t, hard.containsMatchIn(SpokenFr.text(t)))
+        val hard = Regex("(?<![\\p{L}-])(pat|mat|gambit|fianchetto|zugzwang|Giuoco|Kieseritzky|Najdorf|Winawer|Tarrasch|Grünfeld|Réti|Philidor|Nimzo)(?![\\p{L}])", RegexOption.IGNORE_CASE)
+        for (l in Lessons.all) for (t in spoken(l)) assertFalse(t, hard.containsMatchIn(SpokenFr.text(t)))
     }
 
     @Test

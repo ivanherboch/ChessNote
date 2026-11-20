@@ -447,6 +447,16 @@ val Icons.Rounded.SportsScore: ImageVector
         )
     }.also { _rounded_SportsScore = it }
 
+private var _rounded_StarOutline: ImageVector? = null
+
+val Icons.Rounded.StarOutline: ImageVector
+    get() = _rounded_StarOutline ?: materialIcon(name = "Rounded.StarOutline", autoMirror = false) {
+        addPath(
+            addPathNodes("M19.65,9.04 l-4.84,-0.42 l-1.89,-4.45 c-0.34,-0.81 -1.5,-0.81 -1.84,0 L9.19,8.63 l-4.83,0.41 c-0.88,0.07 -1.24,1.17 -0.57,1.75 l3.67,3.18 l-1.1,4.72 c-0.2,0.86 0.73,1.54 1.49,1.08 l4.15,-2.5 l4.15,2.51 c0.76,0.46 1.69,-0.22 1.49,-1.08 l-1.1,-4.73 l3.67,-3.18 c0.67,-0.58 0.32,-1.68 -0.56,-1.75 Z M12,15.4 l-3.76,2.27 l1,-4.28 l-3.32,-2.88 l4.38,-0.38 L12,6.1 l1.71,4.04 l4.38,0.38 l-3.32,2.88 l1,4.28 L12,15.4 Z"),
+            pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black), fillAlpha = 1.0f,
+        )
+    }.also { _rounded_StarOutline = it }
+
 private var _rounded_SwapVert: ImageVector? = null
 
 val Icons.Rounded.SwapVert: ImageVector

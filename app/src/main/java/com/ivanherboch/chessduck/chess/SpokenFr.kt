@@ -43,6 +43,8 @@ object SpokenFr {
         "Caro-Kann" to "Caro-Kane", "Grünfeld" to "Grunfèlde", "Alekhine" to "Aliékhine", "Pirc" to "Pirtse",
         "Rubinstein" to "Roubinnchtaïne", "Fischer" to "Fichère", "Lucena" to "Loucéna", "Boden" to "Bodène",
         "Evans" to "Évanse", "Petrov" to "Pétrof", "Kasparov" to "Kasparof",
+        "Réti" to "Rétti", "Philidor" to "Filidor", "Anastasie" to "Anastazie", "Scandinave" to "Skandinave",
+        "Nimzo-indienne" to "Nimmzo-indienne", "Nimzo" to "Nimmzo",
     ).map { (word, said) -> Regex("(?<![\\p{L}-])${Regex.escape(word)}(?![\\p{L}-])", RegexOption.IGNORE_CASE) to said }
 
     /**

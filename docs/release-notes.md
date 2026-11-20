@@ -1,3 +1,18 @@
+## ChessDuck 2.6.0 — une Académie qui fait vraiment apprendre (étape 1)
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- **Guidé actif** : aux moments clés, la leçon s'arrête et vous demande « À vous : que jouez-vous ici ? ». Proposez votre coup sur l'échiquier, ou touchez Lecture pour découvrir celui de la leçon. La lecture vocale pose aussi la question.
+- **La règle d'abord** : l'objectif de chaque leçon affiche dès le départ la phrase « À retenir » et, pour Lucena et Philidor, les conditions qui permettent de reconnaître la position. Des repères colorés (cases et flèches) éclairent certaines positions.
+- **Défi plus juste** : un coup aussi bon que celui de la leçon est accepté (« Bon coup aussi ! La leçon poursuit avec… »), au lieu d'être refusé. Un mauvais coup est réfuté par la réponse de l'Ordinateur (flèche rouge), puis « Reprendre au coup manqué » vous ramène juste avant l'erreur.
+- **Défi mieux commenté** : les coups adverses sont expliqués, et le dernier commentaire reste affiché à la fin avec sa règle « À retenir ». Une fois le Défi réussi, la leçon se relit coup par coup, et revenir au Guidé garde la position.
+- **Étoiles** : ★★★ sans erreur ni indice, ★★ avec au plus une erreur ou le premier indice, ★ sinon. Elles s'affichent dans l'en-tête et dans le catalogue.
+- **Maîtrise validée** : pour les leçons de tactique et de finale liées à un thème, la maîtrise se gagne sur 5 problèmes inédits du même thème, tirés des 150 000 problèmes embarqués (4 réussis sur 5, sans l'indice qui montre le coup), après un Défi à au moins 2 étoiles.
+- **Passerelles** : en fin de leçon, « S'entraîner » ouvre l'onglet Problèmes sur le thème de la leçon, et « Jouer cette position » lance une partie d'entraînement contre l'Ordinateur depuis la position atteinte. Cette partie ne change pas l'ELO, et sa revue repart de la bonne position.
+- **Leçons corrigées** : « Calculer un mat en trois coups » (le pion g7, pas un cavalier), « L'échec double » (le second cavalier noir présenté dès le début), « Le contournement » (trait expliqué, ligne menée jusqu'à la promotion) et « Le pat sauveur » (vraie défense contre les échecs de la dame).
+- **Voix** : Réti, Philidor, Anastasie, Nimzo et Scandinave sont mieux prononcés.
+- **Sous le capot** : identifiants de leçons figés (votre progression est conservée), base de données v4 avec migration automatique, et vérification automatique des 113 leçons (coups vérifiés par l'Ordinateur, cohérence entre le texte et l'échiquier).
+
 ## ChessDuck 2.5.2 — échecs et prises visibles dans les images
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

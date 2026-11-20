@@ -49,7 +49,7 @@ class GameReviewViewModel(private val analysis: GameAnalysisService) : ViewModel
     /** Ouvre une partie de l'historique sur son résumé, en pause : le joueur lance la lecture quand il veut. */
     fun openReview(g: GameRecord) {
         playback.cancel()
-        val line = runCatching { Line.fromUci(START_FEN, g.moves) }.getOrNull() ?: return
+        val line = runCatching { Line.fromUci(g.startFen.ifEmpty { START_FEN }, g.moves) }.getOrNull() ?: return
         _review.value = Review(g, line, 0, false, analysis.analysisOf(g, line), flipped = g.vsComputer && !g.playerWhite)
         analysis.start(g, line)
     }

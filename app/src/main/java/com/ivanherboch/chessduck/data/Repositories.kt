@@ -10,6 +10,9 @@ interface SettingsRepository {
     suspend fun setNotationBest(v: Int)
     suspend fun setNotationLevel(v: Int)
     suspend fun setLesson(v: Int)
+    /** Palier de l'Académie (1 à 5). */
+    suspend fun setAcademyLevel(v: Int)
+    suspend fun setPlacementDone(v: Boolean)
     suspend fun setElo(v: Int)
     suspend fun setGameSettings(twoPlayers: Boolean, color: Int, aiElo: Int)
     suspend fun setPuzzleFilter(band: Int, theme: String)
@@ -71,10 +74,15 @@ interface GameRepository {
     suspend fun deleteGame(id: Long)
 }
 
-/** Leçons de l'Académie maîtrisées. */
+/** Progression dans l'Académie : leçons, étoiles, exercices et tests. */
 interface LessonProgressRepository {
+    /** Leçons maîtrisées (Défi réussi et, s'il y a lieu, exercices validés). */
     fun masteredLessons(): Flow<List<Int>>
-    suspend fun markLesson(id: Int, at: Long = System.currentTimeMillis())
+    fun progress(): Flow<List<LessonProgress>>
+    suspend fun progress(id: Int): LessonProgress?
+    suspend fun save(p: LessonProgress)
+    suspend fun saveAssessment(a: AcademyAssessment): Long
+    fun assessments(): Flow<List<AcademyAssessment>>
 }
 
 class RoomPuzzleRepository(private val context: Context, private val db: DuckDatabase) : PuzzleRepository {
@@ -119,6 +127,11 @@ class RoomGameRepository(private val db: DuckDatabase) : GameRepository {
 }
 
 class RoomLessonProgressRepository(private val db: DuckDatabase) : LessonProgressRepository {
-    override fun masteredLessons() = db.user().masteredLessons()
-    override suspend fun markLesson(id: Int, at: Long) = db.user().markLesson(LessonProgress(id, at))
+    private val dao get() = db.user()
+    override fun masteredLessons() = dao.masteredLessons()
+    override fun progress() = dao.lessonProgress()
+    override suspend fun progress(id: Int) = dao.lessonProgress(id)
+    override suspend fun save(p: LessonProgress) = dao.saveLesson(p)
+    override suspend fun saveAssessment(a: AcademyAssessment) = dao.insertAssessment(a)
+    override fun assessments() = dao.assessments()
 }

@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,7 +45,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.ivanherboch.chessduck.content.LessonCategory
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.ui.DuckChip
 import com.ivanherboch.chessduck.ui.InfoPill
@@ -64,6 +64,7 @@ internal fun LessonCatalog(
     onClose: () -> Unit,
 ) {
     val c = LocalDuck.current
+    val progress by vm.progress.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf("") }
     var cat by remember { mutableStateOf(s.filter) }
     val total = Lessons.all.size
@@ -77,7 +78,7 @@ internal fun LessonCatalog(
         }
     }
     val perCategory = remember(mastered) {
-        LessonCategory.entries.associateWith { k -> Lessons.all.count { it.category == k } to Lessons.all.count { it.category == k && it.id in mastered } }
+        Lessons.categories.associateWith { k -> Lessons.all.count { it.category == k } to Lessons.all.count { it.category == k && it.id in mastered } }
     }
     DuckLazySheet("Leçons — ${mastered.size} / $total maîtrisées", onClose) {
         item(key = "filtres") {
@@ -97,7 +98,7 @@ internal fun LessonCatalog(
                 SectionTitle("Catégorie")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     DuckChip("Toutes", cat == null, { cat = null; vm.setFilter(null) }, accent = c.blue)
-                    for (k in LessonCategory.entries) {
+                    for (k in Lessons.categories) {
                         val (n, m) = perCategory.getValue(k)
                         DuckChip("${k.label} $m/$n", cat == k, { cat = k; vm.setFilter(k) }, accent = c.blue)
                     }
@@ -114,11 +115,15 @@ internal fun LessonCatalog(
         items(items, key = { it.id }) { item ->
             val current = item.id == s.lessonId
             val done = item.id in mastered
+            val stars = progress[item.id]?.stars ?: 0
             Row(
                 Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(DuckRadius.M))
                     .background(if (current) c.surfaceHi else c.surface)
                     .clickable(role = Role.Button) { vm.open(item.id); onClose() }
-                    .semantics { stateDescription = (if (done) "maîtrisée" else "à maîtriser") + if (current) ", leçon en cours" else "" }
+                    .semantics {
+                        stateDescription = (if (done) "maîtrisée" else "à maîtriser") +
+                            (if (stars > 0) ", $stars étoile${if (stars > 1) "s" else ""} sur 3" else "") + if (current) ", leçon en cours" else ""
+                    }
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -127,7 +132,10 @@ internal fun LessonCatalog(
                     else Text("${item.id}", color = c.goldText, style = MaterialTheme.typography.labelLarge)
                 }
                 Column(Modifier.padding(start = 8.dp).weight(1f)) {
-                    if (current) InfoPill("En cours", accent = c.blue, modifier = Modifier.padding(bottom = 2.dp))
+                    if (current || stars > 0) Row(Modifier.padding(bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                        if (current) InfoPill("En cours", accent = c.blue, modifier = Modifier.padding(end = 6.dp))
+                        if (stars > 0) StarRow(stars, size = 14.dp)
+                    }
                     Text(item.title, color = c.text, style = MaterialTheme.typography.titleSmall)
                     Text(item.summary, color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }

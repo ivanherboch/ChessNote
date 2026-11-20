@@ -45,8 +45,38 @@ data class Puzzle(
 @Entity(tableName = "puzzle_progress")
 data class PuzzleProgress(@PrimaryKey val puzzleId: String, val solvedAt: Long)
 
+/**
+ * Progression d'une leçon de l'Académie (v4). [masteredAt] > 0 : leçon maîtrisée (0 : Défi réussi, maîtrise à valider).
+ * [stars] : meilleur résultat du Défi (1 à 3). [practicePassed]/[practiceTotal] : meilleure série d'exercices inédits.
+ * Les champs de révision espacée ([srsStage], [nextReviewAt], [lastReviewedAt]) sont préparés pour les révisions.
+ */
 @Entity(tableName = "lesson_progress")
-data class LessonProgress(@PrimaryKey val lessonId: Int, val masteredAt: Long)
+data class LessonProgress(
+    @PrimaryKey val lessonId: Int,
+    val masteredAt: Long,
+    @ColumnInfo(defaultValue = "0") val stars: Int = 0,
+    @ColumnInfo(defaultValue = "0") val errors: Int = 0,
+    @ColumnInfo(defaultValue = "0") val hintsUsed: Int = 0,
+    @ColumnInfo(defaultValue = "0") val practicePassed: Int = 0,
+    @ColumnInfo(defaultValue = "0") val practiceTotal: Int = 0,
+    @ColumnInfo(defaultValue = "0") val srsStage: Int = 0,
+    @ColumnInfo(defaultValue = "0") val nextReviewAt: Long = 0,
+    @ColumnInfo(defaultValue = "0") val lastReviewedAt: Long = 0,
+) {
+    val mastered: Boolean get() = masteredAt > 0
+}
+
+/** Résultat d'un test de l'Académie (placement, examen de palier…) : [kind] identifie le type de test. */
+@Entity(tableName = "academy_assessments")
+data class AcademyAssessment(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val kind: String,
+    val level: Int,
+    val score: Int,
+    val total: Int,
+    val passed: Boolean,
+    val completedAt: Long,
+)
 
 @Entity(tableName = "games")
 data class GameRecord(
@@ -69,6 +99,8 @@ data class GameRecord(
     @ColumnInfo(defaultValue = "") val blackName: String = "",
     /** ELO de l'ordinateur (0 pour une partie à 2 joueurs). */
     @ColumnInfo(defaultValue = "0") val opponentElo: Int = 0,
+    /** Position de départ (FEN) d'une partie jouée depuis une leçon ; vide pour la position initiale. */
+    @ColumnInfo(defaultValue = "") val startFen: String = "",
 )
 
 data class PuzzleMeta(val id: String, val rating: Int, val themes: String, val primaryTheme: String)
@@ -165,11 +197,23 @@ interface PuzzleDao {
 
 @Dao
 interface UserDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun markLesson(p: LessonProgress)
-
-    @Query("SELECT lessonId FROM lesson_progress")
+    @Query("SELECT lessonId FROM lesson_progress WHERE masteredAt > 0")
     fun masteredLessons(): Flow<List<Int>>
+
+    @Query("SELECT * FROM lesson_progress")
+    fun lessonProgress(): Flow<List<LessonProgress>>
+
+    @Query("SELECT * FROM lesson_progress WHERE lessonId = :id")
+    suspend fun lessonProgress(id: Int): LessonProgress?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveLesson(p: LessonProgress)
+
+    @Insert
+    suspend fun insertAssessment(a: AcademyAssessment): Long
+
+    @Query("SELECT * FROM academy_assessments ORDER BY completedAt DESC")
+    fun assessments(): Flow<List<AcademyAssessment>>
 
     @Insert
     suspend fun insertGame(g: GameRecord): Long
@@ -188,8 +232,8 @@ interface UserDao {
 }
 
 @Database(
-    entities = [Puzzle::class, PuzzleProgress::class, LessonProgress::class, GameRecord::class],
-    version = 3,
+    entities = [Puzzle::class, PuzzleProgress::class, LessonProgress::class, GameRecord::class, AcademyAssessment::class],
+    version = 4,
     exportSchema = true,
 )
 abstract class DuckDatabase : RoomDatabase() {
@@ -203,7 +247,7 @@ abstract class DuckDatabase : RoomDatabase() {
         fun create(context: Context, name: String = "chessduck.db"): DuckDatabase =
             Room.databaseBuilder(context, DuckDatabase::class.java, name)
                 .createFromAsset("chessduck.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build()
 
         /**
@@ -239,6 +283,25 @@ abstract class DuckDatabase : RoomDatabase() {
                 false
             } finally {
                 tmp.delete()
+            }
+        }
+
+        /**
+         * v4 : progression détaillée des leçons (étoiles, erreurs, indices, exercices, révisions), résultats des tests
+         * de l'Académie et position de départ des parties. Les leçons déjà maîtrisées en v3 reçoivent 3 étoiles.
+         */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                for (c in listOf("stars", "errors", "hintsUsed", "practicePassed", "practiceTotal", "srsStage", "nextReviewAt", "lastReviewedAt")) {
+                    db.execSQL("ALTER TABLE lesson_progress ADD COLUMN $c INTEGER NOT NULL DEFAULT 0")
+                }
+                db.execSQL("UPDATE lesson_progress SET stars = 3")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `academy_assessments` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`kind` TEXT NOT NULL, `level` INTEGER NOT NULL, `score` INTEGER NOT NULL, `total` INTEGER NOT NULL, " +
+                        "`passed` INTEGER NOT NULL, `completedAt` INTEGER NOT NULL)",
+                )
+                db.execSQL("ALTER TABLE games ADD COLUMN startFen TEXT NOT NULL DEFAULT ''")
             }
         }
 

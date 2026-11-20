@@ -67,7 +67,7 @@ object DuckViewModels {
 
     val Factory: ViewModelProvider.Factory = viewModelFactory {
         initializer { container().let { NotationViewModel(it.settings, it.puzzles) } }
-        initializer { container().let { AcademyViewModel(it.settings, it.lessons, it.narrator, createSavedStateHandle()) } }
+        initializer { container().let { AcademyViewModel(it.settings, it.lessons, it.narrator, it.engine, it.puzzles, createSavedStateHandle()) } }
         initializer { container().let { PuzzlesViewModel(it.settings, it.puzzles, it.engine, createSavedStateHandle()) } }
         initializer { container().let { PlayViewModel(it.settings, it.games, it.engine, it.analysis) } }
         initializer { GameReviewViewModel(container().analysis) }

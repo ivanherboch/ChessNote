@@ -70,6 +70,10 @@ data class Settings(
     val puzzleId: String = "",
     val notationLevel: Int = 0,
     val lessonId: Int = 1,
+    /** Palier de l'Académie choisi ou atteint (1 Les bases … 5 Confirmé). */
+    val academyLevel: Int = 2,
+    /** Le test de placement de l'Académie a été passé (ou écarté). */
+    val placementDone: Boolean = false,
     /** Format des images exportées : nom de ShareFormat (« PORTRAIT » ou « SQUARE »). */
     val shareFormat: String = "PORTRAIT",
     /** Images exportées sur fond clair (sinon sombre). */
@@ -109,6 +113,8 @@ class Prefs(private val context: Context) : SettingsRepository {
         val puzzleId = stringPreferencesKey("puzzle_id")
         val level = intPreferencesKey("notation_level")
         val lesson = intPreferencesKey("lesson_id")
+        val academyLevel = intPreferencesKey("academy_level")
+        val placementDone = booleanPreferencesKey("academy_placement_done")
     }
 
     override val settings: Flow<Settings> = context.store.data.map { p ->
@@ -137,6 +143,8 @@ class Prefs(private val context: Context) : SettingsRepository {
             puzzleId = p[K.puzzleId] ?: "",
             notationLevel = p[K.level] ?: 0,
             lessonId = p[K.lesson] ?: 1,
+            academyLevel = p[K.academyLevel] ?: 2,
+            placementDone = p[K.placementDone] ?: false,
             shareFormat = p[SHARE_FORMAT] ?: "PORTRAIT",
             shareLight = p[SHARE_LIGHT] ?: false,
         )
@@ -154,6 +162,8 @@ class Prefs(private val context: Context) : SettingsRepository {
     override suspend fun setNotationBest(v: Int) { context.store.edit { if (v > (it[K.notationBest] ?: 0)) it[K.notationBest] = v } }
     override suspend fun setHaptics(v: Boolean) { context.store.edit { it[K.haptics] = v } }
     override suspend fun setSound(v: Boolean) { context.store.edit { it[K.sound] = v } }
+    override suspend fun setAcademyLevel(v: Int) { context.store.edit { it[K.academyLevel] = v.coerceIn(1, 5) } }
+    override suspend fun setPlacementDone(v: Boolean) { context.store.edit { it[K.placementDone] = v } }
     override suspend fun setNarration(v: Boolean) { context.store.edit { it[K.narration] = v } }
     override suspend fun setKidNarration(v: Boolean) { context.store.edit { it[K.kidNarration] = v } }
     override suspend fun setKidMode(v: Boolean) { context.store.edit { it[K.kid] = v } }

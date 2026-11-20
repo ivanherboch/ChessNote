@@ -253,6 +253,7 @@ private fun liveStatus(s: PlayState, p1: String, p2: String): Pair<String, Tone>
     }
     val check = if (pos.inCheck) "Échec ! " else ""
     return if (s.twoPlayers) "${check}À ${if (pos.whiteToMove) p1 else p2} de jouer (les $side)." to Tone.INFO
+    else if (s.line.size == 0 && s.fromPosition) "Position de la leçon contre l'ordinateur (${s.aiElo} ELO). Vous jouez les $side. Partie d'entraînement : l'ELO ne change pas." to Tone.INFO
     else if (s.line.size == 0) "Nouvelle partie contre l'ordinateur (${s.aiElo} ELO). Vous jouez les $side : à vous de commencer !" to Tone.INFO
     else "${check}À vous de jouer (les $side)." to Tone.INFO
 }

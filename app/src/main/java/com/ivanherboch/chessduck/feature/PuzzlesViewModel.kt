@@ -241,6 +241,12 @@ class PuzzlesViewModel(
         viewModelScope.launch { prefs.setPuzzleFilter(band, state.value.theme) }
     }
 
+    /** « S'entraîner sur ce thème » (Académie) : filtre sur le thème et la tranche, puis tire un problème. */
+    fun train(theme: String, band: Int) {
+        setFilter(band, theme)
+        random()
+    }
+
     fun setFilter(band: Int, theme: String) {
         _state.update { it.copy(band = band, theme = theme) }
         viewModelScope.launch { prefs.setPuzzleFilter(band, theme) }

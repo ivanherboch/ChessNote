@@ -149,8 +149,13 @@ class AppRobolectricTest {
         // Une base déjà complète n'est pas réimportée.
         assertEquals(false, DuckDatabase.syncPuzzles(ApplicationProvider.getApplicationContext(), db))
         assertEquals(30, db.puzzles().slice(100, 30).size)
-        db.user().markLesson(LessonProgress(3, 1L))
+        // v4 : seule une leçon maîtrisée (masteredAt > 0) compte ; étoiles et exercices sont conservés.
+        db.user().saveLesson(LessonProgress(3, 1L, stars = 2, practicePassed = 4, practiceTotal = 5))
+        db.user().saveLesson(LessonProgress(4, 0L, stars = 3))
         assertEquals(listOf(3), db.user().masteredLessons().first())
+        assertEquals(4, db.user().lessonProgress(3)?.practicePassed)
+        db.user().insertAssessment(com.ivanherboch.chessduck.data.AcademyAssessment(kind = "placement", level = 3, score = 9, total = 12, passed = true, completedAt = 1L))
+        assertEquals(1, db.user().assessments().first().size)
         // La base embarquée (v1) est migrée en v2 : noms des joueurs et ELO de l'ordinateur.
         val id = db.user().insertGame(GameRecord(date = 1, opponent = "Ordinateur 1200", vsComputer = true, playerWhite = true, result = "1-0", outcome = 1, reason = "échec et mat", eloBefore = 1200, eloAfter = 1216, moves = "e2e4 e7e5", whiteName = "Ivan", blackName = "🤖 Ordinateur", opponentElo = 1200))
         assertEquals("Ivan", db.user().games().first().first().whiteName)
@@ -208,6 +213,50 @@ class AppRobolectricTest {
         }
         assertNotNull(db.puzzles().byIdIgnoreCase("0000d"))
         db.close()
+    }
+
+    /**
+     * Migration 3 → 4 : une base v3 reconstruite à partir du schéma exporté (app/schemas) est ouverte par Room, qui
+     * applique MIGRATION_3_4 puis vérifie le schéma v4. Leçons maîtrisées (3 étoiles) et historique sont conservés.
+     */
+    @Test
+    fun migration3To4KeepsLessonsAndGames() = runBlocking {
+        val ctx: android.content.Context = ApplicationProvider.getApplicationContext()
+        val root = generateSequence(File("").absoluteFile) { it.parentFile }.first { File(it, "settings.gradle.kts").exists() }
+        val schema = org.json.JSONObject(File(root, "app/schemas/com.ivanherboch.chessduck.data.DuckDatabase/3.json").readText()).getJSONObject("database")
+        val name = "chessduck-v3.db"
+        ctx.deleteDatabase(name)
+        val path = ctx.getDatabasePath(name).apply { parentFile?.mkdirs() }
+        android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(path, null).use { sql ->
+            val entities = schema.getJSONArray("entities")
+            for (i in 0 until entities.length()) {
+                val e = entities.getJSONObject(i)
+                val table = e.getString("tableName")
+                sql.execSQL(e.getString("createSql").replace("\${TABLE_NAME}", table))
+                val idx = e.optJSONArray("indices") ?: org.json.JSONArray()
+                for (k in 0 until idx.length()) sql.execSQL(idx.getJSONObject(k).getString("createSql").replace("\${TABLE_NAME}", table))
+            }
+            val setup = schema.getJSONArray("setupQueries")
+            for (i in 0 until setup.length()) sql.execSQL(setup.getString(i))
+            sql.execSQL("INSERT OR REPLACE INTO room_master_table (id, identity_hash) VALUES (42, '${schema.getString("identityHash")}')")
+            sql.execSQL("INSERT INTO lesson_progress (lessonId, masteredAt) VALUES (7, 123)")
+            sql.execSQL(
+                "INSERT INTO games (date, opponent, vsComputer, playerWhite, result, outcome, reason, eloBefore, eloAfter, moves, analysis, whiteName, blackName, opponentElo) " +
+                    "VALUES (1, 'Ordinateur 1200', 1, 1, '1-0', 1, 'abandon', 1200, 1216, 'e2e4', '', 'Ivan', 'Ordinateur', 1200)",
+            )
+            sql.version = 3
+        }
+        val db = DuckDatabase.create(ctx, name)
+        assertEquals(listOf(7), db.user().masteredLessons().first())
+        assertEquals(3, db.user().lessonProgress(7)?.stars)
+        val game = db.user().games().first().single()
+        assertEquals("", game.startFen)
+        assertEquals("Ivan", game.whiteName)
+        db.user().insertAssessment(com.ivanherboch.chessduck.data.AcademyAssessment(kind = "exam", level = 2, score = 8, total = 10, passed = true, completedAt = 2L))
+        assertEquals(1, db.user().assessments().first().size)
+        db.close()
+        ctx.deleteDatabase(name)
+        Unit
     }
 
     @Test
@@ -380,6 +429,14 @@ class AppRobolectricTest {
         desc("Mémo anglais").performClick(); settle(800); shot("1b_memo")
         close(); settle(800)
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("2_academie")
+        // Guidé actif : la leçon 1 s'arrête avant le 5e demi-coup et demande « À vous : que jouez-vous ici ? ».
+        repeat(4) { desc("Coup suivant").performClick(); settle(500) }
+        rule.onNodeWithText(com.ivanherboch.chessduck.feature.ASK).assertExists(); shot("2d_a_vous")
+        // Fin de la leçon : passerelle « Jouer la position » vers le Jeu Libre (partie d'entraînement).
+        desc("Aller à la fin").performClick(); settle(800); shot("2e_fin_lecon")
+        desc("Jouer cette position contre l'Ordinateur dans le Jeu Libre").performClick(); settle(2000)
+        rule.onNodeWithText("Position de la leçon", substring = true).assertExists(); shot("2f_jouer_position")
+        rule.onNodeWithText("Académie").performClick(); settle(1200)
         rule.onNodeWithText("Défi").performClick(); settle(1500); shot("2b_defi")
         desc("Ouvrir le catalogue des leçons").performClick(); settle(1200); shot("2c_catalogue_lecons")
         close(); settle(800)
@@ -391,6 +448,7 @@ class AppRobolectricTest {
         val back = { rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1200) }
         back(); desc("Catalogue des problèmes").assertExists()
         back(); desc("Ouvrir le catalogue des leçons").assertExists()
+        back(); desc("Historique des parties").assertExists() // Jeu Libre, ouvert depuis l'Académie
         back(); desc("Mémo anglais").assertExists()
         rule.onNodeWithText("Jeu Libre").performClick(); settle(1500)
         rule.onNodeWithContentDescription("Paramètres").performClick(); settle(800); shot("5_parametres")
