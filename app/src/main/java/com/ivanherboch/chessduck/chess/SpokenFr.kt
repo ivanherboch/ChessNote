@@ -46,6 +46,14 @@ object SpokenFr {
         "Réti" to "Rétti", "Philidor" to "Filidor", "Anastasie" to "Anastazie", "Scandinave" to "Skandinave",
         "Nimzo-indienne" to "Nimmzo-indienne", "Nimzo" to "Nimmzo",
         "Morphy" to "Morfi", "Brunswick" to "Brunesvik", "Isouard" to "Izouar",
+        // Étape 3 : noms propres et termes des nouvelles leçons.
+        "Vancura" to "Vantsoura", "Saavedra" to "Saavédra", "Anderssen" to "Andersséne", "Nimzowitsch" to "Nimmzovitch",
+        "Botvinnik" to "Botvinik", "Lasker" to "Laskère", "Bauer" to "Baouère", "Pillsbury" to "Pilsbéri",
+        "Greco" to "Gréco", "Taimanov" to "Taïmanof", "Trompowsky" to "Trompofski", "Marshall" to "Marchal",
+        "Benko" to "Bènnko", "desperado" to "dèspérado", "Smith-Morra" to "Smisse-Morra", "Kan" to "Kanne",
+        "Panov" to "Panof", "Budapest" to "Boudapèste", "Tartakower" to "Tartakovère", "Rotlewi" to "Rotlévi",
+        "Lodz" to "Woudj", "Sämisch" to "Zémiche", "AVRO" to "Avro", "Capablanca" to "Capablannca",
+        "Rossolimo" to "Rossolimmo",
     ).map { (word, said) -> Regex("(?<![\\p{L}-])${Regex.escape(word)}(?![\\p{L}-])", RegexOption.IGNORE_CASE) to said }
 
     /**

@@ -599,3 +599,16 @@ Ra1 : La tour cherche un mat.
 -? Le roi blanc s'approche du pion a6.
 - Le roi noir attaque à l'aile roi.
 -? Le roi blanc prend le pion a6. Il ira ensuite prendre le pion b5, et le pion a ira à dame. À retenir : quand les pions sont bloqués, celui dont le roi est le plus actif gagne. Cherchez la case qui place l'adversaire en zugzwang.
+
+# Le cavalier contre le pion | Un cavalier arrête un pion seul s'il contrôle sa case de promotion ou se place devant lui. Il faut seulement éviter les cases où il serait pris ou trop loin. | w | id=211 level=3 order=3211
+FEN: 8/8/8/8/8/1p6/8/1N2K2k w - - 0 1
+SHOW 0: marks=b1,b2
+?Kf2 : Le cavalier est déjà devant le pion, sur sa case de promotion : le pion ne peut pas aller à dame. Le roi blanc enferme le roi noir.
+Kh2 : Le roi noir cherche une sortie.
+?Nd2 : Le cavalier quitte la case b1 mais la contrôle toujours, ainsi que la case b3 : le pion reste bloqué.
+Kh3 : Le roi noir s'éloigne de son pion.
+?Kf3 : Le roi blanc garde le roi noir loin du pion.
+b2 : Le pion avance d'une case.
+?Nb1 : Le cavalier revient bloquer la case de promotion, juste devant le pion.
+Kh4 : Le roi noir ne peut pas aider son pion.
+?Kf4 : Le roi blanc reste proche. La partie est nulle. À retenir : un cavalier arrête un pion en se plaçant devant lui ou en contrôlant sa case de promotion. Il peut aussi le prendre dès qu'il n'est plus protégé.

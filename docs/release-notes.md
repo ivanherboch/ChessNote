@@ -1,3 +1,22 @@
+## ChessDuck 3.0.0 — l'Académie complète : 211 leçons et un parcours personnalisé
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Académie : 211 leçons sur 5 paliers (contre 114). Chacune est vérifiée par l'Ordinateur : aucun coup perdant n'est enseigné.
+  - Nouvelle catégorie « Les bases » (palier 1) : l'échiquier et la notation, la marche de chaque pièce, la valeur des pièces, l'échec, le mat, le pat, les nulles, le roque, la prise en passant, la promotion et la guerre des pions.
+  - Méthode de réflexion : échecs, prises et menaces, le contrôle anti-gaffe, compter attaquants et défenseurs, les coups candidats, ce que veut l'adversaire ; trois exercices d'initiation.
+  - Les 37 ouvertures sont enrichies : trois idées clés, un piège pour vous et un contre vous, deux déviations fréquentes de l'adversaire et un QCM sur le plan. On y explique aussi pourquoi les Noirs acceptent un déséquilibre dans l'Alekhine, la Dragon, la Pirc et la scandinave.
+  - 16 nouvelles ouvertures : catalane, Réti, siciliennes Taimanov, Kan, Rossolimo, Grand Prix et gambit Smith-Morra, Caro-Kann d'avance et attaque Panov, françaises d'échange et Rubinstein, italienne lente, attaque Marshall, gambits Budapest et Benko, Trompowsky.
+  - Tactique : contre-exemples (le coup naturel puni), pion empoisonné, surcharge, moulin, desperado, échec perpétuel, pat sauveur, sacrifice grec, double sacrifice des fous, et les mats de Greco, Damiano, Lolli, Pillsbury et Morphy.
+  - Nouvelle catégorie « Stratégie » (18 leçons) : centre de pions, chaînes, pion isolé, pions pendants, doublés, arriérés, majorité, avant-poste, bon et mauvais fou, paire de fous, colonne ouverte, tour en septième, doublement des tours, attaque de minorité, tempête de pions, sacrifice de qualité, prophylaxie et pire pièce. Chaque leçon se termine par un QCM « Qui est mieux ? » ou « Quel est le plan ? ».
+  - 17 finales : étude de Saavedra, défense Vancura, défense du côté long, règle de Tarrasch, dame contre pion en septième, deux tours contre dame, fous de couleurs opposées, pions passés éloignés et protégés, zugzwang mutuel, tour contre fou, cavalier contre pion, opposition… Trois nouvelles finales se jouent contre l'Ordinateur : dame contre pion, dame contre pion fou (le pat) et défense Vancura.
+  - 7 parties modèles commentées : l'Immortelle d'Anderssen, Rubinstein, Lasker, Nimzowitsch, Alekhine, Botvinnik et Capablanca. Les coups historiques imprécis sont signalés.
+- Revue de partie : après une gaffe (pièce en prise, mat manqué ou permis, roque ou développement en retard), le bouton « Travailler ce point dans l'Académie » ouvre la leçon et 5 exercices adaptés.
+- Bilan : le tiroir « Entraînements » présente vos 3 priorités du moment, tirées de vos parties analysées et de vos difficultés dans l'Académie.
+- Notation : nouvel exercice facultatif « Vision des cases » (couleur d'une case, échiquier masqué ; toucher une case ; chemin du cavalier), sans chronomètre et utilisable avec TalkBack.
+- Exercice avancé « Calcul à l'aveugle » (palier 5) : deux coups sont annoncés à voix haute et écrits, puis vous trouvez le coup suivant sans les voir joués. Un bouton réaffiche l'échiquier.
+- Les libellés « Guidé » et « Devinez le coup » passent sur deux lignes au lieu d'être coupés avec une grande taille de police.
+
 ## ChessDuck 2.7.4 — un bandeau lisible avec une grande police
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

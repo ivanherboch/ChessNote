@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `2.7.4` (`versionCode = 49`), publiée en release GitHub `v2.7.4`.
+- **Version actuelle** : `3.0.0` (`versionCode = 50`), publiée en release GitHub `v3.0.0`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -172,6 +172,8 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
   mode enfant et paramètres). Interface adulte et commentaires de revue au vouvoiement ; mode enfant au tutoiement.
 - **2.7.0** : refonte de l'Académie, étape 2 sur 3 : finales jouables, réflexes, révisions espacées, paliers,
   placement et examens, variantes, QCM, répertoire, partie modèle et « Devinez le coup ».
+- **3.0.0** : refonte de l'Académie, étape 3 sur 3 : 211 leçons (bases, méthode, stratégie, finales, 8 parties modèles,
+  53 ouvertures), pont Revue → Académie, bilan des 3 priorités, Vision des cases, Calcul à l'aveugle.
 - **2.7.1 → 2.7.4** : correctifs de l'Académie (coup du joueur montré pendant le jugement, mat plus lent refusé,
   coup équivalent ramené avec flèche verte, bouton « Entraînements » et en-tête d'entraînement, bandeau de puces
   qui passe à la ligne au lieu de défiler sous « Entraînements » avec une grande police).
@@ -195,14 +197,19 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
   `skipGuess`, `startReviews/nextReview`, `startRepertoire/nextRepertoire`, `startPlacement`, `startExam`, `validation(l)`.
   Écran : `AcademyPanels.kt` (bandeau, tiroir Entraînements, panneaux finale/réflexes/série/QCM, variantes).
 
-### Relais refonte Académie (étape 3 en cours, contenu terminé)
-- 210 leçons, identifiants 1–210 sans trou : bases 115–130 (`basics.txt`, palier 1, catégorie `BASICS`), méthode et
+### Relais refonte Académie (étape 3 terminée, v3.0.0)
+- 211 leçons, identifiants 1–211 sans trou : bases 115–130 (`basics.txt`, palier 1, catégorie `BASICS`), méthode et
   initiation 131–138, tactique 139–153 (`middlegames.txt`), stratégie 154–171 (`strategy.txt`, catégorie `STRATEGY`),
-  finales 172–187, parties modèles 188–194 (`model_games.txt`), ouvertures nouvelles 195–210 (`openings.txt`).
+  finales 172–187 et 211, parties modèles 188–194 (`model_games.txt`), ouvertures nouvelles 195–210 (`openings.txt`).
 - Les 37 ouvertures d'origine ont toutes `IDEA` ×3, `TRAP` ×2, 2 `VARIANT` et un `QUIZ`.
 - Finales jouables ajoutées : `KQKP`, `QUEEN_BISHOP_PAWN_DRAW`, `VANCURA_DRAW` (`EndgamePractice.kt`, règle `pawnGone`).
 - Audit : dans une partie modèle, un coup historique imprécis n'est accepté que si son commentaire contient
   « Ordinateur ». Positions des leçons PUZZLE ajoutées à `scripts/lessons/puzzles.json` depuis la base embarquée.
+- `WeakTopics.kt` : `ReviewTopic` (leçon + thème), `ReviewComments.topic(g, line, i, analysis)`, `WeakTopics.compute` →
+  `AcademyViewModel.priorities` (paramètre `games`) et `trainTopic(lessonId, theme)` ; bouton dans `ReviewLayout`.
+- `SquareVision.kt` (`VisionKind`, `VisionSession`) : `NotationViewModel.vision`, menu du niveau → « Vision des cases ».
+- Calcul à l'aveugle : `ReflexKind.BLIND`, `BlindItem`, `ReflexTrainer(speak = …)`, `announce()`, `showBoard()`.
+- `SrsScheduler.recommended` : les bases (palier 1) ne sont conseillées qu'au palier 1.
 
 ### Relais refonte Académie (état après l'étape 1, v2.6.0)
 - Sources : en-tête `# Titre | Résumé | w/b/PUZZLE id | id=N level= order= theme= kind=line` ; `?SAN : …` / `-? …` =

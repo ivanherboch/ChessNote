@@ -66,6 +66,52 @@ class AppRobolectricTest {
     fun leaveKidMode() = runBlocking { ApplicationProvider.getApplicationContext<ChessDuckApp>().prefs.setKidMode(false) }
 
     /** Ajoute une courte partie terminée à l'historique de l'application (mat du berger). */
+    /**
+     * Partie perdue par le joueur (Noirs) sur une gaffe : le cavalier en f6 permet le mat en f7. L'analyse est
+     * fournie, comme après la revue en tâche de fond : la gaffe désigne un thème de l'Académie.
+     */
+    private fun seedBlunder() = runBlocking {
+        val app = ApplicationProvider.getApplicationContext<ChessDuckApp>()
+        val a = listOf(
+            com.ivanherboch.chessduck.feature.Analysis(30, 20, "e2e4"), com.ivanherboch.chessduck.feature.Analysis(30, 20, "e7e5"),
+            com.ivanherboch.chessduck.feature.Analysis(30, 20, "g1f3"), com.ivanherboch.chessduck.feature.Analysis(30, 20, "b8c6"),
+            com.ivanherboch.chessduck.feature.Analysis(20, 10, "g1f3"), com.ivanherboch.chessduck.feature.Analysis(0, -20, "g7g6"),
+            com.ivanherboch.chessduck.feature.Analysis(com.ivanherboch.chessduck.engine.MATE - 1, null, "h5f7"),
+            com.ivanherboch.chessduck.feature.Analysis(com.ivanherboch.chessduck.engine.MATE, null, ""),
+        )
+        app.db.user().insertGame(
+            GameRecord(
+                date = 1_764_000_000_000, opponent = "Ordinateur 1200", vsComputer = true, playerWhite = false, result = "1-0", outcome = -1,
+                reason = "échec et mat", eloBefore = 1200, eloAfter = 1184, moves = "e2e4 e7e5 f1c4 b8c6 d1h5 g8f6 h5f7",
+                whiteName = "🤖 Ordinateur", blackName = "Joueur", opponentElo = 1200,
+                analysis = com.ivanherboch.chessduck.feature.Analysis.encodeAll(a),
+            ),
+        )
+    }
+
+    /** Étape 3 : Vision des cases, pont Revue → Académie, bilan des priorités et calcul à l'aveugle. */
+    @Test
+    fun step3Screens() {
+        settle(2500)
+        rule.onNodeWithText("Niveau : Tous").performClick(); settle(500)
+        rule.onNodeWithText("Vision des cases (exercice)").performClick(); settle(800); shot("1c_vision")
+        rule.onNodeWithText("Vision des cases").assertExists()
+        rule.onNodeWithText("Revenir à la notation").performClick(); settle(800)
+        seedBlunder()
+        rule.onNodeWithText("Jeu Libre").performClick(); settle(1500)
+        rule.onNodeWithContentDescription("Historique des parties").performClick(); settle(1200)
+        rule.onAllNodesWithText("Revue commentée").onFirst().performClick(); settle(600)
+        repeat(6) { desc("Coup suivant").performClick(); settle(300) }
+        settle(800); shot("4g_revue_pont")
+        rule.onNodeWithText("Travailler ce point dans l'Académie").performScrollTo().performClick(); settle(3000)
+        rule.onNodeWithText("Méthode : le contrôle anti-gaffe", substring = true).assertExists()
+        shot("2q_pont_academie")
+        rule.onNodeWithText("Entraînements").performClick(); settle(1500); shot("2r_priorites")
+        rule.onNodeWithText("Mat permis à l'adversaire", substring = true).assertExists()
+        rule.onNodeWithText("Calcul à l'aveugle (palier 5)").performScrollTo().performClick(); settle(3000); shot("2s_aveugle")
+        rule.onNodeWithText("Coups annoncés", substring = true).assertExists()
+    }
+
     private fun seedGame() = runBlocking {
         val app = ApplicationProvider.getApplicationContext<ChessDuckApp>()
         app.db.user().insertGame(
@@ -490,7 +536,7 @@ class AppRobolectricTest {
         rule.onNodeWithText("Jouer c3 puis d4 pour construire un centre de deux pions").performClick(); settle(600); shot("2n_qcm_reponse")
         rule.onNodeWithText("Revoir la leçon").performClick(); settle(600)
         desc("Ouvrir le catalogue des leçons").performClick(); settle(1200)
-        rule.onNodeWithText("Parties modèles 0/1").performScrollTo().performClick(); settle(1000)
+        rule.onNodeWithText("Parties modèles 0/8").performScrollTo().performClick(); settle(1000)
         rule.onNodeWithText("La partie de l'Opéra : Morphy, Paris 1858").performScrollTo().performClick(); settle(1200)
         rule.onNodeWithText("Devinez le coup").performClick(); settle(1500); shot("2o_devinez")
         rule.onNodeWithText("Guidé").performClick(); settle(800)

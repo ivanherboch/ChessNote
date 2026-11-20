@@ -50,6 +50,8 @@ class SpokenFrTest {
         assertEquals("L'étude de Rétti et la défense Filidor.", SpokenFr.text("L'étude de Réti et la défense Philidor."))
         assertEquals("Paul Morfi contre le duc de Brunesvik et le comte Izouar.", SpokenFr.text("Paul Morphy contre le duc de Brunswick et le comte Isouard."))
         assertEquals("La défense Nimmzo-indienne, la Skandinave, le matte d'Anastazie.", SpokenFr.text("La défense nimzo-indienne, la scandinave, le mat d'Anastasie."))
+        assertEquals("L'étude de Saavédra, la défense Vantsoura et le gambitte Bènnko.", SpokenFr.text("L'étude de Saavedra, la défense Vancura et le gambit Benko."))
+        assertEquals("La sicilienne Kanne et la Caro-Kane.", SpokenFr.text("La sicilienne Kan et la Caro-Kann."))
         // Les mots qui ne font que ressembler restent intacts.
         val same = "Il faut mater sans perdre de matériel, avec patience."
         assertEquals(same, SpokenFr.text(same))
@@ -57,7 +59,7 @@ class SpokenFrTest {
 
     @Test
     fun noLessonKeepsAHardWordForTheVoice() {
-        val hard = Regex("(?<![\\p{L}-])(pat|mat|gambit|fianchetto|zugzwang|Giuoco|Kieseritzky|Najdorf|Winawer|Tarrasch|Grünfeld|Réti|Philidor|Nimzo|Morphy|Brunswick|Isouard)(?![\\p{L}])", RegexOption.IGNORE_CASE)
+        val hard = Regex("(?<![\\p{L}-])(pat|mat|gambit|fianchetto|zugzwang|Giuoco|Kieseritzky|Najdorf|Winawer|Tarrasch|Grünfeld|Réti|Philidor|Nimzo|Morphy|Brunswick|Isouard|Vancura|Saavedra|Anderssen|Nimzowitsch|Botvinnik|Lasker|Bauer|Pillsbury|Greco|Taimanov|Trompowsky|Marshall|Benko|desperado|Smith|Kan|Panov|Budapest|Tartakower|Rotlewi|Lodz|Sämisch)(?![\\p{L}])", RegexOption.IGNORE_CASE)
         for (l in Lessons.all) for (t in spoken(l)) assertFalse(t, hard.containsMatchIn(SpokenFr.text(t)))
     }
 
