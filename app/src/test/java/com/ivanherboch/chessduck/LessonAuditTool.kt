@@ -74,23 +74,34 @@ class LessonAuditTool {
                 val pos = line.positions[i]
                 if (pos.whiteToMove != l.heroWhite) continue
                 heroMoves++
-                val best = engine.search(pos.toFen(), MOVETIME).score ?: continue
                 val after = line.positions[i + 1]
-                // Score du coup de la leçon, vu par le joueur : opposé du score de l'adversaire au trait.
-                val played = when {
-                    after.isCheckmate -> best
-                    after.legalMoves.isEmpty() -> 0
-                    else -> -(engine.search(after.toFen(), MOVETIME).score ?: continue)
-                }
-                // Deux gains écrasants (mat forcé ou plus de 10 pions d'avance) se valent ; un gambit d'ouverture
-                // peut céder jusqu'à un pion ; un gain n'est « gâché » que si l'avantage retombe nettement.
-                val bothCrushing = best >= CRUSHING && played >= CRUSHING
-                val loss = best - played
                 val maxLoss = if (l.category == LessonCategory.OPENING || l.category == LessonCategory.MODEL_GAMES) OPENING_LOSS else LOSS
                 // Partie modèle ou gambit d'ouverture : un coup historique ou risqué est accepté s'il est signalé
                 // à l'élève dans son commentaire (« L'Ordinateur préfère… », « L'Ordinateur le juge risqué… »).
                 val flagged = (l.kind == LessonKind.MODEL_GAME || l.category == LessonCategory.OPENING) && "Ordinateur" in l.textsFor(v)[i]
-                if (!flagged && ((loss >= maxLoss && !bothCrushing) || (best >= WIN && played < WIN - 100))) {
+                // Score du coup de la leçon, vu par le joueur : opposé du score de l'adversaire au trait.
+                suspend fun verdict(ms: Int): Pair<Int, Int>? {
+                    val best = engine.search(pos.toFen(), ms).score ?: return null
+                    val played = when {
+                        after.isCheckmate -> best
+                        after.legalMoves.isEmpty() -> 0
+                        else -> -(engine.search(after.toFen(), ms).score ?: return null)
+                    }
+                    return best to played
+                }
+                // Deux gains écrasants (mat forcé ou plus de 10 pions d'avance) se valent ; un gambit d'ouverture
+                // peut céder jusqu'à un pion ; un gain n'est « gâché » que si l'avantage retombe nettement.
+                fun dubious(v: Pair<Int, Int>): Boolean {
+                    val (best, played) = v
+                    val bothCrushing = best >= CRUSHING && played >= CRUSHING
+                    return (best - played >= maxLoss && !bothCrushing) || (best >= WIN && played < WIN - 100)
+                }
+                var res = verdict(MOVETIME) ?: continue
+                // Second avis : un coup signalé après une analyse courte est réexaminé plus longuement, pour ne pas
+                // retenir les écarts d'évaluation dus au peu de temps de réflexion.
+                if (!flagged && dubious(res)) res = verdict(MOVETIME * SECOND_OPINION) ?: res
+                val (best, played) = res
+                if (!flagged && dubious(res)) {
                     problems.add("${l.id}. ${l.title}${if (v > 0) " (variante $v)" else ""} — demi-coup ${i + 1} (${line.sans[i]}) : meilleur $best, leçon $played")
                 }
             }
@@ -108,6 +119,8 @@ class LessonAuditTool {
 
     private companion object {
         const val MOVETIME = 300
+        /** Multiplicateur du temps de réflexion du second avis. */
+        const val SECOND_OPINION = 5
         const val LOSS = 80
         const val OPENING_LOSS = 100
         const val CRUSHING = 1000
