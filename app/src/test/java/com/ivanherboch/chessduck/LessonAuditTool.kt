@@ -10,6 +10,7 @@ import com.ivanherboch.chessduck.chess.pieceType
 import com.ivanherboch.chessduck.chess.sqFromName
 import com.ivanherboch.chessduck.content.Lesson
 import com.ivanherboch.chessduck.content.LessonCategory
+import com.ivanherboch.chessduck.content.LessonKind
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.content.PuzzleThemes
 import com.ivanherboch.chessduck.engine.Stockfish
@@ -26,7 +27,8 @@ import java.io.File
  *   cité dans un commentaire désigne bien cette pièce sur cette case (avant ou après le coup commenté).
  * - Avec REVIEW_SF (chemin d'un Stockfish de la machine) : chaque coup du joueur est vérifié par le moteur.
  *   Un coup qui perd au moins 0,8 pion (1 pion en ouverture, où les gambits sont permis), ou qui laisse échapper un
- *   gain, est signalé ; deux gains écrasants se valent. Rapport : build/lesson-audit.txt.
+ *   gain, est signalé ; deux gains écrasants se valent. Dans une partie modèle, un coup historique imprécis n'est
+ *   accepté que si son commentaire le dit à l'élève (« L'Ordinateur préfère… »). Rapport : build/lesson-audit.txt.
  */
 class LessonAuditTool {
     @Test
@@ -85,7 +87,10 @@ class LessonAuditTool {
                 val bothCrushing = best >= CRUSHING && played >= CRUSHING
                 val loss = best - played
                 val maxLoss = if (l.category == LessonCategory.OPENING || l.category == LessonCategory.MODEL_GAMES) OPENING_LOSS else LOSS
-                if ((loss >= maxLoss && !bothCrushing) || (best >= WIN && played < WIN - 100)) {
+                // Partie modèle : un coup historique imprécis est accepté s'il est signalé à l'élève dans son
+                // commentaire (« L'Ordinateur préfère… »).
+                val flagged = l.kind == LessonKind.MODEL_GAME && "Ordinateur" in l.textsFor(v)[i]
+                if (!flagged && ((loss >= maxLoss && !bothCrushing) || (best >= WIN && played < WIN - 100))) {
                     problems.add("${l.id}. ${l.title}${if (v > 0) " (variante $v)" else ""} — demi-coup ${i + 1} (${line.sans[i]}) : meilleur $best, leçon $played")
                 }
             }

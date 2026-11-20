@@ -32,3 +32,475 @@ Nxd7 : Le cavalier reprend. Les Noirs ont beaucoup plus de matériel, mais leur 
 Qb8+ : Un sacrifice de dame ! Elle se place en b8 pour attirer le cavalier loin de la case d8.
 Nxb8 : Le cavalier est obligé de prendre la dame.
 Rd8# : La tour donne échec et mat, protégée par le fou g5. À retenir : développez vite toutes vos pièces, ouvrez les lignes vers le roi resté au centre, et n'hésitez pas à sacrifier du matériel pour garder l'initiative.
+
+
+# L'Immortelle : Anderssen contre Kieseritzky, Londres 1851 | Adolf Anderssen sacrifie un fou, deux tours et sa dame pour mater avec ses trois pièces mineures. La partie la plus célèbre de l'époque romantique. | w | id=188 level=4 kind=model_game
+e4 : Anderssen ouvre avec le pion roi.
+e5 : Kieseritzky répond au centre.
+f4 : Le gambit du roi : les Blancs donnent un pion pour ouvrir la colonne f. L'Ordinateur juge ce gambit un peu risqué, mais il était à la mode à l'époque.
+exf4 : Les Noirs acceptent le pion.
+Bc4 : Le fou vise la case f7.
+Qh4+ : La dame donne échec : le roi blanc ne pourra plus roquer.
+Kf1 : Le roi s'écarte. Il restera au centre toute la partie.
+b5 : Le contre-gambit Bryan : les Noirs rendent un pion pour détourner le fou.
+Bxb5 : Le fou prend le pion.
+Nf6 : Le cavalier se développe et attaque le pion e4.
+Nf3 : Le cavalier attaque la dame et protège la case h4.
+Qh6 : La dame recule.
+d3 : Le pion protège le pion e4 et libère le fou c1.
+Nh5 : Le cavalier menace d'aller en g3.
+Nh4 : Le cavalier empêche le cavalier noir d'aller en g3. L'Ordinateur préférerait un coup de développement, mais Anderssen prépare déjà l'attaque.
+Qg5 : La dame attaque le cavalier h4.
+Nf5 : Le cavalier s'installe en f5, d'où il attaque la case g7.
+c6 : Le pion attaque le fou b5.
+g4 : Les Blancs chassent le cavalier h5 et gagnent de l'espace. L'Ordinateur trouve ce coup trop ambitieux, mais il garde l'initiative.
+Nf6 : Le cavalier recule.
+Rg1 : Anderssen laisse son fou b5 en prise : il veut ouvrir des lignes vers le roi noir.
+cxb5 : Les Noirs prennent le fou.
+h4 : Le pion chasse la dame.
+Qg6 : La dame recule.
+h5 : Le pion continue.
+Qg5 : La dame revient.
+Qf3 : La dame menace d'enfermer la dame noire : le fou c1 pourra prendre le pion f4 avec gain de temps.
+Ng8 : Le cavalier recule pour libérer la case f6 à sa dame.
+Bxf4 : Le fou prend le pion f4 et chasse la dame.
+Qf6 : La dame se replie.
+Nc3 : Les Blancs développent leur dernière pièce mineure.
+Bc5 : Le fou noir attaque la tour g1.
+Nd5 : Le cavalier saute au centre et attaque la dame. L'Ordinateur préfère d'autres coups, mais l'attaque devient effrayante.
+Qxb2 : La dame prend le pion b2 et attaque la tour a1.
+Bd6 : Un coup incroyable : Anderssen laisse prendre ses deux tours. L'Ordinateur montre qu'une défense existait, mais personne ne l'a trouvée à l'époque.
+Bxg1 : Le fou prend la tour g1.
+e5 : Le pion coupe la dame noire de la case g7. L'Ordinateur préfère une autre suite, mais le piège est tendu.
+Qxa1+ : La dame prend la seconde tour avec échec.
+Ke2 : Le roi s'écarte. Les Blancs n'ont plus de tours. L'Ordinateur indique que les Noirs pouvaient se défendre, mais la menace de mat est très difficile à voir.
+Na6 : Les Noirs veulent couvrir la case c7.
+Nxg7+ : Le cavalier prend le pion g7 avec échec.
+Kd8 : Le roi s'enfuit.
+Qf6+ : Le sacrifice final : la dame se donne pour dévier le cavalier g8.
+Nxf6 : Le cavalier prend la dame.
+Be7# : Le fou donne le mat. Trois pièces mineures matent un roi entouré de toute son armée. À retenir : l'avance de développement et l'activité des pièces comptent souvent plus que le matériel. Mais tous les sacrifices de cette partie ne sont pas corrects : à votre tour, vérifiez vos calculs.
+
+# L'Immortelle de Rubinstein : Rotlewi contre Rubinstein, Lodz 1907 | Akiba Rubinstein centralise ses pièces, pointe ses deux fous vers le roi blanc, puis sacrifie sa dame et ses tours dans une combinaison célèbre. | b | id=189 level=5 kind=model_game
+d4 : Les Blancs ouvrent avec le pion dame.
+d5 : Rubinstein répond symétriquement.
+Nf3 : Le cavalier se développe.
+e6 : Le pion ouvre la diagonale du fou f8.
+e3 : Les Blancs jouent tranquillement.
+c5 : Rubinstein frappe le centre.
+c4 : Les Blancs attaquent le pion d5.
+Nc6 : Le cavalier se développe et vise le pion d4.
+Nc3 : Les Blancs se développent.
+Nf6 : Le cavalier se développe.
+dxc5 : Les Blancs échangent au centre.
+Bxc5 : Le fou reprend avec activité.
+a3 : Les Blancs préparent l'avance b4.
+a6 : Les Noirs font de même.
+b4 : Le pion chasse le fou.
+Bd6 : Le fou recule sur une bonne diagonale vers l'aile roi.
+Bb2 : Le fou blanc vise la grande diagonale.
+O-O : Les Noirs roquent.
+Qd2 : Un coup timide : la dame bloque la colonne d.
+Qe7 : La dame se développe et relie les tours.
+Bd3 : Le fou se développe, mais le pion c4 va tomber.
+dxc4 : Les Noirs prennent le pion c4.
+Bxc4 : Le fou reprend : les Blancs ont perdu un temps.
+b5 : Le pion chasse le fou.
+Bd3 : Le fou recule.
+Rd8 : La tour vise la dame d2 sur la colonne d.
+Qe2 : La dame quitte la colonne dangereuse.
+Bb7 : Le second fou s'installe sur la grande diagonale. Les deux fous noirs visent le roque blanc.
+O-O : Les Blancs roquent.
+Ne5 : Le cavalier propose l'échange pour ouvrir les diagonales.
+Nxe5 : Les Blancs échangent.
+Bxe5 : Le fou reprend et vise la case h2.
+f4 : Les Blancs chassent le fou.
+Bc7 : Le fou recule en gardant la diagonale vers h2.
+e4 : Les Blancs avancent au centre.
+Rac8 : La seconde tour rejoint la colonne c.
+e5 : Le pion attaque le cavalier f6.
+Bb6+ : Le fou donne échec sur la diagonale a7-g1.
+Kh1 : Le roi se cache dans le coin.
+Ng4 : Le cavalier attaque la case h2 et ouvre la diagonale du fou b7.
+Be4 : Le fou blanc bloque la grande diagonale.
+Qh4 : La dame menace le mat en h2.
+g3 : Les Blancs attaquent la dame.
+Rxc3 : Le sacrifice commence : la tour prend le cavalier c3 en laissant la dame en prise.
+gxh4 : Les Blancs prennent la dame.
+Rd2 : La seconde tour attaque la dame blanche et ouvre la route du fou b7.
+Qxd2 : La dame prend la tour.
+Bxe4+ : Le fou prend le fou e4 avec échec.
+Qg2 : La dame s'interpose.
+Rh3 : La tour menace le mat en h2 : il est imparable. À retenir : développez toutes vos pièces, pointez-les vers le roi adverse, puis cherchez la combinaison. Ici, les deux fous de Rubinstein, alignés sur les grandes diagonales, ont fait tout le travail.
+
+# Le double sacrifice des fous : Lasker contre Bauer, Amsterdam 1889 | Emanuel Lasker invente un motif nouveau : ses deux fous se sacrifient en h7 et en g7 pour mettre à nu le roi noir. | w | id=190 level=5 kind=model_game
+f4 : Lasker ouvre avec le pion f : l'ouverture Bird.
+d5 : Bauer occupe le centre.
+e3 : Le pion ouvre la diagonale du fou f1.
+Nf6 : Le cavalier se développe.
+b3 : Le fou c1 ira en b2, sur la grande diagonale.
+e6 : Le pion ouvre la diagonale du fou f8.
+Bb2 : Le fou vise l'aile roi noire.
+Be7 : Le fou se développe.
+Bd3 : Le second fou vise la case h7.
+b6 : Le fou c8 ira en b7.
+Nc3 : Les Blancs se développent.
+Bb7 : Le fou s'installe sur la grande diagonale.
+Nf3 : Le cavalier se développe.
+Nbd7 : Le cavalier se développe.
+O-O : Les Blancs roquent.
+O-O : Les Noirs roquent aussi.
+Ne2 : Le cavalier part vers l'aile roi.
+c5 : Les Noirs gagnent de l'espace.
+Ng3 : Le cavalier arrive près du roi noir.
+Qc7 : La dame se développe.
+Ne5 : Le cavalier saute au centre.
+Nxe5 : Les Noirs échangent.
+Bxe5 : Le fou reprend : il vise la case g7.
+Qc6 : La dame vise la case g2.
+Qe2 : La dame protège l'aile roi.
+a6 : Les Noirs préparent b5.
+Nh5 : Le cavalier attaque le cavalier f6, défenseur du roi noir.
+Nxh5 : Les Noirs prennent.
+Bxh7+ : Premier sacrifice : le fou prend le pion h7 avec échec.
+Kxh7 : Le roi prend le fou.
+Qxh5+ : La dame reprend le cavalier avec échec.
+Kg8 : Le roi recule.
+Bxg7 : Second sacrifice : le fou prend le pion g7. Le roi noir est à découvert.
+Kxg7 : Le roi prend le fou.
+Qg4+ : La dame donne échec.
+Kh7 : Le roi s'enfuit.
+Rf3 : La tour arrive par la troisième rangée pour mater en h3.
+e5 : Les Noirs ouvrent une case pour leur dame.
+Rh3+ : La tour donne échec.
+Qh6 : La dame s'interpose.
+Rxh6+ : La tour prend la dame.
+Kxh6 : Le roi reprend.
+Qd7 : La dame fait une fourchette : elle attaque les deux fous noirs.
+Bf6 : Les Noirs sauvent un fou.
+Qxb7 : La dame gagne l'autre fou. Les Blancs ont maintenant une dame contre deux tours.
+Kg7 : Le roi revient.
+Rf1 : La tour rejoint l'attaque. L'Ordinateur trouve un gain encore plus rapide, mais la position reste gagnante.
+Rab8 : La tour attaque la dame.
+Qd7 : La dame se replace.
+Rfd8 : La tour chasse encore la dame.
+Qg4+ : La dame donne échec.
+Kf8 : Le roi fuit.
+fxe5 : Le pion prend en e5 et ouvre la colonne f.
+Bg7 : Le fou protège le roi.
+e6 : Le pion avance et attaque le pion f7.
+Rb7 : La tour défend sur la septième rangée.
+Qg6 : La dame attaque le pion f7.
+f6 : Le pion bloque la colonne.
+Rxf6+ : La tour prend le pion avec échec.
+Bxf6 : Le fou prend la tour.
+Qxf6+ : La dame reprend avec échec.
+Ke8 : Le roi fuit.
+Qh8+ : La dame donne échec.
+Ke7 : Le roi fuit encore.
+Qg7+ : Les Noirs abandonnent : la tour b7 tombe et le mat approche. À retenir : deux fous qui visent le roque peuvent se sacrifier l'un après l'autre pour ouvrir le roi adverse. Ce motif porte depuis le nom de Lasker.
+
+# Le zugzwang immortel : Sämisch contre Nimzowitsch, Copenhague 1923 | Aron Nimzowitsch étouffe les Blancs : à la fin, toutes leurs pièces sont bloquées et chaque coup aggrave leur position. Ils abandonnent sans être matés. | b | id=191 level=5 kind=model_game
+d4 : Les Blancs ouvrent avec le pion dame.
+Nf6 : Le cavalier contrôle la case e4.
+c4 : Les Blancs prennent de l'espace.
+e6 : Le pion ouvre la diagonale du fou f8.
+Nf3 : Le cavalier se développe.
+b6 : La défense ouest-indienne : le fou c8 ira en b7.
+g3 : Le fou ira en g2.
+Bb7 : Le fou contrôle la case e4.
+Bg2 : Les deux fous se font face sur la grande diagonale.
+Be7 : Le fou se développe.
+Nc3 : Les Blancs se développent.
+O-O : Les Noirs roquent.
+O-O : Les Blancs aussi.
+d5 : Les Noirs prennent leur part du centre.
+Ne5 : Le cavalier saute au centre.
+c6 : Le pion ferme la grande diagonale.
+cxd5 : Les Blancs échangent.
+cxd5 : Le pion reprend.
+Bf4 : Le fou se développe.
+a6 : Les Noirs préparent b5.
+Rc1 : La tour occupe la colonne c.
+b5 : Les Noirs gagnent de l'espace à l'aile dame.
+Qb3 : La dame se développe.
+Nc6 : Le cavalier propose l'échange.
+Nxc6 : Les Blancs échangent.
+Bxc6 : Le fou reprend.
+h3 : Les Blancs empêchent le cavalier de venir en g4.
+Qd7 : La dame vise la case h3.
+Kh2 : Le roi protège le pion h3.
+Nh5 : Le cavalier attaque le fou f4.
+Bd2 : Le fou recule.
+f5 : Le pion contrôle la case e4 et prépare l'attaque. L'Ordinateur préfère un autre coup, mais Nimzowitsch suit un plan clair.
+Qd1 : La dame se replie.
+b4 : Le pion chasse le cavalier c3.
+Nb1 : Le cavalier recule sur sa case de départ.
+Bb5 : Le fou vise la case f1 et la colonne f.
+Rg1 : La tour protège le pion g3.
+Bd6 : Le fou vise le pion g3.
+e4 : Les Blancs veulent se libérer.
+fxe4 : Les Noirs prennent et ouvrent la colonne f.
+Qxh5 : La dame prend le cavalier h5.
+Rxf2 : La tour prend le pion f2 : elle entre sur la deuxième rangée.
+Qg5 : La dame défend.
+Raf8 : La seconde tour double sur la colonne f.
+Kh1 : Le roi se cache.
+R8f5 : La tour chasse la dame.
+Qe3 : La dame recule.
+Bd3 : Le fou prend la case d3 et immobilise le cavalier b1 et la tour c1. L'Ordinateur trouve une suite plus rapide, mais ce coup fige toute l'armée blanche.
+Rce1 : Les Blancs déplacent leur tour.
+h6 : Un simple coup d'attente ! Les Blancs n'ont plus de bon coup : chaque mouvement perd du matériel. Ils abandonnent. À retenir : bloquer toutes les pièces adverses peut gagner sans mat. Quand l'adversaire n'a plus que de mauvais coups, un coup d'attente suffit : c'est le zugzwang.
+
+# Le zugzwang d'Alekhine : Alekhine contre Nimzowitsch, San Remo 1930 | Alexandre Alekhine gagne de l'espace à l'aile dame, envahit la colonne c avec ses deux tours et sa dame, puis laisse les Noirs sans aucun coup utile. | w | id=192 level=5 kind=model_game
+e4 : Alekhine ouvre avec le pion roi.
+e6 : La défense française.
+d4 : Les Blancs prennent le centre.
+d5 : Les Noirs attaquent le pion e4.
+Nc3 : Le cavalier protège le pion e4.
+Bb4 : La variante Winawer : le fou cloue le cavalier.
+e5 : Les Blancs gagnent de l'espace.
+c5 : Les Noirs attaquent la base de la chaîne.
+Bd2 : Le fou déloue le cavalier.
+Ne7 : Le cavalier se développe.
+Nb5 : Le cavalier attaque le fou et vise la case d6.
+Bxd2+ : Les Noirs échangent le fou.
+Qxd2 : La dame reprend.
+O-O : Les Noirs roquent.
+c3 : Le pion protège le pion d4.
+b6 : Le fou c8 ira en a6.
+f4 : Les Blancs consolident le pion e5.
+Ba6 : Le fou attaque le cavalier b5.
+Nf3 : Le cavalier se développe.
+Qd7 : La dame attaque le cavalier b5.
+a4 : Le pion protège le cavalier.
+Nbc6 : Le cavalier se développe.
+b4 : Les Blancs gagnent de l'espace à l'aile dame.
+cxb4 : Les Noirs prennent.
+cxb4 : Les Blancs reprennent : la colonne c s'ouvre.
+Bb7 : Le fou recule.
+Nd6 : Le cavalier s'installe en d6, un avant-poste.
+f5 : Les Noirs ferment l'aile roi.
+a5 : Le pion avance et gêne l'aile dame noire.
+Nc8 : Les Noirs veulent échanger le cavalier d6.
+Nxb7 : Le cavalier prend le fou.
+Qxb7 : La dame reprend.
+a6 : Le pion chasse la dame.
+Qf7 : La dame recule.
+Bb5 : Le fou occupe une belle case.
+N8e7 : Le cavalier revient.
+O-O : Les Blancs roquent.
+h6 : Les Noirs attendent.
+Rfc1 : La tour occupe la colonne c.
+Rfc8 : Les Noirs contestent la colonne.
+Rc2 : La tour se prépare à doubler.
+Qe8 : La dame noire se replie.
+Rac1 : Les deux tours sont doublées sur la colonne c.
+Rab8 : La tour noire se place.
+Qe3 : La dame rejoint l'aile dame.
+Rc7 : La tour noire bloque la colonne.
+Rc3 : Les Blancs préparent le triplement.
+Qd7 : La dame noire défend.
+R1c2 : Les tours et la dame se placent les unes derrière les autres sur la colonne c.
+Kf8 : Le roi noir s'approche.
+Qc1 : La dame arrive derrière les tours : la colonne c est triplée.
+Rbc8 : Les Noirs défendent la case c8.
+Ba4 : Le fou se replace.
+b5 : Les Noirs proposent un pion.
+Bxb5 : Le fou prend le pion.
+Ke8 : Le roi noir défend.
+Ba4 : Le fou revient.
+Kd8 : Le roi noir protège la case c7.
+h4 : Les Blancs attendent : les Noirs n'ont plus de coups utiles.
+h5 : Les Noirs jouent un coup de pion.
+Kh2 : Le roi blanc attend lui aussi.
+g6 : Le dernier coup de pion noir.
+g3 : Les Noirs sont en zugzwang : chaque coup perd du matériel. Ils abandonnent. À retenir : gagnez de l'espace, occupez la colonne ouverte avec toutes vos pièces lourdes, puis laissez l'adversaire sans coup utile.
+
+# La percée de Botvinnik : Botvinnik contre Capablanca, AVRO 1938 | Mikhaïl Botvinnik bâtit un centre de pions, sacrifie son pion a pour ouvrir le jeu, puis conclut par un sacrifice de fou et une marche du pion e jusqu'à la septième rangée. | w | id=193 level=5 kind=model_game
+d4 : Botvinnik ouvre avec le pion dame.
+Nf6 : Le cavalier contrôle la case e4.
+c4 : Les Blancs prennent de l'espace.
+e6 : Le pion ouvre la diagonale du fou f8.
+Nc3 : Les Blancs préparent e4.
+Bb4 : La défense nimzo-indienne.
+e3 : Les Blancs se développent.
+d5 : Les Noirs prennent leur part du centre.
+a3 : Les Blancs demandent au fou de se décider.
+Bxc3+ : Le fou prend le cavalier.
+bxc3 : Le pion reprend : les Blancs ont des pions doublés mais un centre fort.
+c5 : Les Noirs frappent le centre.
+cxd5 : Les Blancs échangent.
+exd5 : Le pion reprend.
+Bd3 : Le fou vise l'aile roi.
+O-O : Les Noirs roquent.
+Ne2 : Le cavalier se développe sans bloquer le pion f.
+b6 : Le fou c8 ira en a6.
+O-O : Les Blancs roquent.
+Ba6 : Les Noirs proposent l'échange des fous.
+Bxa6 : Les Blancs échangent.
+Nxa6 : Le cavalier reprend.
+Bb2 : Le fou se développe.
+Qd7 : La dame se développe.
+a4 : Le pion empêche l'avance du pion b noir.
+Rfe8 : La tour se place sur la colonne e.
+Qd3 : La dame vise le cavalier a6.
+c4 : Les Noirs ferment l'aile dame et fixent les pions blancs.
+Qc2 : La dame recule.
+Nb8 : Le cavalier se replace.
+Rae1 : Les Blancs préparent e4.
+Nc6 : Le cavalier se développe.
+Ng3 : Le cavalier vise l'aile roi.
+Na5 : Le cavalier vise la case b3.
+f3 : Les Blancs préparent e4.
+Nb3 : Le cavalier occupe la case b3.
+e4 : Le pion avance : le centre blanc se met en marche.
+Qxa4 : La dame noire prend le pion a4. Botvinnik a donné ce pion pour attaquer.
+e5 : Le pion chasse le cavalier f6.
+Nd7 : Le cavalier recule.
+Qf2 : La dame se tourne vers l'aile roi.
+g6 : Les Noirs protègent leur roi.
+f4 : Le pion f avance.
+f5 : Les Noirs bloquent le pion f.
+exf6 : Les Blancs prennent en passant.
+Nxf6 : Le cavalier reprend.
+f5 : Le pion avance encore et ouvre des lignes.
+Rxe1 : Les Noirs échangent une tour.
+Rxe1 : La tour reprend.
+Re8 : La tour conteste la colonne.
+Re6 : La tour envahit.
+Rxe6 : Les Noirs échangent.
+fxe6 : Le pion reprend : il est maintenant en e6, tout près de la promotion.
+Kg7 : Le roi bloque.
+Qf4 : La dame vise la case e5.
+Qe8 : La dame noire bloque le pion.
+Qe5 : La dame se centralise. L'Ordinateur trouve un gain plus rapide, mais la menace sur le cavalier f6 reste forte.
+Qe7 : La dame noire bloque toujours.
+Ba3 : Un sacrifice de fou : il attire la dame noire loin du pion e6.
+Qxa3 : La dame noire prend le fou.
+Nh5+ : Un second sacrifice : le cavalier se donne pour ouvrir le roi.
+gxh5 : Le pion prend le cavalier.
+Qg5+ : La dame donne échec.
+Kf8 : Le roi fuit.
+Qxf6+ : La dame prend le cavalier avec échec.
+Kg8 : Le roi recule.
+e7 : Le pion arrive en septième rangée.
+Qc1+ : Les Noirs cherchent un échec perpétuel.
+Kf2 : Le roi blanc s'échappe.
+Qc2+ : Un nouvel échec.
+Kg3 : Le roi monte.
+Qd3+ : Encore un échec.
+Kh4 : Le roi fuit vers l'aile roi.
+Qe4+ : Un échec de plus.
+Kxh5 : Le roi prend le pion h5.
+Qe2+ : Les échecs continuent.
+Kh4 : Le roi recule.
+Qe4+ : Un nouvel échec.
+g4 : Le pion s'interpose.
+Qe1+ : Un dernier échec.
+Kh5 : Les échecs sont terminés : le pion e7 va à dame. Les Noirs abandonnent. À retenir : construisez un centre de pions, sacrifiez du matériel pour l'ouvrir au bon moment, et calculez précisément quand votre roi échappera aux échecs.
+
+# La finale de Capablanca : Capablanca contre Tartakower, New York 1924 | José Raúl Capablanca transforme un petit avantage en gain : son roi traverse l'échiquier pendant que sa tour coupe le roi noir. Un modèle de finale de tours. | w | id=194 level=5 kind=model_game
+d4 : Capablanca ouvre avec le pion dame.
+e6 : Tartakower prépare la défense hollandaise.
+Nf3 : Le cavalier se développe.
+f5 : La défense hollandaise.
+c4 : Les Blancs prennent de l'espace.
+Nf6 : Le cavalier contrôle la case e4.
+Bg5 : Le fou cloue le cavalier.
+Be7 : Le fou déloue.
+Nc3 : Les Blancs se développent.
+O-O : Les Noirs roquent.
+e3 : Le pion libère le fou f1.
+b6 : Le fou c8 ira en b7.
+Bd3 : Le fou vise la case f5.
+Bb7 : Le fou contrôle la case e4.
+O-O : Les Blancs roquent.
+Qe8 : La dame vise l'aile roi.
+Qe2 : La dame prépare l'avance e4.
+Ne4 : Le cavalier s'installe en e4.
+Bxe7 : Les Blancs échangent les fous.
+Nxc3 : Les Noirs échangent les cavaliers.
+bxc3 : Le pion reprend.
+Qxe7 : La dame reprend.
+a4 : Le pion gagne de l'espace.
+Bxf3 : Les Noirs échangent leur fou contre le cavalier.
+Qxf3 : La dame reprend.
+Nc6 : Le cavalier se développe.
+Rfb1 : La tour vise la colonne b.
+Rae8 : La tour soutient l'avance e5.
+Qh3 : La dame attaque le pion e6.
+Rf6 : La tour protège le pion e6.
+f4 : Le pion freine l'avance e5.
+Na5 : Le cavalier attaque le pion c4.
+Qf3 : La dame protège la grande diagonale.
+d6 : Les Noirs préparent e5.
+Re1 : La tour soutient l'avance e4.
+Qd7 : La dame noire protège le pion e6.
+e4 : Les Blancs ouvrent le centre.
+fxe4 : Les Noirs prennent.
+Qxe4 : La dame reprend et se centralise.
+g6 : Le pion protège la case f5.
+g3 : Le pion protège le pion f4.
+Kf8 : Le roi noir se rapproche du centre.
+Kg2 : Le roi blanc se met à l'abri.
+Rf7 : La tour protège la septième rangée.
+h4 : Le pion avance à l'aile roi.
+d5 : Les Noirs ferment le centre.
+cxd5 : Les Blancs échangent.
+exd5 : Le pion reprend.
+Qxe8+ : Les Blancs échangent les dames.
+Qxe8 : La dame reprend.
+Rxe8+ : La tour prend la dame.
+Kxe8 : Le roi reprend. C'est une finale de tours : le roi noir est loin de l'aile roi.
+h5 : Le pion h attaque le pion g6.
+Rf6 : La tour défend le pion g6.
+hxg6 : Les Blancs échangent.
+hxg6 : Le pion reprend : la colonne h est ouverte.
+Rh1 : La tour occupe la colonne h ouverte.
+Kf8 : Le roi noir revient vers l'aile roi.
+Rh7 : La tour entre sur la septième rangée.
+Rc6 : La tour noire attaque le pion c3.
+g4 : Le pion g avance pour créer un pion passé.
+Nc4 : Le cavalier se rapproche.
+g5 : Le pion avance.
+Ne3+ : Le cavalier donne échec.
+Kf3 : Le roi s'approche.
+Nf5 : Le cavalier bloque le pion f4.
+Bxf5 : Les Blancs échangent le fou contre le cavalier.
+gxf5 : Le pion reprend.
+Kg3 : Le roi blanc vise la case h4 puis g5. Capablanca laisse tomber le pion c3 : son roi et sa tour comptent davantage.
+Rxc3+ : La tour prend le pion avec échec.
+Kh4 : Le roi blanc avance.
+Rf3 : La tour attaque le pion f4.
+g6 : Le pion avance : la tour en septième et le pion g coupent le roi noir.
+Rxf4+ : La tour prend le pion avec échec.
+Kg5 : Le roi blanc s'approche.
+Re4 : La tour noire se replace.
+Kf6 : Le roi blanc entre : le roi noir est coupé sur la huitième rangée.
+Kg8 : Le roi noir se met devant le pion.
+Rg7+ : La tour donne échec.
+Kh8 : Le roi s'écarte.
+Rxc7 : La tour prend le pion c7.
+Re8 : La tour noire protège la huitième rangée.
+Kxf5 : Le roi blanc prend le pion f5.
+Re4 : La tour noire attaque le pion d4.
+Kf6 : Le roi blanc revient.
+Rf4+ : La tour donne échec.
+Ke5 : Le roi blanc avance vers les pions de l'aile dame.
+Rg4 : La tour attaque le pion g6.
+g7+ : Le pion avance avec échec.
+Kg8 : Le roi bloque le pion.
+Rxa7 : La tour prend le pion a7.
+Rg1 : La tour noire cherche des échecs.
+Kxd5 : Le roi blanc prend le pion d5.
+Rc1 : La tour noire coupe le roi.
+Kd6 : Le roi blanc avance.
+Rc2 : La tour noire attend.
+d5 : Le pion d avance.
+Rc1 : La tour noire attend toujours.
+Rc7 : La tour blanche coupe la tour noire.
+Ra1 : La tour noire attaque le pion a4.
+Kc6 : Le roi blanc protège le pion.
+Rxa4 : La tour noire prend le pion a4.
+d6 : Le pion d est trop rapide. Les Noirs abandonnent. À retenir : en finale de tours, un roi actif et une tour en septième rangée valent plus que quelques pions. Capablanca a donné deux pions pour activer son roi.
