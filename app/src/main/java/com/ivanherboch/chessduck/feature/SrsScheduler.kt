@@ -33,11 +33,13 @@ class SrsScheduler(private val clock: () -> Long = System::currentTimeMillis) {
 
     /**
      * Prochaine leçon conseillée : la première leçon non maîtrisée du palier [level] (ordre du cursus), sinon des
-     * paliers inférieurs, sinon des paliers suivants.
+     * paliers inférieurs (les bases du palier 1 seulement au palier 1), sinon des paliers suivants.
      */
     fun recommended(lessons: List<Lesson>, progress: Map<Int, LessonProgress>, level: Int): Lesson? {
         val open = lessons.filter { progress[it.id]?.mastered != true }
-        return open.firstOrNull { it.level == level } ?: open.firstOrNull { it.level < level } ?: open.minByOrNull { it.level }
+        // Les bases (palier 1) ne sont conseillées qu'au palier 1 : au-delà, on rattrape les paliers 2 et plus.
+        return open.firstOrNull { it.level == level } ?: open.firstOrNull { it.level < level && (it.level > 1 || level == 1) }
+            ?: open.filter { it.level > level }.minByOrNull { it.level } ?: open.minByOrNull { it.level }
     }
 
     /** Leçon commencée (Défi ou exercices déjà tentés) mais pas encore maîtrisée, autre que [current]. */

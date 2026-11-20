@@ -6,6 +6,7 @@ import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.chess.Move
 import com.ivanherboch.chessduck.chess.PIECE_VALUES
 import com.ivanherboch.chessduck.chess.PieceLexiconFr
+import com.ivanherboch.chessduck.chess.SpokenFr
 import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.chess.isWhite
 import com.ivanherboch.chessduck.chess.pieceType
@@ -32,6 +33,13 @@ data class ThreatItem(val position: Position, val lastMove: Move, val target: In
 /** « Puis-je prendre ? » : la prise [capture] est-elle bonne ([good]) ? */
 @Immutable
 data class CaptureItem(val position: Position, val capture: Move, val good: Boolean, val explanation: String)
+
+/**
+ * « Calcul à l'aveugle » : depuis [start], deux demi-coups sont annoncés sans être joués sur l'échiquier ; l'élève
+ * trouve le coup suivant ([expected]) dans la position [after] qu'il doit se représenter.
+ */
+@Immutable
+data class BlindItem(val start: Position, val announced: List<String>, val after: Position, val expected: Move, val answer: String)
 
 /** Exercices de réflexes générés automatiquement à partir des problèmes embarqués. */
 object ReflexDrills {
@@ -61,6 +69,23 @@ object ReflexDrills {
         val text = "${PieceLexiconFr.definiteCapitalized(pieceType(attacker))} ${sqName(follow.from)} menace de prendre " +
             "votre ${PieceLexiconFr.name(pieceType(victim))} en ${sqName(follow.to)}."
         return ThreatItem(pos, line.moves[1], follow.to, follow.from, text)
+    }
+
+    /**
+     * Calcul à l'aveugle tiré d'un problème : après la faute adverse, le coup gagnant et la réponse sont annoncés ;
+     * l'élève doit trouver le coup suivant de la solution.
+     */
+    fun blindFrom(p: Puzzle): BlindItem? {
+        val line = runCatching { Line.fromUci(p.fen, p.moves) }.getOrNull() ?: return null
+        if (line.size < 4) return null
+        return BlindItem(line.positions[1], listOf(line.sans[1], line.sans[2]), line.positions[3], line.moves[3], line.sans[3])
+    }
+
+    /** Texte des coups annoncés, numérotés comme dans une partie (« 24. Nf5+ Kh8 » ou « 24… Qd2 25. Rxd2 »). */
+    fun announcedText(b: BlindItem): String {
+        val n = b.start.fullmove
+        val (a, r) = b.announced
+        return if (b.start.whiteToMove) "$n. $a $r" else "$n… $a ${n + 1}. $r"
     }
 
     /**
@@ -95,6 +120,10 @@ object ReflexDrills {
 enum class ReflexKind(val label: String, val question: String) {
     THREAT("Quelle est la menace ?", "L'adversaire vient de jouer. Touchez la pièce qu'il menace de prendre."),
     CAPTURE("Puis-je prendre ?", "Cette prise est-elle bonne ? Répondez par oui ou par non."),
+    BLIND(
+        "Calcul à l'aveugle",
+        "Sans les voir joués, suivez les deux coups annoncés, puis touchez la case de départ et la case d'arrivée du coup suivant.",
+    ),
 }
 
 @Immutable
@@ -105,6 +134,10 @@ data class ReflexSession(
     val results: List<Boolean> = emptyList(),
     val threat: ThreatItem? = null,
     val capture: CaptureItem? = null,
+    val blind: BlindItem? = null,
+    /** Calcul à l'aveugle : case de départ touchée, et position après les coups annoncés réaffichée (aide). */
+    val from: Int = -1,
+    val shown: Boolean = false,
     /** Réponse donnée à la question en cours. */
     val answered: Boolean = false,
     /** Case touchée (menace). */
@@ -115,7 +148,7 @@ data class ReflexSession(
     val tone: Tone = Tone.INFO,
 ) {
     val score: Int get() = results.count { it }
-    val position: Position? get() = threat?.position ?: capture?.position
+    val position: Position? get() = threat?.position ?: capture?.position ?: blind?.let { if (shown || answered) it.after else it.start }
 }
 
 /**
@@ -128,6 +161,8 @@ class ReflexTrainer(
     private val engine: ChessEngine,
     private val random: Random,
     private val onFinished: suspend (ReflexKind, Int, Int) -> Unit = { _, _, _ -> },
+    /** Lecture vocale des coups annoncés (calcul à l'aveugle) ; ne lit rien si la voix est coupée. */
+    private val speak: (String) -> Unit = {},
 ) {
     private val _state = MutableStateFlow<ReflexSession?>(null)
     val state: StateFlow<ReflexSession?> = _state.asStateFlow()
@@ -143,7 +178,11 @@ class ReflexTrainer(
             queue.clear()
             engineOk = true
             val range = AcademyAssessments.levelRange(level)
-            val themes = if (kind == ReflexKind.THREAT) ReflexDrills.THREAT_THEMES else ReflexDrills.CAPTURE_THEMES
+            val themes = when (kind) {
+                ReflexKind.THREAT -> ReflexDrills.THREAT_THEMES
+                ReflexKind.CAPTURE -> ReflexDrills.CAPTURE_THEMES
+                ReflexKind.BLIND -> null
+            }
             var exclude = ""
             repeat(total * 8) {
                 if (queue.size >= total) return@repeat
@@ -154,6 +193,7 @@ class ReflexTrainer(
                     ReflexKind.THREAT -> ReflexDrills.threatFrom(p)
                     ReflexKind.CAPTURE -> runCatching { Line.fromUci(p.fen, p.moves).positions[1] }.getOrNull()
                         ?.let { ReflexDrills.captureFrom(it, random) }?.takeIf { confirmed(it) }
+                    ReflexKind.BLIND -> ReflexDrills.blindFrom(p)
                 }
                 if (item != null && queue.none { it == item }) queue.add(item)
             }
@@ -181,24 +221,56 @@ class ReflexTrainer(
 
     private fun show(index: Int) {
         val item = queue[index]
+        val blind = item as? BlindItem
         _state.update {
             it?.copy(
-                index = index, answered = false, tapped = -1, tone = Tone.INFO,
-                threat = item as? ThreatItem, capture = item as? CaptureItem,
-                message = "Question ${index + 1} sur ${queue.size}. ${it.kind.question}",
+                index = index, answered = false, tapped = -1, from = -1, shown = false, tone = Tone.INFO,
+                threat = item as? ThreatItem, capture = item as? CaptureItem, blind = blind,
+                message = "Question ${index + 1} sur ${queue.size}. ${it.kind.question}" +
+                    (blind?.let { b -> " Coups annoncés : ${ReflexDrills.announcedText(b)}." } ?: ""),
             )
         }
+        blind?.let { announce(it) }
     }
 
-    /** Menace : case touchée par l'élève. */
+    /** Calcul à l'aveugle : lit les coups annoncés (si la voix est active ; sous TalkBack, le texte suffit). */
+    fun announce(b: BlindItem? = _state.value?.blind) {
+        val item = b ?: return
+        val side = if (item.after.whiteToMove) "des Blancs" else "des Noirs"
+        speak(SpokenFr.text("Coups annoncés : ${SpokenFr.move(item.announced[0])}, puis ${SpokenFr.move(item.announced[1])}. Quel est le coup suivant $side ?"))
+    }
+
+    /** Calcul à l'aveugle : réaffiche l'échiquier après les coups annoncés (la réponse ne comptera plus). */
+    fun showBoard() = _state.update { it?.takeIf { s -> s.blind != null && !s.answered }?.copy(shown = true) ?: it }
+
+    /** Menace : case touchée par l'élève ; calcul à l'aveugle : case de départ, puis case d'arrivée. */
     fun tap(sq: Int) {
         val s = _state.value ?: return
+        s.blind?.let { b -> return blindTap(s, b, sq) }
         val t = s.threat ?: return
         if (s.answered) return
         val ok = sq == t.target
         _state.value = s.copy(
             answered = true, tapped = sq, results = s.results + ok, tone = if (ok) Tone.GOOD else Tone.BAD,
             message = (if (ok) "Bien vu ! " else "Ce n'est pas la pièce menacée. ") + t.explanation,
+        )
+    }
+
+    private fun blindTap(s: ReflexSession, b: BlindItem, sq: Int) {
+        if (s.answered) return
+        if (s.from < 0 || s.from == sq) {
+            _state.value = s.copy(from = if (s.from == sq) -1 else sq)
+            return
+        }
+        val right = s.from == b.expected.from && sq == b.expected.to
+        val ok = right && !s.shown
+        _state.value = s.copy(
+            answered = true, tapped = sq, results = s.results + ok, tone = if (right) Tone.GOOD else Tone.BAD,
+            message = when {
+                ok -> "Bien calculé ! Le coup suivant était ${b.answer}."
+                right -> "Exact : ${b.answer}. Vous avez réaffiché l'échiquier : réessayez sans le regarder."
+                else -> "Ce n'est pas le bon coup. Il fallait jouer ${b.answer}. Regardez la position après les coups annoncés."
+            },
         )
     }
 

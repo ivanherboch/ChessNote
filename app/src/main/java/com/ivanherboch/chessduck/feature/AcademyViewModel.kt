@@ -216,7 +216,7 @@ class AcademyViewModel(
     /** Finales jouables contre l'Ordinateur. */
     val endgame = EndgameTrainer(viewModelScope, engine, random, onFinished = ::endgameFinished)
     /** Exercices de réflexes (menace, prise). */
-    val reflex = ReflexTrainer(viewModelScope, puzzles, engine, random)
+    val reflex = ReflexTrainer(viewModelScope, puzzles, engine, random, speak = { if (narration.value) narrator.speak(it) })
 
     val lesson: Lesson get() = Lessons.byId(state.value.lessonId)
     /** Ligne affichée (principale ou variante) et ses commentaires. */
@@ -1040,10 +1040,14 @@ class AcademyViewModel(
         cancelAll()
         narrator.stop()
         _state.update { it.copy(quiz = null, practice = null) }
-        viewModelScope.launch { reflex.start(kind, prefs.settings.first().academyLevel) }
+        // Le calcul à l'aveugle est un exercice du palier 5.
+        viewModelScope.launch { reflex.start(kind, if (kind == ReflexKind.BLIND) 5 else prefs.settings.first().academyLevel) }
     }
 
-    fun closeReflex() = reflex.stop()
+    fun closeReflex() {
+        narrator.stop()
+        reflex.stop()
+    }
 
     // ---- Révisions du jour (répétition espacée) ----
 

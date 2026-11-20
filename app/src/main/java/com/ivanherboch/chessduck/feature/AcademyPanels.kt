@@ -49,6 +49,8 @@ import com.ivanherboch.chessduck.ui.icons.Extension
 import com.ivanherboch.chessduck.ui.icons.Lightbulb
 import com.ivanherboch.chessduck.ui.icons.RestartAlt
 import com.ivanherboch.chessduck.ui.icons.School
+import com.ivanherboch.chessduck.ui.icons.Visibility
+import com.ivanherboch.chessduck.ui.icons.VolumeUp
 import com.ivanherboch.chessduck.ui.icons.SportsEsports
 import com.ivanherboch.chessduck.ui.icons.StarOutline
 import com.ivanherboch.chessduck.ui.turnOf
@@ -156,6 +158,8 @@ internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, onClose: ()
         TrainingButton(ReflexKind.THREAT.label, go { vm.startReflex(ReflexKind.THREAT) })
         TrainingButton("Le seul coup", go(vm::startOnlyMove))
         TrainingButton(ReflexKind.CAPTURE.label, go { vm.startReflex(ReflexKind.CAPTURE) })
+        SectionTitle("Exercices avancés")
+        TrainingButton("Calcul à l'aveugle (palier 5)", go { vm.startReflex(ReflexKind.BLIND) })
         SectionTitle("Finales contre l'Ordinateur")
         for (f in EndgameFamily.entries) {
             TrainingButton("${if (f.goal == EndgameGoal.WIN) "Gagnez" else "Tenez la nulle"} : ${f.label}", go { vm.startEndgame(f) })
@@ -327,6 +331,14 @@ internal fun ColumnScope.ReflexPanel(vm: AcademyViewModel, rx: ReflexSession) {
             rx.capture != null -> {
                 DuckButton("Oui, je prends", { vm.reflex.answer(true) }, Modifier.weight(1f), accent = c.green, filled = true)
                 DuckButton("Non", { vm.reflex.answer(false) }, Modifier.weight(1f), accent = c.red, filled = true)
+            }
+            rx.blind != null -> {
+                // La voix peut être coupée (ou TalkBack actif) : les coups annoncés restent écrits dans la carte.
+                DuckButton("Réécouter", { vm.reflex.announce() }, Modifier.weight(1f), accent = c.blue, icon = Icons.AutoMirrored.Rounded.VolumeUp)
+                DuckButton(
+                    "Revoir l'échiquier", vm.reflex::showBoard, Modifier.weight(1.3f), enabled = !rx.shown, icon = Icons.Rounded.Visibility,
+                    contentDescription = "Réafficher l'échiquier après les coups annoncés ; la réponse ne comptera plus",
+                )
             }
             else -> DuckButton("Arrêter", vm::closeReflex, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
         }

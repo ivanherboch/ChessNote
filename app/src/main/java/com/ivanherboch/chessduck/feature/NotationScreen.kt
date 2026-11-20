@@ -20,6 +20,13 @@ import com.ivanherboch.chessduck.ui.icons.Replay
 import com.ivanherboch.chessduck.ui.icons.SkipNext
 import com.ivanherboch.chessduck.ui.icons.SwapVert
 import com.ivanherboch.chessduck.ui.icons.Tune
+import com.ivanherboch.chessduck.ui.icons.Visibility
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.activity.compose.BackHandler
+import androidx.compose.ui.semantics.heading
+import com.ivanherboch.chessduck.chess.sqName
+import com.ivanherboch.chessduck.ui.EqualRow
+import com.ivanherboch.chessduck.ui.ButtonVariant
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -80,6 +87,8 @@ fun NotationScreen(vm: NotationViewModel) {
     val c = LocalDuck.current
     var memo by rememberSaveable { mutableStateOf(false) }
     val fb = LocalFeedback.current
+    val vision by vm.vision.collectAsStateWithLifecycle()
+    vision?.let { VisionLayout(vm, it); return }
     val ex = s.exercise
     if (ex == null) {
         LoadingState("Préparation de l'exercice…")
@@ -90,7 +99,7 @@ fun NotationScreen(vm: NotationViewModel) {
         bottomMin = 298.dp,
         top = {
             Row(Modifier.fillMaxWidth().height(52.dp), verticalAlignment = Alignment.CenterVertically) {
-                LevelMenu(s.level, vm::setLevel, Modifier.weight(1f))
+                LevelMenu(s.level, vm::setLevel, Modifier.weight(1f), onVision = { vm.startVision() })
                 DuckIconButton(Icons.AutoMirrored.Rounded.MenuBook, "Mémo anglais : lettres et symboles FIDE", { memo = true }, accent = c.blue)
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
                 DuckIconButton(Icons.Rounded.Replay, "Revoir le coup", vm::replay)
@@ -183,7 +192,7 @@ fun NotationScreen(vm: NotationViewModel) {
 
 /** Sélecteur de niveau compact (menu déroulant). */
 @Composable
-private fun LevelMenu(level: Int, onSelect: (Int) -> Unit, modifier: Modifier) {
+private fun LevelMenu(level: Int, onSelect: (Int) -> Unit, modifier: Modifier, onVision: () -> Unit) {
     val c = LocalDuck.current
     var open by remember { mutableStateOf(false) }
     Box(modifier) {
@@ -199,6 +208,12 @@ private fun LevelMenu(level: Int, onSelect: (Int) -> Unit, modifier: Modifier) {
                     leadingIcon = { if (i == level) Icon(Icons.Rounded.Check, contentDescription = "sélectionné", tint = c.goldText) else Spacer(Modifier.size(24.dp)) },
                 )
             }
+            // Exercice facultatif : couleur des cases, toucher une case, chemin du cavalier.
+            DropdownMenuItem(
+                text = { Text("Vision des cases (exercice)", style = MaterialTheme.typography.bodyMedium, color = c.text) },
+                onClick = { open = false; onVision() },
+                leadingIcon = { Icon(Icons.Rounded.Visibility, contentDescription = null, tint = c.greenText) },
+            )
         }
     }
 }
@@ -245,3 +260,72 @@ private fun Key(label: String, sub: String?, modifier: Modifier, enabled: Boolea
  * huit touches par rangée, soit environ 41 dp sur un téléphone de 360 dp, bien au-dessus du minimum WCAG 2.5.8 (24 dp).
  */
 private val KEY_ROW = 44.dp
+
+/**
+ * « Vision des cases » : exercice facultatif, sans chronomètre. Couleur d'une case (échiquier masqué), toucher une
+ * case, ou nombre de sauts du cavalier. Les réponses passent par des boutons ou par les cases, annoncées par TalkBack.
+ */
+@Composable
+private fun VisionLayout(vm: NotationViewModel, v: VisionSession) {
+    val c = LocalDuck.current
+    val fb = LocalFeedback.current
+    val q = v.question
+    BackHandler { vm.closeVision() }
+    ModuleLayout(
+        bottomMin = 200.dp,
+        top = {
+            Row(Modifier.fillMaxWidth().height(52.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.Visibility, contentDescription = null, tint = c.greenText, modifier = Modifier.padding(start = 8.dp))
+                Text(
+                    "Vision des cases", color = c.text, style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(start = 8.dp).weight(1f).semantics { heading() },
+                )
+                DuckButton("Revenir à la notation", vm::closeVision, icon = Icons.Rounded.Close, variant = ButtonVariant.OUTLINED)
+            }
+        },
+        board = {
+            if (q.kind == VisionKind.COLOR && !v.answered) {
+                // Couleur de la case : l'échiquier est masqué, on se le représente de mémoire.
+                Box(
+                    Modifier.fillMaxSize().clip(RoundedCornerShape(DuckRadius.M)).background(c.surface),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        "Échiquier masqué : représentez-vous la case ${sqName(q.square)}.", color = c.muted,
+                        style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(24.dp),
+                    )
+                }
+            } else {
+                val marks = when {
+                    q.kind == VisionKind.KNIGHT -> listOf(q.target to c.gold)
+                    q.kind == VisionKind.TOUCH && v.answered -> listOfNotNull(q.square to c.green, v.tapped.takeIf { it != q.square }?.let { it to c.red })
+                    q.kind == VisionKind.COLOR -> listOf(q.square to c.gold)
+                    else -> emptyList()
+                }
+                ChessBoard(
+                    position = v.position, modifier = Modifier.fillMaxSize(), marks = marks,
+                    onSquareTap = if (q.kind == VisionKind.TOUCH && !v.answered) { sq -> vm.tapVision(sq); if (vm.vision.value?.correct == true) fb?.success() else fb?.error() } else null,
+                )
+            }
+        },
+        bottom = {
+            FeedbackCard(v.message, v.tone, Modifier.padding(top = 6.dp).weight(1f), title = "${q.kind.label} · ${v.score} sur ${v.total}")
+            EqualRow(Modifier.padding(vertical = 6.dp)) {
+                when {
+                    v.answered -> {
+                        DuckButton("Arrêter", vm::closeVision, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
+                        DuckButton("Question suivante", vm::nextVision, Modifier.weight(1.4f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
+                    }
+                    q.kind == VisionKind.COLOR -> {
+                        DuckButton("Claire", { vm.answerColor(true) }, Modifier.weight(1f), accent = c.gold, filled = true, contentDescription = "Case claire")
+                        DuckButton("Foncée", { vm.answerColor(false) }, Modifier.weight(1f), accent = c.blue, filled = true, contentDescription = "Case foncée")
+                    }
+                    q.kind == VisionKind.KNIGHT -> for (n in 1..4) {
+                        DuckButton("$n", { vm.answerKnight(n) }, Modifier.weight(1f), accent = c.blue, contentDescription = "$n saut${if (n > 1) "s" else ""}")
+                    }
+                    else -> DuckButton("Arrêter", vm::closeVision, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
+                }
+            }
+        },
+    )
+}

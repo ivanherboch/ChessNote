@@ -791,6 +791,71 @@ class ViewModelsTest {
         assertEquals(1, settings.flow.value.notationBest)
     }
 
+    /** Vision des cases : couleur (échiquier masqué), toucher la case, chemin du cavalier ; aucun chronomètre. */
+    @Test
+    fun notationSquareVision() = test {
+        val vm = NotationViewModel(FakeSettings(), FakePuzzles(emptyList()))
+        vm.startVision(com.ivanherboch.chessduck.feature.VisionKind.COLOR)
+        val sq = vm.vision.value!!.question.square
+        vm.answerColor(com.ivanherboch.chessduck.feature.SquareVision.isLight(sq))
+        assertTrue(vm.vision.value!!.correct)
+        assertEquals(1, vm.vision.value!!.score)
+        vm.nextVision()
+        assertEquals(1, vm.vision.value!!.total)
+        assertTrue(!vm.vision.value!!.answered)
+        vm.startVision(com.ivanherboch.chessduck.feature.VisionKind.TOUCH)
+        val target = vm.vision.value!!.question.square
+        vm.tapVision((target + 1) % 64)
+        assertTrue(!vm.vision.value!!.correct && vm.vision.value!!.message.contains("marquée en vert"))
+        vm.startVision(com.ivanherboch.chessduck.feature.VisionKind.KNIGHT)
+        val q = vm.vision.value!!.question
+        val n = com.ivanherboch.chessduck.feature.SquareVision.knightDistance(q.square, q.target)
+        assertTrue(n in 1..4)
+        assertEquals(com.ivanherboch.chessduck.chess.KNIGHT, com.ivanherboch.chessduck.chess.pieceType(vm.vision.value!!.position[q.square]))
+        vm.answerKnight(n)
+        assertTrue(vm.vision.value!!.correct)
+        vm.closeVision()
+        assertNull(vm.vision.value)
+    }
+
+    /** Calcul à l'aveugle (palier 5) : coups lus en français par la voix, écrits dans la carte, échiquier réaffichable. */
+    @Test
+    fun academyBlindCalculationIsSpokenAndShown() = test {
+        val prefs = FakeSettings()
+        prefs.setNarration(true)
+        val voice = FakeNarrator()
+        // Exercice du palier 5 : problèmes classés de 1800 à 2500.
+        val vm = academy(voice = voice, prefs = prefs, puzzles = FakePuzzles(listOf(PUZZLE_0000D.copy(rating = 2000))))
+        advanceUntilIdle()
+        vm.startReflex(com.ivanherboch.chessduck.feature.ReflexKind.BLIND); advanceUntilIdle()
+        val rx = vm.reflex.state.value!!
+        val b = rx.blind!!
+        assertEquals(listOf("Rd8", "Qxd8+"), b.announced)
+        assertEquals("Calcul à l'aveugle", vm.trainingTitle(vm.state.value, vm.endgame.state.value, rx))
+        // La carte écrit les coups (voix coupée ou TalkBack) ; la voix les lit en français, sans notation anglaise.
+        assertTrue(rx.message, "Coups annoncés : 27… Rd8 28. Qxd8+" in rx.message)
+        val said = voice.spoken.last()
+        assertTrue(said, "tour" in said && "dame" in said && "Rd8" !in said && "Qxd8" !in said)
+        // L'échiquier affiché reste la position de départ, puis peut être réaffiché après les coups annoncés.
+        assertEquals(b.start, vm.reflex.state.value!!.position)
+        vm.reflex.announce(); assertEquals(said, voice.spoken.last())
+        vm.reflex.tap(com.ivanherboch.chessduck.chess.sqFromName("f6"))
+        vm.reflex.tap(com.ivanherboch.chessduck.chess.sqFromName("d8"))
+        assertEquals(listOf(true), vm.reflex.state.value!!.results)
+        assertEquals(b.after, vm.reflex.state.value!!.position)
+        // Sans voix : rien n'est lu, le texte suffit.
+        prefs.setNarration(false); advanceUntilIdle()
+        val before = voice.spoken.size
+        vm.startReflex(com.ivanherboch.chessduck.feature.ReflexKind.BLIND); advanceUntilIdle()
+        assertEquals(before, voice.spoken.size)
+        vm.reflex.showBoard()
+        assertTrue(vm.reflex.state.value!!.shown)
+        vm.reflex.tap(com.ivanherboch.chessduck.chess.sqFromName("f6"))
+        vm.reflex.tap(com.ivanherboch.chessduck.chess.sqFromName("d8"))
+        assertEquals(listOf(false), vm.reflex.state.value!!.results) // juste, mais avec l'échiquier réaffiché
+        vm.closeReflex()
+    }
+
     @Test
     fun playComputerRepliesAndStaleMoveIsIgnored() = test {
         val games = FakeGames()

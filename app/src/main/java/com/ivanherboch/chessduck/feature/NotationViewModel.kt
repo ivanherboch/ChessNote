@@ -132,6 +132,67 @@ class NotationViewModel(
 
     fun flip() = _state.update { it.copy(flipped = !it.flipped) }
 
+    // ---- Vision des cases (exercice facultatif, sans chronomètre) ----
+
+    private val _vision = MutableStateFlow<VisionSession?>(null)
+    val vision: StateFlow<VisionSession?> = _vision.asStateFlow()
+
+    private fun ask(score: Int, total: Int, kind: VisionKind? = null): VisionSession {
+        val q = SquareVision.question(rnd, kind)
+        return VisionSession(q, score = score, total = total, message = SquareVision.prompt(q))
+    }
+
+    fun startVision(kind: VisionKind? = null) { _vision.value = ask(0, 0, kind) }
+
+    fun closeVision() { _vision.value = null }
+
+    fun nextVision() {
+        val v = _vision.value ?: return
+        if (v.answered) _vision.value = ask(v.score, v.total)
+    }
+
+    private fun judge(v: VisionSession, ok: Boolean, text: String, tapped: Int = -1) {
+        _vision.value = v.copy(
+            answered = true, correct = ok, tapped = tapped, score = v.score + if (ok) 1 else 0, total = v.total + 1,
+            tone = if (ok) Tone.GOOD else Tone.BAD, message = text,
+        )
+    }
+
+    /** Couleur de la case : réponse « claire » ou « foncée ». */
+    fun answerColor(light: Boolean) {
+        val v = _vision.value?.takeIf { !it.answered && it.question.kind == VisionKind.COLOR } ?: return
+        val sq = v.question.square
+        val isLight = SquareVision.isLight(sq)
+        val color = if (isLight) "claire" else "foncée"
+        judge(
+            v, light == isLight,
+            if (light == isLight) "Exact : la case ${sqName(sq)} est $color."
+            else "Non : la case ${sqName(sq)} est $color. Repère : la case a1 est foncée, et les couleurs alternent d'une case à la suivante.",
+        )
+    }
+
+    /** Toucher la case : case touchée sur l'échiquier. */
+    fun tapVision(square: Int) {
+        val v = _vision.value?.takeIf { !it.answered && it.question.kind == VisionKind.TOUCH } ?: return
+        val target = v.question.square
+        judge(
+            v, square == target,
+            if (square == target) "Bien vu : c'est la case ${sqName(target)}."
+            else "Vous avez touché la case ${sqName(square)}. La case ${sqName(target)} est marquée en vert.",
+            square,
+        )
+    }
+
+    /** Chemin du cavalier : nombre minimal de sauts. */
+    fun answerKnight(jumps: Int) {
+        val v = _vision.value?.takeIf { !it.answered && it.question.kind == VisionKind.KNIGHT } ?: return
+        val n = SquareVision.knightDistance(v.question.square, v.question.target)
+        judge(
+            v, jumps == n,
+            (if (jumps == n) "Exact : " else "Non : il faut ") + "$n saut${if (n > 1) "s" else ""} pour aller de ${sqName(v.question.square)} à ${sqName(v.question.target)}.",
+        )
+    }
+
     /** Ajoute [key] à la saisie ; renvoie faux (et explique pourquoi) si la touche est refusée. */
     fun type(key: String): Boolean {
         val s = state.value

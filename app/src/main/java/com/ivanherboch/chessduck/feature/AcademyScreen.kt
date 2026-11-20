@@ -186,16 +186,23 @@ fun AcademyScreen(
                     val pos = rxs.position!!
                     val t = rxs.threat
                     val cp = rxs.capture
+                    val b = rxs.blind
                     ChessBoard(
-                        position = pos, modifier = Modifier.fillMaxSize(), flipped = !pos.whiteToMove,
+                        // Calcul à l'aveugle : l'échiquier reste orienté comme au départ, même réaffiché.
+                        position = pos, modifier = Modifier.fillMaxSize(), flipped = !(b?.start ?: pos).whiteToMove,
                         lastMove = t?.lastMove,
                         arrows = when {
                             cp != null -> listOf(Arrow(cp.capture.from, cp.capture.to, c.blue))
                             t != null && rxs.answered -> listOf(Arrow(t.attacker, t.target, c.red))
+                            b != null && rxs.answered -> listOf(Arrow(b.expected.from, b.expected.to, c.green))
                             else -> emptyList()
                         },
-                        marks = if (t != null && rxs.answered) listOfNotNull(t.target to c.gold, rxs.tapped.takeIf { it >= 0 && it != t.target }?.let { it to c.red }) else emptyList(),
-                        onSquareTap = if (t != null && !rxs.answered) vm.reflex::tap else null,
+                        marks = when {
+                            t != null && rxs.answered -> listOfNotNull(t.target to c.gold, rxs.tapped.takeIf { it >= 0 && it != t.target }?.let { it to c.red })
+                            b != null && !rxs.answered && rxs.from >= 0 -> listOf(rxs.from to c.gold)
+                            else -> emptyList()
+                        },
+                        onSquareTap = if ((t != null || b != null) && !rxs.answered) vm.reflex::tap else null,
                     )
                 }
                 pr != null -> {
