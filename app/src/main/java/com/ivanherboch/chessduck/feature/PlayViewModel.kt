@@ -290,7 +290,8 @@ class PlayViewModel(
         }
         val reason = if (resignedWhite != null) "abandon" else GameLogic.endText(end)
         val resultStr = when (whiteResult) { 1 -> "1-0"; -1 -> "0-1"; else -> "1/2-1/2" }
-        if (line.size < 2) {
+        // Une partie d'entraînement depuis une leçon compte dès le premier coup (un mat en 1 est une vraie fin).
+        if (line.size < if (s.fromPosition) 1 else 2) {
             _state.update { it.copy(result = GameResult("Partie interrompue avant le premier échange : rien n'est enregistré.", Tone.NEUTRAL)) }
             return
         }
