@@ -1,6 +1,12 @@
 package com.ivanherboch.chessduck.feature
 
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import com.ivanherboch.chessduck.ui.DuckRadius
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -28,7 +34,6 @@ import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.ui.ButtonVariant
 import com.ivanherboch.chessduck.ui.DuckButton
 import com.ivanherboch.chessduck.ui.DuckChip
-import com.ivanherboch.chessduck.ui.DuckIconButton
 import com.ivanherboch.chessduck.ui.DuckSheet
 import com.ivanherboch.chessduck.ui.EqualRow
 import com.ivanherboch.chessduck.ui.FeedbackCard
@@ -91,7 +96,28 @@ internal fun AcademyBanner(vm: AcademyViewModel, s: AcademyState, home: AcademyH
                 }
             }
         }
-        DuckIconButton(Icons.Rounded.School, "Entraînements : réflexes, finales, répertoire et tests", onTrainings)
+        DuckChip("Entraînements", false, onTrainings, Modifier.padding(start = 6.dp), accent = c.gold, icon = Icons.Rounded.School)
+    }
+}
+
+/**
+ * En-tête d'un entraînement indépendant de la leçon (réflexes, finale, tests) : il remplace le sélecteur de leçon et
+ * les modes Guidé/Défi, pour qu'on sache toujours ce que montre l'échiquier, et permet de revenir à la leçon.
+ */
+@Composable
+internal fun TrainingHeader(title: String, onClose: () -> Unit) {
+    val c = LocalDuck.current
+    Row(
+        Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
+            .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Rounded.School, contentDescription = null, tint = c.goldText, modifier = Modifier.size(22.dp))
+        Column(Modifier.padding(start = 10.dp).weight(1f).semantics(mergeDescendants = true) { heading() }) {
+            Text("Entraînement", color = c.muted, style = MaterialTheme.typography.labelMedium)
+            Text(title, color = c.text, style = MaterialTheme.typography.titleMedium)
+        }
+        DuckButton("Revenir à la leçon", onClose, accent = c.blue, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Close)
     }
 }
 

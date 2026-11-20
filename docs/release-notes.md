@@ -1,3 +1,10 @@
+## ChessDuck 2.7.3 — des entraînements clairement annoncés
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Le bouton au chapeau de l'Académie s'appelle désormais « Entraînements ».
+- Pendant un entraînement indépendant de la leçon (réflexes, finale lancée depuis le tiroir, « Le seul coup », test de placement, examen), l'en-tête annonce « Entraînement : … » à la place de la leçon en cours et des modes Guidé et Défi. Un bouton « Revenir à la leçon » permet d'en sortir. L'échiquier, un peu plus grand, ne se confond plus avec la leçon.
+
 ## ChessDuck 2.7.2 — un bon coup différent n'est plus remplacé en silence
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

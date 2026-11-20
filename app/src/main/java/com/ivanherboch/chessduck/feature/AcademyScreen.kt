@@ -123,6 +123,11 @@ fun AcademyScreen(
     ModuleLayout(
         bottomMin = 190.dp,
         top = {
+            val training = vm.trainingTitle(s, eg, rx)
+            if (training != null) {
+                TrainingHeader(training, vm::closeTraining)
+                return@ModuleLayout
+            }
             // Sélecteur de leçon : précédente / leçon courante (ouvre le catalogue) / suivante.
             Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Leçon précédente", vm::prevLesson)

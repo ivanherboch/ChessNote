@@ -441,18 +441,18 @@ class AppRobolectricTest {
         desc("Ouvrir le catalogue des leçons").performClick(); settle(1200); shot("2c_catalogue_lecons")
         close(); settle(800)
         // Étape 2 : entraînements (réflexes, finales jouables), variantes, QCM et partie modèle.
-        desc("Entraînements").performClick(); settle(1000); shot("2g_entrainements")
+        rule.onNodeWithText("Entraînements").performClick(); settle(1000); shot("2g_entrainements")
         rule.onNodeWithText("Quelle est la menace ?").performClick(); settle(1000)
         rule.waitUntil(20_000) { rule.onAllNodesWithText("Question 1 sur", substring = true).fetchSemanticsNodes().isNotEmpty() }
         settle(500); shot("2h_menace")
         rule.onNodeWithText("Arrêter").performClick(); settle(600)
-        desc("Entraînements").performClick(); settle(1000)
+        rule.onNodeWithText("Entraînements").performClick(); settle(1000)
         rule.onNodeWithText("Puis-je prendre ?").performClick(); settle(1000)
         rule.waitUntil(20_000) { rule.onAllNodesWithText("Oui, je prends").fetchSemanticsNodes().isNotEmpty() }
         settle(500); shot("2i_prise")
         rule.onNodeWithText("Oui, je prends").performClick(); settle(600); shot("2j_prise_reponse")
         rule.onNodeWithText("Arrêter").performClick(); settle(600)
-        desc("Entraînements").performClick(); settle(1000)
+        rule.onNodeWithText("Entraînements").performClick(); settle(1000)
         rule.onNodeWithText("Gagnez : Roi et tour contre roi").performScrollTo().performClick(); settle(1500); shot("2k_finale")
         rule.onNodeWithText("Arrêter").performClick(); settle(600)
         rule.onNodeWithText("Guidé").performClick(); settle(800)

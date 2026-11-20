@@ -393,12 +393,16 @@ class ViewModelsTest {
         advanceUntilIdle()
         val rx = vm.reflex.state.value!!
         assertEquals(1, rx.total)
+        // L'en-tête annonce l'entraînement à la place de la leçon ouverte.
+        assertEquals("Quelle est la menace ?", vm.trainingTitle(vm.state.value, vm.endgame.state.value, rx))
         vm.reflex.tap(com.ivanherboch.chessduck.chess.sqFromName("a1"))
         assertEquals(listOf(true), vm.reflex.state.value!!.results)
         vm.reflex.next()
         assertTrue(vm.reflex.state.value!!.finished)
         vm.closeReflex()
+        assertNull(vm.trainingTitle(vm.state.value, vm.endgame.state.value, vm.reflex.state.value))
         vm.startOnlyMove(); advanceUntilIdle()
+        assertEquals("Le seul coup", vm.trainingTitle(vm.state.value, vm.endgame.state.value, vm.reflex.state.value))
         assertEquals(com.ivanherboch.chessduck.feature.PracticeKind.ONLY_MOVE, vm.state.value.practice!!.kind)
         solveSeries(vm)
         assertEquals(5, vm.state.value.practice!!.score)

@@ -990,6 +990,26 @@ class AcademyViewModel(
         }
     }
 
+    /**
+     * Titre de l'entraînement en cours s'il ne dépend pas de la leçon ouverte (réflexes, finale lancée depuis le
+     * tiroir, « Le seul coup », placement, examen) ; null quand on travaille la leçon elle-même.
+     */
+    fun trainingTitle(s: AcademyState, eg: EndgameSession?, rx: ReflexSession?): String? = when {
+        eg != null && endgameLesson == null && !endgameReview -> "Finale : ${eg.family.label}"
+        rx != null -> rx.kind.label
+        s.practice?.kind == PracticeKind.ONLY_MOVE -> "Le seul coup"
+        s.practice?.kind == PracticeKind.PLACEMENT -> "Test de placement"
+        s.practice?.kind == PracticeKind.EXAM -> "Examen du palier ${levelName(s.practice.level)}"
+        else -> null
+    }
+
+    /** Quitte l'entraînement en cours et revient à la leçon. */
+    fun closeTraining() {
+        closeEndgame()
+        closeReflex()
+        closePractice()
+    }
+
     // ---- Réflexes ----
 
     fun startReflex(kind: ReflexKind) {
