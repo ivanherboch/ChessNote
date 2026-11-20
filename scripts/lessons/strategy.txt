@@ -1,0 +1,373 @@
+# Le centre de pions | Deux pions côte à côte au centre contrôlent beaucoup de cases. Il faut les soutenir avec ses pièces et ne les avancer qu'au bon moment. | w | id=154 level=4 order=4154
+d4 : Les Blancs occupent le centre.
+Nf6 : Le cavalier contrôle la case e4.
+c4 : Les Blancs prennent de l'espace.
+g6 : Le fou ira en g7, sur la grande diagonale.
+Nc3 : Le cavalier prépare l'avance e4.
+d5 : La défense Grünfeld : les Noirs frappent tout de suite le centre.
+cxd5 : Les Blancs échangent.
+Nxd5 : Le cavalier reprend.
+?e4 : Le pion chasse le cavalier et complète le centre.
+Nxc3 : Les Noirs échangent les cavaliers.
+bxc3 : Le pion reprend vers le centre : les Blancs ont maintenant deux pions centraux côte à côte, en d4 et e4.
+Bg7 : Le fou vise le pion d4.
+?Nf3 : Le cavalier protège le pion d4.
+c5 : Les Noirs attaquent le centre une nouvelle fois.
+?Be3 : Le fou protège encore le pion d4. Les Blancs soutiennent leur centre avec leurs pièces avant de penser à l'avancer. À retenir : un centre de pions est fort tant qu'il est soutenu et mobile. Avancez-le seulement quand l'avance gagne de l'espace sans laisser de cases faibles.
+QUIZ: Quel est le plan des Blancs avec leur centre en d4 et e4 ? | Le soutenir avec leurs pièces et l'avancer au bon moment | L'échanger au plus vite | Laisser le pion d4 sans défense | Un centre de pions est une force tant qu'il est protégé : les Blancs le soutiennent, puis poussent d5 ou e5 au moment favorable.
+
+# Les chaînes de pions | Une chaîne de pions s'attaque à sa base, comme on abat un arbre par le pied. | b | id=155 level=4 order=4155
+e4 : Les Blancs occupent le centre.
+e6 : La défense française.
+d4 : Les Blancs prennent tout le centre.
+d5 : Les Noirs attaquent le pion e4.
+e5 : Les Blancs avancent : la chaîne de pions d4 et e5 est formée. Sa base est le pion d4.
+?c5 : Les Noirs attaquent la base de la chaîne, le pion d4.
+c3 : Les Blancs soutiennent la base avec un autre pion.
+?Nc6 : Le cavalier attaque à son tour le pion d4.
+Nf3 : Le cavalier protège le pion d4.
+?Qb6 : La dame ajoute une troisième attaque sur le pion d4.
+Be2 : Les Blancs se développent.
+?cxd4 : Les Noirs échangent au centre.
+cxd4 : Les Blancs reprennent : le pion d4 n'est plus soutenu par un pion.
+?Nge7 : Le cavalier va en f5, d'où il attaquera encore le pion d4. À retenir : attaquez une chaîne de pions à sa base. Ici, toutes les pièces noires visent le pion d4.
+QUIZ: Où faut-il attaquer une chaîne de pions ? | À sa base, le pion le plus en arrière | À sa tête, le pion le plus avancé | Nulle part, elle est imprenable | La base d'une chaîne n'est protégée par aucun pion : c'est son point faible. Ici, la base est le pion d4.
+
+# Jouer contre le pion isolé | Un pion isolé n'a plus de voisin pour le protéger. Bloquez-le avec une pièce, échangez les pièces, et il deviendra une faiblesse en finale. | w | id=156 level=4 order=4156
+d4 : Les Blancs occupent le centre.
+d5 : Les Noirs aussi.
+c4 : Le gambit dame.
+e6 : Les Noirs tiennent le pion d5.
+Nc3 : Les Blancs se développent.
+c5 : La défense Tarrasch : les Noirs acceptent un pion isolé contre un jeu actif.
+cxd5 : Les Blancs échangent.
+exd5 : Le pion reprend.
+Nf3 : Le cavalier se développe.
+Nc6 : Le cavalier noir se développe.
+?g3 : Le fou ira en g2, où il visera le pion d5.
+Nf6 : Les Noirs se développent.
+Bg2 : Le fou attaque déjà le pion d5.
+Be7 : Les Noirs préparent le roque.
+O-O : Les Blancs roquent.
+O-O : Les Noirs roquent aussi.
+?Bg5 : Le fou attaque le cavalier f6, l'un des défenseurs du pion d5.
+cxd4 : Les Noirs échangent : leur pion d5 est maintenant isolé, sans pion voisin.
+?Nxd4 : Le cavalier reprend et s'installe en d4, juste devant le pion isolé. Il le bloque. À retenir : contre un pion isolé, bloquez la case devant lui avec une pièce, attaquez-le, et échangez les pièces : en finale, il sera faible.
+QUIZ: Quelle case les Blancs veulent-ils occuper contre le pion isolé d5 ? | La case d4, juste devant lui | La case h4 | La case a8 | Une pièce en d4 bloque le pion isolé : il ne peut plus avancer, et la pièce y est à l'abri des pions.
+
+# Les pions pendants | Deux pions voisins sans voisin de chaque côté sont dits pendants. Ils sont forts s'ils peuvent avancer, faibles s'ils sont bloqués. | w | id=157 level=5 order=5157
+d4 : Les Blancs occupent le centre.
+d5 : Les Noirs aussi.
+c4 : Le gambit dame.
+e6 : Les Noirs tiennent le pion d5.
+Nc3 : Les Blancs se développent.
+Nf6 : Le cavalier se développe.
+Bg5 : Le fou cloue le cavalier.
+Be7 : Le fou déloue.
+e3 : Les Blancs se développent.
+O-O : Les Noirs roquent.
+Nf3 : Le cavalier se développe.
+h6 : Le pion questionne le fou.
+Bh4 : Le fou garde le clouage.
+b6 : Le fou c8 ira en b7.
+cxd5 : Les Blancs échangent.
+Nxd5 : Le cavalier reprend.
+Bxe7 : Les fous s'échangent.
+Qxe7 : La dame reprend.
+Nxd5 : Les cavaliers s'échangent.
+exd5 : Le pion reprend.
+?Rc1 : La tour se place sur la colonne c, en face du pion c7.
+Be6 : Le fou protège le pion d5.
+Qa4 : La dame vise l'aile dame noire.
+c5 : Les Noirs créent des pions pendants en c5 et d5.
+?Qa3 : La dame attaque le pion c5, cloué sur la dame e7.
+Rc8 : La tour protège le pion c5.
+?Be2 : Les Blancs se développent et préparent des attaques sur les pions pendants. À retenir : les pions pendants sont dynamiques s'ils peuvent avancer, mais si l'adversaire les fixe et les attaque, ils deviennent deux cibles.
+QUIZ: Que faire contre des pions pendants ? | Les fixer et les attaquer avec ses pièces | Les laisser avancer librement | Échanger sa dame contre l'un d'eux | Les pions pendants deviennent faibles quand ils ne peuvent plus avancer : on les bloque, puis on les attaque.
+
+# Les pions doublés | Deux pions sur la même colonne se protègent mal. En échange, ils ouvrent souvent une colonne et donnent la paire de fous. | w | id=158 level=4 order=4158
+e4 : Les Blancs occupent le centre.
+c5 : La défense sicilienne.
+Nf3 : Le cavalier se développe.
+Nc6 : Le cavalier noir se développe.
+Bb5 : La variante Rossolimo : le fou attaque le cavalier c6.
+g6 : Le fou ira en g7.
+?Bxc6 : Les Blancs donnent leur fou pour doubler les pions noirs.
+dxc6 : Le pion reprend vers le centre : les pions c sont doublés, mais la colonne d s'ouvre et les Noirs ont la paire de fous.
+?d3 : Les Blancs protègent le pion e4 et ouvrent la route de leur fou c1.
+Bg7 : Le fou s'installe sur la grande diagonale.
+?h3 : Un coup de prophylaxie : le fou c8 ne pourra pas venir en g4.
+Nf6 : Les Noirs se développent.
+?Nc3 : Le cavalier se développe.
+O-O : Les Noirs roquent.
+?Be3 : Le fou vise le pion c5, le plus faible des pions doublés. À retenir : les pions doublés sont lents et difficiles à défendre. Mais avant d'en créer chez l'adversaire, comparez avec ce qu'il obtient en échange.
+QUIZ: Qui est mieux après l'échange en c6 ? | La position est équilibrée : pions doublés contre paire de fous | Les Blancs gagnent facilement | Les Noirs gagnent facilement | Les Noirs ont des pions doublés, mais ils ont la paire de fous et une colonne ouverte : chaque camp a ses atouts.
+
+# Le pion arriéré et la case faible | Un pion resté en arrière, que ses voisins ne peuvent plus protéger, laisse devant lui une case faible. Une pièce adverse s'y installe pour toujours. | w | id=159 level=5 order=5159
+e4 : Les Blancs occupent le centre.
+c5 : La défense sicilienne.
+Nf3 : Le cavalier se développe.
+d6 : Le pion contrôle la case e5.
+d4 : Les Blancs ouvrent le centre.
+cxd4 : Les Noirs échangent.
+Nxd4 : Le cavalier reprend.
+Nf6 : Le cavalier attaque le pion e4.
+Nc3 : Le cavalier protège le pion.
+a6 : La Najdorf.
+Be2 : Les Blancs se développent.
+e5 : Le pion chasse le cavalier. Le pion d6 devient arriéré : aucun pion noir ne pourra plus le protéger, et la case d5 devient faible.
+?Nb3 : Le cavalier recule.
+Be7 : Le fou se développe.
+?O-O : Les Blancs roquent.
+O-O : Les Noirs aussi.
+?Be3 : Le fou contrôle la case d4.
+Be6 : Le fou noir surveille la case d5.
+?Nd5 : Le cavalier occupe la case d5. Aucun pion noir ne peut l'en chasser. À retenir : un pion arriéré laisse une case faible devant lui. Installez une pièce sur cette case : elle y sera à l'abri et gênera tout le camp adverse.
+QUIZ: Pourquoi la case d5 est-elle faible pour les Noirs ? | Aucun pion noir ne peut plus la contrôler | Elle est attaquée par le roi blanc | Elle est trop loin du centre | Le pion e5 est passé devant le pion d6 : plus aucun pion noir ne peut chasser une pièce installée en d5.
+
+# La majorité de pions | Le camp qui a plus de pions sur une aile peut créer un pion passé. En finale, c'est souvent décisif. | w | id=160 level=4 order=4160
+FEN: 4k3/pp3ppp/2p5/8/8/8/PPP2PPP/4K3 w - - 0 1
+SHOW 0: marks=f2,g2,h2,f7,g7,h7
+?Ke2 : Les deux camps ont le même nombre de pions, mais les Blancs ont trois pions contre trois à l'aile roi et trois contre trois à l'aile dame. Le roi s'active d'abord.
+Ke7 : Le roi noir s'active aussi.
+?Ke3 : Le roi se rapproche du centre.
+Ke6 : Le roi noir fait de même.
+?Ke4 : Le roi blanc prend la case centrale.
+f5+ : Les Noirs gagnent de l'espace avec échec.
+?Kd4 : Le roi blanc vise l'aile dame et la case c5. À retenir : en finale de pions, activez le roi avant tout, puis utilisez la majorité de pions pour créer un pion passé.
+QUIZ: Que faut-il faire en premier dans une finale de pions ? | Activer son roi vers le centre | Avancer tous ses pions | Attendre sans bouger | En finale, le roi devient une pièce forte : il se place au centre avant que les pions ne se mettent en route.
+
+# L'avant-poste | Un avant-poste est une case que les pions adverses ne peuvent plus attaquer. Un cavalier qui s'y installe devient une pièce redoutable. | w | id=161 level=5 order=5161
+e4 : Les Blancs occupent le centre.
+c5 : La défense sicilienne.
+Nf3 : Le cavalier se développe.
+Nc6 : Le cavalier noir se développe.
+d4 : Les Blancs ouvrent le centre.
+cxd4 : Les Noirs échangent.
+Nxd4 : Le cavalier reprend.
+Nf6 : Le cavalier attaque le pion e4.
+Nc3 : Le cavalier protège le pion.
+e5 : La variante Sveshnikov : les Noirs chassent le cavalier, mais la case d5 n'est plus protégée par aucun pion noir.
+?Ndb5 : Le cavalier vise la case d6.
+d6 : Le pion protège la case d6.
+?Bg5 : Le fou attaque le cavalier f6, qui protège la case d5.
+a6 : Le pion chasse le cavalier b5.
+?Na3 : Le cavalier recule ; il reviendra vers d5 par la case c4 ou c2.
+b5 : Les Noirs gagnent de l'espace.
+?Bxf6 : Le fou élimine le défenseur de la case d5.
+gxf6 : Le pion reprend : les pions noirs sont abîmés.
+?Nd5 : Le cavalier s'installe en d5, un avant-poste parfait : aucun pion noir ne peut plus l'attaquer. À retenir : cherchez les cases que les pions adverses ne contrôlent plus et installez-y un cavalier, si possible soutenu par un de vos pions.
+QUIZ: Qu'est-ce qu'un avant-poste ? | Une case que les pions adverses ne peuvent plus attaquer | Une case où le roi se cache | Une case de promotion | Sur un avant-poste, une pièce ne peut être chassée par aucun pion : seule une pièce peut l'échanger.
+
+# Bon fou et mauvais fou | Un fou est mauvais quand ses propres pions bloquent ses diagonales. On cherche à l'activer, à l'échanger, ou à mettre ses pions sur l'autre couleur. | b | id=162 level=4 order=4162
+d4 : Les Blancs occupent le centre.
+d5 : Les Noirs aussi.
+c4 : Le gambit dame.
+e6 : Le pion protège le pion d5, mais il enferme le fou c8 derrière lui : c'est le mauvais fou des Noirs.
+Nc3 : Les Blancs se développent.
+Nf6 : Le cavalier se développe.
+Bg5 : Le fou cloue le cavalier.
+Be7 : Le fou déloue.
+e3 : Les Blancs se développent.
+O-O : Les Noirs roquent.
+Nf3 : Le cavalier se développe.
+?h6 : Le pion questionne le fou g5.
+Bh4 : Le fou garde le clouage.
+?b6 : Le pion b avance pour ouvrir une nouvelle diagonale au fou c8.
+Be2 : Les Blancs se développent.
+?Bb7 : Le fou c8 sort par la grande diagonale : de mauvais, il devient actif. À retenir : si vos pions centraux sont sur des cases blanches, votre fou de cases blanches est mauvais. Donnez-lui une autre diagonale, ou échangez-le.
+QUIZ: Pourquoi le fou c8 est-il mauvais dans le gambit dame refusé ? | Le pion e6 bloque sa diagonale | Il est attaqué par le roi blanc | Il ne peut jamais bouger | Les pions noirs d5 et e6 sont sur des cases blanches, comme le fou c8 : ils bouchent ses diagonales. Le pion b6 lui en ouvre une nouvelle.
+
+# La paire de fous | Deux fous ensemble contrôlent des cases des deux couleurs. Ils deviennent très forts quand la position s'ouvre. | b | id=163 level=4 order=4163
+e4 : Les Blancs occupent le centre.
+e5 : Les Noirs aussi.
+Nf3 : Le cavalier attaque le pion e5.
+Nc6 : Le cavalier protège le pion.
+Bb5 : La partie espagnole.
+a6 : Le pion chasse le fou.
+Bxc6 : La variante d'échange : les Blancs donnent leur fou.
+?dxc6 : Les Noirs reprennent vers le centre : ils ont maintenant la paire de fous.
+O-O : Les Blancs roquent.
+?f6 : Le pion protège le pion e5.
+d4 : Les Blancs ouvrent le centre.
+?exd4 : Les Noirs échangent : la position s'ouvre, ce qui avantage les fous.
+Nxd4 : Le cavalier reprend.
+?c5 : Le pion chasse le cavalier.
+Nb3 : Le cavalier recule.
+?Qxd1 : Les dames s'échangent.
+Rxd1 : La tour reprend.
+?Bd6 : Le fou se développe. Les deux fous noirs balaieront bientôt tout l'échiquier. À retenir : avec la paire de fous, ouvrez la position. Sans elle, gardez la position fermée.
+QUIZ: Quel type de position favorise la paire de fous ? | Une position ouverte, avec des diagonales libres | Une position bloquée par les pions | Une position sans aucune pièce | Les fous ont besoin de longues diagonales : plus la position est ouverte, plus ils sont forts.
+
+# La colonne ouverte | Une colonne sans pion est une autoroute pour les tours. Le premier qui l'occupe y fait entrer ses tours dans le camp adverse. | w | id=164 level=4 order=4164
+d4 : Les Blancs occupent le centre.
+d5 : Les Noirs aussi.
+c4 : Le gambit dame.
+c6 : La défense slave.
+cxd5 : La variante d'échange : la colonne c s'ouvre.
+cxd5 : Le pion reprend.
+Nc3 : Les Blancs se développent.
+Nf6 : Les Noirs aussi.
+Bf4 : Le fou se développe.
+Nc6 : Le cavalier se développe.
+e3 : Les Blancs consolident.
+Bf5 : Le fou noir sort.
+Nf3 : Le cavalier se développe.
+e6 : Les Noirs consolident.
+Bb5 : Le fou cloue le cavalier c6.
+Nd7 : Le cavalier recule et protège la case e5.
+O-O : Les Blancs roquent.
+Be7 : Les Noirs préparent le roque.
+?Rc1 : La tour occupe la colonne c ouverte, avant les tours noires. À retenir : placez vos tours sur les colonnes ouvertes. Celui qui contrôle la colonne y fait entrer ses tours dans le camp adverse.
+QUIZ: Pourquoi la tour va-t-elle en c1 ? | Pour occuper la colonne c, ouverte | Pour protéger le roi | Pour préparer le grand roque | Sur la colonne ouverte, la tour agit jusqu'à la septième rangée adverse.
+
+# La tour en septième rangée | Une tour sur la septième rangée attaque les pions restés chez eux et enferme le roi adverse. | w | id=165 level=4 order=4165
+FEN: r5k1/pp3ppp/8/8/8/8/PP3PPP/2R3K1 w - - 0 1
+?Rc7 : La tour entre sur la septième rangée. Elle attaque le pion b7.
+Rb8 : La tour noire doit protéger le pion b7 : elle devient passive.
+?b4 : Le pion gagne de l'espace et empêche les Noirs de se libérer.
+g5 : Les Noirs gagnent de l'espace à l'aile roi.
+?g3 : Les Blancs préparent la sortie de leur roi.
+a6 : Les Noirs protègent leurs pions.
+?Kg2 : Le roi s'active. À retenir : une tour en septième rangée paralyse l'adversaire. Ses pièces doivent défendre et ne peuvent plus attaquer.
+QUIZ: Qui est mieux dans cette finale de tours ? | Les Blancs, grâce à leur tour active en septième rangée | Les Noirs, grâce à leur tour en b8 | La position est totalement morte | Le matériel est égal, mais la tour blanche est active et la tour noire passive : c'est un avantage durable.
+
+# Le doublement des tours | Deux tours sur la même colonne ou la même rangée se protègent et doublent leur force. | w | id=166 level=4 order=4166
+FEN: r5k1/pp3pp1/2p4p/8/8/6P1/PP3P1P/3R1RK1 w - - 0 1
+?Rd7 : La première tour entre sur la septième rangée.
+b5 : Les Noirs gagnent de l'espace.
+?Rfd1 : La seconde tour rejoint la colonne d. Les deux tours se protègent.
+a5 : Les Noirs n'ont toujours aucun contre-jeu.
+?R1d6 : La tour attaque le pion c6. À retenir : doublez vos tours sur la colonne ouverte ou sur la septième rangée. Ensemble, elles sont bien plus fortes que séparément.
+QUIZ: Pourquoi doubler les tours ? | Elles se protègent et attaquent ensemble | Pour libérer la première rangée | Pour protéger le pion h2 | Deux tours sur la même ligne se défendent mutuellement et concentrent leur force sur un même objectif.
+
+# L'attaque de minorité | Avec deux pions contre trois à l'aile dame, on les avance quand même pour créer une faiblesse chez l'adversaire. | w | id=167 level=5 order=5167
+d4 : Les Blancs occupent le centre.
+d5 : Les Noirs aussi.
+c4 : Le gambit dame.
+e6 : Les Noirs tiennent le pion d5.
+Nc3 : Les Blancs se développent.
+Nf6 : Le cavalier se développe.
+cxd5 : La variante d'échange.
+exd5 : Le pion reprend. Les Blancs ont deux pions à l'aile dame, a et b, contre trois aux Noirs : a, b et c.
+Bg5 : Le fou cloue le cavalier.
+Be7 : Le fou déloue.
+e3 : Les Blancs se développent.
+c6 : Les Noirs soutiennent le pion d5.
+Bd3 : Le fou se développe.
+Nbd7 : Le cavalier se développe.
+Qc2 : La dame se développe.
+O-O : Les Noirs roquent.
+Nf3 : Le cavalier se développe.
+Re8 : La tour se place sur la colonne e.
+O-O : Les Blancs roquent.
+Nf8 : Le cavalier va défendre l'aile roi.
+?Rab1 : La tour soutient l'avance du pion b.
+a5 : Les Noirs freinent l'avance blanche.
+?a3 : Le pion prépare l'avance b4. À retenir : l'attaque de minorité pousse les pions a et b pour échanger le pion c6 et laisser aux Noirs un pion faible. Les deux pions blancs suffisent à créer cette faiblesse.
+QUIZ: Quel est le but de l'attaque de minorité ? | Créer un pion faible dans le camp adverse | Gagner tout de suite une pièce | Faire roquer l'adversaire | En poussant b4 puis b5, les Blancs forcent un échange qui laisse aux Noirs un pion c isolé ou arriéré.
+
+# La tempête de pions | Quand les roques sont opposés, on lance ses pions contre le roi adverse sans craindre d'affaiblir le sien. | w | id=168 level=5 order=5168
+e4 : Les Blancs occupent le centre.
+c5 : La défense sicilienne.
+Nf3 : Le cavalier se développe.
+d6 : Le pion contrôle la case e5.
+d4 : Les Blancs ouvrent le centre.
+cxd4 : Les Noirs échangent.
+Nxd4 : Le cavalier reprend.
+Nf6 : Le cavalier attaque le pion e4.
+Nc3 : Le cavalier protège le pion.
+g6 : La sicilienne Dragon.
+Be3 : Le fou se développe.
+Bg7 : Le fou s'installe sur la grande diagonale.
+f3 : Le pion protège le pion e4 et prépare l'avance g4.
+O-O : Les Noirs roquent du petit côté.
+Qd2 : La dame prépare le grand roque.
+Nc6 : Le cavalier se développe.
+Bc4 : Le fou vise la case f7.
+Bd7 : Le fou se développe.
+?O-O-O : Les Blancs roquent du grand côté : les roques sont opposés.
+Rc8 : La tour noire vise la colonne c.
+?Bb3 : Le fou se met à l'abri des attaques.
+Ne5 : Le cavalier vise la case c4.
+?h4 : La tempête commence : le pion h fonce vers le roi noir pour ouvrir la colonne h. À retenir : avec des roques opposés, les pions peuvent attaquer sans affaiblir son propre roi. Le plus rapide gagne la course.
+QUIZ: Pourquoi les Blancs avancent-ils leur pion h ? | Pour ouvrir la colonne h vers le roi noir | Pour protéger leur propre roi | Pour préparer le petit roque | Le roi blanc est à l'aile dame : avancer les pions de l'aile roi ne l'affaiblit pas et ouvre des lignes vers le roi noir.
+
+# Le sacrifice de qualité positionnel | On donne une tour contre un fou ou un cavalier, non pour mater, mais pour détruire la structure adverse ou gagner une case. | b | id=169 level=5 order=5169
+e4 : Les Blancs occupent le centre.
+c5 : La défense sicilienne.
+Nf3 : Le cavalier se développe.
+d6 : Le pion contrôle la case e5.
+d4 : Les Blancs ouvrent le centre.
+cxd4 : Les Noirs échangent.
+Nxd4 : Le cavalier reprend.
+Nf6 : Le cavalier attaque le pion e4.
+Nc3 : Le cavalier protège le pion.
+g6 : La sicilienne Dragon.
+Be3 : Le fou se développe.
+Bg7 : Le fou s'installe sur la grande diagonale.
+f3 : Le pion protège le pion e4.
+O-O : Les Noirs roquent.
+Qd2 : La dame prépare le grand roque.
+Nc6 : Le cavalier se développe.
+Bc4 : Le fou vise la case f7.
+Bd7 : Le fou se développe.
+O-O-O : Les Blancs roquent du grand côté.
+Rc8 : La tour vise la colonne c.
+Bb3 : Le fou se met à l'abri.
+Ne5 : Le cavalier vise la case c4.
+h4 : Les Blancs lancent leur attaque.
+?Qa5 : La dame se place face au roi blanc et soutient l'attaque sur la colonne c.
+Kb1 : Le roi blanc s'écarte de la colonne c.
+?Rxc3 : Le sacrifice de qualité ! La tour se donne contre le cavalier c3, qui défendait le roi blanc.
+Qxc3 : La dame reprend.
+?Qxc3 : Les Noirs échangent les dames.
+bxc3 : Le pion reprend : les pions blancs de l'aile dame sont doublés et isolés.
+?h5 : Les Noirs bloquent l'avance du pion h. Ils ont une qualité de moins, mais leurs pièces mineures sont actives et la structure blanche est ruinée. À retenir : une tour contre une pièce mineure n'est pas toujours une perte. Si elle détruit la structure adverse et élimine un défenseur clé, le sacrifice est souvent excellent.
+QUIZ: Pourquoi les Noirs donnent-ils leur tour en c3 ? | Pour éliminer un défenseur et abîmer la structure blanche | Pour gagner tout de suite la dame | Pour mater en un coup | La prise en c3 élimine le cavalier qui protégeait le roi blanc et laisse aux Blancs des pions doublés et isolés.
+
+# La prophylaxie | Avant d'attaquer, empêchez le meilleur plan de l'adversaire. Un petit coup préventif peut valoir plus qu'une attaque. | w | id=170 level=4 order=4170
+d4 : Les Blancs occupent le centre.
+Nf6 : Le cavalier contrôle la case e4.
+c4 : Les Blancs prennent de l'espace.
+e6 : Le pion ouvre la diagonale du fou f8.
+Nf3 : Le cavalier se développe.
+b6 : La défense ouest-indienne : le fou c8 ira en b7.
+?a3 : Un coup de prophylaxie : les Blancs empêchent le fou noir de venir en b4 clouer leur cavalier.
+Bb7 : Le fou s'installe sur la grande diagonale.
+?Nc3 : Le cavalier se développe sans crainte du clouage.
+d5 : Les Noirs frappent le centre.
+?cxd5 : Les Blancs échangent.
+Nxd5 : Le cavalier reprend.
+?Qc2 : La dame contrôle la case e4 et prépare l'avance du pion e. À retenir : demandez-vous ce que l'adversaire veut faire. S'il est bon marché de l'en empêcher, faites-le.
+QUIZ: À quoi sert le coup a3 des Blancs ? | Empêcher le fou noir de venir en b4 | Préparer le petit roque | Attaquer le roi noir | Le pion a3 contrôle la case b4 : le fou noir ne peut plus clouer le cavalier c3.
+
+# La pire pièce | Quand on ne sait pas quoi jouer, on améliore sa plus mauvaise pièce. Un cavalier mal placé fait parfois un long voyage pour trouver une bonne case. | w | id=171 level=4 order=4171
+e4 : Les Blancs occupent le centre.
+e5 : Les Noirs aussi.
+Nf3 : Le cavalier attaque le pion e5.
+Nc6 : Le cavalier protège le pion.
+Bb5 : La partie espagnole.
+a6 : Le pion chasse le fou.
+Ba4 : Le fou recule.
+Nf6 : Le cavalier se développe.
+O-O : Les Blancs roquent.
+Be7 : Le fou se développe.
+Re1 : La tour protège le pion e4.
+b5 : Les Noirs chassent le fou.
+Bb3 : Le fou recule.
+d6 : Les Noirs consolident.
+c3 : Les Blancs préparent l'avance d4.
+O-O : Les Noirs roquent.
+h3 : Un coup prophylactique.
+Nb8 : La variante Breyer : le cavalier noir se replace en d7.
+d4 : Les Blancs occupent le centre.
+Nbd7 : Le cavalier arrive en d7.
+?Nbd2 : Le cavalier b1 est la pire pièce blanche. Il commence un long voyage.
+Bb7 : Le fou noir se développe.
+?Bc2 : Le fou libère la route.
+Re8 : La tour soutient le pion e5.
+?Nf1 : Le cavalier passe par f1.
+Bf8 : Le fou se replace.
+?Ng3 : Le cavalier arrive en g3, d'où il vise la case f5 et l'aile roi. À retenir : quand aucun plan n'est évident, trouvez votre pire pièce et améliorez-la.
+QUIZ: Que faire quand on ne voit pas de plan ? | Améliorer sa plus mauvaise pièce | Jouer un coup au hasard | Échanger toutes les pièces | Une position s'améliore souvent pièce par pièce : en commençant par la pire, on renforce tout son jeu.
