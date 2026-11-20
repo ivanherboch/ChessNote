@@ -140,8 +140,10 @@ def emit(lessons, var, fname, rows):
             "\x1d".join(f'{v["from"]}~{v["title"]}~{" ".join(v["moves"])}~' + "\x1e".join(v["texts"]) for v in c["variants"]),
         ]))
 
-sets = [("openings.txt", "OPENING_LESSONS", "LessonsOpenings.kt"),
+sets = [("basics.txt", "BASICS_LESSONS", "LessonsBasics.kt"),
+        ("openings.txt", "OPENING_LESSONS", "LessonsOpenings.kt"),
         ("middlegames.txt", "MIDDLEGAME_LESSONS", "LessonsMiddlegames.kt"),
+        ("strategy.txt", "STRATEGY_LESSONS", "LessonsStrategy.kt"),
         ("endgames.txt", "ENDGAME_LESSONS", "LessonsEndgames.kt"),
         ("model_games.txt", "MODEL_GAME_LESSONS", "LessonsModelGames.kt")]
 allL = []

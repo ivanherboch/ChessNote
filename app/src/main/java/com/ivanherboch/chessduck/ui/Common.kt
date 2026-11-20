@@ -390,7 +390,10 @@ fun DuckSegmentedRow(
                     activeContainerColor = c.goldRole.fill, activeContentColor = c.goldRole.onFill, activeBorderColor = c.outlineStrong,
                     inactiveContainerColor = c.surface, inactiveContentColor = c.text, inactiveBorderColor = c.outlineStrong,
                 ),
-            ) { Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1) }
+            ) {
+                // Deux lignes au besoin (grandes polices) : un libellé comme « Devinez le coup » n'est jamais coupé.
+                Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 2, textAlign = TextAlign.Center)
+            }
         }
     }
 }

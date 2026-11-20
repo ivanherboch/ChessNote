@@ -230,3 +230,62 @@ SHOW 2: marks=c3 arrows=b4e1
 -? Le cavalier blanc prend le cavalier f6 avec échec. Le fou g4 vient de perdre son seul défenseur.
 - Les Noirs reprennent avec la dame. Ils devaient répondre à l'échec et n'ont pas pu sauver le fou.
 - La dame blanche prend le fou en g4. À retenir : chaque pièce que vous développez doit rester protégée. Vérifiez vos défenseurs avant de jouer.
+
+# Méthode : échecs, prises, menaces | À chaque coup, passez en revue dans l'ordre vos échecs, vos prises, puis vos menaces. Le coup gagnant se cache souvent parmi les échecs. | PUZZLE 5LVcO | id=131 theme=mateIn1 level=2 order=2131
+- Les Noirs prennent le cavalier g5 avec leur pion f. Ils gagnent une pièce, mais avant de prendre, il fallait regarder les échecs de l'adversaire.
+-? Première question : quels sont mes échecs ? Le fou e2 prend le cavalier h5 et donne échec par la diagonale qui mène au roi e8. Le roi n'a aucune case libre, rien ne peut s'interposer ni prendre le fou : c'est mat. À retenir : regardez toujours, dans l'ordre, vos échecs, vos prises puis vos menaces, et faites la même revue pour l'adversaire.
+
+# Méthode : le contrôle anti-gaffe | Avant de jouer un coup qui semble gagner du matériel, demandez-vous ce que l'adversaire répondra. Cette vérification évite la plupart des gaffes. | w | id=132 theme=opening level=2 order=2132
+e4 : Les Blancs occupent le centre.
+e5 : Les Noirs répondent au centre.
+Nf3 : Le cavalier attaque le pion e5.
+Nc6 : Le cavalier noir protège le pion.
+Bc4 : Le fou vise la case f7.
+Nd4 : Un coup étrange : le cavalier abandonne le pion e5. Est-ce un cadeau ? Faites le contrôle anti-gaffe avant de prendre.
+?Nxd4 : Les Blancs refusent le piège. Si le cavalier avait pris le pion e5, la dame noire serait venue en g5 : elle aurait attaqué à la fois le cavalier blanc et le pion g2, avec de gros ennuis pour les Blancs. Ici, le cavalier échange simplement le cavalier d4.
+exd4 : Le pion reprend.
+O-O : Les Blancs mettent leur roi à l'abri et gardent une belle avance de développement. À retenir : avant chaque coup, posez-vous la question : après ce coup, quel est le meilleur coup de l'adversaire ? Si vous ne trouvez pas de réponse dangereuse, jouez.
+
+# Méthode : compter attaquants et défenseurs | Une pièce est en danger quand elle est attaquée plus de fois qu'elle n'est défendue. Comptez avant de prendre et avant de laisser une pièce sans protection. | PUZZLE mDxnD | id=133 theme=hangingPiece level=2 order=2133
+- Les Blancs prennent le pion c5 avec leur fou. Avant de répondre, comptez : qui attaque le fou c5, et qui le défend ?
+-? La tour c6 prend le fou. Le fou c5 était attaqué une fois, par la tour, et défendu zéro fois : la prise est gratuite.
+- Les Blancs prennent le fou d8 avec leur tour. Ce fou était attaqué une fois, par la tour d1, et défendu une fois, par la tour e8.
+-? La tour e8 reprend. Une attaque, une défense : l'échange est égal, et les Noirs gardent la pièce gagnée. À retenir : comptez les attaquants et les défenseurs de chaque pièce. Si les attaquants sont plus nombreux, la pièce est en danger.
+
+# Méthode : les coups candidats | Avant de calculer, dressez la liste de vos coups les plus forçants : ce sont les coups candidats. Puis calculez-les un par un, en commençant par les échecs. | PUZZLE muqe0 | id=134 theme=middlegame level=2 order=2134
+- Les Noirs prennent la dame blanche avec leur fou. Les Blancs ont perdu leur pièce la plus forte. Faut-il abandonner ? Non : cherchez d'abord vos coups candidats.
+-? Le seul échec, le cavalier en g6, est le premier candidat. Il attaque le roi h8 et, en même temps, la tour f8.
+- Le roi doit fuir. Il ne peut pas prendre le cavalier, protégé par le fou f5.
+-? Le cavalier prend la tour en f8 et donne un échec double : le cavalier et le fou f5 attaquent le roi en même temps. Le pion f7 menace en plus d'aller à dame. Les Blancs récupèrent bien plus que leur dame. À retenir : quand tout semble perdu, listez vos échecs, vos prises et vos menaces. Le coup forçant renverse souvent la situation.
+
+# Méthode : que veut l'adversaire ? | Après chaque coup adverse, demandez-vous ce qu'il menace et ce qu'il prépare. Un petit coup préventif évite souvent de gros problèmes : c'est la prophylaxie. | w | id=135 theme=defensiveMove level=2 order=2135
+e4 : Les Blancs occupent le centre.
+e5 : Les Noirs répondent au centre.
+Nf3 : Le cavalier attaque le pion e5.
+Nc6 : Le cavalier noir protège le pion.
+Bc4 : Le fou vise la case f7.
+Bc5 : Le fou noir vise la case f2.
+c3 : Le pion prépare l'avance d4.
+Nf6 : Les Noirs attaquent le pion e4.
+d3 : Le pion protège le pion e4.
+d6 : Les Noirs renforcent leur centre.
+O-O : Les Blancs mettent leur roi à l'abri.
+O-O : Les Noirs roquent aussi. Que veulent-ils maintenant ? Leur fou c8 aimerait venir en g4 pour clouer le cavalier f3 devant la dame.
+?h3 : Un coup de prophylaxie : le pion h contrôle la case g4. Ni le fou ni le cavalier noir ne pourront s'y installer. À retenir : avant de chercher votre plan, demandez-vous toujours ce que veut l'adversaire, et empêchez-le si c'est bon marché.
+
+# Initiation : la pièce gratuite | Une pièce que personne ne défend peut être prise gratuitement. Avant chaque coup, regardez si l'adversaire a laissé une pièce sans protection. | w | id=136 theme=hangingPiece level=2 order=2136
+FEN: 3r2k1/5ppp/3b4/8/8/7P/5PP1/3R2K1 b - - 0 1
+Re8 : La tour noire quitte la colonne d. Mais elle protégeait le fou d6, qui reste maintenant seul face à la tour blanche.
+?Rxd6 : La tour prend le fou. Personne ne peut le reprendre : c'est une pièce gratuite.
+Re1+ : La tour noire donne échec sur la première rangée.
+?Kh2 : Le roi s'échappe grâce à la case h2, libérée par le pion h3. Les Blancs ont une pièce de plus. À retenir : à chaque coup, regardez quelles pièces adverses ne sont protégées par rien. Et laissez toujours une case de fuite à votre roi.
+
+# Initiation : le mat en un coup | Quand le roi adverse est mal protégé, cherchez le coup qui le met échec et mat tout de suite, avant de penser à autre chose. | PUZZLE pRdjT | id=137 theme=mateIn1 level=2 order=2137
+- Les Blancs prennent la tour f4 avec leur dame. Ils gagnent une tour… mais regardez leur roi g1, et le pion g2 qui le protège.
+-? La dame prend le pion g2. Elle est protégée par la tour g7 : le roi ne peut pas la prendre et n'a aucune case de fuite. Échec et mat ! À retenir : avant de reprendre du matériel, cherchez toujours s'il existe un mat en un coup.
+
+# Initiation : la fourchette de dame | La dame peut donner échec et attaquer une autre pièce en même temps. Le roi doit se sauver, et la pièce tombe. | PUZZLE nCYTL | id=138 theme=fork level=2 order=2138
+- Les Noirs proposent l'échange des dames. Mais leur cavalier en b8 n'est protégé par aucune pièce.
+-? La dame va en a7 et donne échec au roi h7 le long de la septième rangée. En même temps, elle attaque le cavalier b8 : c'est une fourchette.
+- Le roi doit s'échapper. Les Noirs n'ont pas le temps de sauver leur cavalier.
+-? La dame prend le cavalier, avec échec. À retenir : cherchez les coups qui donnent échec tout en attaquant une pièce non protégée.

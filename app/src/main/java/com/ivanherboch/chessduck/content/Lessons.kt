@@ -105,13 +105,16 @@ class Lesson(
 /**
  * Catalogue des leçons, classées par catégorie (ordre du cursus) puis par [Lesson.order].
  * Source : les fichiers .txt de scripts/lessons, compilés en structures Kotlin typées par scripts/gen_lessons.py
- * et LessonCompilerTool (voir LessonsOpenings.kt, LessonsMiddlegames.kt, LessonsEndgames.kt, LessonsModelGames.kt).
+ * et LessonCompilerTool (voir LessonsBasics.kt, LessonsOpenings.kt, LessonsMiddlegames.kt, LessonsStrategy.kt, LessonsEndgames.kt,
+ * LessonsModelGames.kt).
  */
 object Lessons {
     val all: List<Lesson> by lazy {
         listOf(
+            LessonCategory.BASICS to BASICS_LESSONS,
             LessonCategory.OPENING to OPENING_LESSONS,
             LessonCategory.MIDDLEGAME to MIDDLEGAME_LESSONS,
+            LessonCategory.STRATEGY to STRATEGY_LESSONS,
             LessonCategory.ENDGAME to ENDGAME_LESSONS,
             LessonCategory.MODEL_GAMES to MODEL_GAME_LESSONS,
         ).flatMap { (cat, data) ->

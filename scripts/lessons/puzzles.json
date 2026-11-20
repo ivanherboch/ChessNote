@@ -210,5 +210,25 @@
 "yzVwQ": {
 "fen": "8/3B4/1pp2p2/3b2k1/1P1K1p2/8/5P2/8 b - - 3 46",
 "moves": "f4f3 b4b5 c6b5 d4d5"
+},
+"5LVcO": {
+"fen": "r1bqkb1r/pp1np2p/3p1p2/2p3Nn/2PP3B/4P3/PP2BPPP/RN1QK2R b KQkq - 0 9",
+"moves": "f6g5 e2h5"
+},
+"mDxnD": {
+"fen": "3br3/1p3pkp/pnr3p1/n1p5/P3P1N1/2P1BP2/4B1PP/1R1R2K1 w - - 8 26",
+"moves": "e3c5 c6c5 d1d8 e8d8"
+},
+"muqe0": {
+"fen": "1n1q1r1k/r4Pp1/b6p/p1ppNB2/8/3Q4/PP3PPP/R4RK1 b - - 2 25",
+"moves": "a6d3 e5g6 h8h7 g6f8"
+},
+"nCYTL": {
+"fen": "1n6/7k/p2p1p1p/2q2Pp1/B2Q2P1/2P5/1P6/6K1 b - - 3 34",
+"moves": "c5e5 d4a7 h7g8 a7b8"
+},
+"pRdjT": {
+"fen": "6k1/pp4rp/2p1P2Q/3p4/4qr2/8/PP2N1P1/4R1K1 w - - 0 32",
+"moves": "h6f4 e4g2"
 }
 }

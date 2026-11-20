@@ -11,18 +11,20 @@ import org.junit.Test
 
 class LessonsTest {
     @Test
-    fun catalogueHas113LegalDistinctLessons() {
+    fun catalogueHasLegalDistinctLessons() {
         val all = Lessons.all
-        assertEquals(114, all.size)
-        assertEquals(37, all.count { it.category == LessonCategory.OPENING })
-        assertEquals(38, all.count { it.category == LessonCategory.MIDDLEGAME })
-        assertEquals(38, all.count { it.category == LessonCategory.ENDGAME })
-        assertEquals(1, all.count { it.category == LessonCategory.MODEL_GAMES && it.kind == LessonKind.MODEL_GAME })
-        assertEquals(114, all.map { it.title }.toSet().size)
-        // Identifiants fixes : 1–113 conservés, la partie modèle prend le 114.
-        assertEquals((1..114).toSet(), all.map { it.id }.toSet())
-        // Cursus : paliers 2 à 5 attribués, ordre du catalogue par catégorie puis par palier.
-        assertTrue(all.all { it.level in 2..5 })
+        val counts = mapOf(
+            LessonCategory.BASICS to 16, LessonCategory.OPENING to 37, LessonCategory.MIDDLEGAME to 46,
+            LessonCategory.STRATEGY to 0, LessonCategory.ENDGAME to 38, LessonCategory.MODEL_GAMES to 1,
+        )
+        for ((cat, n) in counts) assertEquals(cat.label, n, all.count { it.category == cat })
+        assertEquals(counts.values.sum(), all.size)
+        assertEquals(all.size, all.map { it.title }.toSet().size)
+        assertTrue(all.filter { it.category == LessonCategory.MODEL_GAMES }.all { it.kind == LessonKind.MODEL_GAME })
+        // Identifiants fixes : 1–113 conservés, 114 l'Opéra, puis la suite sans trou (étape 3).
+        assertEquals((1..all.size).toSet(), all.map { it.id }.toSet())
+        // Cursus : palier 1 réservé aux bases, paliers 2 à 5 ailleurs ; ordre du catalogue par catégorie puis palier.
+        assertTrue(all.all { (it.level == 1) == (it.category == LessonCategory.BASICS) && it.level in 1..5 })
         for (cat in Lessons.categories) {
             val levels = all.filter { it.category == cat }.map { it.level }
             assertEquals(cat.label, levels.sorted(), levels)
