@@ -11,7 +11,9 @@ import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.chess.SpokenFr
 import com.ivanherboch.chessduck.content.Lesson
 import com.ivanherboch.chessduck.content.LessonCategory
+import com.ivanherboch.chessduck.content.LessonKind
 import com.ivanherboch.chessduck.content.Lessons
+import com.ivanherboch.chessduck.data.AcademyAssessment
 import com.ivanherboch.chessduck.data.LessonProgress
 import com.ivanherboch.chessduck.data.LessonProgressRepository
 import com.ivanherboch.chessduck.data.PuzzleRepository
@@ -30,6 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -44,12 +47,15 @@ import kotlin.random.Random
 @Immutable
 data class Pulse(val id: Long, val good: Boolean)
 
+/** Nature d'une série de problèmes : validation d'une leçon, révision, réflexe, placement ou examen. */
+enum class PracticeKind { LESSON, REVIEW, ONLY_MOVE, PLACEMENT, EXAM }
+
 /**
- * Série de validation : [PRACTICE_SIZE] problèmes inédits du thème de la leçon. Un problème compte s'il est résolu
- * sans erreur et sans l'indice qui montre le coup.
+ * Série de problèmes inédits. Un problème compte s'il est résolu sans erreur et sans l'indice qui montre le coup.
  */
 @Immutable
 data class Practice(
+    val kind: PracticeKind = PracticeKind.LESSON,
     val ids: List<String> = emptyList(),
     val index: Int = 0,
     val results: List<Boolean> = emptyList(),
@@ -66,10 +72,37 @@ data class Practice(
     val loading: Boolean = true,
     /** Série terminée (résultat dans [results]). */
     val finished: Boolean = false,
+    /** Palier concerné (examen). */
+    val level: Int = 2,
 ) {
     val heroWhite: Boolean get() = line?.positions?.get(0)?.whiteToMove == false
     val score: Int get() = results.count { it }
 }
+
+/** QCM de fin de leçon : choix mélangés, indice de la bonne réponse, réponse donnée. */
+@Immutable
+data class QuizState(val choices: List<String>, val correct: Int, val picked: Int? = null)
+
+/** Révisions du jour : file des leçons dues et nombre de révisions réussies. */
+@Immutable
+data class ReviewSession(val queue: List<Int>, val index: Int = 0, val passed: Int = 0, val finished: Boolean = false)
+
+/** « Réviser mon répertoire » : suite de (leçon, variante) jouées en Défi. */
+@Immutable
+data class RepertoireSession(val white: Boolean, val items: List<Pair<Int, Int>>, val index: Int = 0, val results: List<Boolean> = emptyList(), val finished: Boolean = false)
+
+/** Accueil de l'Académie : palier, leçon à reprendre, révisions dues, leçon conseillée. */
+@Immutable
+data class AcademyHome(
+    val level: Int = 2,
+    val placementDone: Boolean = false,
+    val due: List<Int> = emptyList(),
+    val recommended: Int? = null,
+    val continueId: Int? = null,
+)
+
+/** Comment une leçon se valide après le Défi. */
+enum class Validation { NONE, PUZZLES, ENDGAME }
 
 @Immutable
 data class AcademyState(
@@ -78,6 +111,8 @@ data class AcademyState(
     val filter: LessonCategory? = null,
     val challenge: Boolean = false,
     val cursor: Int = 0,
+    /** Ligne affichée : 0 = principale, 1… = variante. */
+    val variant: Int = 0,
     val playing: Boolean = false,
     val flipped: Boolean = false,
     val anim: BoardAnim? = null,
@@ -95,6 +130,9 @@ data class AcademyState(
     val maxHint: Int = 0,
     /** Étoiles obtenues au Défi qui vient d'être réussi (0 tant qu'il n'est pas fini). */
     val stars: Int = 0,
+    /** Partie modèle (« Devinez le coup ») : points gagnés et points possibles. */
+    val guessScore: Int = 0,
+    val guessMax: Int = 0,
     /** L'Ordinateur juge le coup proposé : l'échiquier attend. */
     val judging: Boolean = false,
     /** Réfutation d'un mauvais coup du Défi : position après la réponse adverse, compte à rebours avant le retour. */
@@ -102,9 +140,21 @@ data class AcademyState(
     val refuteUntil: Long = 0L,
     val refuteHold: Long = 0L,
     val pulse: Pulse? = null,
-    /** Série d'exercices de validation en cours (null : leçon). */
+    /** Série de problèmes en cours (null : leçon). */
     val practice: Practice? = null,
+    val quiz: QuizState? = null,
+    val review: ReviewSession? = null,
+    val repertoire: RepertoireSession? = null,
 )
+
+/** Fiche de la leçon, affichée et lue à son ouverture : objectif, règle, conditions, idées et pièges. */
+fun objectiveText(l: Lesson): String = buildString {
+    append(l.summary)
+    append("\n\nÀ retenir : ").append(l.takeaway)
+    if (l.conditions.isNotEmpty()) append("\n\nConditions : ").append(l.conditions)
+    if (l.ideas.isNotEmpty()) append("\n\nLes idées : ").append(l.ideas.joinToString(" "))
+    if (l.traps.isNotEmpty()) append("\n\nLes pièges : ").append(l.traps.joinToString(" "))
+}
 
 class AcademyViewModel(
     private val prefs: SettingsRepository,
@@ -115,22 +165,45 @@ class AcademyViewModel(
     /** Leçon, mode et position mémorisés pour survivre à l'arrêt du processus par Android. */
     private val saved: SavedStateHandle = SavedStateHandle(),
     private val random: Random = Random(System.nanoTime()),
+    clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
     private val _state = MutableStateFlow(AcademyState())
     val state: StateFlow<AcademyState> = _state.asStateFlow()
     val mastered = lessons.masteredLessons().map { it.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
-    /** Progression détaillée (étoiles, exercices) par leçon. */
+    /** Progression détaillée (étoiles, exercices, révisions) par leçon. */
     val progress = lessons.progress().map { l -> l.associateBy { it.lessonId } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+    val srs = SrsScheduler(clock)
+    /** Accueil : leçon à reprendre, révisions dues, leçon conseillée selon le palier. */
+    val home: StateFlow<AcademyHome> = combine(lessons.progress(), prefs.settings, state.map { it.lessonId }.distinctUntilChanged()) { list, st, current ->
+        val byId = list.associateBy { it.lessonId }
+        AcademyHome(
+            level = st.academyLevel, placementDone = st.placementDone, due = srs.due(list),
+            recommended = srs.recommended(Lessons.all, byId, st.academyLevel)?.id,
+            continueId = srs.continueLesson(Lessons.all, byId, current)?.id,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AcademyHome())
+
     /** Lecture automatique et séquences du mode Défi : un seul travail à la fois. */
     private val playback = LinePlaybackController(viewModelScope)
     private val judge = MoveJudge(engine)
     private var judgeJob: Job? = null
     private var practiceJob: Job? = null
     private var pulses = 0L
+    /** Finale jouée lancée depuis une leçon (validation) ou une révision. */
+    private var endgameLesson: Int? = null
+    private var endgameReview = false
+
+    /** Finales jouables contre l'Ordinateur. */
+    val endgame = EndgameTrainer(viewModelScope, engine, random, onFinished = ::endgameFinished)
+    /** Exercices de réflexes (menace, prise). */
+    val reflex = ReflexTrainer(viewModelScope, puzzles, engine, random)
 
     val lesson: Lesson get() = Lessons.byId(state.value.lessonId)
+    /** Ligne affichée (principale ou variante) et ses commentaires. */
+    fun line(s: AcademyState = state.value): Line = Lessons.byId(s.lessonId).lineFor(s.variant)
+    fun texts(s: AcademyState = state.value): List<String> = Lessons.byId(s.lessonId).textsFor(s.variant)
 
     /** Lecture à voix haute des commentaires du mode Guidé (réglage), et phrase en cours de lecture. */
     val narration: StateFlow<Boolean> = prefs.settings.map { it.narration }.distinctUntilChanged()
@@ -165,28 +238,57 @@ class AcademyViewModel(
         const val KEY_CURSOR = "academy_cursor"
         const val PRACTICE_SIZE = 5
         const val PRACTICE_PASS = 4
+        const val REVIEW_SIZE = 2
+        const val REPERTOIRE_SIZE = 5
         val RED = Color(0xFFEF4444)
     }
 
     private fun pulse(good: Boolean) = _state.update { it.copy(pulse = Pulse(++pulses, good)) }
+
+    /** Une activité (Défi, série, finale, réflexes, QCM) occupe l'élève : la voix se tait. */
+    private fun active(s: AcademyState = state.value) =
+        s.challenge || s.practice != null || s.quiz != null || endgame.state.value != null || reflex.state.value != null
 
     /** Interrompt toute séquence en cours (lecture, réponse adverse, jugement, réfutation, exercices). */
     private fun cancelAll() {
         playback.cancel()
         judgeJob?.cancel()
         practiceJob?.cancel()
+        endgame.stop()
+        reflex.stop()
     }
 
-    fun open(id: Int, save: Boolean = true) {
+    fun validation(l: Lesson = lesson): Validation = when {
+        EndgameFamily.of(l.drill) != null -> Validation.ENDGAME
+        l.theme.isNotEmpty() -> Validation.PUZZLES
+        else -> Validation.NONE
+    }
+
+    /** Enregistre la progression ; une première maîtrise lance le calendrier des révisions. */
+    private suspend fun saveProgress(id: Int, update: (LessonProgress) -> LessonProgress): LessonProgress {
+        val old = lessons.progress(id) ?: LessonProgress(id, 0)
+        var p = update(old)
+        if (!old.mastered && p.mastered) p = srs.mastered(p)
+        lessons.save(p)
+        return p
+    }
+
+    /**
+     * Ouvre une leçon. [session] : l'ouverture fait partie d'une révision ou du répertoire (ces séances sont gardées) ;
+     * sinon, choisir une autre leçon les termine.
+     */
+    fun open(id: Int, save: Boolean = true, variant: Int = 0, session: Boolean = false) {
         cancelAll()
         val l = Lessons.byId(id)
         val challenge = state.value.challenge
         _state.update {
             it.copy(
-                lessonId = l.id, cursor = 0, playing = false, flipped = !l.heroWhite, anim = null, hintStage = 0, done = false,
+                lessonId = l.id, cursor = 0, variant = variant.coerceIn(0, l.variants.size), playing = false, flipped = !l.heroWhite,
+                anim = null, hintStage = 0, done = false,
                 filter = if (it.filter != null && it.filter != l.category) l.category else it.filter,
-                answered = emptySet(), note = null, judging = false, refute = null, refuteUntil = 0L, practice = null,
-                errors = 0, maxHint = 0, stars = 0,
+                answered = emptySet(), note = null, judging = false, refute = null, refuteUntil = 0L, practice = null, quiz = null,
+                errors = 0, maxHint = 0, stars = 0, guessScore = 0, guessMax = 0,
+                review = if (session) it.review else null, repertoire = if (session) it.repertoire else null,
             )
         }
         if (save) viewModelScope.launch { prefs.setLesson(l.id) }
@@ -206,11 +308,12 @@ class AcademyViewModel(
         if (state.value.challenge == on) return
         cancelAll()
         // Retour au Guidé : on garde la position atteinte (après un Défi réussi, on relit la leçon là où l'on en est).
-        val keep = if (on) 0 else state.value.cursor.coerceIn(0, lesson.line.size)
+        val keep = if (on) 0 else state.value.cursor.coerceIn(0, line().size)
         _state.update {
             it.copy(
                 challenge = on, cursor = keep, playing = false, anim = null, hintStage = 0, done = false, message = "", tone = Tone.INFO,
-                note = null, judging = false, refute = null, refuteUntil = 0L, practice = null, errors = 0, maxHint = 0, stars = 0,
+                note = null, judging = false, refute = null, refuteUntil = 0L, practice = null, quiz = null, errors = 0, maxHint = 0, stars = 0,
+                guessScore = 0, guessMax = 0, review = if (on) it.review else null, repertoire = if (on) it.repertoire else null,
             )
         }
         if (on) {
@@ -219,18 +322,32 @@ class AcademyViewModel(
         } else narrate()
     }
 
+    /** Choisit la ligne affichée en mode Guidé : 0 = principale, puis les variantes (départ : leur premier coup). */
+    fun setVariant(v: Int) {
+        val l = lesson
+        if (v !in 0..l.variants.size || v == state.value.variant) return
+        pause()
+        val start = if (v == 0) state.value.cursor.coerceAtMost(l.line.size) else l.variants[v - 1].from
+        _state.update { it.copy(variant = v, cursor = start, anim = null, note = null, quiz = null) }
+        narrate()
+    }
+
     // ---- Mode Guidé ----
 
-    /** Le mode Guidé attend ici le coup de l'élève (« À vous : que jouez-vous ici ? »). */
-    fun asking(s: AcademyState = state.value): Boolean =
-        !s.challenge && s.practice == null && s.cursor in lesson.pauseSteps && s.cursor !in s.answered && s.cursor < lesson.line.size
+    /** Le mode Guidé attend ici le coup de l'élève (« À vous : que jouez-vous ici ? »). Arrêts de la ligne principale. */
+    fun asking(s: AcademyState = state.value): Boolean {
+        val l = Lessons.byId(s.lessonId)
+        val ownLine = s.variant == 0 || s.cursor < l.variants[s.variant - 1].from
+        return !s.challenge && s.practice == null && s.quiz == null && ownLine && s.cursor in l.pauseSteps &&
+            s.cursor !in s.answered && s.cursor < l.line.size
+    }
 
     fun goTo(target: Int) {
-        val l = lesson
+        val ln = line()
         val s = state.value
-        val t = target.coerceIn(0, l.line.size)
+        val t = target.coerceIn(0, ln.size)
         if (t == s.cursor) return
-        val anim = LinePlaybackController.transition(l.line, s.cursor, t)
+        val anim = LinePlaybackController.transition(ln, s.cursor, t)
         _state.update { it.copy(cursor = t, anim = anim, note = null) }
         narrate()
     }
@@ -277,18 +394,36 @@ class AcademyViewModel(
         }
     }
 
+    // ---- QCM de fin de leçon ----
+
+    fun startQuiz() {
+        val q = lesson.quiz ?: return
+        pause()
+        narrator.stop()
+        val choices = (listOf(q.answer) + q.wrong).shuffled(random)
+        _state.update { it.copy(quiz = QuizState(choices, choices.indexOf(q.answer))) }
+    }
+
+    fun answerQuiz(i: Int) {
+        val q = state.value.quiz ?: return
+        if (q.picked != null || i !in q.choices.indices) return
+        pulse(i == q.correct)
+        _state.update { it.copy(quiz = q.copy(picked = i)) }
+    }
+
+    fun closeQuiz() = _state.update { it.copy(quiz = null) }
+
     // ---- Lecture à voix haute (mode Guidé uniquement) ----
-    /** Ce qui est lu pour la position affichée : l'objectif de la leçon, puis chaque coup et son commentaire. */
+    /** Ce qui est lu pour la position affichée : la fiche de la leçon, puis chaque coup et son commentaire. */
     private fun spokenStep(): String {
         val l = lesson
         val c = state.value.cursor
-        val base = if (c == 0) "${l.title}. ${l.summary}" else "${SpokenFr.move(l.line.sans[c - 1])}. ${l.texts[c - 1]}"
+        val base = if (c == 0) "${l.title}. ${objectiveText(l)}" else "${SpokenFr.move(line().sans[c - 1])}. ${texts()[c - 1]}"
         return SpokenFr.text(if (asking()) "$base $ASK" else base)
     }
 
     private fun narrate() {
-        val s = state.value
-        if (narration.value && !s.challenge && s.practice == null) narrator.speak(spokenStep())
+        if (narration.value && !active()) narrator.speak(spokenStep())
     }
 
     /** Bouton haut-parleur : arrête la phrase en cours, ou relit celle de la position affichée. */
@@ -320,13 +455,13 @@ class AcademyViewModel(
         if (state.value.playing) return pause()
         playback.cancel()
         when {
-            state.value.cursor >= lesson.line.size -> goTo(0)
+            state.value.cursor >= line().size -> goTo(0)
             asking() -> reveal()
             else -> narrator.resume()
         }
         _state.update { it.copy(playing = true) }
         playback.autoplay(
-            cursor = { state.value.cursor }, size = { lesson.line.size },
+            cursor = { state.value.cursor }, size = { line().size },
             // Avec la voix, on attend la fin du commentaire puis on marque une courte pause.
             delayFor = { c -> if (narration.value) 600L else if (c == 0) 700L else 2600L }, checkBeforeDelay = true,
             // Un arrêt « À vous » interrompt la lecture : l'élève cherche le coup.
@@ -336,16 +471,19 @@ class AcademyViewModel(
         )
     }
 
-    // ---- Mode Défi ----
+    // ---- Mode Défi (et « Devinez le coup » pour les parties modèles) ----
     private fun sideName(l: Lesson) = if (l.heroWhite) "Blancs" else "Noirs"
 
     private fun startChallenge() {
         val l = lesson
+        val intro = if (l.kind == LessonKind.MODEL_GAME) {
+            "Devinez les coups des ${sideName(l)} : 3 points pour le coup du maître, 1 ou 2 points pour un coup presque aussi bon."
+        } else "À vous de jouer les coups des ${sideName(l)} sur l'échiquier. ${l.summary}"
         _state.update {
             it.copy(
                 cursor = 0, anim = null, hintStage = 0, done = false, tone = Tone.INFO, flipped = !l.heroWhite,
-                errors = 0, maxHint = 0, stars = 0, refute = null, refuteUntil = 0L, judging = false,
-                message = "À vous de jouer les coups des ${sideName(l)} sur l'échiquier. ${l.summary}",
+                errors = 0, maxHint = 0, stars = 0, refute = null, refuteUntil = 0L, judging = false, guessScore = 0, guessMax = 0,
+                message = intro,
             )
         }
         advanceOpponent()
@@ -357,8 +495,8 @@ class AcademyViewModel(
     }
 
     private fun heroToMove(cursor: Int): Boolean {
-        val l = lesson
-        return cursor < l.line.size && l.line.positions[cursor].whiteToMove == l.heroWhite
+        val ln = line()
+        return cursor < ln.size && ln.positions[cursor].whiteToMove == lesson.heroWhite
     }
 
     /**
@@ -367,64 +505,78 @@ class AcademyViewModel(
      */
     private fun advanceOpponent() {
         playback.launch {
-            val l = lesson
-            while (state.value.cursor < l.line.size && !heroToMove(state.value.cursor)) {
+            val ln = line()
+            val tx = texts()
+            while (state.value.cursor < ln.size && !heroToMove(state.value.cursor)) {
                 delay(650)
                 val cur = state.value.cursor
-                val reply = "Réponse ${l.line.sans[cur]} : ${l.texts[cur]}"
+                val reply = "Réponse ${ln.sans[cur]} : ${tx[cur]}"
                 _state.update {
                     it.copy(
-                        cursor = cur + 1, anim = moveAnim(l.line.positions[cur], l.line.moves[cur]), hintStage = 0,
+                        cursor = cur + 1, anim = moveAnim(ln.positions[cur], ln.moves[cur]), hintStage = 0,
                         message = if (it.message.isEmpty()) reply else it.message + "\n\n" + reply,
                     )
                 }
             }
-            if (state.value.cursor >= l.line.size) finishChallenge()
+            if (state.value.cursor >= ln.size) finishChallenge()
         }
     }
 
     private suspend fun finishChallenge() {
         val l = lesson
         val s = state.value
+        val model = l.kind == LessonKind.MODEL_GAME
         val stars = when {
+            model -> if (s.guessScore * 5 >= s.guessMax * 4) 3 else if (s.guessScore * 5 >= s.guessMax * 3) 2 else 1
             s.errors == 0 && s.maxHint == 0 -> 3
             s.errors <= 1 && s.maxHint <= 1 -> 2
             else -> 1
         }
         val takeaway = if (s.message.contains("À retenir")) "" else "\n\nÀ retenir : ${l.takeaway}"
+        val scoreText = if (model) "\n\nScore : ${s.guessScore} points sur ${s.guessMax}." else ""
+        _state.update { it.copy(done = true, stars = stars, tone = Tone.GOOD, message = it.message + takeaway + scoreText) }
+        // Séances : révision du jour ou répertoire.
+        state.value.repertoire?.let { return repertoireResult(stars >= 2) }
+        if (state.value.review != null) return reviewChallengeDone(stars >= 2)
+        val v = validation(l)
         val old = lessons.progress(l.id)
-        val practiced = (old?.practicePassed ?: 0) >= PRACTICE_PASS
+        val needed = if (v == Validation.ENDGAME) EndgameTrainer.PASS else PRACTICE_PASS
+        val practiced = (old?.practicePassed ?: 0) >= needed
         val bestStars = maxOf(stars, old?.stars ?: 0)
-        val nowMastered = old?.mastered == true || (bestStars >= 2 && (l.theme.isEmpty() || practiced))
+        val nowMastered = old?.mastered == true || (bestStars >= 2 && (v == Validation.NONE || practiced))
         val next = when {
             nowMastered -> ""
-            stars < 2 -> "\n\nRejouez le Défi avec au plus une erreur pour viser la maîtrise."
+            stars < 2 -> "\n\nRejouez avec au plus une erreur pour viser la maîtrise."
+            v == Validation.ENDGAME -> "\n\nValidez maintenant la leçon contre l'Ordinateur : réussissez ${EndgameTrainer.PASS} positions sur 5."
             else -> "\n\nValidez maintenant la leçon sur $PRACTICE_SIZE problèmes inédits du même thème."
         }
-        lessons.save(
-            (old ?: LessonProgress(l.id, 0)).copy(
-                masteredAt = if (old?.mastered == true) old.masteredAt else if (nowMastered) System.currentTimeMillis() else 0,
+        saveProgress(l.id) { p ->
+            p.copy(
+                masteredAt = if (p.mastered) p.masteredAt else if (nowMastered) srs.now() else 0,
                 stars = bestStars, errors = s.errors, hintsUsed = s.maxHint,
-            ),
-        )
-        _state.update { it.copy(done = true, stars = stars, tone = Tone.GOOD, message = it.message + takeaway + next) }
+            )
+        }
+        _state.update { it.copy(message = it.message + next) }
     }
 
     /**
      * Coup du joueur en mode Défi. Renvoie vrai si c'est le coup de la leçon (accepté tout de suite) ; sinon
      * l'Ordinateur juge le coup : aussi bon, il est accepté et la leçon reprend son propre coup ; moins bon,
-     * il est réfuté puis la position d'avant l'erreur revient.
+     * il est réfuté puis la position d'avant l'erreur revient. Partie modèle : le coup est noté, puis le coup du
+     * maître est joué.
      */
     fun challengeMove(m: Move): Boolean {
         val s = state.value
         val l = lesson
+        val ln = line()
         if (!s.challenge || s.done || s.judging || s.refute != null || !heroToMove(s.cursor)) return false
-        val pos = l.line.positions[s.cursor]
+        val pos = ln.positions[s.cursor]
         if (!pos.isLegal(m)) return false
-        val expected = l.line.moves[s.cursor]
+        val expected = ln.moves[s.cursor]
+        if (l.kind == LessonKind.MODEL_GAME) return guess(pos, m, expected)
         if (m == expected) {
             pulse(true)
-            accept(s.cursor, "${l.line.sans[s.cursor]} : ${l.texts[s.cursor]}")
+            accept(s.cursor, "${ln.sans[s.cursor]} : ${texts()[s.cursor]}")
             return true
         }
         _state.update { it.copy(judging = true) }
@@ -433,7 +585,7 @@ class AcademyViewModel(
                 Verdict.EXACT, Verdict.EQUIVALENT -> {
                     pulse(true)
                     _state.update { it.copy(judging = false) }
-                    accept(s.cursor, "Bon coup aussi ! La leçon poursuit avec ${l.line.sans[s.cursor]} : ${l.texts[s.cursor]}")
+                    accept(s.cursor, "Bon coup aussi ! La leçon poursuit avec ${ln.sans[s.cursor]} : ${texts()[s.cursor]}")
                 }
                 Verdict.WORSE -> refute(pos, m)
                 Verdict.UNAVAILABLE -> {
@@ -450,11 +602,45 @@ class AcademyViewModel(
         return false
     }
 
+    /** « Devinez le coup » : 3 points pour le coup du maître, 2 si presque aussi bon, 1 si raisonnable, puis le coup du maître. */
+    private fun guess(pos: Position, m: Move, expected: Move): Boolean {
+        val cur = state.value.cursor
+        val ln = line()
+        if (m == expected) {
+            pulse(true)
+            _state.update { it.copy(guessScore = it.guessScore + 3, guessMax = it.guessMax + 3) }
+            accept(cur, "3 points : c'est le coup du maître ! ${ln.sans[cur]} : ${texts()[cur]}")
+            return true
+        }
+        _state.update { it.copy(judging = true) }
+        judgeJob = viewModelScope.launch {
+            val loss = judge.loss(pos, m, expected)
+            val pts = when {
+                loss == null -> 0
+                loss <= MoveJudge.MAX_LOSS -> 2
+                loss <= 15.0 -> 1
+                else -> 0
+            }
+            pulse(pts > 0)
+            _state.update { it.copy(judging = false, guessScore = it.guessScore + pts, guessMax = it.guessMax + 3) }
+            accept(cur, "${pos.san(m)} : $pts point${if (pts > 1) "s" else ""}. Le maître a joué ${ln.sans[cur]} : ${texts()[cur]}")
+        }
+        return false
+    }
+
+    /** « Devinez le coup » : passe ce coup (0 point) et montre le coup du maître. */
+    fun skipGuess() {
+        val s = state.value
+        if (!s.challenge || s.done || s.judging || !heroToMove(s.cursor) || lesson.kind != LessonKind.MODEL_GAME) return
+        _state.update { it.copy(guessMax = it.guessMax + 3) }
+        accept(s.cursor, "Le coup du maître : ${line().sans[s.cursor]} : ${texts()[s.cursor]}")
+    }
+
     /** Joue le coup de la leçon (le bon coup, ou celui qui suit un coup équivalent) puis les réponses adverses. */
     private fun accept(cur: Int, text: String) {
-        val l = lesson
+        val ln = line()
         _state.update {
-            it.copy(cursor = cur + 1, anim = moveAnim(l.line.positions[cur], l.line.moves[cur]), hintStage = 0, tone = Tone.GOOD, message = text)
+            it.copy(cursor = cur + 1, anim = moveAnim(ln.positions[cur], ln.moves[cur]), hintStage = 0, tone = Tone.GOOD, message = text)
         }
         advanceOpponent()
     }
@@ -511,7 +697,7 @@ class AcademyViewModel(
 
     fun hint() {
         val s = state.value
-        if (!s.challenge || s.done || s.judging || s.refute != null || !heroToMove(s.cursor)) return
+        if (!s.challenge || s.done || s.judging || s.refute != null || !heroToMove(s.cursor) || lesson.kind == LessonKind.MODEL_GAME) return
         val stage = (s.hintStage + 1).coerceAtMost(2)
         _state.update {
             it.copy(
@@ -521,37 +707,57 @@ class AcademyViewModel(
         }
     }
 
-    // ---- Série de validation : problèmes inédits du thème ----
+    // ---- Séries de problèmes : validation, révision, « Le seul coup », placement, examen ----
 
-    /** Tranche de classement des problèmes selon le palier de la leçon. */
-    private fun ratingRange(level: Int): IntRange = when (level) {
-        1, 2 -> 400..1300
-        3 -> 900..1600
-        4 -> 1300..2000
-        else -> 1700..2700
-    }
-
+    /** Validation d'une leçon de tactique : 5 problèmes inédits de son thème, au palier de la leçon. */
     fun startPractice() {
         val l = lesson
         if (l.theme.isEmpty()) return
+        startSeries(PracticeKind.LESSON, List(PRACTICE_SIZE) { PuzzleSpec(listOf(l.theme), AcademyAssessments.levelRange(l.level)) })
+    }
+
+    /** « Le seul coup » : 5 positions où une seule défense tient. */
+    fun startOnlyMove() {
+        viewModelScope.launch {
+            val level = prefs.settings.first().academyLevel
+            startSeries(PracticeKind.ONLY_MOVE, List(PRACTICE_SIZE) { PuzzleSpec(listOf("defensiveMove"), AcademyAssessments.levelRange(level)) })
+        }
+    }
+
+    /** Test de placement facultatif (12 positions, paliers 2 à 5). */
+    fun startPlacement() = startSeries(PracticeKind.PLACEMENT, AcademyAssessments.placementSpecs())
+
+    /** Examen du palier en cours (10 positions mélangées, réussite à 8). */
+    fun startExam() {
+        viewModelScope.launch {
+            val level = prefs.settings.first().academyLevel.coerceAtLeast(2)
+            startSeries(PracticeKind.EXAM, AcademyAssessments.examSpecs(level, random), level)
+        }
+    }
+
+    private fun startSeries(kind: PracticeKind, specs: List<PuzzleSpec>, level: Int = 2) {
         cancelAll()
         narrator.stop()
-        _state.update { it.copy(practice = Practice(message = "Préparation des problèmes…")) }
+        _state.update { it.copy(practice = Practice(kind = kind, level = level, message = "Préparation des problèmes…"), quiz = null) }
         practiceJob = viewModelScope.launch {
             val ids = ArrayList<String>()
-            for (range in listOf(ratingRange(l.level), 0..4000)) {
-                repeat(PRACTICE_SIZE * 2) {
-                    if (ids.size >= PRACTICE_SIZE) return@repeat
-                    val id = runCatchingSuspend { puzzles.randomId(listOf(l.theme), range, ids.lastOrNull() ?: "", random) }.getOrNull()
-                    if (id != null && id !in ids) ids.add(id)
+            for (spec in specs) {
+                var id: String? = null
+                for (range in listOf(spec.range, 0..4000)) {
+                    repeat(6) {
+                        if (id != null) return@repeat
+                        val c = runCatchingSuspend { puzzles.randomId(spec.themes, range, ids.lastOrNull() ?: "", random) }.getOrNull()
+                        if (c != null && c !in ids) id = c
+                    }
+                    if (id != null) break
                 }
-                if (ids.size >= PRACTICE_SIZE) break
+                id?.let { ids.add(it) }
             }
             if (ids.isEmpty()) {
-                _state.update { it.copy(practice = Practice(loading = false, finished = true, message = "Aucun problème de ce thème n'est disponible.")) }
+                _state.update { it.copy(practice = Practice(kind = kind, loading = false, finished = true, message = "Aucun problème disponible pour cette série.")) }
                 return@launch
             }
-            _state.update { it.copy(practice = Practice(ids = ids, loading = false)) }
+            _state.update { it.copy(practice = Practice(kind = kind, ids = ids, loading = false, level = level)) }
             showPractice(0)
         }
     }
@@ -566,11 +772,17 @@ class AcademyViewModel(
             return
         }
         val side = if (line.positions[1].whiteToMove) "Blancs" else "Noirs"
+        val kind = state.value.practice?.kind
+        val goal = when (kind) {
+            PracticeKind.LESSON, PracticeKind.REVIEW -> "appliquent l'idée de la leçon"
+            PracticeKind.ONLY_MOVE -> "trouvent la seule défense"
+            else -> "trouvent la meilleure suite"
+        }
         _state.update { s ->
             s.copy(
                 practice = s.practice?.copy(
                     index = index, line = line, cursor = 0, hintStage = 0, failed = false, solved = false, anim = null, tone = Tone.INFO,
-                    message = "Problème ${index + 1} sur ${ids.size} : les $side jouent et appliquent l'idée de la leçon.",
+                    message = "Problème ${index + 1} sur ${ids.size} : les $side $goal.",
                 ),
             )
         }
@@ -609,7 +821,7 @@ class AcademyViewModel(
                     practice = pr.copy(
                         cursor = cur + 1, anim = moveAnim(pos, m), solved = true, results = pr.results + ok, tone = if (ok) Tone.GOOD else Tone.GOLD,
                         line = if (m == expected) line else Line(line.startFen, line.moves.take(cur) + m),
-                        message = if (ok) "Résolu ! Vous avez appliqué l'idée de la leçon." else "Résolu, mais avec l'indice qui montre le coup : ce problème ne compte pas.",
+                        message = if (ok) "Résolu !" else "Résolu, mais avec l'indice qui montre le coup : ce problème ne compte pas.",
                     ),
                 )
             }
@@ -650,24 +862,50 @@ class AcademyViewModel(
     private suspend fun nextPracticeOrFinish(index: Int) {
         val pr = state.value.practice ?: return
         if (index + 1 < pr.ids.size) return showPractice(index + 1)
-        val l = lesson
         val score = pr.score
-        val old = lessons.progress(l.id)
-        val stars = old?.stars ?: 0
-        val passed = score >= PRACTICE_PASS
-        val mastered = old?.mastered == true || (passed && stars >= 2)
-        lessons.save(
-            (old ?: LessonProgress(l.id, 0)).copy(
-                masteredAt = if (old?.mastered == true) old.masteredAt else if (mastered) System.currentTimeMillis() else 0,
-                practicePassed = maxOf(score, old?.practicePassed ?: 0), practiceTotal = pr.ids.size,
-            ),
-        )
-        val text = when {
-            mastered && passed -> "$score sur ${pr.ids.size} : leçon maîtrisée ! Vous savez appliquer cette idée sur des positions inédites."
-            passed -> "$score sur ${pr.ids.size} : série réussie. Réussissez aussi le Défi avec au plus une erreur pour maîtriser la leçon."
-            else -> "$score sur ${pr.ids.size} : il en faut $PRACTICE_PASS pour valider. Relisez la leçon en mode Guidé, puis retentez la série."
+        val total = pr.ids.size
+        val text = when (pr.kind) {
+            PracticeKind.LESSON -> lessonPracticeDone(score, total)
+            PracticeKind.REVIEW -> { completeReview(score >= 1); "$score sur $total." + if (score >= 1) " Révision réussie." else " Révision à refaire demain." }
+            PracticeKind.ONLY_MOVE -> "$score sur $total. " + if (score >= PRACTICE_PASS) "Vous savez repérer la menace et la parer." else "Cherchez d'abord la menace adverse, puis la seule parade."
+            PracticeKind.PLACEMENT -> {
+                val level = AcademyAssessments.placementLevel(pr.results)
+                prefs.setAcademyLevel(level)
+                prefs.setPlacementDone(true)
+                lessons.saveAssessment(AcademyAssessment(kind = AcademyAssessments.KIND_PLACEMENT, level = level, score = score, total = total, passed = true, completedAt = srs.now()))
+                "$score sur $total. Votre palier de départ : ${levelName(level)}. Les leçons conseillées suivent ce palier."
+            }
+            PracticeKind.EXAM -> {
+                val passed = AcademyAssessments.examPassed(score)
+                if (passed && pr.level < 5) prefs.setAcademyLevel(pr.level + 1)
+                lessons.saveAssessment(AcademyAssessment(kind = AcademyAssessments.KIND_EXAM, level = pr.level, score = score, total = total, passed = passed, completedAt = srs.now()))
+                "$score sur $total. " + if (passed) "Examen réussi : bienvenue au palier ${levelName((pr.level + 1).coerceAtMost(5))} !" else "Il faut ${AcademyAssessments.EXAM_PASS} bonnes réponses : révisez les leçons du palier, puis retentez l'examen."
+            }
         }
-        _state.update { s -> s.copy(practice = pr.copy(finished = true, solved = false, failed = false, tone = if (passed) Tone.GOOD else Tone.GOLD, message = text)) }
+        val good = when (pr.kind) {
+            PracticeKind.EXAM -> AcademyAssessments.examPassed(score)
+            PracticeKind.REVIEW -> score >= 1
+            PracticeKind.PLACEMENT -> true
+            else -> score >= PRACTICE_PASS
+        }
+        _state.update { s -> s.copy(practice = s.practice?.copy(finished = true, solved = false, failed = false, tone = if (good) Tone.GOOD else Tone.GOLD, message = text)) }
+    }
+
+    private suspend fun lessonPracticeDone(score: Int, total: Int): String {
+        val l = lesson
+        val passed = score >= PRACTICE_PASS
+        val p = saveProgress(l.id) { p ->
+            val mastered = p.mastered || (passed && p.stars >= 2)
+            p.copy(
+                masteredAt = if (p.mastered) p.masteredAt else if (mastered) srs.now() else 0,
+                practicePassed = maxOf(score, p.practicePassed), practiceTotal = total,
+            )
+        }
+        return when {
+            p.mastered && passed -> "$score sur $total : leçon maîtrisée ! Vous savez appliquer cette idée sur des positions inédites."
+            passed -> "$score sur $total : série réussie. Réussissez aussi le Défi avec au plus une erreur pour maîtriser la leçon."
+            else -> "$score sur $total : il en faut $PRACTICE_PASS pour valider. Relisez la leçon en mode Guidé, puis retentez la série."
+        }
     }
 
     /** Quitte la série (ou son bilan) et revient à la leçon. */
@@ -675,6 +913,141 @@ class AcademyViewModel(
         practiceJob?.cancel()
         _state.update { it.copy(practice = null) }
     }
+
+    // ---- Finales jouées contre l'Ordinateur ----
+
+    /** Lance la finale [family] ; depuis une leçon, la réussite (3 positions sur 5) valide sa maîtrise. */
+    fun startEndgame(family: EndgameFamily, fromLesson: Boolean = false, total: Int = 5) {
+        cancelAll()
+        narrator.stop()
+        endgameLesson = if (fromLesson) lesson.id else null
+        endgameReview = false
+        _state.update { it.copy(quiz = null, practice = null) }
+        endgame.start(family, total)
+    }
+
+    fun closeEndgame() {
+        endgame.stop()
+        endgameLesson = null
+        endgameReview = false
+    }
+
+    private suspend fun endgameFinished(family: EndgameFamily, score: Int, total: Int) {
+        if (endgameReview) return completeReview(score == total)
+        val id = endgameLesson ?: return
+        val passed = score >= EndgameTrainer.PASS
+        saveProgress(id) { p ->
+            val mastered = p.mastered || (passed && p.stars >= 2)
+            p.copy(masteredAt = if (p.mastered) p.masteredAt else if (mastered) srs.now() else 0, practicePassed = maxOf(score, p.practicePassed), practiceTotal = total)
+        }
+    }
+
+    // ---- Réflexes ----
+
+    fun startReflex(kind: ReflexKind) {
+        cancelAll()
+        narrator.stop()
+        _state.update { it.copy(quiz = null, practice = null) }
+        viewModelScope.launch { reflex.start(kind, prefs.settings.first().academyLevel) }
+    }
+
+    fun closeReflex() = reflex.stop()
+
+    // ---- Révisions du jour (répétition espacée) ----
+
+    /**
+     * Révisions du jour : chaque leçon due est rejouée en Défi (au moins 2 étoiles), puis vérifiée sur 2 problèmes
+     * inédits de son thème (au moins 1 réussi) ou sur une finale jouée contre l'Ordinateur. Réussie, la prochaine
+     * révision s'éloigne (7, 30, 90 jours) ; ratée, la leçon revient demain.
+     */
+    fun startReviews() {
+        viewModelScope.launch {
+            val due = srs.due(lessons.progress().first())
+            if (due.isEmpty()) return@launch
+            _state.update { it.copy(review = ReviewSession(due), repertoire = null, challenge = true) }
+            openReview(0)
+        }
+    }
+
+    private fun openReview(index: Int) {
+        val r = state.value.review ?: return
+        _state.update { it.copy(review = r.copy(index = index), challenge = true) }
+        open(r.queue[index], save = false, session = true)
+    }
+
+    private suspend fun reviewChallengeDone(success: Boolean) {
+        val l = lesson
+        if (!success) return completeReview(false)
+        when (validation(l)) {
+            Validation.PUZZLES -> startSeries(PracticeKind.REVIEW, List(REVIEW_SIZE) { PuzzleSpec(listOf(l.theme), AcademyAssessments.levelRange(l.level)) })
+            Validation.ENDGAME -> {
+                startEndgame(EndgameFamily.of(l.drill)!!, total = 1)
+                endgameReview = true
+            }
+            Validation.NONE -> completeReview(true)
+        }
+    }
+
+    private suspend fun completeReview(success: Boolean) {
+        val r = state.value.review ?: return
+        val id = r.queue[r.index]
+        lessons.progress(id)?.let { lessons.save(srs.reviewed(it, success)) }
+        _state.update { it.copy(review = r.copy(passed = r.passed + if (success) 1 else 0)) }
+        _state.update {
+            it.copy(message = it.message + if (success) "\n\nRévision réussie : prochaine révision dans ${srs.daysUntil(lessons.progress(id))} jours." else "\n\nRévision ratée : cette leçon reviendra demain.")
+        }
+    }
+
+    /** Révision suivante, ou fin de la séance. */
+    fun nextReview() {
+        val r = state.value.review ?: return
+        closeEndgame()
+        _state.update { it.copy(practice = null) }
+        if (r.index + 1 < r.queue.size) openReview(r.index + 1)
+        else _state.update { it.copy(review = r.copy(finished = true)) }
+    }
+
+    fun closeReviews() = _state.update { it.copy(review = null) }
+
+    // ---- Répertoire ----
+
+    /** « Réviser mon répertoire » : 5 ouvertures du camp choisi (révisions dues d'abord), ligne principale ou variante. */
+    fun startRepertoire(white: Boolean) {
+        val pool = Lessons.all.filter { it.category == LessonCategory.OPENING && it.heroWhite == white }
+        if (pool.isEmpty()) return
+        viewModelScope.launch {
+            val dueIds = srs.due(lessons.progress().first()).toSet()
+            val ordered = pool.filter { it.id in dueIds } + pool.filter { it.id !in dueIds }.shuffled(random)
+            val items = ordered.take(REPERTOIRE_SIZE).map { it.id to random.nextInt(it.variants.size + 1) }
+            _state.update { it.copy(repertoire = RepertoireSession(white, items), review = null, challenge = true) }
+            openRepertoire(0)
+        }
+    }
+
+    private fun openRepertoire(index: Int) {
+        val r = state.value.repertoire ?: return
+        _state.update { it.copy(repertoire = r.copy(index = index), challenge = true) }
+        val (id, variant) = r.items[index]
+        open(id, save = false, variant = variant, session = true)
+    }
+
+    private suspend fun repertoireResult(success: Boolean) {
+        val r = state.value.repertoire ?: return
+        val id = r.items[r.index].first
+        // Une leçon maîtrisée rejouée dans le répertoire compte comme une révision.
+        lessons.progress(id)?.takeIf { it.mastered }?.let { lessons.save(srs.reviewed(it, success)) }
+        _state.update { it.copy(repertoire = r.copy(results = r.results + success)) }
+    }
+
+    fun nextRepertoire() {
+        val r = state.value.repertoire ?: return
+        if (r.index + 1 < r.items.size) openRepertoire(r.index + 1)
+        else _state.update { it.copy(repertoire = r.copy(finished = true)) }
+    }
+
+    fun closeRepertoire() = _state.update { it.copy(repertoire = null) }
+
+    // ---- Navigation ----
 
     fun nextLesson() = shiftLesson(1)
     fun prevLesson() = shiftLesson(-1)
@@ -690,8 +1063,17 @@ class AcademyViewModel(
 
     /** Dans le mode Guidé, saute directement au coup [n] (nombre de demi-coups joués). */
     fun jump(n: Int) { pause(); goTo(n) }
-    fun last() { pause(); goTo(lesson.line.size) }
+    fun last() { pause(); goTo(line().size) }
 }
 
 /** Question posée à chaque arrêt du mode Guidé (lue après le commentaire précédent). */
 const val ASK = "À vous : que jouez-vous ici ?"
+
+/** Nom d'un palier du cursus. */
+fun levelName(level: Int): String = when (level) {
+    1 -> "1, Les bases"
+    2 -> "2, Débutant"
+    3 -> "3, Novice"
+    4 -> "4, Club"
+    else -> "5, Confirmé"
+}

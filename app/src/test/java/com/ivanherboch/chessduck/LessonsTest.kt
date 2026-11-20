@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck
 
 import com.ivanherboch.chessduck.content.LessonCategory
+import com.ivanherboch.chessduck.content.LessonKind
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.content.PuzzleThemes
 import com.ivanherboch.chessduck.ui.stepTitle
@@ -12,12 +13,36 @@ class LessonsTest {
     @Test
     fun catalogueHas113LegalDistinctLessons() {
         val all = Lessons.all
-        assertEquals(113, all.size)
+        assertEquals(114, all.size)
         assertEquals(37, all.count { it.category == LessonCategory.OPENING })
         assertEquals(38, all.count { it.category == LessonCategory.MIDDLEGAME })
         assertEquals(38, all.count { it.category == LessonCategory.ENDGAME })
-        assertEquals(113, all.map { it.title }.toSet().size)
-        assertEquals((1..113).toList(), all.map { it.id })
+        assertEquals(1, all.count { it.category == LessonCategory.MODEL_GAMES && it.kind == LessonKind.MODEL_GAME })
+        assertEquals(114, all.map { it.title }.toSet().size)
+        // Identifiants fixes : 1–113 conservés, la partie modèle prend le 114.
+        assertEquals((1..114).toSet(), all.map { it.id }.toSet())
+        // Cursus : paliers 2 à 5 attribués, ordre du catalogue par catégorie puis par palier.
+        assertTrue(all.all { it.level in 2..5 })
+        for (cat in Lessons.categories) {
+            val levels = all.filter { it.category == cat }.map { it.level }
+            assertEquals(cat.label, levels.sorted(), levels)
+        }
+        // Formats de l'étape 2 : variantes légales commentées, QCM complet, finales jouables connues.
+        for (l in all) {
+            l.variants.forEachIndexed { i, v ->
+                val line = l.lineFor(i + 1)
+                assertEquals(l.title, line.size, l.textsFor(i + 1).size)
+                assertTrue(l.title, v.from in 1 until l.line.size && line.uciMoves(v.from) == l.line.uciMoves(v.from))
+            }
+            l.quiz?.let { assertTrue(l.title, it.wrong.size in 1..2 && it.explanation.length > 10) }
+            assertTrue(l.title, l.drill.isEmpty() || com.ivanherboch.chessduck.feature.EndgameFamily.of(l.drill) != null)
+        }
+        val italian = all.first { it.title.startsWith("La partie italienne") }
+        assertEquals(2, italian.variants.size)
+        assertEquals(3, italian.ideas.size)
+        assertEquals(2, italian.traps.size)
+        assertTrue(italian.quiz != null)
+        assertEquals(9, all.count { it.drill.isNotEmpty() })
         for (l in all) {
             val line = l.line // lève une exception si un coup est illégal
             assertEquals(l.title, line.size, l.texts.size)

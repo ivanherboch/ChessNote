@@ -1,3 +1,18 @@
+## ChessDuck 2.7.0 — s'entraîner pour de vrai (Académie, étape 2)
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- **Finales jouées contre l'Ordinateur** : « Gagnez » ou « Tenez la nulle » sur 8 familles (roi et dame, deux tours, roi et tour, deux fous, roi et pion, Lucena, Philidor, pion tour). Les positions sont tirées au hasard pour apprendre la méthode, pas une position. L'Ordinateur défend à pleine force, et la partie s'arrête si le gain s'envole, en cas de pat ou au-delà du nombre de coups.
+- **Mats élémentaires refaits depuis le centre** : la dame, les deux tours, la tour et les deux fous repoussent le roi du milieu de l'échiquier jusqu'au mat. Les finales théoriques affichent leurs **conditions** (Lucena, Philidor, roi en sixième, opposition, pion tour).
+- **Validation des finales** : 3 positions réussies sur 5 contre l'Ordinateur, après un Défi à au moins 2 étoiles.
+- **Réflexes** : « Quelle est la menace ? » (touchez la pièce menacée), « Le seul coup » (trouvez l'unique défense) et « Puis-je prendre ? » (oui ou non, avec l'explication du bilan matériel).
+- **Révisions espacées** : une leçon maîtrisée revient après 1, 7, 30 puis 90 jours ; une révision ratée la fait revenir le lendemain. Le bandeau de l'Académie affiche les « Révisions du jour », la leçon à « Continuer » et la leçon « Conseillée » pour votre palier.
+- **Cursus en 5 paliers** (Les bases, Débutant, Novice, Club, Confirmé), avec toutes les leçons classées. Le catalogue se filtre par palier et par « À revoir », et indique la date de la prochaine révision.
+- **Tests** : test de placement facultatif (12 positions) et examen de palier (10 positions mélangées, réussite à 8), tous deux dans le tiroir « Entraînements ».
+- **Ouvertures** : variantes (« Si 3… Nf6 »), fiche des idées et des pièges, QCM final « Quel est le plan ? » (pilote : la partie italienne), et « Réviser mon répertoire » avec les Blancs ou les Noirs.
+- **Partie modèle** : « La partie de l'Opéra » de Morphy (Paris, 1858), commentée coup par coup, et le mode « Devinez le coup » (3 points pour le coup du maître, 1 ou 2 pour un coup presque aussi bon).
+- **Voix** : la fiche complète de la leçon est lue à l'ouverture, ainsi que les variantes ; la voix se tait pendant les exercices. Morphy, Brunswick et Isouard sont bien prononcés.
+
 ## ChessDuck 2.6.0 — une Académie qui fait vraiment apprendre (étape 1)
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

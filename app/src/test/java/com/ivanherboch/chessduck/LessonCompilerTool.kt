@@ -21,7 +21,7 @@ class LessonCompilerTool {
         val files = LinkedHashMap<Pair<String, String>, StringBuilder>()
         for (row in input.readLines().filter { it.isNotBlank() }) {
             val f = row.split('|')
-            require(f.size == 17) { "ligne invalide : $row" }
+            require(f.size == 22) { "ligne invalide : $row" }
             val (variable, fileName, title, summary) = f
             val hero = f[4]
             val fen = f[5]
@@ -32,6 +32,11 @@ class LessonCompilerTool {
             val takeaway = f[14]
             val conditions = f[15]
             val visuals = f[16].split('\u001f').filter { it.isNotBlank() }
+            val drill = f[17]
+            val ideas = f[18].split('\u001f').filter { it.isNotBlank() }
+            val traps = f[19].split('\u001f').filter { it.isNotBlank() }
+            val quiz = f[20].split('\u001f').filter { it.isNotBlank() }
+            val variants = f[21].split('\u001d').filter { it.isNotBlank() }
             val line = Line.fromMoves(fen, tokens)
             require(line.size == texts.size) { "$title : ${line.size} coups pour ${texts.size} commentaires" }
             for (p in pauses) require(p < line.size && line.positions[p].whiteToMove == (hero == "w")) { "$title : arrêt $p hors du camp du joueur" }
@@ -62,6 +67,26 @@ class LessonCompilerTool {
                     val a = arrows.split(',').filter { it.isNotBlank() }.map { "${sqFromName(it.take(2))} to ${sqFromName(it.drop(2))}" }
                     require(n.toInt() <= line.size) { "$title : repère $n hors de la leçon" }
                     sb.append("            $n to StepVisuals(marks = listOf(${m.joinToString()}), arrows = listOf(${a.joinToString()})),\n")
+                }
+                sb.append("        ),\n")
+            }
+            if (drill.isNotEmpty()) sb.append("        drill = ${kt(drill)},\n")
+            if (ideas.isNotEmpty()) sb.append("        ideas = listOf(${ideas.joinToString { kt(it) }}),\n")
+            if (traps.isNotEmpty()) sb.append("        traps = listOf(${traps.joinToString { kt(it) }}),\n")
+            if (quiz.isNotEmpty()) {
+                val wrong = quiz.subList(2, quiz.size - 1)
+                sb.append("        quiz = LessonQuiz(${kt(quiz[0])}, ${kt(quiz[1])}, listOf(${wrong.joinToString { kt(it) }}), ${kt(quiz.last())}),\n")
+            }
+            if (variants.isNotEmpty()) {
+                sb.append("        variants = listOf(\n")
+                for (v in variants) {
+                    val (from, vTitle, vMoves, vTexts) = v.split('~')
+                    val n = from.toInt()
+                    val full = Line.fromMoves(fen, line.moves.take(n).map { it.uci } + vMoves.split(' ').filter { it.isNotBlank() })
+                    val vt = vTexts.split('\u001e')
+                    require(full.size - n == vt.size) { "$title / $vTitle : ${full.size - n} coups pour ${vt.size} commentaires" }
+                    sb.append("            LessonVariant(\n                $n, ${kt(vTitle)}, ${kt(full.moves.drop(n).joinToString(" ") { it.uci })},\n")
+                    sb.append("                listOf(${vt.joinToString { kt(it) }}),\n            ),\n")
                 }
                 sb.append("        ),\n")
             }

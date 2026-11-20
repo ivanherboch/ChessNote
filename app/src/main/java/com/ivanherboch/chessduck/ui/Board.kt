@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
@@ -195,6 +196,11 @@ fun ChessBoard(
     kid: Boolean = false,
     /** Appelé quand on touche une de ses pièces qui n'a aucun coup légal (clouée, ou roi en échec). */
     onIllegalTouch: ((Int) -> Unit)? = null,
+    /**
+     * Mode « toucher une case » (exercices) : chaque case touchée, ou activée avec TalkBack, est signalée, qu'elle
+     * contienne une pièce ou non ; aucun coup n'est joué.
+     */
+    onSquareTap: ((Int) -> Unit)? = null,
     onMove: (Move) -> Unit = {},
 ) {
     val c = LocalDuck.current
@@ -297,10 +303,17 @@ fun ChessBoard(
                     stateDescription = "Trait aux ${if (position.whiteToMove) "Blancs" else "Noirs"}" +
                         if (position.isCheckmate) ", échec et mat" else if (position.inCheck) ", échec au roi" else ""
                 }
-                .pointerInput(position, flipped, interactive) {
-                    if (!interactive) return@pointerInput
+                .pointerInput(position, flipped, interactive, onSquareTap) {
                     val s = size.width / 8f
                     fun at(o: Offset): Int = BoardGeometry.squareAt(o.x, o.y, s, flipped)
+                    if (onSquareTap != null) {
+                        awaitEachGesture {
+                            val down = awaitFirstDown()
+                            if (waitForUpOrCancellation() != null) onSquareTap(at(down.position))
+                        }
+                        return@pointerInput
+                    }
+                    if (!interactive) return@pointerInput
                     awaitEachGesture {
                         val down = awaitFirstDown()
                         if (promo != null) return@awaitEachGesture
@@ -439,7 +452,7 @@ fun ChessBoard(
             }
         }
         // Grille sémantique : 64 cases explorables et activables par TalkBack (le dessin reste dans le Canvas).
-        BoardCells(position, flipped, lastMove, selected.takeIf { interactive }, targets, if (interactive) ::tap else null)
+        BoardCells(position, flipped, lastMove, selected.takeIf { interactive }, targets, onSquareTap ?: if (interactive) ::tap else null)
         promo?.let { (from, to) -> PromotionPicker(position.whiteToMove, to, flipped, kid, onCancel = { promo = null }) { type ->
             promo = null; selected = -1; onMove(Move(from, to, type))
         } }

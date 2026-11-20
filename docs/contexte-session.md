@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `2.6.0` (`versionCode = 44`), publiée en release GitHub `v2.6.0`.
+- **Version actuelle** : `2.7.0` (`versionCode = 45`), publiée en release GitHub `v2.7.0`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -102,7 +102,7 @@ Paquet racine : `app/src/main/java/com/ivanherboch/chessduck/`
 
 ### Commandes
 ```bash
-./gradlew :app:testDebugUnitTest      # 75 tests : règles, leçons, base Room, contrastes, ViewModels, captures d'écran
+./gradlew :app:testDebugUnitTest      # 89 tests : règles, leçons, base Room, contrastes, ViewModels, captures d'écran
 ./gradlew :app:assembleRelease        # APK signé : app/build/outputs/apk/release/app-release.apk (R8 + réduction des ressources)
 ```
 - Le dépôt Maven renvoie parfois **HTTP 429** : relancer la commande (boucle de 3 essais).
@@ -170,8 +170,27 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
   lexique de prononciation, cohérence jauge / commentaires de revue, bandeau de coups par tour, nulles expliquées.
 - **2.5.0** : refonte ergonomique en 4 étapes (shell et design system, échiquier accessible, écrans adultes,
   mode enfant et paramètres). Interface adulte et commentaires de revue au vouvoiement ; mode enfant au tutoiement.
+- **2.7.0** : refonte de l'Académie, étape 2 sur 3 : finales jouables, réflexes, révisions espacées, paliers,
+  placement et examens, variantes, QCM, répertoire, partie modèle et « Devinez le coup ».
 - **2.6.0** : refonte de l'Académie, étape 1 sur 3 (plan `plan_academie_claude_etapes.md`) : identifiants fixes,
   Room v4, juge de coups, Guidé actif, Défi intelligent avec étoiles, validation sur 5 problèmes, passerelles.
+
+### Relais refonte Académie (état après l'étape 2, v2.7.0)
+- Sources (étape 2) : en-tête `… | id=N level=2..5 order=level*1000+id theme= kind=line|model_game drill=FAMILLE` ;
+  lignes `IDEA:`, `TRAP:`, `QUIZ: question | bonne | mauvaise(s) | explication`, `VARIANT n | Titre` suivi de `> SAN : texte`.
+  Fichier `scripts/lessons/model_games.txt` (catégorie `MODEL_GAMES`, id 114 : l'Opéra). Généré : `LessonsModelGames.kt`.
+- `Lesson` : + `drill`, `ideas`, `traps`, `quiz: LessonQuiz?`, `variants: List<LessonVariant(from, title, uci, texts)>`,
+  `lineFor(v)`, `textsFor(v)` ; `LessonKind.MODEL_GAME` ; `objectiveText(l)` (fiche lue et affichée à l'ouverture).
+- `EndgamePractice.kt` : `EndgameFamily` (KQK, KRRK, KRK, KBBK, KPK_WIN, LUCENA, PHILIDOR_DRAW, ROOK_PAWN_DRAW),
+  `EndgamePositions.generate(f, rnd)`, `EndgameTrainer` (5 positions, `PASS = 3`, `WIN_CP = 250`).
+- `ReflexDrills.kt` : `threatFrom(puzzle)`, `captureFrom(pos, rnd)`, `ReflexTrainer`, `ReflexKind` ; « Le seul coup » =
+  série `PracticeKind.ONLY_MOVE` (thème `defensiveMove`). `ChessBoard(onSquareTap = …)` pour toucher une case.
+- `SrsScheduler.kt` (horloge injectable) : `mastered`, `reviewed`, `isDue`, `due`, `daysUntil`, `recommended`, `continueLesson`.
+- `AcademyAssessments.kt` : `levelRange`, `placementSpecs`/`placementLevel`, `examSpecs`/`examPassed` (8/10) ;
+  `PracticeKind` LESSON/REVIEW/ONLY_MOVE/PLACEMENT/EXAM ; résultats dans `academy_assessments` (`placement`, `exam`).
+- `AcademyViewModel` : `home: StateFlow<AcademyHome>`, `endgame`, `reflex`, `setVariant`, `startQuiz/answerQuiz`,
+  `skipGuess`, `startReviews/nextReview`, `startRepertoire/nextRepertoire`, `startPlacement`, `startExam`, `validation(l)`.
+  Écran : `AcademyPanels.kt` (bandeau, tiroir Entraînements, panneaux finale/réflexes/série/QCM, variantes).
 
 ### Relais refonte Académie (état après l'étape 1, v2.6.0)
 - Sources : en-tête `# Titre | Résumé | w/b/PUZZLE id | id=N level= order= theme= kind=line` ; `?SAN : …` / `-? …` =

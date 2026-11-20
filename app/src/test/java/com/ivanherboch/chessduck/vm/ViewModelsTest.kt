@@ -41,6 +41,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import kotlinx.coroutines.launch
 import kotlin.random.Random
 import com.ivanherboch.chessduck.engine.SearchResult
 import com.ivanherboch.chessduck.engine.PvLine
@@ -174,8 +175,236 @@ class ViewModelsTest {
     private fun academy(
         lessons: FakeLessons = FakeLessons(), voice: FakeNarrator = FakeNarrator(), engine: FakeEngine = FakeEngine(),
         puzzles: FakePuzzles = FakePuzzles(listOf(PUZZLE_0000D)), prefs: FakeSettings = FakeSettings(),
-        saved: SavedStateHandle = SavedStateHandle(),
-    ) = AcademyViewModel(prefs, lessons, voice, engine, puzzles, saved, Random(1))
+        saved: SavedStateHandle = SavedStateHandle(), clock: () -> Long = System::currentTimeMillis,
+    ) = AcademyViewModel(prefs, lessons, voice, engine, puzzles, saved, Random(1), clock)
+
+    /** Joue tout le Défi (ou « Devinez le coup ») avec les coups de la leçon. */
+    private suspend fun TestScope.playChallenge(vm: AcademyViewModel) {
+        advanceUntilIdle()
+        while (!vm.state.value.done) {
+            val c = vm.state.value.cursor
+            vm.challengeMove(vm.line().moves[c])
+            advanceUntilIdle()
+        }
+    }
+
+    /** Résout les problèmes d'une série (2e et 4e coups de chaque problème). */
+    private suspend fun TestScope.solveSeries(vm: AcademyViewModel) {
+        while (vm.state.value.practice?.finished == false) {
+            val pr = vm.state.value.practice!!
+            val line = pr.line!!
+            vm.practiceMove(line.moves[1]); advanceUntilIdle()
+            if (line.size > 3) { vm.practiceMove(line.moves[3]); advanceUntilIdle() }
+            vm.nextPractice(); advanceUntilIdle()
+        }
+    }
+
+    private val puzzleSet = (1..12).map { PUZZLE_0000D.copy(id = "Q$it", rating = 500 + it * 150) }
+
+    @Test
+    fun academyVariantsAreShownAndReadAloud() = test {
+        val prefs = FakeSettings()
+        val voice = FakeNarrator()
+        val vm = academy(voice = voice, prefs = prefs)
+        advanceUntilIdle()
+        val italian = Lessons.all.first { it.variants.isNotEmpty() }
+        prefs.setNarration(true); runCurrent()
+        vm.open(italian.id)
+        // La fiche de la leçon (idées et pièges compris) est lue à l'ouverture.
+        assertTrue(voice.spoken.last().contains(SpokenFr.text(italian.ideas.first())))
+        vm.setVariant(1)
+        val v = italian.variants[0]
+        assertEquals(v.from, vm.state.value.cursor)
+        vm.step(1)
+        assertEquals(italian.lineFor(1).sans[v.from], vm.line().sans[v.from])
+        assertEquals(SpokenFr.text("${SpokenFr.move(vm.line().sans[v.from])}. ${v.texts[0]}"), voice.spoken.last())
+        // Défi sur la variante : l'adversaire joue l'écart, l'élève répond.
+        vm.setChallenge(true)
+        voice.spoken.clear()
+        playChallenge(vm)
+        assertTrue(voice.spoken.isEmpty()) // aucune lecture en Défi
+    }
+
+    @Test
+    fun academyQuizAtTheEndOfTheLesson() = test {
+        val vm = academy()
+        advanceUntilIdle()
+        val l = Lessons.all.first { it.quiz != null }
+        vm.open(l.id)
+        vm.last()
+        vm.startQuiz()
+        val q = vm.state.value.quiz!!
+        assertEquals(1 + l.quiz!!.wrong.size, q.choices.size)
+        assertEquals(l.quiz!!.answer, q.choices[q.correct])
+        vm.answerQuiz((q.correct + 1) % q.choices.size)
+        vm.answerQuiz(q.correct) // une seule réponse
+        assertEquals((q.correct + 1) % q.choices.size, vm.state.value.quiz!!.picked)
+        vm.closeQuiz()
+        assertNull(vm.state.value.quiz)
+    }
+
+    @Test
+    fun academyModelGameGuessesTheMove() = test {
+        val voice = FakeNarrator()
+        val prefs = FakeSettings()
+        val vm = academy(voice = voice, prefs = prefs)
+        advanceUntilIdle()
+        prefs.setNarration(true); runCurrent()
+        val game = Lessons.all.first { it.kind == com.ivanherboch.chessduck.content.LessonKind.MODEL_GAME }
+        vm.open(game.id)
+        vm.setChallenge(true)
+        voice.spoken.clear()
+        advanceUntilIdle()
+        assertTrue(vm.challengeMove(game.line.moves[0])) // le coup du maître : 3 points
+        advanceUntilIdle()
+        assertEquals(3, vm.state.value.guessScore)
+        val c = vm.state.value.cursor
+        val other = game.line.positions[c].legalMoves.first { it != game.line.moves[c] }
+        assertFalse(vm.challengeMove(other)) // faux moteur : coup jugé aussi bon, 2 points, puis le coup du maître
+        advanceUntilIdle()
+        assertEquals(5, vm.state.value.guessScore)
+        assertEquals(c + 2, vm.state.value.cursor)
+        vm.skipGuess(); advanceUntilIdle()
+        assertEquals(9, vm.state.value.guessMax)
+        assertTrue(voice.spoken.isEmpty()) // voix muette pendant la recherche
+    }
+
+    @Test
+    fun academyEndgameLessonValidatesAgainstTheComputer() = test {
+        val lessons = FakeLessons()
+        val vm = academy(lessons)
+        advanceUntilIdle()
+        val kqk = Lessons.all.first { it.drill == "KQK" }
+        vm.open(kqk.id)
+        vm.setChallenge(true)
+        playChallenge(vm)
+        assertEquals(3, vm.state.value.stars)
+        assertTrue(lessons.masteredLessons().first().isEmpty())
+        assertTrue(vm.state.value.message.contains("contre l'Ordinateur"))
+        // Faux moteur (évaluation nulle) : le gain « s'envole » au premier coup, la position est perdue.
+        vm.startEndgame(com.ivanherboch.chessduck.feature.EndgameFamily.KQK, fromLesson = true)
+        val eg = vm.endgame.state.value!!
+        vm.endgame.move(eg.position!!.legalMoves.first { !eg.position!!.play(it).isCheckmate && eg.position!!.play(it).legalMoves.isNotEmpty() })
+        advanceUntilIdle()
+        assertTrue(vm.endgame.state.value!!.over)
+        assertEquals(listOf(false), vm.endgame.state.value!!.results)
+        vm.closeEndgame()
+        assertNull(vm.endgame.state.value)
+    }
+
+    @Test
+    fun endgameDrawIsHeldForFifteenMoves() = test {
+        val engine = FakeEngine()
+        val trainer = com.ivanherboch.chessduck.feature.EndgameTrainer(this, engine, Random(3))
+        trainer.start(com.ivanherboch.chessduck.feature.EndgameFamily.PHILIDOR_DRAW, total = 1)
+        var guard = 0
+        while (trainer.state.value?.over == false && guard++ < 40) {
+            val s = trainer.state.value!!
+            if (s.heroToMove) trainer.move(s.position!!.legalMoves.first())
+            advanceUntilIdle()
+        }
+        val s = trainer.state.value!!
+        assertTrue(s.message, s.over && s.results.single())
+        trainer.next()
+        assertTrue(trainer.state.value!!.finished)
+    }
+
+    @Test
+    fun academyReviewsFollowTheSchedule() = test {
+        var now = 10 * com.ivanherboch.chessduck.feature.SrsScheduler.DAY
+        val lessons = FakeLessons()
+        // Leçon 1 maîtrisée, révision prévue hier.
+        lessons.save(com.ivanherboch.chessduck.data.LessonProgress(1, masteredAt = 1, stars = 3, srsStage = 1, nextReviewAt = now - 1))
+        val vm = academy(lessons, clock = { now })
+        backgroundScope.launch { vm.home.collect {} }
+        advanceUntilIdle()
+        assertEquals(listOf(1), vm.home.value.due)
+        vm.startReviews()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.challenge && vm.state.value.review != null)
+        playChallenge(vm)
+        val p = lessons.progress(1)!!
+        assertEquals(2, p.srsStage)
+        assertEquals(now + 7 * com.ivanherboch.chessduck.feature.SrsScheduler.DAY, p.nextReviewAt)
+        assertTrue(vm.state.value.message.contains("Révision réussie"))
+        vm.nextReview(); vm.closeReviews()
+        assertNull(vm.state.value.review)
+        advanceUntilIdle()
+        assertTrue(vm.home.value.due.isEmpty())
+        now += 8 * com.ivanherboch.chessduck.feature.SrsScheduler.DAY
+        assertTrue(vm.srs.isDue(lessons.progress(1)!!))
+    }
+
+    @Test
+    fun academyRepertoireReplaysOpenings() = test {
+        val vm = academy()
+        advanceUntilIdle()
+        vm.startRepertoire(white = true)
+        advanceUntilIdle()
+        val rep = vm.state.value.repertoire!!
+        assertEquals(5, rep.items.size)
+        assertTrue(rep.items.all { (id, _) -> Lessons.byId(id).let { it.heroWhite && it.category == com.ivanherboch.chessduck.content.LessonCategory.OPENING } })
+        assertEquals(rep.items[0].first, vm.state.value.lessonId)
+        assertEquals(rep.items[0].second, vm.state.value.variant)
+        playChallenge(vm)
+        assertEquals(listOf(true), vm.state.value.repertoire!!.results)
+        vm.nextRepertoire(); advanceUntilIdle()
+        assertEquals(rep.items[1].first, vm.state.value.lessonId)
+        vm.closeRepertoire()
+        assertNull(vm.state.value.repertoire)
+    }
+
+    @Test
+    fun academyPlacementAndExamSetTheLevel() = test {
+        val prefs = FakeSettings()
+        val lessons = FakeLessons()
+        val vm = academy(lessons, puzzles = FakePuzzles(puzzleSet), prefs = prefs)
+        advanceUntilIdle()
+        vm.startPlacement(); advanceUntilIdle()
+        assertEquals(12, vm.state.value.practice!!.ids.size)
+        solveSeries(vm)
+        assertEquals(5, prefs.settings.first().academyLevel)
+        assertTrue(prefs.settings.first().placementDone)
+        prefs.setAcademyLevel(3)
+        // Examen : 6 positions tactiques, 2 défensives, 2 finales, sans annonce du thème.
+        val examSet = (1..8).map { PUZZLE_0000D.copy(id = "T$it", primaryTheme = "fork", rating = 1200) } +
+            (1..3).map { PUZZLE_0000D.copy(id = "D$it", primaryTheme = "defensiveMove", rating = 1200) } +
+            (1..3).map { PUZZLE_0000D.copy(id = "E$it", primaryTheme = "pawnEndgame", rating = 1200) }
+        val vm2 = academy(lessons, puzzles = FakePuzzles(examSet), prefs = prefs)
+        advanceUntilIdle()
+        vm2.startExam(); advanceUntilIdle()
+        val examVm = vm2
+        val exam = examVm.state.value.practice!!
+        assertEquals(10, exam.ids.size)
+        assertEquals(3, exam.level)
+        assertEquals(2, exam.ids.count { it.startsWith("D") })
+        solveSeries(examVm)
+        assertEquals(4, prefs.settings.first().academyLevel) // examen réussi : palier suivant
+        assertEquals(listOf("placement", "exam"), lessons.tests.value.map { it.kind })
+        assertTrue(lessons.tests.value.last().passed)
+    }
+
+    @Test
+    fun academyReflexesAndOnlyMove() = test {
+        val fork = com.ivanherboch.chessduck.data.Puzzle("FORK1", "4k3/8/8/8/3n4/1p6/4K3/R7 w - - 0 1", "e2e1 d4c2 e1d2 c2a1", 600, 90, 100, " fork ", "fork")
+        val vm = academy(puzzles = FakePuzzles(listOf(fork) + puzzleSet.map { it.copy(primaryTheme = "defensiveMove") }))
+        advanceUntilIdle()
+        vm.startReflex(com.ivanherboch.chessduck.feature.ReflexKind.THREAT)
+        advanceUntilIdle()
+        val rx = vm.reflex.state.value!!
+        assertEquals(1, rx.total)
+        vm.reflex.tap(com.ivanherboch.chessduck.chess.sqFromName("a1"))
+        assertEquals(listOf(true), vm.reflex.state.value!!.results)
+        vm.reflex.next()
+        assertTrue(vm.reflex.state.value!!.finished)
+        vm.closeReflex()
+        vm.startOnlyMove(); advanceUntilIdle()
+        assertEquals(com.ivanherboch.chessduck.feature.PracticeKind.ONLY_MOVE, vm.state.value.practice!!.kind)
+        solveSeries(vm)
+        assertEquals(5, vm.state.value.practice!!.score)
+    }
+
+
 
     /** Réponse imposée au faux moteur : la position obtenue après [m] vaut [score] pour le camp au trait. */
     private fun FakeEngine.after(pos: Position, m: Move, score: Int) {

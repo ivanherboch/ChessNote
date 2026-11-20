@@ -1,0 +1,34 @@
+# La partie de l'Opéra : Morphy, Paris 1858 | Paul Morphy affronte le duc de Brunswick et le comte Isouard pendant une soirée à l'Opéra. Une démonstration de développement rapide, de lignes ouvertes et d'attaque. | w | id=114 level=3 kind=model_game
+e4 : Morphy occupe le centre avec son pion roi.
+e5 : Les Noirs répondent de la même façon.
+Nf3 : Le cavalier se développe et attaque le pion e5.
+d6 : La défense Philidor : solide, mais un peu passive.
+d4 : Morphy ouvre tout de suite le centre pour profiter de son avance de développement.
+Bg4 : Le fou cloue le cavalier f3 sur la dame. Ce fou va bientôt disparaître.
+dxe5 : Le pion prend en e5 et attaque le pion d6.
+Bxf3 : Les Noirs échangent leur fou contre le cavalier pour ne pas perdre un pion. Ils cèdent leur paire de fous.
+Qxf3 : La dame reprend et se trouve déjà active, face à la case f7.
+dxe5 : Les Noirs reprennent le pion. Le matériel est égal, mais les Blancs ont deux pièces de plus en jeu.
+Bc4 : Le fou sort à son tour. Avec la dame, il menace le mat en f7.
+Nf6 : Les Noirs parent la menace en développant un cavalier.
+Qb3 : La dame vise à la fois f7 et b7 : une double attaque.
+Qe7 : La dame noire protège f7. Elle bouche la route de son propre fou f8.
+Nc3 : Morphy ne prend pas le pion b7 : il préfère sortir une pièce de plus.
+c6 : Les Noirs protègent la case b7 et préparent b5.
+Bg5 : Le fou cloue le cavalier f6 devant la dame. Tous les Blancs participent à l'attaque.
+b5 : Les Noirs chassent le fou c4, mais affaiblissent leur aile dame.
+Nxb5 : Un sacrifice : le cavalier se donne pour ouvrir les lignes vers le roi noir.
+cxb5 : Les Noirs acceptent le cadeau.
+Bxb5+ : Le fou reprend avec échec. Le roi noir est toujours au centre.
+Nbd7 : Le cavalier s'interpose, mais il est cloué sur le roi.
+O-O-O : Le grand roque met le roi à l'abri et amène la tour sur la colonne d, face au cavalier cloué.
+Rd8 : La tour noire protège le cavalier d7.
+Rxd7 : Morphy prend le cavalier : encore un sacrifice pour garder l'initiative.
+Rxd7 : La tour noire reprend.
+Rd1 : La seconde tour arrive sur la colonne ouverte. Toutes les pièces blanches attaquent.
+Qe6 : La dame noire tente de soulager sa position.
+Bxd7+ : Le fou prend la tour avec échec.
+Nxd7 : Le cavalier reprend. Les Noirs ont beaucoup plus de matériel, mais leur roi est sans défense.
+Qb8+ : Un sacrifice de dame ! Elle se place en b8 pour attirer le cavalier loin de la case d8.
+Nxb8 : Le cavalier est obligé de prendre la dame.
+Rd8# : La tour donne échec et mat, protégée par le fou g5. À retenir : développez vite toutes vos pièces, ouvrez les lignes vers le roi resté au centre, et n'hésitez pas à sacrifier du matériel pour garder l'initiative.

@@ -66,9 +66,9 @@ class LessonAuditTool {
         val report = StringBuilder()
         var heroMoves = 0
         val problems = ArrayList<String>()
-        for (l in all()) {
-            val line = l.line
-            for (i in 0 until line.size) {
+        for (l in all()) for (v in 0..l.variants.size) {
+            val line = l.lineFor(v)
+            for (i in (if (v == 0) 0 else l.variants[v - 1].from) until line.size) {
                 val pos = line.positions[i]
                 if (pos.whiteToMove != l.heroWhite) continue
                 heroMoves++
@@ -84,9 +84,9 @@ class LessonAuditTool {
                 // peut céder jusqu'à un pion ; un gain n'est « gâché » que si l'avantage retombe nettement.
                 val bothCrushing = best >= CRUSHING && played >= CRUSHING
                 val loss = best - played
-                val maxLoss = if (l.category == LessonCategory.OPENING) OPENING_LOSS else LOSS
+                val maxLoss = if (l.category == LessonCategory.OPENING || l.category == LessonCategory.MODEL_GAMES) OPENING_LOSS else LOSS
                 if ((loss >= maxLoss && !bothCrushing) || (best >= WIN && played < WIN - 100)) {
-                    problems.add("${l.id}. ${l.title} — demi-coup ${i + 1} (${line.sans[i]}) : meilleur $best, leçon $played")
+                    problems.add("${l.id}. ${l.title}${if (v > 0) " (variante $v)" else ""} — demi-coup ${i + 1} (${line.sans[i]}) : meilleur $best, leçon $played")
                 }
             }
         }
@@ -114,10 +114,13 @@ class LessonAuditTool {
         val FUTURE = Regex("""\b(sortie|sortir|jouer|venir|aller|placer|installer|amener|sauter|suivie|prépare|pourra|ira|veut|veulent)\b""", RegexOption.IGNORE_CASE)
 
         /** Pièces citées avec leur case qui ne sont sur cette case ni avant ni après le coup commenté. */
-        fun lexicalProblems(l: Lesson): List<String> {
-            val line = l.line
+        fun lexicalProblems(l: Lesson): List<String> = (0..l.variants.size).flatMap { v -> lexicalProblems(l, v) }
+
+        private fun lexicalProblems(l: Lesson, v: Int): List<String> {
+            val line = l.lineFor(v)
             val out = ArrayList<String>()
-            l.texts.forEachIndexed { i, text ->
+            l.textsFor(v).forEachIndexed { i, text ->
+                if (v > 0 && i < l.variants[v - 1].from) return@forEachIndexed
                 for (m in CITED.findAll(text)) {
                     // « prépare la sortie du cavalier en f6 », « jouer leur fou en h6 » : une intention, pas un constat.
                     if (" en " in m.value && FUTURE.containsMatchIn(text.substring(maxOf(0, m.range.first - 30), m.range.first))) continue
