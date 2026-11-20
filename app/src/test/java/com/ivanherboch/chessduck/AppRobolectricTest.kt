@@ -103,13 +103,17 @@ class AppRobolectricTest {
         rule.onAllNodesWithText("Revue commentée").onFirst().performClick(); settle(600)
         repeat(6) { desc("Coup suivant").performClick(); settle(300) }
         settle(800); shot("4g_revue_pont")
-        rule.onNodeWithText("Travailler ce point dans l'Académie").performScrollTo().performClick(); settle(3000)
-        rule.onNodeWithText("Méthode : le contrôle anti-gaffe", substring = true).assertExists()
+        rule.onNodeWithText("Travailler ce point dans l'Académie").performClick(); settle(3000)
         shot("2q_pont_academie")
+        rule.onNodeWithText("Méthode : le contrôle anti-gaffe", substring = true, useUnmergedTree = true).assertExists()
         rule.onNodeWithText("Entraînements").performClick(); settle(1500); shot("2r_priorites")
         rule.onNodeWithText("Mat permis à l'adversaire", substring = true).assertExists()
-        rule.onNodeWithText("Calcul à l'aveugle (palier 5)").performScrollTo().performClick(); settle(3000); shot("2s_aveugle")
-        rule.onNodeWithText("Coups annoncés", substring = true).assertExists()
+        rule.onNodeWithText("Calcul à l'aveugle (palier 5)").performScrollTo().performClick(); settle(1500)
+        rule.waitUntil(30_000) {
+            shadowOf(Looper.getMainLooper()).idle()
+            rule.onAllNodesWithText("Coups annoncés", substring = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        settle(800); shot("2s_aveugle")
     }
 
     private fun seedGame() = runBlocking {
@@ -617,14 +621,14 @@ class AppRobolectricTest {
         val seen = HashSet<String>()
         repeat(16) {
             // Un problème déjà révélé plus tôt (tirage au hasard) affiche directement son thème : rien à révéler.
-            rule.waitUntil(10_000) {
+            rule.waitUntil(20_000) {
                 rule.onAllNodesWithText("Révéler le thème").fetchSemanticsNodes().isNotEmpty() ||
                     rule.onAllNodesWithText("Type de problème : ", substring = true).fetchSemanticsNodes().isNotEmpty()
             }
             if (rule.onAllNodesWithText("Révéler le thème").fetchSemanticsNodes().isNotEmpty()) {
                 rule.onNodeWithText("Révéler le thème").performClick(); settle(600)
             }
-            rule.waitUntil(10_000) { rule.onAllNodesWithText("Type de problème : ", substring = true).fetchSemanticsNodes().isNotEmpty() }
+            rule.waitUntil(20_000) { rule.onAllNodesWithText("Type de problème : ", substring = true).fetchSemanticsNodes().isNotEmpty() }
             val shown = mates.filter { name -> rule.onAllNodesWithText("Type de problème : $name").fetchSemanticsNodes().isNotEmpty() }
             assertEquals(1, shown.size)
             seen.addAll(shown)

@@ -123,7 +123,7 @@ Bb6+ : Le fou donne échec sur la diagonale a7-g1.
 Kh1 : Le roi se cache dans le coin.
 Ng4 : Le cavalier attaque la case h2 et ouvre la diagonale du fou b7.
 Be4 : Le fou blanc bloque la grande diagonale.
-Qh4 : La dame menace le mat en h2.
+Qh4 : La dame menace le mat en h2. L'Ordinateur trouve un gain encore plus net, mais ce coup prépare la combinaison qui a rendu la partie célèbre.
 g3 : Les Blancs attaquent la dame.
 Rxc3 : Le sacrifice commence : la tour prend le cavalier c3 en laissant la dame en prise.
 gxh4 : Les Blancs prennent la dame.

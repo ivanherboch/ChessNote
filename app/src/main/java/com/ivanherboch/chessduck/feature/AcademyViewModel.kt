@@ -29,7 +29,7 @@ import com.ivanherboch.chessduck.ui.moveAnim
 import com.ivanherboch.chessduck.util.runCatchingSuspend
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -179,6 +179,8 @@ class AcademyViewModel(
     clock: () -> Long = System::currentTimeMillis,
     /** Parties du Jeu Libre, pour le bilan des thèmes faibles (facultatif). */
     games: GameRepository? = null,
+    /** Fil de calcul du bilan (relecture des parties) ; null : celui du ViewModel (tests). */
+    work: CoroutineDispatcher? = null,
 ) : ViewModel() {
     private val _state = MutableStateFlow(AcademyState())
     val state: StateFlow<AcademyState> = _state.asStateFlow()
@@ -201,12 +203,14 @@ class AcademyViewModel(
     /** Bilan : les 3 priorités du moment, d'après les parties analysées et la progression dans l'Académie. */
     val priorities: StateFlow<List<Priority>> = combine(games?.games() ?: flowOf(emptyList()), lessons.progress()) { g, p ->
         WeakTopics.compute(g, p)
-    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    }.let { f -> if (work != null) f.flowOn(work) else f }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Lecture automatique et séquences du mode Défi : un seul travail à la fois. */
     private val playback = LinePlaybackController(viewModelScope)
     private val judge = MoveJudge(engine)
     private var judgeJob: Job? = null
+    /** Une leçon a été ouverte par un pont avant la fin de la restauration de l'état au démarrage. */
+    private var openedExplicitly = false
     private var practiceJob: Job? = null
     private var pulses = 0L
     /** Finale jouée lancée depuis une leçon (validation) ou une révision. */
@@ -238,8 +242,10 @@ class AcademyViewModel(
             val restoredId = saved.get<Int>(KEY_LESSON)
             val restoredChallenge = saved.get<Boolean>(KEY_CHALLENGE) ?: false
             val restoredCursor = saved.get<Int>(KEY_CURSOR) ?: 0
-            open(restoredId ?: prefs.settings.first().lessonId, save = false)
-            if (restoredId != null) {
+            val stored = restoredId ?: prefs.settings.first().lessonId
+            // Une leçon ouverte entre-temps (pont depuis la revue de partie, bilan) garde la priorité.
+            if (!openedExplicitly) open(stored, save = false)
+            if (restoredId != null && !openedExplicitly) {
                 if (restoredChallenge) setChallenge(true) else if (restoredCursor > 0) goTo(restoredCursor)
             }
             state.collect { st ->
@@ -780,6 +786,7 @@ class AcademyViewModel(
      * de son thème, au palier du joueur. Sans thème, la leçon seule est ouverte.
      */
     fun trainTopic(lessonId: Int, theme: String) {
+        openedExplicitly = true
         open(lessonId)
         if (theme.isEmpty()) return
         viewModelScope.launch {

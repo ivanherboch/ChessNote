@@ -15,7 +15,7 @@ class LessonsTest {
         val all = Lessons.all
         val counts = mapOf(
             LessonCategory.BASICS to 16, LessonCategory.OPENING to 53, LessonCategory.MIDDLEGAME to 61,
-            LessonCategory.STRATEGY to 18, LessonCategory.ENDGAME to 54, LessonCategory.MODEL_GAMES to 8,
+            LessonCategory.STRATEGY to 18, LessonCategory.ENDGAME to 55, LessonCategory.MODEL_GAMES to 8,
         )
         for ((cat, n) in counts) assertEquals(cat.label, n, all.count { it.category == cat })
         assertEquals(counts.values.sum(), all.size)

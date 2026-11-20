@@ -160,7 +160,7 @@ internal val MODEL_GAME_LESSONS: List<LessonData> = listOf(
             "Le roi se cache dans le coin.",
             "Le cavalier attaque la case h2 et ouvre la diagonale du fou b7.",
             "Le fou blanc bloque la grande diagonale.",
-            "La dame menace le mat en h2.",
+            "La dame menace le mat en h2. L'Ordinateur trouve un gain encore plus net, mais ce coup prépare la combinaison qui a rendu la partie célèbre.",
             "Les Blancs attaquent la dame.",
             "Le sacrifice commence : la tour prend le cavalier c3 en laissant la dame en prise.",
             "Les Blancs prennent la dame.",

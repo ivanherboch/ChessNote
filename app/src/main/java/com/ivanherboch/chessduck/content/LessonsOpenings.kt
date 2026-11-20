@@ -510,7 +510,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         texts = listOf(
             "Les Blancs occupent le centre.",
             "Les Noirs répondent au centre.",
-            "Voici le gambit du roi. Le pion f est offert pour détourner le pion e5 du centre.",
+            "Voici le gambit du roi. Le pion f est offert pour détourner le pion e5 du centre. L'Ordinateur le juge un peu risqué, mais il reste jouable et mène à des parties très vivantes.",
             "Les Noirs acceptent le gambit et prennent le pion.",
             "Le cavalier se développe. Il empêche aussi la dame noire de donner un échec gênant en h4.",
             "Les Noirs protègent leur pion de plus.",

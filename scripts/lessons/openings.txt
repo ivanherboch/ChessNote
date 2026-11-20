@@ -404,7 +404,7 @@ VARIANT 6 | Si les Blancs échangent tout de suite en e5
 # Le gambit du roi | Les Blancs offrent leur pion f pour détourner le pion e5 du centre et ouvrir la colonne f. C'est l'ouverture romantique par excellence. | w | id=13 level=4 order=4013
 e4 : Les Blancs occupent le centre.
 e5 : Les Noirs répondent au centre.
-?f4 : Voici le gambit du roi. Le pion f est offert pour détourner le pion e5 du centre.
+?f4 : Voici le gambit du roi. Le pion f est offert pour détourner le pion e5 du centre. L'Ordinateur le juge un peu risqué, mais il reste jouable et mène à des parties très vivantes.
 exf4 : Les Noirs acceptent le gambit et prennent le pion.
 Nf3 : Le cavalier se développe. Il empêche aussi la dame noire de donner un échec gênant en h4.
 g5 : Les Noirs protègent leur pion de plus.
