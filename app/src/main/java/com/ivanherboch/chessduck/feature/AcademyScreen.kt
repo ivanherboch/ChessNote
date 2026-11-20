@@ -213,7 +213,8 @@ fun AcademyScreen(
                     )
                 }
                 else -> {
-                    val r = s.refute
+                    // Réfutation d'un mauvais coup, ou coup de l'élève en cours de jugement : affiché tel qu'il l'a joué.
+                    val r = s.refute ?: s.tentative
                     val pos = r?.position ?: line.positions[cur]
                     val last = r?.last ?: if (cur > 0) line.moves[cur - 1] else null
                     val heroTurn = s.challenge && !s.done && !s.judging && r == null && cur < line.size && line.positions[cur].whiteToMove == l.heroWhite

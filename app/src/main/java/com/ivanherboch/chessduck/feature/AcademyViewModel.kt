@@ -139,6 +139,11 @@ data class AcademyState(
     val refute: Refutation? = null,
     val refuteUntil: Long = 0L,
     val refuteHold: Long = 0L,
+    /**
+     * Coup de l'élève affiché tel qu'il l'a joué pendant que l'Ordinateur le juge (et, s'il est aussi bon, un court
+     * instant avant que la leçon ne reprenne son propre coup).
+     */
+    val tentative: Refutation? = null,
     val pulse: Pulse? = null,
     /** Série de problèmes en cours (null : leçon). */
     val practice: Practice? = null,
@@ -245,6 +250,13 @@ class AcademyViewModel(
 
     private fun pulse(good: Boolean) = _state.update { it.copy(pulse = Pulse(++pulses, good)) }
 
+    /** Montre tout de suite le coup de l'élève, là où il l'a joué, pendant que l'Ordinateur le juge. */
+    private fun showTentative(pos: Position, m: Move) =
+        _state.update { it.copy(judging = true, tentative = Refutation(pos.play(m), m, null), anim = moveAnim(pos, m)) }
+
+    /** Temps laissé pour voir son propre coup avant que la leçon ne reprenne le sien. */
+    private val tentativeHold = 1_200L
+
     /** Une activité (Défi, série, finale, réflexes, QCM) occupe l'élève : la voix se tait. */
     private fun active(s: AcademyState = state.value) =
         s.challenge || s.practice != null || s.quiz != null || endgame.state.value != null || reflex.state.value != null
@@ -286,7 +298,7 @@ class AcademyViewModel(
                 lessonId = l.id, cursor = 0, variant = variant.coerceIn(0, l.variants.size), playing = false, flipped = !l.heroWhite,
                 anim = null, hintStage = 0, done = false,
                 filter = if (it.filter != null && it.filter != l.category) l.category else it.filter,
-                answered = emptySet(), note = null, judging = false, refute = null, refuteUntil = 0L, practice = null, quiz = null,
+                answered = emptySet(), note = null, judging = false, refute = null, refuteUntil = 0L, tentative = null, practice = null, quiz = null,
                 errors = 0, maxHint = 0, stars = 0, guessScore = 0, guessMax = 0,
                 review = if (session) it.review else null, repertoire = if (session) it.repertoire else null,
             )
@@ -312,7 +324,7 @@ class AcademyViewModel(
         _state.update {
             it.copy(
                 challenge = on, cursor = keep, playing = false, anim = null, hintStage = 0, done = false, message = "", tone = Tone.INFO,
-                note = null, judging = false, refute = null, refuteUntil = 0L, practice = null, quiz = null, errors = 0, maxHint = 0, stars = 0,
+                note = null, judging = false, refute = null, refuteUntil = 0L, tentative = null, practice = null, quiz = null, errors = 0, maxHint = 0, stars = 0,
                 guessScore = 0, guessMax = 0, review = if (on) it.review else null, repertoire = if (on) it.repertoire else null,
             )
         }
@@ -369,23 +381,27 @@ class AcademyViewModel(
         if (!pos.isLegal(m)) return
         val expected = l.line.moves[c]
         val san = pos.san(m)
-        _state.update { it.copy(judging = true) }
+        showTentative(pos, m)
         judgeJob = viewModelScope.launch {
             val v = judge.judge(pos, m, expected, l.category == LessonCategory.ENDGAME)
             val lessonSan = l.line.sans[c]
             when (v) {
                 Verdict.EXACT, Verdict.EQUIVALENT -> {
                     pulse(true)
-                    _state.update { it.copy(judging = false, answered = it.answered + c) }
-                    goTo(c + 1)
                     val bravo = if (v == Verdict.EXACT) "Bravo, c'est le coup de la leçon !" else "Bon coup aussi ! La leçon poursuit avec $lessonSan."
+                    if (v == Verdict.EQUIVALENT) {
+                        _state.update { it.copy(note = "$san : bon coup aussi !", noteTone = Tone.GOOD) }
+                        delay(tentativeHold)
+                    }
+                    _state.update { it.copy(judging = false, tentative = null, anim = null, answered = it.answered + c) }
+                    goTo(c + 1)
                     _state.update { it.copy(note = bravo, noteTone = Tone.GOOD) }
                 }
                 else -> {
                     pulse(false)
                     _state.update {
                         it.copy(
-                            judging = false, noteTone = Tone.GOLD,
+                            judging = false, tentative = null, anim = null, noteTone = Tone.GOLD,
                             note = "$san n'est pas le coup de la leçon. Cherchez encore, ou touchez Lecture pour le découvrir.",
                         )
                     }
@@ -482,7 +498,7 @@ class AcademyViewModel(
         _state.update {
             it.copy(
                 cursor = 0, anim = null, hintStage = 0, done = false, tone = Tone.INFO, flipped = !l.heroWhite,
-                errors = 0, maxHint = 0, stars = 0, refute = null, refuteUntil = 0L, judging = false, guessScore = 0, guessMax = 0,
+                errors = 0, maxHint = 0, stars = 0, refute = null, refuteUntil = 0L, tentative = null, judging = false, guessScore = 0, guessMax = 0,
                 message = intro,
             )
         }
@@ -579,12 +595,14 @@ class AcademyViewModel(
             accept(s.cursor, "${ln.sans[s.cursor]} : ${texts()[s.cursor]}")
             return true
         }
-        _state.update { it.copy(judging = true) }
+        showTentative(pos, m)
         judgeJob = viewModelScope.launch {
             when (judge.judge(pos, m, expected, l.category == LessonCategory.ENDGAME)) {
                 Verdict.EXACT, Verdict.EQUIVALENT -> {
                     pulse(true)
-                    _state.update { it.copy(judging = false) }
+                    _state.update { it.copy(tone = Tone.GOOD, message = "${pos.san(m)} : bon coup aussi ! La leçon poursuit avec ${ln.sans[s.cursor]}.") }
+                    delay(tentativeHold)
+                    _state.update { it.copy(judging = false, tentative = null, anim = null) }
                     accept(s.cursor, "Bon coup aussi ! La leçon poursuit avec ${ln.sans[s.cursor]} : ${texts()[s.cursor]}")
                 }
                 Verdict.WORSE -> refute(pos, m)
@@ -592,7 +610,7 @@ class AcademyViewModel(
                     pulse(false)
                     _state.update {
                         it.copy(
-                            judging = false, errors = it.errors + 1, tone = Tone.BAD,
+                            judging = false, tentative = null, anim = null, errors = it.errors + 1, tone = Tone.BAD,
                             message = "${pos.san(m)} n'est pas le coup de la leçon. Réfléchissez à l'idée du thème, ou demandez un indice.",
                         )
                     }
@@ -612,7 +630,7 @@ class AcademyViewModel(
             accept(cur, "3 points : c'est le coup du maître ! ${ln.sans[cur]} : ${texts()[cur]}")
             return true
         }
-        _state.update { it.copy(judging = true) }
+        showTentative(pos, m)
         judgeJob = viewModelScope.launch {
             val loss = judge.loss(pos, m, expected)
             val pts = when {
@@ -622,7 +640,9 @@ class AcademyViewModel(
                 else -> 0
             }
             pulse(pts > 0)
-            _state.update { it.copy(judging = false, guessScore = it.guessScore + pts, guessMax = it.guessMax + 3) }
+            _state.update { it.copy(tone = if (pts > 0) Tone.GOOD else Tone.GOLD, message = "${pos.san(m)} : $pts point${if (pts > 1) "s" else ""}. Le maître a joué ${ln.sans[cur]}.") }
+            delay(tentativeHold)
+            _state.update { it.copy(judging = false, tentative = null, anim = null, guessScore = it.guessScore + pts, guessMax = it.guessMax + 3) }
             accept(cur, "${pos.san(m)} : $pts point${if (pts > 1) "s" else ""}. Le maître a joué ${ln.sans[cur]} : ${texts()[cur]}")
         }
         return false
@@ -657,7 +677,7 @@ class AcademyViewModel(
         val opp = if (l.heroWhite) "Noirs" else "Blancs"
         _state.update {
             it.copy(
-                judging = false, errors = it.errors + 1, tone = Tone.BAD, anim = moveAnim(pos, m),
+                judging = false, errors = it.errors + 1, tone = Tone.BAD, tentative = null, anim = null,
                 refute = Refutation(after, m, null), message = "$san n'est pas le bon coup. Regardez la réponse des $opp…",
             )
         }

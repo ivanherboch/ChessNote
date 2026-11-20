@@ -462,7 +462,11 @@ class ViewModelsTest {
         vm.setChallenge(true)
         advanceUntilIdle()
         assertFalse(vm.challengeMove(Move.fromUci("d2d4"))) // pas le coup de la leçon…
+        // La pièce va d'abord là où l'élève l'a jouée, pendant que l'Ordinateur juge le coup.
+        assertEquals(Move.fromUci("d2d4"), vm.state.value.tentative?.last)
+        assertEquals(com.ivanherboch.chessduck.chess.PAWN, com.ivanherboch.chessduck.chess.pieceType(vm.state.value.tentative!!.position[com.ivanherboch.chessduck.chess.sqFromName("d4")]))
         advanceUntilIdle()
+        assertNull(vm.state.value.tentative)
         // … mais aussi bon : accepté, la leçon poursuit avec son propre coup, puis la réponse adverse est commentée.
         assertEquals(0, vm.state.value.errors)
         assertTrue(vm.state.value.message.startsWith("Bon coup aussi ! La leçon poursuit avec ${l.line.sans[0]}"))
