@@ -156,7 +156,7 @@ Ng3 : Le cavalier arrive près du roi noir.
 Qc7 : La dame se développe.
 Ne5 : Le cavalier saute au centre.
 Nxe5 : Les Noirs échangent.
-Bxe5 : Le fou reprend : il vise la case g7.
+Bxe5 : Le fou reprend : il vise la case g7. L'Ordinateur préfère un autre coup, mais Lasker prépare déjà son attaque.
 Qc6 : La dame vise la case g2.
 Qe2 : La dame protège l'aile roi.
 a6 : Les Noirs préparent b5.
@@ -315,7 +315,7 @@ h4 : Les Blancs attendent : les Noirs n'ont plus de coups utiles.
 h5 : Les Noirs jouent un coup de pion.
 Kh2 : Le roi blanc attend lui aussi.
 g6 : Le dernier coup de pion noir.
-g3 : Les Noirs sont en zugzwang : chaque coup perd du matériel. Ils abandonnent. À retenir : gagnez de l'espace, occupez la colonne ouverte avec toutes vos pièces lourdes, puis laissez l'adversaire sans coup utile.
+g3 : Les Noirs sont en zugzwang : chaque coup perd du matériel. Ils abandonnent. L'Ordinateur trouve un gain encore plus direct, mais le coup d'attente d'Alekhine illustre parfaitement le zugzwang. À retenir : gagnez de l'espace, occupez la colonne ouverte avec toutes vos pièces lourdes, puis laissez l'adversaire sans coup utile.
 
 # La percée de Botvinnik : Botvinnik contre Capablanca, AVRO 1938 | Mikhaïl Botvinnik bâtit un centre de pions, sacrifie son pion a pour ouvrir le jeu, puis conclut par un sacrifice de fou et une marche du pion e jusqu'à la septième rangée. | w | id=193 level=5 kind=model_game
 d4 : Botvinnik ouvre avec le pion dame.
