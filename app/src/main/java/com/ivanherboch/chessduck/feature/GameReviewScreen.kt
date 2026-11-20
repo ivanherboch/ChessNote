@@ -56,6 +56,7 @@ import com.ivanherboch.chessduck.ui.DuckButton
 import com.ivanherboch.chessduck.ui.DuckIconButton
 import com.ivanherboch.chessduck.ui.EqualRow
 import com.ivanherboch.chessduck.ui.FeedbackCard
+import com.ivanherboch.chessduck.ui.icons.School
 import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.LocalFeedback
 import com.ivanherboch.chessduck.ui.ModuleLayout
@@ -71,7 +72,7 @@ private val NOTES = listOf("!!", "!", "?!", "?", "??")
 private val NOTE_NAMES = mapOf("!!" to "brillant", "!" to "très bon", "?!" to "imprécision", "?" to "erreur", "??" to "gaffe")
 
 @Composable
-internal fun ReviewLayout(vm: GameReviewViewModel, r: Review) {
+internal fun ReviewLayout(vm: GameReviewViewModel, r: Review, onTrainTopic: ((ReviewTopic) -> Unit)? = null) {
     val c = LocalDuck.current
     BackHandler { vm.close() }
     val line = r.line
@@ -138,11 +139,21 @@ internal fun ReviewLayout(vm: GameReviewViewModel, r: Review) {
                 val (c0, t0) = ReviewComments.comment(g, line, cur - 1, r.analysis)
                 val text = c0 + if (cur == line.size) " " + ReviewComments.ending(g) else ""
                 val title = line.stepTitle(cur, note = note)
+                // Pont vers l'Académie : la faute du joueur relève d'un thème enseigné (pièce en prise, mat manqué…).
+                val topic = onTrainTopic?.let { ReviewComments.topic(g, line, cur - 1, r.analysis) }
+                val action: (@Composable () -> Unit)? = topic?.let { t ->
+                    {
+                        DuckButton(
+                            "Travailler ce point dans l'Académie", { onTrainTopic(t) }, Modifier.fillMaxWidth(),
+                            accent = c.green, icon = Icons.Rounded.School,
+                        )
+                    }
+                }
                 if (wide) {
                     // Tablette : commentaire puis tableau complet des coups sur deux colonnes.
-                    FeedbackCard(text, t0, Modifier.padding(top = 4.dp).heightIn(max = 180.dp), title = title)
+                    FeedbackCard(text, t0, Modifier.padding(top = 4.dp).heightIn(max = 220.dp), title = title, action = action)
                 } else {
-                    FeedbackCard(text, t0, Modifier.padding(top = 4.dp).weight(1f), title = title)
+                    FeedbackCard(text, t0, Modifier.padding(top = 4.dp).weight(1f), title = title, action = action)
                 }
             }
             if (wide) MoveTable(line, cur, notes, vm::jump, Modifier.padding(top = 6.dp).weight(1f))

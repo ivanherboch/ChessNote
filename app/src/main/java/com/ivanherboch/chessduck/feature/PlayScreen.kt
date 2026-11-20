@@ -79,11 +79,11 @@ fun annotationColor(a: String): Color = when (a) {
 internal data class Players(val white: Pair<String, String?>, val black: Pair<String, String?>)
 
 @Composable
-fun PlayScreen(vm: PlayViewModel, rv: GameReviewViewModel) {
+fun PlayScreen(vm: PlayViewModel, rv: GameReviewViewModel, onTrainTopic: ((ReviewTopic) -> Unit)? = null) {
     val review by rv.review.collectAsStateWithLifecycle()
     // Entrée et sortie de la revue en fondu ; le bouton Retour Android quitte la revue.
     AnimatedContent(review != null, label = "revue", transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(140)) }) { inReview ->
-        if (inReview) review?.let { ReviewLayout(rv, it) } else LiveGame(vm, rv::openReview)
+        if (inReview) review?.let { ReviewLayout(rv, it, onTrainTopic) } else LiveGame(vm, rv::openReview)
     }
 }
 

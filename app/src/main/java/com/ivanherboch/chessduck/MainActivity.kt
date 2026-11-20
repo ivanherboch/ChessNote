@@ -83,6 +83,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ivanherboch.chessduck.data.Settings
 import com.ivanherboch.chessduck.feature.AcademyScreen
 import com.ivanherboch.chessduck.feature.AcademyViewModel
+import com.ivanherboch.chessduck.feature.ReviewTopic
 import com.ivanherboch.chessduck.feature.KidScreen
 import com.ivanherboch.chessduck.feature.KidViewModel
 import com.ivanherboch.chessduck.feature.NotationScreen
@@ -231,6 +232,8 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
     // Passerelles de l'Académie : thème à travailler dans Problèmes, position à jouer dans le Jeu Libre.
     var trainTheme by remember { mutableStateOf<Pair<String, Int>?>(null) }
     var playPosition by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    // Pont Revue de partie → Académie : point faible à travailler (leçon et 5 exercices).
+    var academyTopic by remember { mutableStateOf<ReviewTopic?>(null) }
     val content: @Composable (Modifier) -> Unit = { m ->
         AnimatedContent(
             targetState = tab, modifier = m, label = "onglet",
@@ -240,11 +243,17 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
             holder.SaveableStateProvider(t) {
                 when (t) {
                     0 -> NotationScreen(viewModel<NotationViewModel>(factory = DuckViewModels.Factory))
-                    1 -> AcademyScreen(
-                        viewModel<AcademyViewModel>(factory = DuckViewModels.Factory),
-                        onTrainTheme = { theme, level -> trainTheme = theme to level; select(2) },
-                        onPlayPosition = { fen, white -> playPosition = fen to white; select(3) },
-                    )
+                    1 -> {
+                        val avm = viewModel<AcademyViewModel>(factory = DuckViewModels.Factory)
+                        LaunchedEffect(academyTopic) {
+                            academyTopic?.let { t -> avm.trainTopic(t.lessonId, t.theme); academyTopic = null }
+                        }
+                        AcademyScreen(
+                            avm,
+                            onTrainTheme = { theme, level -> trainTheme = theme to level; select(2) },
+                            onPlayPosition = { fen, white -> playPosition = fen to white; select(3) },
+                        )
+                    }
                     2 -> {
                         val pvm = viewModel<PuzzlesViewModel>(factory = DuckViewModels.Factory)
                         LaunchedEffect(trainTheme) {
@@ -258,7 +267,7 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                         LaunchedEffect(playPosition) {
                             playPosition?.let { (fen, white) -> review.close(); play.startFromPosition(fen, white); playPosition = null }
                         }
-                        PlayScreen(play, review)
+                        PlayScreen(play, review, onTrainTopic = { t -> academyTopic = t; select(1) })
                     }
                 }
             }

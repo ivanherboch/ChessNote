@@ -97,7 +97,11 @@ object ReviewComments {
     }
 
     /** Pourquoi le coup joué est fautif : la première explication concrète qui s'applique. */
-    private fun explain(v: Voice, p: Position, m: Move, san: String, a0: Analysis, a1: Analysis): String {
+    private fun explain(v: Voice, p: Position, m: Move, san: String, a0: Analysis, a1: Analysis): String =
+        diagnose(v, p, m, san, a0, a1).first
+
+    /** Explication d'une faute et, s'il y a lieu, le point faible qu'elle révèle (pont vers l'Académie). */
+    private fun diagnose(v: Voice, p: Position, m: Move, san: String, a0: Analysis, a1: Analysis): Pair<String, ReviewTopic?> {
         val after = p.play(m)
         val reply = a1.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { after.isLegal(it) }
         val best = a0.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { p.isLegal(it) && it != m }
@@ -105,8 +109,8 @@ object ReviewComments {
         // 1. Le coup autorise un mat rapide.
         val n = mateFor(a1.eval, !p.whiteToMove)
         if (n != null && reply != null) {
-            return if (n <= 2) "en jouant $san, ${v.f("vous permettez", "il permet")} à l'adversaire de faire échec et mat en $n (${after.san(reply)})."
-            else "$san laisse l'adversaire lancer une attaque décisive contre ${v.f("votre", "son")} roi."
+            return (if (n <= 2) "en jouant $san, ${v.f("vous permettez", "il permet")} à l'adversaire de faire échec et mat en $n (${after.san(reply)})."
+            else "$san laisse l'adversaire lancer une attaque décisive contre ${v.f("votre", "son")} roi.") to ReviewTopic.ALLOWED_MATE
         }
         // 2. Une pièce est laissée en prise.
         if (reply != null && after.isCapture(reply)) {
@@ -114,8 +118,8 @@ object ReviewComments {
             val gained = if (p.isCapture(m)) PIECE_VALUES[p.capturedType(m)] else 0
             if (PIECE_VALUES[victim] > gained) {
                 val rs = after.san(reply)
-                return if (reply.to == m.to) "en jouant $san, ${v.f("vous exposez", "il expose")} ${poss(v, victim)} : $rs peut ${it(victim)} capturer."
-                else "$san laisse ${poss(v, victim)} en ${sqName(reply.to)} sans protection suffisante : $rs ${it(victim)} capture."
+                return (if (reply.to == m.to) "en jouant $san, ${v.f("vous exposez", "il expose")} ${poss(v, victim)} : $rs peut ${it(victim)} capturer."
+                else "$san laisse ${poss(v, victim)} en ${sqName(reply.to)} sans protection suffisante : $rs ${it(victim)} capture.") to ReviewTopic.HANGING_PIECE
             }
         }
         if (best != null) {
@@ -126,28 +130,48 @@ object ReviewComments {
                 val victim = p.capturedType(best)
                 val free = p.attackers(best.to, !p.whiteToMove).isEmpty()
                 if (free || PIECE_VALUES[victim] >= PIECE_VALUES[bt]) {
-                    return "${v.f("vous avez", "il a")} manqué l'occasion de capturer ${the(victim)} en ${sqName(best.to)} avec $bs : cela ${v.f("vous ", "lui ")}aurait donné l'avantage."
+                    return "${v.f("vous avez", "il a")} manqué l'occasion de capturer ${the(victim)} en ${sqName(best.to)} avec $bs : cela ${v.f("vous ", "lui ")}aurait donné l'avantage." to ReviewTopic.MISSED_CAPTURE
                 }
             }
             // 4. Une pièce attaquée n'a pas été mise à l'abri.
             if (attackedCheaply(p, best.from) && bt != PAWN && bt != KING && best.from != m.from) {
-                return "${poss(v, bt)} en ${sqName(best.from)} était attaqué${if (PieceLexiconFr.isFeminine(bt)) "e" else ""} : il fallait ${it(bt)} mettre à l'abri avec $bs."
+                return "${poss(v, bt)} en ${sqName(best.from)} était attaqué${if (PieceLexiconFr.isFeminine(bt)) "e" else ""} : il fallait ${it(bt)} mettre à l'abri avec $bs." to ReviewTopic.HANGING_PIECE
             }
             // 5. Un échec fort a été manqué.
-            if (bs.endsWith("+")) return "${v.f("vous auriez dû", "il aurait dû")} donner échec avec $bs pour garder l'initiative."
+            if (bs.endsWith("+")) return "${v.f("vous auriez dû", "il aurait dû")} donner échec avec $bs pour garder l'initiative." to null
             // 6. Principes d'ouverture.
-            if (p.isCastle(best)) return "${v.f("vous auriez dû", "il aurait dû")} mettre ${v.f("votre", "son")} roi à l'abri en roquant ($bs)."
+            if (p.isCastle(best)) return "${v.f("vous auriez dû", "il aurait dû")} mettre ${v.f("votre", "son")} roi à l'abri en roquant ($bs)." to ReviewTopic.CASTLING
             if (p.fullmove <= 14) {
                 if ((bt == KNIGHT || bt == BISHOP) && rankOf(best.from) == (if (p.whiteToMove) 0 else 7)) {
-                    return "${v.f("vous auriez dû", "il aurait dû")} développer ${poss(v, bt)} avec $bs pour prendre part à la bataille du centre."
+                    return "${v.f("vous auriez dû", "il aurait dû")} développer ${poss(v, bt)} avec $bs pour prendre part à la bataille du centre." to ReviewTopic.DEVELOPMENT
                 }
                 if (bt == PAWN && fileOf(best.to) in 3..4 && rankOf(best.to) in 2..5) {
-                    return "${v.f("vous auriez dû", "il aurait dû")} occuper le centre avec $bs."
+                    return "${v.f("vous auriez dû", "il aurait dû")} occuper le centre avec $bs." to ReviewTopic.DEVELOPMENT
                 }
             }
-            return "$bs était plus fort que $san."
+            return "$bs était plus fort que $san." to null
         }
-        return "$san affaiblit ${v.f("votre", "sa")} position."
+        return "$san affaiblit ${v.f("votre", "sa")} position." to null
+    }
+
+    /**
+     * Point faible révélé par le coup n° [i] (indice 0), seulement pour un joueur humain et une faute nette :
+     * mat manqué, gaffe, erreur ou imprécision dont l'explication relève d'un thème de l'Académie.
+     */
+    fun topic(g: GameRecord, line: Line, i: Int, analysis: List<Analysis?>): ReviewTopic? {
+        if (i !in 0 until line.size) return null
+        val p = line.positions[i]
+        val v = voice(g, p.whiteToMove)
+        if (!v.human) return null
+        val a0 = analysis.getOrNull(i) ?: return null
+        val a1 = analysis.getOrNull(i + 1) ?: return null
+        val m = line.moves[i]
+        val san = line.sans[i]
+        if (san.endsWith("#")) return null
+        if (GameLogic.missedMate(p.whiteToMove, a0, a1) != null) return ReviewTopic.MISSED_MATE
+        val note = GameLogic.annotate(p, m, a0, a1, if (i > 0) line.moves[i - 1] else null)
+        if (note != "??" && note != "?" && note != "?!") return null
+        return diagnose(v, p, m, san, a0, a1).second
     }
 
     /**

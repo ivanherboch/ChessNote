@@ -83,4 +83,41 @@ class ReviewCommentsTest {
         assertTrue(text, "Qh4# matait immédiatement" in text)
         assertTrue(text, "Après Be7, il lui faut encore 2 coups pour mater." in text)
     }
+
+    /** Pont Revue → Académie : la faute du joueur humain désigne la leçon et le thème à travailler. */
+    @Test
+    fun blundersPointToAnAcademyTopic() {
+        val human = record(true, true, "Ivan", "")
+        // Dame laissée en prise : « Pièce laissée en prise », leçon d'initiation et exercices « hangingPiece ».
+        val hanging = ReviewComments.topic(human, line, 4, analysis)
+        assertEquals(com.ivanherboch.chessduck.feature.ReviewTopic.HANGING_PIECE, hanging)
+        assertEquals("hangingPiece", hanging!!.theme)
+        assertEquals("Initiation : la pièce gratuite", com.ivanherboch.chessduck.content.Lessons.byId(hanging.lessonId).title)
+        // Les coups de l'ordinateur et les bons coups ne proposent rien.
+        assertEquals(null, ReviewComments.topic(record(true, false, "", "Ivan"), line, 4, analysis))
+        assertEquals(null, ReviewComments.topic(human, line, 0, analysis))
+        // Mat en 1 manqué, prise gagnante manquée.
+        val m = Line.fromSan("6k1/5ppp/8/8/8/8/8/3R2K1 w - - 0 1", listOf("Kf2"))
+        assertEquals(com.ivanherboch.chessduck.feature.ReviewTopic.MISSED_MATE,
+            ReviewComments.topic(record(false, true, "Ivan", "Léa"), m, 0, listOf(Analysis(100000 - 1, null, "d1d8"), Analysis(500, null, "g7g6"))))
+        val l = Line.fromSan("4k3/8/8/3q4/8/8/8/R2R2K1 w - - 0 1", listOf("Kf1"))
+        assertEquals(com.ivanherboch.chessduck.feature.ReviewTopic.MISSED_CAPTURE,
+            ReviewComments.topic(record(false, true, "Ivan", "Léa"), l, 0, listOf(Analysis(900, 0, "d1d5"), Analysis(-100, null, "e8e7"))))
+    }
+
+    /** Bilan : les erreurs des parties et les difficultés de l'Académie donnent au plus 3 priorités, les plus fréquentes d'abord. */
+    @Test
+    fun weakTopicsBalanceGamesAndAcademy() {
+        val game = record(true, true, "Ivan", "").copy(moves = "e2e4 e7e5 d1h5 b8c6 h5f7 e8f7", analysis = Analysis.encodeAll(analysis))
+        assertEquals(mapOf(com.ivanherboch.chessduck.feature.ReviewTopic.HANGING_PIECE to 1), com.ivanherboch.chessduck.feature.WeakTopics.fromGame(game))
+        val struggling = com.ivanherboch.chessduck.data.LessonProgress(lessonId = 41, masteredAt = 0, errors = 3, practiceTotal = 5, practicePassed = 2)
+        val fine = com.ivanherboch.chessduck.data.LessonProgress(lessonId = 42, masteredAt = 0, errors = 1)
+        val p = com.ivanherboch.chessduck.feature.WeakTopics.compute(listOf(game, game.copy(id = 2)), listOf(struggling, fine))
+        assertEquals(2, p.size)
+        // La leçon du clouage (3 erreurs + 3 exercices manqués) passe avant la pièce en prise vue 2 fois.
+        assertEquals(41, p[0].lessonId)
+        assertTrue(p[0].reason, "3 erreurs en Défi" in p[0].reason && "3 exercices manqués" in p[0].reason)
+        assertEquals("Pièce laissée en prise", p[1].title)
+        assertTrue(p[1].reason, "2 fois" in p[1].reason)
+    }
 }

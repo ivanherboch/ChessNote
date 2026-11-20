@@ -410,6 +410,27 @@ class ViewModelsTest {
 
 
 
+    /** Pont Revue → Académie et bilan : la leçon du point faible s'ouvre et 5 exercices de son thème suivent. */
+    @Test
+    fun academyTrainTopicOpensLessonAndExercises() = test {
+        val vm = academy(puzzles = FakePuzzles(puzzleSet.map { it.copy(primaryTheme = "hangingPiece") }))
+        advanceUntilIdle()
+        val t = com.ivanherboch.chessduck.feature.ReviewTopic.HANGING_PIECE
+        vm.trainTopic(t.lessonId, t.theme); advanceUntilIdle()
+        assertEquals(136, vm.state.value.lessonId)
+        val p = vm.state.value.practice!!
+        assertEquals(com.ivanherboch.chessduck.feature.PracticeKind.LESSON, p.kind)
+        assertEquals(5, p.ids.size)
+        solveSeries(vm)
+        assertEquals(5, vm.state.value.practice!!.score)
+        // Sans thème (développement : leçon des principes), seule la leçon s'ouvre.
+        vm.closePractice()
+        vm.trainTopic(1, ""); advanceUntilIdle()
+        assertEquals(1, vm.state.value.lessonId)
+        assertNull(vm.state.value.practice)
+        assertTrue(vm.priorities.value.isEmpty())
+    }
+
     /** Réponse imposée au faux moteur : la position obtenue après [m] vaut [score] pour le camp au trait. */
     private fun FakeEngine.after(pos: Position, m: Move, score: Int) {
         val after = pos.play(m)

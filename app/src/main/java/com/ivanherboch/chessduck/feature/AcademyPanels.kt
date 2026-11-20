@@ -27,6 +27,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
@@ -131,11 +133,25 @@ internal fun TrainingHeader(title: String, onClose: () -> Unit) {
 internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, onClose: () -> Unit) {
     val c = LocalDuck.current
     fun go(action: () -> Unit): () -> Unit = { onClose(); action() }
+    val priorities by vm.priorities.collectAsStateWithLifecycle()
     DuckSheet("Entraînements", onClose) {
         Text(
             "Votre palier : ${levelName(home.level)}." + if (home.placementDone) "" else " Un court test de placement peut l'ajuster.",
             color = c.muted, style = MaterialTheme.typography.bodyMedium,
         )
+        // Bilan des thèmes faibles : les 3 priorités du moment (parties analysées, Défis et exercices).
+        SectionTitle("Vos 3 priorités")
+        if (priorities.isEmpty()) {
+            Text(
+                "Analysez vos parties du Jeu Libre et travaillez des leçons : vos points faibles apparaîtront ici.",
+                color = c.muted, style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        priorities.forEachIndexed { i, p ->
+            Text("${i + 1}. ${p.title}", color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 6.dp))
+            Text(p.reason, color = c.muted, style = MaterialTheme.typography.bodyMedium)
+            TrainingButton(if (p.theme.isEmpty()) "Revoir la leçon" else "Travailler ce point : leçon et 5 exercices", go { vm.trainTopic(p.lessonId, p.theme) })
+        }
         SectionTitle("Réflexes")
         TrainingButton(ReflexKind.THREAT.label, go { vm.startReflex(ReflexKind.THREAT) })
         TrainingButton("Le seul coup", go(vm::startOnlyMove))

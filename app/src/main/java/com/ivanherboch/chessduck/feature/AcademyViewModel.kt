@@ -14,6 +14,7 @@ import com.ivanherboch.chessduck.content.LessonCategory
 import com.ivanherboch.chessduck.content.LessonKind
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.data.AcademyAssessment
+import com.ivanherboch.chessduck.data.GameRepository
 import com.ivanherboch.chessduck.data.LessonProgress
 import com.ivanherboch.chessduck.data.LessonProgressRepository
 import com.ivanherboch.chessduck.data.PuzzleRepository
@@ -28,6 +29,7 @@ import com.ivanherboch.chessduck.ui.moveAnim
 import com.ivanherboch.chessduck.util.runCatchingSuspend
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +37,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -173,6 +177,8 @@ class AcademyViewModel(
     private val saved: SavedStateHandle = SavedStateHandle(),
     private val random: Random = Random(System.nanoTime()),
     clock: () -> Long = System::currentTimeMillis,
+    /** Parties du Jeu Libre, pour le bilan des thèmes faibles (facultatif). */
+    games: GameRepository? = null,
 ) : ViewModel() {
     private val _state = MutableStateFlow(AcademyState())
     val state: StateFlow<AcademyState> = _state.asStateFlow()
@@ -191,6 +197,11 @@ class AcademyViewModel(
             continueId = srs.continueLesson(Lessons.all, byId, current)?.id,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AcademyHome())
+
+    /** Bilan : les 3 priorités du moment, d'après les parties analysées et la progression dans l'Académie. */
+    val priorities: StateFlow<List<Priority>> = combine(games?.games() ?: flowOf(emptyList()), lessons.progress()) { g, p ->
+        WeakTopics.compute(g, p)
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Lecture automatique et séquences du mode Défi : un seul travail à la fois. */
     private val playback = LinePlaybackController(viewModelScope)
@@ -762,6 +773,19 @@ class AcademyViewModel(
         val l = lesson
         if (l.theme.isEmpty()) return
         startSeries(PracticeKind.LESSON, List(PRACTICE_SIZE) { PuzzleSpec(listOf(l.theme), AcademyAssessments.levelRange(l.level)) })
+    }
+
+    /**
+     * Pont depuis la revue de partie ou le bilan : ouvre la leçon qui enseigne le point faible et lance 5 exercices
+     * de son thème, au palier du joueur. Sans thème, la leçon seule est ouverte.
+     */
+    fun trainTopic(lessonId: Int, theme: String) {
+        open(lessonId)
+        if (theme.isEmpty()) return
+        viewModelScope.launch {
+            val level = prefs.settings.first().academyLevel.coerceAtLeast(2)
+            startSeries(PracticeKind.LESSON, List(PRACTICE_SIZE) { PuzzleSpec(listOf(theme), AcademyAssessments.levelRange(level)) }, level)
+        }
     }
 
     /** « Le seul coup » : 5 positions où une seule défense tient. */
