@@ -195,6 +195,15 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
   `skipGuess`, `startReviews/nextReview`, `startRepertoire/nextRepertoire`, `startPlacement`, `startExam`, `validation(l)`.
   Écran : `AcademyPanels.kt` (bandeau, tiroir Entraînements, panneaux finale/réflexes/série/QCM, variantes).
 
+### Relais refonte Académie (étape 3 en cours, contenu terminé)
+- 210 leçons, identifiants 1–210 sans trou : bases 115–130 (`basics.txt`, palier 1, catégorie `BASICS`), méthode et
+  initiation 131–138, tactique 139–153 (`middlegames.txt`), stratégie 154–171 (`strategy.txt`, catégorie `STRATEGY`),
+  finales 172–187, parties modèles 188–194 (`model_games.txt`), ouvertures nouvelles 195–210 (`openings.txt`).
+- Les 37 ouvertures d'origine ont toutes `IDEA` ×3, `TRAP` ×2, 2 `VARIANT` et un `QUIZ`.
+- Finales jouables ajoutées : `KQKP`, `QUEEN_BISHOP_PAWN_DRAW`, `VANCURA_DRAW` (`EndgamePractice.kt`, règle `pawnGone`).
+- Audit : dans une partie modèle, un coup historique imprécis n'est accepté que si son commentaire contient
+  « Ordinateur ». Positions des leçons PUZZLE ajoutées à `scripts/lessons/puzzles.json` depuis la base embarquée.
+
 ### Relais refonte Académie (état après l'étape 1, v2.6.0)
 - Sources : en-tête `# Titre | Résumé | w/b/PUZZLE id | id=N level= order= theme= kind=line` ; `?SAN : …` / `-? …` =
   arrêt « À vous » ; lignes `TAKEAWAY:`, `CONDITIONS:`, `SHOW n: marks=e4,d5 arrows=f3e5`. Ids figés 1–37 / 38–75 / 76–113.
