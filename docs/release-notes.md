@@ -1,3 +1,11 @@
+## ChessDuck 2.7.1 — le Défi suit la méthode de la leçon
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Défi corrigé : quand la leçon mène au mat, un autre coup n'est accepté que s'il mate au moins aussi vite. Par exemple, dans le mat avec deux tours, Rh2 garde le mat mais ne suit pas l'escalier. Le coup est montré, compté comme une erreur (« garde le mat, mais plus lentement »), puis la position revient sans que la leçon joue son propre coup.
+- Même règle en tactique : gagner une dame au lieu de mater n'est plus considéré comme « aussi bon ».
+- Même règle dans les arrêts « À vous » du mode Guidé.
+
 ## ChessDuck 2.7.0 — s'entraîner pour de vrai (Académie, étape 2)
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

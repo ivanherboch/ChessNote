@@ -16,6 +16,8 @@ enum class Verdict {
     EQUIVALENT,
     /** Un coup nettement moins bon. */
     WORSE,
+    /** Un coup qui garde le mat, mais moins vite que la méthode de la leçon. */
+    SLOWER,
     /** L'Ordinateur n'a pas pu trancher (absent ou trop lent) : seul le coup attendu est accepté. */
     UNAVAILABLE,
 }
@@ -24,9 +26,10 @@ enum class Verdict {
  * Juge de coups de l'Académie : un coup différent de celui de la leçon est-il aussi bon ?
  * L'Ordinateur cherche les 4 meilleures suites (MultiPV) ; un coup absent de ces suites est évalué depuis la position
  * qu'il donne. Les deux scores (point de vue du joueur) sont comparés en probabilité de gain ([winPercent]).
+ * - Leçon qui mène au mat : un autre coup n'est équivalent que s'il mate au moins aussi vite ; s'il garde le mat mais
+ *   plus lentement, c'est [Verdict.SLOWER] (la méthode de la leçon est plus directe) ; s'il perd le mat, il est moins bon.
  * - Ouverture et milieu de partie : équivalent si la perte est d'au plus [MAX_LOSS] points de pourcentage.
- * - Finale : le résultat théorique doit être préservé. Un mat forcé doit rester un mat forcé (mat en 6 au lieu de 5
- *   accepté) ; un gain décisif (≥ 95 %) ne doit pas passer sous 90 % (pat, gain gâché) ; une nulle ne doit pas perdre
+ * - Finale : un gain décisif (≥ 95 %) ne doit pas passer sous 90 % (pat, gain gâché) ; une nulle ne doit pas perdre
  *   plus de 12 points.
  */
 class MoveJudge(private val engine: ChessEngine, private val movetimeMs: Int = 250) {
@@ -36,7 +39,7 @@ class MoveJudge(private val engine: ChessEngine, private val movetimeMs: Int = 2
         if (!position.isLegal(played)) return Verdict.WORSE
         if (position.play(played).isCheckmate) return Verdict.EQUIVALENT
         val (mine, target) = scores(position, played, expected) ?: return Verdict.UNAVAILABLE
-        return if (acceptable(mine, target, endgame)) Verdict.EQUIVALENT else Verdict.WORSE
+        return compare(mine, target, endgame)
     }
 
     /**
@@ -75,15 +78,23 @@ class MoveJudge(private val engine: ChessEngine, private val movetimeMs: Int = 2
         const val MAX_LOSS = 6.0
 
         /** Règle de comparaison, isolée pour les tests : [mine] et [target] du point de vue du joueur. */
-        fun acceptable(mine: Int, target: Int, endgame: Boolean): Boolean {
+        fun compare(mine: Int, target: Int, endgame: Boolean): Verdict {
+            if (isMateScore(target) && target > 0) return when {
+                // Mat codé MATE − n : plus le score est grand, plus le mat est rapide.
+                isMateScore(mine) && mine > 0 && mine >= target -> Verdict.EQUIVALENT
+                isMateScore(mine) && mine > 0 -> Verdict.SLOWER
+                else -> Verdict.WORSE
+            }
             val wMine = winPercent(mine)
             val wTarget = winPercent(target)
-            if (!endgame) return wTarget - wMine <= MAX_LOSS
-            return when {
-                isMateScore(target) && target > 0 -> isMateScore(mine) && mine > 0
+            val ok = when {
+                !endgame -> wTarget - wMine <= MAX_LOSS
                 wTarget >= 95.0 -> wMine >= 90.0
                 else -> wTarget - wMine <= 12.0
             }
+            return if (ok) Verdict.EQUIVALENT else Verdict.WORSE
         }
+
+        fun acceptable(mine: Int, target: Int, endgame: Boolean): Boolean = compare(mine, target, endgame) == Verdict.EQUIVALENT
     }
 }

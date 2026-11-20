@@ -454,6 +454,29 @@ class ViewModelsTest {
         assertEquals(end, vm.state.value.cursor)
     }
 
+    /** Un coup qui garde le mat mais plus lentement : montré, compté comme une erreur, puis la position revient (pas de coup de la leçon joué). */
+    @Test
+    fun academySlowerMateIsRejectedWithoutPlayingTheLessonMove() = test {
+        val engine = FakeEngine()
+        val vm = academy(engine = engine)
+        advanceUntilIdle()
+        val l = Lessons.all.first { it.drill == "KRRK" }
+        vm.open(l.id)
+        vm.setChallenge(true)
+        advanceUntilIdle()
+        val pos = l.line.positions[0]
+        val rh2 = Move.fromUci("h1h2")
+        engine.scripted[pos.toFen().split(' ').take(4).joinToString(" ")] =
+            SearchResult(l.line.moves[0], listOf(PvLine(l.line.moves[0], com.ivanherboch.chessduck.engine.MATE - 9), PvLine(rh2, com.ivanherboch.chessduck.engine.MATE - 13)))
+        assertFalse(vm.challengeMove(rh2))
+        assertEquals(rh2, vm.state.value.tentative?.last) // la tour va d'abord en h2
+        advanceUntilIdle()
+        assertNull(vm.state.value.tentative)
+        assertEquals(0, vm.state.value.cursor) // la tour attendue n'a pas bougé
+        assertEquals(1, vm.state.value.errors)
+        assertTrue(vm.state.value.message.contains("plus lentement"))
+    }
+
     @Test
     fun academyAcceptsEquivalentMovesAndShowsReplies() = test {
         val vm = academy() // faux moteur : toutes les positions se valent

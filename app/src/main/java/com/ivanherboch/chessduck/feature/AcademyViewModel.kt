@@ -402,7 +402,8 @@ class AcademyViewModel(
                     _state.update {
                         it.copy(
                             judging = false, tentative = null, anim = null, noteTone = Tone.GOLD,
-                            note = "$san n'est pas le coup de la leçon. Cherchez encore, ou touchez Lecture pour le découvrir.",
+                            note = if (v == Verdict.SLOWER) "$san garde le mat, mais plus lentement : la méthode de la leçon est plus directe. Cherchez encore, ou touchez Lecture pour la découvrir."
+                            else "$san n'est pas le coup de la leçon. Cherchez encore, ou touchez Lecture pour le découvrir.",
                         )
                     }
                 }
@@ -606,6 +607,18 @@ class AcademyViewModel(
                     accept(s.cursor, "Bon coup aussi ! La leçon poursuit avec ${ln.sans[s.cursor]} : ${texts()[s.cursor]}")
                 }
                 Verdict.WORSE -> refute(pos, m)
+                Verdict.SLOWER -> {
+                    // Pas une faute grave, mais pas la méthode : le coup est montré, puis la position revient.
+                    pulse(false)
+                    _state.update {
+                        it.copy(
+                            errors = it.errors + 1, tone = Tone.GOLD,
+                            message = "${pos.san(m)} garde le mat, mais plus lentement. La méthode de la leçon est plus directe : retrouvez-la.",
+                        )
+                    }
+                    delay(tentativeHold)
+                    _state.update { it.copy(judging = false, tentative = null, anim = null) }
+                }
                 Verdict.UNAVAILABLE -> {
                     pulse(false)
                     _state.update {
