@@ -161,6 +161,22 @@ object ReflexDrills {
         }
         return CaptureItem(pos, m, gain > 0, text)
     }
+
+    /** La réponse de l'Ordinateur à la prise [m], en une phrase : reprise, mat, prise ailleurs ou échec. */
+    fun replyText(after: Position, m: Move, r: Move, good: Boolean): String {
+        val san = after.san(r)
+        val next = after.play(r)
+        val victim = after[r.to].takeIf { it != 0 }?.let { pieceType(it) }
+        val what = when {
+            next.isCheckmate -> "l'adversaire materait par $san"
+            r.to == m.to -> "l'adversaire reprend par $san"
+            victim != null -> "l'adversaire répond $san et prend ${PieceLexiconFr.definite(victim)} en ${sqName(r.to)}"
+            next.inCheck -> "l'adversaire répond $san, avec échec"
+            else -> "l'adversaire répond $san"
+        }
+        return if (good) "Après la prise, la meilleure défense : $what, et vous gardez l'avantage."
+        else "Après la prise, $what : la prise ne tient pas."
+    }
 }
 
 /** Type d'exercice de réflexes. */
@@ -243,7 +259,7 @@ class ReflexTrainer(
                 val item: Any? = when (kind) {
                     ReflexKind.THREAT -> ReflexDrills.threatFrom(p)?.takeIf { threatConfirmed(it) }
                     ReflexKind.CAPTURE -> runCatching { Line.fromUci(p.fen, p.moves).positions[1] }.getOrNull()
-                        ?.let { ReflexDrills.captureFrom(it, random) }?.takeIf { confirmed(it) }
+                        ?.let { ReflexDrills.captureFrom(it, random) }?.let { confirmed(it) }
                     ReflexKind.BLIND -> ReflexDrills.blindFrom(p)
                 }
                 if (item != null && queue.none { it == item }) queue.add(item)
@@ -270,17 +286,23 @@ class ReflexTrainer(
         return best.to in t.targets
     }
 
-    /** L'Ordinateur confirme-t-il le verdict ? (sans réponse du moteur, on garde le verdict matériel) */
-    private suspend fun confirmed(c: CaptureItem): Boolean {
-        if (!engineOk) return true
+    /**
+     * L'Ordinateur confirme-t-il le verdict ? Si oui, l'explication gagne sa réponse à la prise (la suite tactique, pas
+     * seulement le compte du matériel) ; sinon l'exercice est écarté (null). Sans réponse du moteur, on garde le verdict
+     * matériel.
+     */
+    private suspend fun confirmed(c: CaptureItem): CaptureItem? {
+        if (!engineOk) return c
         val best = runCatchingSuspend { withTimeoutOrNull(2_000) { engine.search(c.position.toFen(), 200).score } }.getOrNull()
-            ?: return true.also { engineOk = false }
+            ?: return c.also { engineOk = false }
         val after = c.position.play(c.capture)
-        if (after.legalMoves.isEmpty()) return c.good
-        val reply = runCatchingSuspend { withTimeoutOrNull(2_000) { engine.search(after.toFen(), 200).score } }.getOrNull()
-            ?: return true.also { engineOk = false }
+        if (after.legalMoves.isEmpty()) return c.takeIf { it.good }
+        val res = runCatchingSuspend { withTimeoutOrNull(2_000) { engine.search(after.toFen(), 200) } }.getOrNull()
+        val reply = res?.score ?: return c.also { engineOk = false }
         val engineGood = best - (-reply) <= 150
-        return engineGood == c.good
+        if (engineGood != c.good) return null
+        val r = res.best?.takeIf { after.isLegal(it) } ?: return c
+        return c.copy(explanation = c.explanation + " " + ReflexDrills.replyText(after, c.capture, r, c.good))
     }
 
     private fun show(index: Int) {

@@ -117,6 +117,9 @@ data class AcademyHome(
     val examsPassed: Set<Int> = emptySet(),
     /** Finales jouables validées (une leçon qui les entraîne est maîtrisée). */
     val endgamesDone: Set<EndgameFamily> = emptySet(),
+    /** Leçons du palier en cours : maîtrisées, et au total (barre de progression du tiroir). */
+    val levelMastered: Int = 0,
+    val levelTotal: Int = 0,
 )
 
 /** Comment une leçon se valide après le Défi. */
@@ -221,6 +224,8 @@ class AcademyViewModel(
             continueId = srs.continueLesson(Lessons.all, byId, current)?.id,
             examsPassed = tests.filter { it.kind == "exam" && it.passed }.map { it.level }.toSet(),
             endgamesDone = Lessons.all.filter { it.drill.isNotEmpty() && byId[it.id]?.mastered == true }.mapNotNull { EndgameFamily.of(it.drill) }.toSet(),
+            levelMastered = Lessons.all.count { it.level == st.academyLevel && byId[it.id]?.mastered == true },
+            levelTotal = Lessons.all.count { it.level == st.academyLevel },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AcademyHome())
 
@@ -279,16 +284,21 @@ class AcademyViewModel(
             val restoredId = saved.get<Int>(KEY_LESSON)
             val restoredChallenge = saved.get<Boolean>(KEY_CHALLENGE) ?: false
             val restoredCursor = saved.get<Int>(KEY_CURSOR) ?: 0
+            val restoredVariant = saved.get<Int>(KEY_VARIANT) ?: 0
             val stored = restoredId ?: prefs.settings.first().lessonId
             // Une leçon ouverte entre-temps (pont depuis la revue de partie, bilan) garde la priorité.
-            if (!openedExplicitly) open(stored, save = false)
+            if (!openedExplicitly) open(stored, save = false, variant = restoredVariant)
             if (restoredId != null && !openedExplicitly) {
-                if (restoredChallenge) setChallenge(true) else if (restoredCursor > 0) goTo(restoredCursor)
+                if (restoredChallenge) resumeChallenge(restoredCursor, saved.get<Int>(KEY_ERRORS) ?: 0, saved.get<Int>(KEY_HINTS) ?: 0)
+                else if (restoredCursor > 0) goTo(restoredCursor)
             }
             state.collect { st ->
                 saved[KEY_LESSON] = st.lessonId
                 saved[KEY_CHALLENGE] = st.challenge
                 saved[KEY_CURSOR] = st.cursor
+                saved[KEY_VARIANT] = st.variant
+                saved[KEY_ERRORS] = st.errors
+                saved[KEY_HINTS] = st.maxHint
             }
         }
     }
@@ -297,6 +307,9 @@ class AcademyViewModel(
         const val KEY_LESSON = "academy_lesson"
         const val KEY_CHALLENGE = "academy_challenge"
         const val KEY_CURSOR = "academy_cursor"
+        const val KEY_VARIANT = "academy_variant"
+        const val KEY_ERRORS = "academy_errors"
+        const val KEY_HINTS = "academy_hints"
         const val PRACTICE_SIZE = 5
         const val PRACTICE_PASS = 4
         const val REVIEW_SIZE = 2
@@ -617,6 +630,21 @@ class AcademyViewModel(
         advanceOpponent()
     }
 
+    /**
+     * Défi interrompu par Android (processus arrêté) : il reprend au coup atteint, avec ses erreurs et ses indices,
+     * au lieu de repartir du début.
+     */
+    private fun resumeChallenge(cursor: Int, errors: Int, hints: Int) {
+        setChallenge(true)
+        val c = cursor.coerceIn(0, line().size)
+        if (c == 0 || c >= line().size) return
+        cancelAll()
+        _state.update {
+            it.copy(cursor = c, errors = errors, maxHint = hints, anim = null, tone = Tone.INFO, message = "Défi repris là où vous l'aviez laissé. ${lesson.summary}")
+        }
+        if (!heroToMove(c)) advanceOpponent()
+    }
+
     fun restartChallenge() {
         cancelAll()
         startChallenge()
@@ -664,8 +692,8 @@ class AcademyViewModel(
         val scoreText = if (model) "\n\nScore : ${s.guessScore} points sur ${s.guessMax}." else ""
         _state.update { it.copy(done = true, stars = stars, tone = Tone.GOOD, message = it.message + takeaway + scoreText) }
         // Séances : révision du jour ou répertoire.
-        state.value.repertoire?.let { return repertoireResult(stars >= 2) }
-        if (state.value.review != null) return reviewChallengeDone(stars >= 2)
+        state.value.repertoire?.let { return repertoireResult(stars >= 2, fluent = stars == 3) }
+        if (state.value.review != null) return reviewChallengeDone(stars >= 2, fluent = stars == 3)
         if (s.variant > 0) {
             // Variante d'ouverture : badge de réussite, sans toucher à la maîtrise (qui suit la ligne principale).
             if (stars >= 2) prefs.markVariantDone("${l.id}:${s.variant}")
@@ -694,7 +722,8 @@ class AcademyViewModel(
         saveProgress(l.id) { p ->
             p.copy(
                 masteredAt = if (p.mastered) p.masteredAt else if (nowMastered) srs.now() else 0,
-                stars = bestStars, errors = s.errors, hintsUsed = s.maxHint,
+                // Cumul de toutes les tentatives (un Défi rejoué n'efface pas les erreurs d'avant) : bilan des points faibles.
+                stars = bestStars, errors = p.errors + s.errors, hintsUsed = p.hintsUsed + s.maxHint,
             )
         }
         _state.update { it.copy(message = it.message + next) }
@@ -1168,7 +1197,7 @@ class AcademyViewModel(
         val total = pr.ids.size
         val text = when (pr.kind) {
             PracticeKind.LESSON -> lessonPracticeDone(score, total)
-            PracticeKind.REVIEW -> { completeReview(score >= 1); "$score sur $total." + if (score >= 1) " Révision réussie." else " Révision à refaire demain." }
+            PracticeKind.REVIEW -> { completeReview(score >= 1, reviewFluent && score == total); "$score sur $total." + if (score >= 1) " Révision réussie." else " Révision à refaire demain." }
             PracticeKind.ONLY_MOVE -> "$score sur $total. " + if (score >= PRACTICE_PASS) "Vous savez repérer la menace et la parer." else "Cherchez d'abord la menace adverse, puis la seule parade."
             PracticeKind.PLACEMENT -> {
                 val level = AcademyAssessments.placementLevel(pr.results)
@@ -1243,7 +1272,7 @@ class AcademyViewModel(
     }
 
     private suspend fun endgameFinished(family: EndgameFamily, score: Int, total: Int) {
-        if (endgameReview) return completeReview(score == total)
+        if (endgameReview) return completeReview(score == total, reviewFluent)
         val id = endgameLesson ?: return
         val passed = score >= EndgameTrainer.PASS
         saveProgress(id) { p ->
@@ -1366,8 +1395,12 @@ class AcademyViewModel(
         open(r.queue[index], save = false, session = true)
     }
 
-    private suspend fun reviewChallengeDone(success: Boolean) {
+    /** Révision réussie sans erreur ni indice : l'intervalle s'allonge ; avec hésitation, il reste le même. */
+    private var reviewFluent = true
+
+    private suspend fun reviewChallengeDone(success: Boolean, fluent: Boolean) {
         val l = lesson
+        reviewFluent = fluent
         if (!success) return completeReview(false)
         when (validation(l)) {
             Validation.PUZZLES -> startSeries(PracticeKind.REVIEW, List(REVIEW_SIZE) { PuzzleSpec(listOf(l.theme), AcademyAssessments.levelRange(l.level)) })
@@ -1375,16 +1408,21 @@ class AcademyViewModel(
                 startEndgame(EndgameFamily.of(l.drill)!!, total = 1)
                 endgameReview = true
             }
-            Validation.NONE -> completeReview(true)
+            Validation.NONE -> completeReview(true, fluent)
         }
     }
 
-    private suspend fun completeReview(success: Boolean) {
+    private suspend fun completeReview(success: Boolean, fluent: Boolean = true) {
         val r = state.value.review ?: return
         val id = r.queue[r.index]
-        lessons.progress(id)?.let { lessons.save(srs.reviewed(it, success)) }
+        lessons.progress(id)?.let { lessons.save(srs.reviewed(it, success, fluent)) }
         _state.update { it.copy(review = r.copy(passed = r.passed + if (success) 1 else 0)) }
-        val text = if (success) "\n\nRévision réussie : prochaine révision dans ${srs.daysUntil(lessons.progress(id))} jours." else "\n\nRévision ratée : cette leçon reviendra demain."
+        val days = srs.daysUntil(lessons.progress(id))
+        val text = when {
+            !success -> "\n\nRévision ratée : cette leçon reviendra demain."
+            fluent -> "\n\nRévision réussie sans hésiter : prochaine révision dans $days jours."
+            else -> "\n\nRévision réussie, avec une hésitation : même intervalle, prochaine révision dans $days jours."
+        }
         // Révision d'une finale : le bilan s'affiche dans la carte de la finale, pas sous la leçon masquée.
         if (endgame.state.value != null) endgame.note(text) else _state.update { it.copy(message = it.message + text) }
     }
@@ -1428,11 +1466,11 @@ class AcademyViewModel(
         open(id, save = false, variant = variant, session = true)
     }
 
-    private suspend fun repertoireResult(success: Boolean) {
+    private suspend fun repertoireResult(success: Boolean, fluent: Boolean) {
         val r = state.value.repertoire ?: return
         val id = r.items[r.index].first
         // Une leçon maîtrisée rejouée dans le répertoire compte comme une révision.
-        lessons.progress(id)?.takeIf { it.mastered }?.let { lessons.save(srs.reviewed(it, success)) }
+        lessons.progress(id)?.takeIf { it.mastered }?.let { lessons.save(srs.reviewed(it, success, fluent)) }
         _state.update { it.copy(repertoire = r.copy(results = r.results + success)) }
     }
 

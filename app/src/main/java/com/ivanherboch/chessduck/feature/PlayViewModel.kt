@@ -122,6 +122,7 @@ class PlayViewModel(
     /**
      * « Jouer cette position » (Académie) : partie contre l'Ordinateur depuis [fen], le joueur ayant les Blancs si
      * [playerWhite]. C'est une partie d'entraînement : elle est enregistrée avec sa position de départ, sans changer l'ELO.
+     * L'Ordinateur joue au niveau du palier de l'Académie (et non au réglage du Jeu Libre).
      */
     fun startFromPosition(fen: String, playerWhite: Boolean) {
         val start = runCatching { Line(fen) }.getOrNull() ?: return
@@ -131,7 +132,7 @@ class PlayViewModel(
             gameGeneration++
             aiJob?.cancel(); analysisJob?.cancel()
             _state.update {
-                PlayState(line = start, playerWhite = playerWhite, twoPlayers = false, aiElo = st.aiElo, flipped = !playerWhite, evalOn = it.evalOn)
+                PlayState(line = start, playerWhite = playerWhite, twoPlayers = false, aiElo = positionElo(st.academyLevel), flipped = !playerWhite, evalOn = it.evalOn)
             }
             if (start.last.whiteToMove != playerWhite) aiMove() else precompute()
         }
@@ -354,4 +355,13 @@ class PlayViewModel(
         viewModelScope.launch { gamesRepo.deleteGame(id) }
     }
 
+}
+
+/** Force de l'Ordinateur pour « Jouer cette position », selon le palier de l'Académie (1 à 5). */
+fun positionElo(level: Int): Int = when (level.coerceIn(1, 5)) {
+    1 -> 600
+    2 -> 900
+    3 -> 1300
+    4 -> 1700
+    else -> 2100
 }

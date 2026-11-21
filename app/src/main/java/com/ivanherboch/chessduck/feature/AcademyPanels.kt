@@ -51,6 +51,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -60,6 +61,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -167,6 +169,19 @@ internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, s: AcademyS
                 levelName(lv), home.level == lv, { vm.setLevel(lv) },
                 Modifier.semantics { contentDescription = "Palier ${levelSpoken(lv)}" }, accent = c.blue,
             )
+        }
+        // Progression du palier : leçons maîtrisées, puis l'examen qui le valide.
+        if (home.levelTotal > 0) {
+            val exam = home.level in home.examsPassed
+            val text = "Palier ${home.level} : ${home.levelMastered} leçon${if (home.levelMastered > 1) "s" else ""} maîtrisée${if (home.levelMastered > 1) "s" else ""} sur ${home.levelTotal}" +
+                if (exam) " · examen réussi" else " · examen à passer"
+            Column(Modifier.fillMaxWidth().padding(top = 8.dp).semantics(mergeDescendants = true) { contentDescription = text }) {
+                LinearProgressIndicator(
+                    progress = { home.levelMastered.toFloat() / home.levelTotal }, color = c.greenRole.fill, trackColor = c.surfaceHi,
+                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                )
+                Text(text, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+            }
         }
         // À faire maintenant : révisions du jour, leçon à reprendre, leçon conseillée. Placées ici plutôt qu'au-dessus
         // de l'échiquier, elles ne prennent aucune place à la grille.

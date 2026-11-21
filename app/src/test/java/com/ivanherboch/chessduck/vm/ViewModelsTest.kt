@@ -907,6 +907,7 @@ class ViewModelsTest {
         advanceUntilIdle()
         assertTrue(vm.state.value.fromPosition)
         assertEquals(0, vm.state.value.line.size)
+        assertEquals(com.ivanherboch.chessduck.feature.positionElo(2), vm.state.value.aiElo) // force du palier 2
         vm.playerMove(Move.fromUci("d1d8")) // mat du couloir
         advanceUntilIdle()
         val record = games.stored.value.single()
@@ -993,6 +994,37 @@ class ViewModelsTest {
         assertEquals(3, vm.state.value.cursor)
         vm.goTo(4); runCurrent()
         assertEquals(4, saved.get<Int>("academy_cursor"))
+    }
+
+    @Test
+    fun academyResumesAnInterruptedChallenge() = test {
+        // Défi de la leçon 1 interrompu par Android au 3e demi-coup, avec une erreur déjà commise.
+        val saved = SavedStateHandle(mapOf("academy_lesson" to 1, "academy_challenge" to true, "academy_cursor" to 2, "academy_errors" to 1))
+        val vm = academy(saved = saved)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.challenge)
+        assertTrue(vm.state.value.cursor >= 2)
+        assertEquals(1, vm.state.value.errors)
+        assertTrue(vm.state.value.message, vm.state.value.message.contains("Défi repris"))
+    }
+
+    @Test
+    fun reviewsLengthenOnlyWhenFluentAndErrorsAccumulate() = test {
+        val srs = com.ivanherboch.chessduck.feature.SrsScheduler { 0L }
+        val p = com.ivanherboch.chessduck.data.LessonProgress(1, masteredAt = 1, srsStage = 2)
+        assertEquals(3, srs.reviewed(p, success = true, fluent = true).srsStage)
+        assertEquals(2, srs.reviewed(p, success = true, fluent = false).srsStage) // hésitation : même intervalle
+        assertEquals(1, srs.reviewed(p, success = false).srsStage)
+        // Les erreurs du Défi s'additionnent d'une tentative à l'autre (bilan des points faibles).
+        val lessons = FakeLessons()
+        lessons.save(com.ivanherboch.chessduck.data.LessonProgress(1, masteredAt = 0, errors = 2, hintsUsed = 1))
+        val vm = academy(lessons)
+        advanceUntilIdle()
+        vm.open(1)
+        vm.setChallenge(true)
+        playChallenge(vm)
+        assertEquals(2, lessons.progress(1)!!.errors)
+        assertEquals(1, lessons.progress(1)!!.hintsUsed)
     }
 
     @Test

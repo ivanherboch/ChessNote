@@ -65,6 +65,10 @@ class ReflexDrillsTest {
         // Une prise équilibrée n'est pas une bonne question ; en échec, on ne pose pas la question.
         assertNull(ReflexDrills.captureFrom(Position.fromFen("4k3/8/3p4/4n3/8/5N2/8/4K3 w - - 0 1"), Random(0)))
         assertNull(ReflexDrills.captureFrom(Position.fromFen("4k3/8/8/3n4/8/8/8/3QK2r w - - 0 1"), Random(0)))
+        // La réponse de l'Ordinateur explique la suite : ici, la reprise du pion.
+        val after = defended.position.play(defended.capture)
+        val reply = ReflexDrills.replyText(after, defended.capture, com.ivanherboch.chessduck.chess.Move.fromUci("d6e5"), false)
+        assertEquals("Après la prise, l'adversaire reprend par dxe5 : la prise ne tient pas.", reply)
     }
 
     @Test

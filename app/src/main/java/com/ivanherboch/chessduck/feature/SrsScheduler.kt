@@ -4,8 +4,8 @@ import com.ivanherboch.chessduck.content.Lesson
 import com.ivanherboch.chessduck.data.LessonProgress
 
 /**
- * Répétition espacée de l'Académie. Une leçon maîtrisée revient en révision après 1, 7, 30 puis 90 jours ;
- * une révision ratée la fait revenir le lendemain. [clock] est injectable pour les tests.
+ * Répétition espacée de l'Académie. Une leçon maîtrisée revient en révision après 1, 7, 30 puis 90 jours si on la
+ * réussit sans hésiter ; une hésitation garde l'intervalle ; une révision ratée la fait revenir le lendemain. [clock] est injectable pour les tests.
  */
 class SrsScheduler(private val clock: () -> Long = System::currentTimeMillis) {
     fun now(): Long = clock()
@@ -14,9 +14,16 @@ class SrsScheduler(private val clock: () -> Long = System::currentTimeMillis) {
     fun mastered(p: LessonProgress): LessonProgress =
         if (p.srsStage > 0) p else p.copy(srsStage = 1, nextReviewAt = now() + DAY, lastReviewedAt = now())
 
-    /** Révision faite : réussie, l'intervalle s'allonge ; ratée, on repart à un jour. */
-    fun reviewed(p: LessonProgress, success: Boolean): LessonProgress {
-        val stage = if (success) minOf(p.srsStage + 1, INTERVAL_DAYS.size) else 1
+    /**
+     * Révision faite. Réussie sans hésiter ([fluent] : sans erreur ni indice), l'intervalle s'allonge ; réussie avec
+     * une hésitation, il reste le même ; ratée, on repart à un jour.
+     */
+    fun reviewed(p: LessonProgress, success: Boolean, fluent: Boolean = true): LessonProgress {
+        val stage = when {
+            !success -> 1
+            fluent -> minOf(p.srsStage + 1, INTERVAL_DAYS.size)
+            else -> p.srsStage.coerceIn(1, INTERVAL_DAYS.size)
+        }
         return p.copy(srsStage = stage, nextReviewAt = now() + INTERVAL_DAYS[stage - 1] * DAY, lastReviewedAt = now())
     }
 
