@@ -4,6 +4,7 @@ APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v
 
 - La ligne d'information au-dessus de l'échiquier (calcul à l'aveugle, séries, réflexes, finales) n'est plus rognée : sa hauteur est calculée à la largeur de l'échiquier, et l'échiquier cède la place nécessaire si le texte passe à la ligne.
 - Calcul à l'aveugle : « Après ces coups : trait aux Blancs », plus court.
+- Entraînements : les finales contre l'Ordinateur ne sont plus dans une section dépliable ; elles sont toutes visibles, en fin de liste, groupées « À gagner » puis « À tenir (nulle) ».
 
 ## ChessDuck 3.3.1 — des finales qui expliquent
 

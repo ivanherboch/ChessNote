@@ -565,7 +565,6 @@ class AppRobolectricTest {
         rule.onNodeWithText("Oui, je prends").performClick(); settle(600); shot("2j_prise_reponse")
         desc("Revenir à la leçon").performClick(); settle(600)
         rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000)
-        rule.onNodeWithText("Finales contre l'Ordinateur", substring = true).performScrollTo().performClick(); settle(500)
         rule.onNodeWithText("Gagnez : Roi et tour contre roi").performScrollTo().performClick(); settle(1500); shot("2k_finale")
         desc("Retourner l'échiquier").assertExists() // le retournement reste offert pendant une séance
         desc("Revenir à la leçon").performClick(); settle(600)

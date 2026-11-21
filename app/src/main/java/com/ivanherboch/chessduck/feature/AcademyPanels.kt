@@ -211,37 +211,20 @@ internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, s: AcademyS
         TrainingButton(ReflexKind.CAPTURE.label, go { vm.startReflex(ReflexKind.CAPTURE) }, active = rx?.kind == ReflexKind.CAPTURE)
         SectionTitle("Exercices avancés")
         TrainingButton("Calcul à l'aveugle (palier 5)", go { vm.startReflex(ReflexKind.BLIND) }, active = rx?.kind == ReflexKind.BLIND)
-        // Les 11 finales jouables, repliées par défaut (dépliées si l'une d'elles est en cours).
-        var endgamesOpen by rememberSaveable { mutableStateOf(eg != null) }
-        val families = EndgameFamily.entries
-        Row(
-            Modifier.fillMaxWidth().padding(top = 8.dp).heightIn(min = 48.dp).clip(RoundedCornerShape(DuckRadius.M))
-                .clickable(role = Role.Button, onClickLabel = if (endgamesOpen) "Replier" else "Déplier") { endgamesOpen = !endgamesOpen }
-                .semantics { heading(); stateDescription = if (endgamesOpen) "dépliée" else "repliée" }
-                .padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                "Finales contre l'Ordinateur (${families.size})", color = c.text, style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.weight(1f),
-            )
-            Text("${families.count { it in home.endgamesDone }}/${families.size}", color = c.goldText, style = MaterialTheme.typography.labelMedium)
-            Icon(if (endgamesOpen) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, contentDescription = null, tint = c.muted, modifier = Modifier.padding(start = 6.dp))
-        }
-        if (endgamesOpen) {
-            for ((goal, name) in listOf(EndgameGoal.WIN to "Gagner", EndgameGoal.DRAW to "Tenir la nulle")) {
-                Text(name, color = c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 6.dp, start = 4.dp))
-                for (f in families.filter { it.goal == goal }) {
-                    TrainingButton(
-                        "${if (f.goal == EndgameGoal.WIN) "Gagnez" else "Tenez la nulle"} : ${f.label}", go { vm.startEndgame(f) },
-                        active = eg?.family == f, done = f in home.endgamesDone,
-                    )
-                }
-            }
-        }
         SectionTitle("Répertoire")
         TrainingButton("Réviser mon répertoire avec les Blancs", go { vm.startRepertoire(true) }, active = s.repertoire?.white == true)
         TrainingButton("Réviser mon répertoire avec les Noirs", go { vm.startRepertoire(false) }, active = s.repertoire?.white == false)
+        // Les finales jouables contre l'Ordinateur, en fin de liste, toutes visibles : à gagner, puis à tenir.
+        SectionTitle("Finales contre l'Ordinateur (${home.endgamesDone.size}/${EndgameFamily.entries.size} validées)")
+        for ((goal, name) in listOf(EndgameGoal.WIN to "À gagner", EndgameGoal.DRAW to "À tenir (nulle)")) {
+            Text(name, color = c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp, bottom = 2.dp, start = 4.dp))
+            for (f in EndgameFamily.entries.filter { it.goal == goal }) {
+                TrainingButton(
+                    "${if (f.goal == EndgameGoal.WIN) "Gagnez" else "Tenez la nulle"} : ${f.label}", go { vm.startEndgame(f) },
+                    active = eg?.family == f, done = f in home.endgamesDone,
+                )
+            }
+        }
     }
 }
 
