@@ -19,6 +19,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -87,6 +89,43 @@ class AppRobolectricTest {
                 whiteName = "🤖 Ordinateur", blackName = "Joueur", opponentElo = 1200,
                 analysis = com.ivanherboch.chessduck.feature.Analysis.encodeAll(a),
             ),
+        )
+    }
+
+    /** Finale contre l'Ordinateur : toucher son roi montre ses destinations, puis toucher une destination joue le coup. */
+    @Test
+    fun endgameKingTapShowsTargets() {
+        settle(2500)
+        rule.onNodeWithText("Académie").performClick(); settle(1500)
+        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000)
+        rule.onNodeWithText("Gagnez : Roi et pion contre roi").performScrollTo().performClick(); settle(2000)
+        shot("2x_finale_depart")
+        val king = rule.onNode(androidx.compose.ui.test.hasContentDescription("roi blanc", substring = true, ignoreCase = true), useUnmergedTree = true)
+        king.performTouchInput { click() }; settle(800)
+        shot("2x_finale_roi_touche")
+        val targets = rule.onAllNodes(androidx.compose.ui.test.SemanticsMatcher("destination légale") {
+            it.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.StateDescription)?.contains("destination légale") == true
+        }, useUnmergedTree = true)
+            .fetchSemanticsNodes()
+        assertTrue("le roi touché doit montrer ses destinations", targets.isNotEmpty())
+        // On joue vers une destination, puis on touche de nouveau son roi après la réponse : les destinations reviennent.
+        val dest = androidx.compose.ui.test.SemanticsMatcher("destination légale") {
+            it.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.StateDescription)?.contains("destination légale") == true
+        }
+        rule.onAllNodes(dest, useUnmergedTree = true).onFirst().performTouchInput { click() }
+        rule.waitUntil(20_000) {
+            shadowOf(Looper.getMainLooper()).idle()
+            rule.onAllNodesWithText("rejouez votre coup", substring = true).fetchSemanticsNodes().isNotEmpty() ||
+                rule.onAllNodesWithText("Coup 1 sur", substring = true).fetchSemanticsNodes().isNotEmpty() ||
+                rule.onAllNodesWithText("Coup 1", substring = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        settle(1500)
+        rule.onNode(androidx.compose.ui.test.hasContentDescription("roi blanc", substring = true, ignoreCase = true), useUnmergedTree = true)
+            .performTouchInput { click() }
+        settle(800); shot("2y_finale_roi_retouche")
+        assertTrue(
+            "après un coup, le roi touché doit encore montrer ses destinations",
+            rule.onAllNodes(dest, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty(),
         )
     }
 

@@ -1,3 +1,15 @@
+## ChessDuck 3.3.4 — des finales enfin jouables
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Finales contre l'Ordinateur : vos bons coups ne sont plus refusés.
+  - L'Ordinateur analyse la position pendant que vous réfléchissez : il est prêt quand vous jouez, et l'indice s'affiche tout de suite.
+  - Un coup n'est jugé perdant que s'il fait nettement baisser l'évaluation de la position d'avant (et plus seulement sous un seuil fixe, que le moteur du téléphone ne voyait pas toujours).
+  - Si l'Ordinateur tarde à répondre (démarrage, téléphone occupé), la position n'est plus perdue : votre coup est annulé et vous le rejouez.
+  - Le pion perdu ne fait plus échouer la position s'il vous reste une tour (ou une dame) contre le roi seul.
+- L'échiquier ne reste plus bloqué de longues secondes : les attentes du moteur, qui s'accumulaient, ont disparu.
+- Vérification : avec Stockfish, les meilleurs coups ont réussi les 55 positions testées (11 finales × 5).
+
 ## ChessDuck 3.3.3 — un parcours plus lisible
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
