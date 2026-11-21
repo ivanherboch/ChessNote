@@ -684,6 +684,10 @@ class AppRobolectricTest {
             }
             rule.waitUntil(20_000) {
                 shadowOf(Looper.getMainLooper()).idle()
+                // Le toucher sur « Révéler le thème » a pu tomber pendant le chargement du problème : on le renouvelle.
+                rule.onAllNodesWithText("Révéler le thème").fetchSemanticsNodes().firstOrNull()?.let {
+                    rule.onNodeWithText("Révéler le thème").performClick()
+                }
                 rule.onAllNodesWithText("Type de problème : ", substring = true).fetchSemanticsNodes().isNotEmpty()
             }
             val shown = mates.filter { name -> rule.onAllNodesWithText("Type de problème : $name").fetchSemanticsNodes().isNotEmpty() }
