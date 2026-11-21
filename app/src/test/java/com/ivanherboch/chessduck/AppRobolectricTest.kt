@@ -727,7 +727,8 @@ class AppRobolectricTest {
                 rule.onAllNodesWithText("Révéler le thème").fetchSemanticsNodes().firstOrNull()?.let {
                     rule.onNodeWithText("Révéler le thème").performClick()
                 }
-                rule.onAllNodesWithText("Type de problème : ", substring = true).fetchSemanticsNodes().isNotEmpty()
+                // Le thème affiché doit être celui du nouveau problème (une catégorie de mat), pas l'ancien en cours de remplacement.
+                mates.count { name -> rule.onAllNodesWithText("Type de problème : $name").fetchSemanticsNodes().isNotEmpty() } == 1
             }
             val shown = mates.filter { name -> rule.onAllNodesWithText("Type de problème : $name").fetchSemanticsNodes().isNotEmpty() }
             assertEquals(1, shown.size)
