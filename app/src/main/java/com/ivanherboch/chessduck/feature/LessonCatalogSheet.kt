@@ -189,7 +189,7 @@ internal fun LessonCatalog(
             Row(
                 Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(DuckRadius.M))
                     .background(if (current) c.surfaceHi else c.surface)
-                    .clickable(role = Role.Button) { vm.open(item.id); onClose() }
+                    .clickable(role = Role.Button) { vm.open(item.id, guided = true); onClose() }
                     .semantics {
                         stateDescription = (if (done) "maîtrisée" else "à maîtriser") +
                             (if (stars > 0) ", $stars étoile${if (stars > 1) "s" else ""} sur 3" else "") + ", palier ${levelSpoken(item.level)}" +

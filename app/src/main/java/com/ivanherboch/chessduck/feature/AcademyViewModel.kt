@@ -171,6 +171,10 @@ data class AcademyState(
     val quiz: QuizState? = null,
     val review: ReviewSession? = null,
     val repertoire: RepertoireSession? = null,
+    /** La séance en cours a été lancée depuis le tiroir « Entraînements » : en la quittant, on y revient. */
+    val fromDrawer: Boolean = false,
+    /** Incrémenté quand une séance du tiroir se termine : l'écran rouvre alors le tiroir. */
+    val drawerReturn: Int = 0,
 )
 
 /** Fiche de la leçon, affichée et lue à son ouverture : objectif, règle, conditions, idées et pièges. */
@@ -340,9 +344,11 @@ class AcademyViewModel(
      * Ouvre une leçon. [session] : l'ouverture fait partie d'une révision ou du répertoire (ces séances sont gardées) ;
      * sinon, choisir une autre leçon les termine.
      */
-    fun open(id: Int, save: Boolean = true, variant: Int = 0, session: Boolean = false) {
+    fun open(id: Int, save: Boolean = true, variant: Int = 0, session: Boolean = false, guided: Boolean = false) {
         cancelAll()
         val l = Lessons.byId(id)
+        // Une leçon choisie (catalogue, « Reprendre », « Conseillée ») commence par le mode Guidé.
+        if (guided) _state.update { it.copy(challenge = false) }
         val challenge = state.value.challenge
         _state.update {
             it.copy(
@@ -352,6 +358,7 @@ class AcademyViewModel(
                 answered = emptySet(), note = null, judging = false, refute = null, refuteUntil = 0L, tentative = null, suggest = null, practice = null, quiz = null,
                 errors = 0, maxHint = 0, stars = 0, guessScore = 0, guessMax = 0,
                 review = if (session) it.review else null, repertoire = if (session) it.repertoire else null,
+                fromDrawer = session && it.fromDrawer,
             )
         }
         if (save) viewModelScope.launch { prefs.setLesson(l.id) }
@@ -1166,7 +1173,14 @@ class AcademyViewModel(
     fun closePractice() {
         practiceJob?.cancel()
         _state.update { it.copy(practice = null) }
+        backToDrawer()
     }
+
+    /** Marque la séance qui va commencer comme lancée depuis le tiroir « Entraînements ». */
+    fun markFromDrawer() = _state.update { it.copy(fromDrawer = true) }
+
+    /** Fin d'une séance lancée depuis le tiroir : on y revient (au lieu de laisser la dernière leçon ouverte à l'écran). */
+    private fun backToDrawer() = _state.update { if (it.fromDrawer) it.copy(fromDrawer = false, drawerReturn = it.drawerReturn + 1) else it }
 
     // ---- Finales jouées contre l'Ordinateur ----
 
@@ -1184,6 +1198,7 @@ class AcademyViewModel(
         endgame.stop()
         endgameLesson = null
         endgameReview = false
+        backToDrawer()
     }
 
     private suspend fun endgameFinished(family: EndgameFamily, score: Int, total: Int) {
@@ -1285,6 +1300,7 @@ class AcademyViewModel(
     fun closeReflex() {
         narrator.stop()
         reflex.stop()
+        backToDrawer()
     }
 
     // ---- Révisions du jour (répétition espacée) ----
@@ -1341,7 +1357,10 @@ class AcademyViewModel(
         else _state.update { it.copy(review = r.copy(finished = true)) }
     }
 
-    fun closeReviews() = _state.update { it.copy(review = null) }
+    fun closeReviews() {
+        _state.update { it.copy(review = null) }
+        backToDrawer()
+    }
 
     // ---- Répertoire ----
 
@@ -1379,7 +1398,10 @@ class AcademyViewModel(
         else _state.update { it.copy(repertoire = r.copy(finished = true)) }
     }
 
-    fun closeRepertoire() = _state.update { it.copy(repertoire = null) }
+    fun closeRepertoire() {
+        _state.update { it.copy(repertoire = null) }
+        backToDrawer()
+    }
 
     // ---- Navigation ----
 

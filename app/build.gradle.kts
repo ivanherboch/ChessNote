@@ -13,8 +13,8 @@ android {
         applicationId = "com.ivanherboch.chessduck"
         minSdk = 26
         targetSdk = 35
-        versionCode = 63
-        versionName = "3.3.2"
+        versionCode = 64
+        versionName = "3.3.3"
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
     }
 

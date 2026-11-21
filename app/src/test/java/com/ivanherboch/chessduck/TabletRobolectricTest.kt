@@ -6,6 +6,8 @@ import android.os.Looper
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.printToString
@@ -102,7 +104,8 @@ class TabletRobolectricTest {
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("t2_academie")
         rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000); shot("t9_entrainements")
         rule.onNodeWithText("Gagnez : Roi et dame contre roi").performScrollTo().performClick(); settle(1500); shot("t10_finale")
-        rule.onNodeWithContentDescription("Revenir à la leçon").performClick(); settle(600)
+        rule.onNodeWithContentDescription("Revenir aux entraînements").performClick(); settle(1000)
+        rule.onAllNodesWithContentDescription("Fermer").onLast().performClick(); settle(800)
         rule.onNodeWithText("Problèmes").performClick(); settle(2500); shot("t3_problemes")
         rule.onNodeWithText("Jeu Libre").performClick(); settle(2000); shot("t4_jeu")
         seedGame()

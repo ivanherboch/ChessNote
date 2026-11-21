@@ -130,6 +130,10 @@ fun AcademyScreen(
     val model = l.kind == LessonKind.MODEL_GAME
     // Retour haptique des coups jugés (bon coup, coup équivalent, erreur), y compris après le jugement de l'Ordinateur.
     LaunchedEffect(s.pulse?.id) { s.pulse?.let { if (it.good) fb?.success() else fb?.error() } }
+    // Séance lancée depuis le tiroir « Entraînements » : on y revient quand elle se termine.
+    val backLabel = if (s.fromDrawer) "Revenir aux entraînements" else "Revenir à la leçon"
+    var drawerSeen by remember { mutableIntStateOf(s.drawerReturn) }
+    LaunchedEffect(s.drawerReturn) { if (s.drawerReturn != drawerSeen) { drawerSeen = s.drawerReturn; onTrainings(true) } }
     LaunchedEffect(eg?.pulse?.id) { eg?.pulse?.let { if (it.good) fb?.success() else fb?.error() } }
     LaunchedEffect(rx?.pulse?.id) { rx?.pulse?.let { if (it.good) fb?.success() else fb?.error() } }
     val endFen = line.positions[cur].takeIf { it.legalMoves.isNotEmpty() }?.toFen()
@@ -155,7 +159,7 @@ fun AcademyScreen(
         top = {
             val session = vm.sessionTitle(s, eg, rx)
             if (session != null) {
-                TrainingHeader(session, vm::closeTraining, vm::flip)
+                TrainingHeader(session, vm::closeTraining, vm::flip, backLabel)
                 return@ModuleLayout
             }
             // Défi réussi (2 étoiles ou plus) mais leçon pas encore validée sur problèmes ou contre l'Ordinateur.
@@ -238,7 +242,7 @@ fun AcademyScreen(
                 ) {
                     EmptyState(
                         Icons.Rounded.SearchOff, "Aucun exercice disponible", (pr?.message ?: rxs?.message).orEmpty(),
-                        actionLabel = "Revenir à la leçon", onAction = vm::closeTraining,
+                        actionLabel = backLabel, onAction = vm::closeTraining,
                     )
                 }
                 egs?.position != null -> {

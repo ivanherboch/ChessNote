@@ -226,6 +226,30 @@ class ViewModelsTest {
     }
 
     @Test
+    fun academyCatalogOpensGuidedAndDrawerSessionsReturnToTheDrawer() = test {
+        val vm = academy()
+        advanceUntilIdle()
+        // Une leçon choisie dans le catalogue commence en mode Guidé, même si l'on était en Défi.
+        vm.setChallenge(true)
+        vm.open(Lessons.all[3].id, guided = true)
+        assertFalse(vm.state.value.challenge)
+        // Les flèches gardent le mode en cours.
+        vm.setChallenge(true); vm.nextLesson()
+        assertTrue(vm.state.value.challenge)
+        // Séance lancée depuis le tiroir : en la quittant, l'écran est invité à rouvrir le tiroir.
+        val before = vm.state.value.drawerReturn
+        vm.markFromDrawer()
+        vm.startReflex(com.ivanherboch.chessduck.feature.ReflexKind.THREAT); advanceUntilIdle()
+        assertTrue(vm.state.value.fromDrawer)
+        vm.closeTraining()
+        assertEquals(before + 1, vm.state.value.drawerReturn)
+        assertFalse(vm.state.value.fromDrawer)
+        // Une séance liée à la leçon (validation) ne renvoie pas au tiroir.
+        vm.closePractice()
+        assertEquals(before + 1, vm.state.value.drawerReturn)
+    }
+
+    @Test
     fun academyVariantsAreShownAndReadAloud() = test {
         val prefs = FakeSettings()
         val voice = FakeNarrator()

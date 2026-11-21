@@ -112,8 +112,8 @@ internal fun StarRow(stars: Int, modifier: Modifier = Modifier, size: Dp = 16.dp
  * (c'est le seul moyen de quitter : plus de bouton « Arrêter » en double), le retournement de l'échiquier reste offert.
  */
 @Composable
-internal fun TrainingHeader(t: SessionTitle, onClose: () -> Unit, onFlip: () -> Unit) =
-    SessionHeader(t.title, onClose, label = t.label, onFlip = onFlip)
+internal fun TrainingHeader(t: SessionTitle, onClose: () -> Unit, onFlip: () -> Unit, backLabel: String = "Revenir à la leçon") =
+    SessionHeader(t.title, onClose, backLabel = backLabel, label = t.label, onFlip = onFlip)
 
 /**
  * Bouton « Entraînements » de l'en-tête de l'application (onglet Académie) : surligné quand le tiroir est ouvert ou
@@ -151,6 +151,8 @@ fun AcademyTrainingsButton(open: Boolean, active: Boolean, suggestions: Int, onC
 internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, s: AcademyState, eg: EndgameSession?, rx: ReflexSession?, onClose: () -> Unit) {
     val c = LocalDuck.current
     fun go(action: () -> Unit): () -> Unit = { onClose(); action() }
+    // Séance du tiroir (réflexes, finales, tests, révisions, répertoire) : en la quittant, on revient au tiroir.
+    fun session(action: () -> Unit): () -> Unit = { onClose(); vm.markFromDrawer(); action() }
     val priorities by vm.priorities.collectAsStateWithLifecycle()
     val pk = s.practice?.kind
     DuckSheet("Entraînements", onClose) {
@@ -167,13 +169,13 @@ internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, s: AcademyS
             SectionTitle("À faire maintenant")
             if (home.due.isNotEmpty()) SuggestionCard(
                 "Révisions du jour : ${home.due.size}", "Rejouez en Défi les leçons à revoir aujourd'hui.", "Commencer les révisions",
-                c.gold, go(vm::startReviews),
+                c.gold, session(vm::startReviews),
             )
             cont?.let { id ->
-                SuggestionCard("Reprendre", Lessons.byId(id).title, "Reprendre cette leçon", c.blue, go { vm.open(id) })
+                SuggestionCard("Reprendre", Lessons.byId(id).title, "Reprendre cette leçon", c.blue, go { vm.open(id, guided = true) })
             }
             rec?.let { id ->
-                SuggestionCard("Conseillée : ${Lessons.byId(id).title}", "La prochaine leçon de votre palier.", "Ouvrir la leçon conseillée", c.green, go { vm.open(id) })
+                SuggestionCard("Conseillée : ${Lessons.byId(id).title}", "La prochaine leçon de votre palier.", "Ouvrir la leçon conseillée", c.green, go { vm.open(id, guided = true) })
             }
         }
         // Bilan des thèmes faibles : des cartes à part, avant le catalogue des exercices.
@@ -199,28 +201,28 @@ internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, s: AcademyS
         }
         // Les tests (placement, examen) juste après les priorités : ce sont eux qui font avancer le palier.
         SectionTitle("Tests")
-        TrainingButton("Test de placement : 12 positions", go(vm::startPlacement), active = pk == PracticeKind.PLACEMENT, done = home.placementDone)
+        TrainingButton("Test de placement : 12 positions", session(vm::startPlacement), active = pk == PracticeKind.PLACEMENT, done = home.placementDone)
         val examLevel = home.level.coerceAtLeast(2)
         TrainingButton(
-            "Examen du palier ${levelName(examLevel)} : 10 positions", go(vm::startExam), active = pk == PracticeKind.EXAM,
+            "Examen du palier ${levelName(examLevel)} : 10 positions", session(vm::startExam), active = pk == PracticeKind.EXAM,
             done = examLevel in home.examsPassed,
         )
         SectionTitle("Réflexes")
-        TrainingButton(ReflexKind.THREAT.label, go { vm.startReflex(ReflexKind.THREAT) }, active = rx?.kind == ReflexKind.THREAT)
-        TrainingButton("Le seul coup", go(vm::startOnlyMove), active = pk == PracticeKind.ONLY_MOVE)
-        TrainingButton(ReflexKind.CAPTURE.label, go { vm.startReflex(ReflexKind.CAPTURE) }, active = rx?.kind == ReflexKind.CAPTURE)
+        TrainingButton(ReflexKind.THREAT.label, session { vm.startReflex(ReflexKind.THREAT) }, active = rx?.kind == ReflexKind.THREAT)
+        TrainingButton("Le seul coup", session(vm::startOnlyMove), active = pk == PracticeKind.ONLY_MOVE)
+        TrainingButton(ReflexKind.CAPTURE.label, session { vm.startReflex(ReflexKind.CAPTURE) }, active = rx?.kind == ReflexKind.CAPTURE)
         SectionTitle("Exercices avancés")
-        TrainingButton("Calcul à l'aveugle (palier 5)", go { vm.startReflex(ReflexKind.BLIND) }, active = rx?.kind == ReflexKind.BLIND)
+        TrainingButton("Calcul à l'aveugle (palier 5)", session { vm.startReflex(ReflexKind.BLIND) }, active = rx?.kind == ReflexKind.BLIND)
         SectionTitle("Répertoire")
-        TrainingButton("Réviser mon répertoire avec les Blancs", go { vm.startRepertoire(true) }, active = s.repertoire?.white == true)
-        TrainingButton("Réviser mon répertoire avec les Noirs", go { vm.startRepertoire(false) }, active = s.repertoire?.white == false)
+        TrainingButton("Réviser mon répertoire avec les Blancs", session { vm.startRepertoire(true) }, active = s.repertoire?.white == true)
+        TrainingButton("Réviser mon répertoire avec les Noirs", session { vm.startRepertoire(false) }, active = s.repertoire?.white == false)
         // Les finales jouables contre l'Ordinateur, en fin de liste, toutes visibles : à gagner, puis à tenir.
         SectionTitle("Finales contre l'Ordinateur (${home.endgamesDone.size}/${EndgameFamily.entries.size} validées)")
         for ((goal, name) in listOf(EndgameGoal.WIN to "À gagner", EndgameGoal.DRAW to "À tenir (nulle)")) {
             Text(name, color = c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp, bottom = 2.dp, start = 4.dp))
             for (f in EndgameFamily.entries.filter { it.goal == goal }) {
                 TrainingButton(
-                    "${if (f.goal == EndgameGoal.WIN) "Gagnez" else "Tenez la nulle"} : ${f.label}", go { vm.startEndgame(f) },
+                    "${if (f.goal == EndgameGoal.WIN) "Gagnez" else "Tenez la nulle"} : ${f.label}", session { vm.startEndgame(f) },
                     active = eg?.family == f, done = f in home.endgamesDone,
                 )
             }
@@ -385,7 +387,10 @@ internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, revie
         when {
             pr.finished && pr.kind == PracticeKind.REVIEW && review != null -> ReviewNextButton(vm, review, Modifier.weight(1f))
             pr.finished -> {
-                DuckButton("Revenir à la leçon", vm::closePractice, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
+                DuckButton(
+                    if (vm.state.value.fromDrawer) "Revenir aux entraînements" else "Revenir à la leçon", vm::closePractice, Modifier.weight(1f),
+                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                )
                 if (pr.kind == PracticeKind.LESSON && pr.score >= 4) DuckButton("Leçon suivante", { vm.closePractice(); vm.nextLesson(guided = true) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
                 else if (pr.kind == PracticeKind.LESSON || pr.kind == PracticeKind.ONLY_MOVE) DuckButton(
                     "Retenter", if (pr.kind == PracticeKind.LESSON) vm::startPractice else vm::startOnlyMove, Modifier.weight(1f),

@@ -1,3 +1,10 @@
+## ChessDuck 3.3.3 — un parcours plus lisible
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Une leçon choisie dans le catalogue, ou depuis « Reprendre » et « Conseillée », s'ouvre toujours en mode Guidé (elle gardait auparavant le mode de la leçon précédente, souvent Défi). Les flèches ‹ › gardent le mode en cours, pour enchaîner les Défis.
+- Les entraînements lancés depuis le tiroir (réflexes, finales, tests, révisions, répertoire) ramènent au tiroir quand on les quitte, au lieu d'afficher la dernière leçon ouverte. Le bouton de retour s'appelle alors « Revenir aux entraînements ».
+
 ## ChessDuck 3.3.2 — plus de texte coupé au-dessus de l'échiquier
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

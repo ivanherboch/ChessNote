@@ -557,17 +557,18 @@ class AppRobolectricTest {
         rule.onNodeWithText("Quelle est la menace ?").performClick(); settle(1000)
         rule.waitUntil(20_000) { rule.onAllNodesWithText("Question 1 sur", substring = true).fetchSemanticsNodes().isNotEmpty() }
         settle(500); shot("2h_menace")
-        desc("Revenir à la leçon").performClick(); settle(600)
-        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000)
+        // Séance du tiroir : on y revient en la quittant (le tiroir se rouvre seul).
+        desc("Revenir aux entraînements").performClick(); settle(1000)
+        rule.onNodeWithText("Puis-je prendre ?").performScrollTo().assertExists()
         rule.onNodeWithText("Puis-je prendre ?").performClick(); settle(1000)
         rule.waitUntil(20_000) { rule.onAllNodesWithText("Oui, je prends").fetchSemanticsNodes().isNotEmpty() }
         settle(500); shot("2i_prise")
         rule.onNodeWithText("Oui, je prends").performClick(); settle(600); shot("2j_prise_reponse")
-        desc("Revenir à la leçon").performClick(); settle(600)
-        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000)
+        desc("Revenir aux entraînements").performClick(); settle(1000)
         rule.onNodeWithText("Gagnez : Roi et tour contre roi").performScrollTo().performClick(); settle(1500); shot("2k_finale")
         desc("Retourner l'échiquier").assertExists() // le retournement reste offert pendant une séance
-        desc("Revenir à la leçon").performClick(); settle(600)
+        desc("Revenir aux entraînements").performClick(); settle(1000)
+        close(); settle(800)
         rule.onNodeWithText("Guidé").performClick(); settle(800)
         desc("Leçon suivante").performClick(); settle(1200) // la partie italienne : variantes et QCM
         // Position de départ : résumé seul ; la fiche complète (idées, pièges) s'ouvre dans un tiroir.
