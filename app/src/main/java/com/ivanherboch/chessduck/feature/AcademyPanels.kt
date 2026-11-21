@@ -694,13 +694,24 @@ internal fun LessonBriefSheet(l: Lesson, onClose: () -> Unit) {
     }
 }
 
+/** Leçon « L'échiquier et la notation » : sa passerelle mène à la Vision des cases. */
+internal const val NOTATION_LESSON = 115
+
 /** Passerelles de fin de leçon : thème dans Problèmes, position dans le Jeu Libre (une seule rangée, sous le commentaire). */
 @Composable
-internal fun LessonBridges(l: Lesson, endFen: String?, onTrainTheme: (String, Int) -> Unit, onPlayPosition: (String, Boolean) -> Unit) {
+internal fun LessonBridges(
+    l: Lesson, endFen: String?, onTrainTheme: (String, Int) -> Unit, onPlayPosition: (String, Boolean) -> Unit, onVision: () -> Unit = {},
+) {
     val c = LocalDuck.current
+    val vision = l.id == NOTATION_LESSON
     // Position finale de mat ou de pat : rien à jouer, le bouton n'apparaît pas (plutôt que désactivé sans raison).
-    if (l.theme.isEmpty() && endFen == null) return
+    if (l.theme.isEmpty() && endFen == null && !vision) return
     Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // « L'échiquier et la notation » : on s'entraîne aussitôt à repérer les cases (onglet Notation).
+        if (vision) DuckButton(
+            "Vision des cases", onVision, Modifier.weight(1f), accent = c.blue, variant = ButtonVariant.OUTLINED,
+            icon = Icons.Rounded.Extension, contentDescription = "S'entraîner à trouver les cases : Vision des cases, dans l'onglet Notation",
+        )
         if (l.theme.isNotEmpty()) DuckButton(
             "S'entraîner", { onTrainTheme(l.theme, l.level) }, Modifier.weight(1f), accent = c.blue, variant = ButtonVariant.OUTLINED,
             icon = Icons.Rounded.Extension, contentDescription = "S'entraîner sur ce thème dans l'onglet Problèmes",

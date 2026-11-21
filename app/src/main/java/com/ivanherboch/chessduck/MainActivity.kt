@@ -260,6 +260,7 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
     // Passerelles de l'Académie : thème à travailler dans Problèmes, position à jouer dans le Jeu Libre.
     var trainTheme by remember { mutableStateOf<Pair<String, Int>?>(null) }
     var playPosition by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    var vision by remember { mutableStateOf(false) }
     // Pont Revue de partie → Académie : point faible à travailler (leçon et 5 exercices).
     var academyTopic by remember { mutableStateOf<ReviewTopic?>(null) }
     val content: @Composable (Modifier) -> Unit = { m ->
@@ -270,7 +271,11 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
             // Chaque onglet garde son état d'interface (défilements, tiroirs, champs) quand on en change.
             holder.SaveableStateProvider(t) {
                 when (t) {
-                    0 -> NotationScreen(viewModel<NotationViewModel>(factory = DuckViewModels.Factory))
+                    0 -> {
+                        val nvm = viewModel<NotationViewModel>(factory = DuckViewModels.Factory)
+                        LaunchedEffect(vision) { if (vision) { nvm.startVision(com.ivanherboch.chessduck.feature.VisionKind.TOUCH); vision = false } }
+                        NotationScreen(nvm)
+                    }
                     1 -> {
                         val avm = viewModel<AcademyViewModel>(factory = DuckViewModels.Factory)
                         LaunchedEffect(academyTopic) {
@@ -280,6 +285,7 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                             avm,
                             onTrainTheme = { theme, level -> trainTheme = theme to level; select(2) },
                             onPlayPosition = { fen, white -> playPosition = fen to white; select(3) },
+                            onVision = { vision = true; select(0) },
                             trainingsOpen = academyTrainings, onTrainings = { academyTrainings = it },
                         )
                     }

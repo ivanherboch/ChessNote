@@ -49,6 +49,7 @@ enum class EndgameFamily(val label: String, val goal: EndgameGoal, val maxMoves:
     KRK("Roi et tour contre roi", EndgameGoal.WIN, 25, "matez le roi noir"),
     KBBK("Les deux fous", EndgameGoal.WIN, 30, "matez le roi noir"),
     KPK_WIN("Roi et pion contre roi", EndgameGoal.WIN, 20, "menez votre pion à dame"),
+    PAWN_WAR("La guerre des pions : la percée", EndgameGoal.WIN, 15, "faites passer un pion à dame"),
     LUCENA("Position de Lucena", EndgameGoal.WIN, 25, "menez votre pion à dame"),
     PHILIDOR_DRAW("Défense de Philidor", EndgameGoal.DRAW, 15, "tenez la nulle"),
     ROOK_PAWN_DRAW("Pion tour : la nulle", EndgameGoal.DRAW, 15, "tenez la nulle"),
@@ -67,6 +68,7 @@ enum class EndgameFamily(val label: String, val goal: EndgameGoal, val maxMoves:
             KRK -> "La tour coupe le roi noir et rétrécit sa boîte, votre roi vient se placer en face du sien, puis la tour mate sur le bord."
             KBBK -> "Les deux fous côte à côte forment un mur, votre roi les soutient, et l'on repousse le roi noir vers un coin, sans le mettre pat."
             KPK_WIN -> "Le roi passe devant son pion et gagne une case clé, deux rangées devant lui. Ne poussez le pion que quand la route est sûre : si le roi noir prend l'opposition devant le pion, c'est nul."
+            PAWN_WAR -> "La percée : poussez le pion du milieu au contact des pions noirs. Quel que soit le pion qui le prend, son voisin avance à son tour et un pion passé file à dame avant que le roi noir n'arrive."
             LUCENA -> "Construisez le pont : la tour vient sur la quatrième rangée pour abriter le roi des échecs, puis le pion va à dame."
             PHILIDOR_DRAW -> "Gardez la tour sur votre troisième rangée pour empêcher le roi blanc d'avancer ; dès que le pion y arrive, donnez des échecs par derrière."
             ROOK_PAWN_DRAW -> "Gardez votre roi dans le coin, devant le pion tour : personne ne peut l'en chasser."
@@ -157,6 +159,20 @@ object EndgamePositions {
                 val bk = any()
                 if (dist(bk, pawn) < 2 || rankOf(bk) <= pr) return null
                 valid(fen(listOf(pawn to 'P', wk to 'K', bk to 'k'), true), f)
+            }
+            EndgameFamily.PAWN_WAR -> {
+                // Trois pions contre trois, face à face (5e et 7e rangées), sur une aile ; les deux rois sont sur l'autre
+                // aile, trop loin : la percée gagne.
+                val left = rnd.nextBoolean()
+                val files = if (left) 0..2 else 5..7
+                val pieces = arrayListOf<Pair<Int, Char>>()
+                for (fl in files) { pieces.add(sq(fl, 4) to 'P'); pieces.add(sq(fl, 6) to 'p') }
+                val kingFiles = if (left) 5..7 else 0..2
+                val wk = sq(kingFiles.random(rnd), rnd.nextInt(3))
+                // Roi noir sur les deux colonnes les plus éloignées (vérifié à l'Ordinateur : sur la colonne f ou c, il rattrape).
+                val bk = sq((if (left) 6..7 else 0..1).random(rnd), 5 + rnd.nextInt(3))
+                pieces.add(wk to 'K'); pieces.add(bk to 'k')
+                valid(fen(pieces, true), f)
             }
             EndgameFamily.LUCENA -> {
                 // Roi blanc devant son pion en 7e, roi noir coupé de deux colonnes, tour blanche entre eux,
@@ -579,6 +595,6 @@ class EndgameTrainer(
         private val MISJUDGED = setOf(EndgameFamily.VANCURA_DRAW, EndgameFamily.PHILIDOR_DRAW, EndgameFamily.QUEEN_BISHOP_PAWN_DRAW)
         /** Attente maximale d'une réponse du moteur (démarrage compris, sur un téléphone lent). */
         const val ENGINE_WAIT = 10_000L
-        private val PAWN_FAMILIES = setOf(EndgameFamily.KPK_WIN, EndgameFamily.LUCENA)
+        private val PAWN_FAMILIES = setOf(EndgameFamily.KPK_WIN, EndgameFamily.LUCENA, EndgameFamily.PAWN_WAR)
     }
 }

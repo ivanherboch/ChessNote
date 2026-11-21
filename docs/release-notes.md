@@ -1,3 +1,23 @@
+## ChessDuck 3.6.0 — audit de l'Académie, lot 3 : plus de pratique, un suivi plus juste
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Les bases :
+  - « L'échiquier et la notation » vous fait jouer deux coups notés, puis mène directement à la Vision des cases (onglet Notation).
+  - « La guerre des pions » se joue maintenant contre l'Ordinateur : trois pions contre trois, trouvez la percée et faites passer un pion à dame. C'est aussi une nouvelle finale dans le tiroir « Entraînements ».
+- Stratégie dès le palier 2 : « La pire pièce » et « Les pions doublés » passent au palier 2 ; « Bon fou et mauvais fou », « La colonne ouverte » et « La tour en septième rangée » passent au palier 3.
+- Tactique : 38 leçons à un seul arrêt « À vous » en ont maintenant un deuxième. Vous jouez aussi la suite de la combinaison, pas seulement son premier coup.
+- Parties modèles :
+  - Chaque partie a 5 à 7 moments clés, choisis avec l'Ordinateur (les coups où le bon choix compte vraiment).
+  - En Guidé, la partie s'y arrête pour vous demander le coup.
+  - En Deviner, l'étoile permet de ne deviner que ces moments ; les autres coups se jouent seuls.
+- Révisions adaptatives : réussie sans erreur ni indice, une révision allonge l'intervalle ; réussie avec une hésitation, elle garde le même ; ratée, la leçon revient le lendemain.
+- Points faibles : les erreurs et les indices du Défi s'additionnent d'une tentative à l'autre au lieu d'être effacés au dernier essai.
+- Un Défi interrompu par Android (application fermée en arrière-plan) reprend au coup atteint, avec ses erreurs, au lieu de repartir du début. La variante d'ouverture choisie est aussi gardée.
+- Tiroir « Entraînements » : une barre montre les leçons maîtrisées du palier en cours et l'état de son examen.
+- « Puis-je prendre ? » : l'explication donne aussi la réponse de l'Ordinateur à la prise (reprise, mat, prise d'une autre pièce, échec).
+- « Jouer cette position » : l'Ordinateur joue au niveau de votre palier (de 600 à 2100 ELO), et non plus au réglage du Jeu Libre.
+
 ## ChessDuck 3.5.0 — audit de l'Académie, lot 2 : un Défi qui teste vraiment, des finales mieux arbitrées
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

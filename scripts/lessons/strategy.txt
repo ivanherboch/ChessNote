@@ -105,7 +105,7 @@ IDEA: Fixés et attaqués, ils deviennent deux cibles.
 TRAP: Pour vous : bloquez les pions pendants adverses et attaquez-les avec vos pièces.
 TRAP: Contre vous : des pions pendants immobiles s'affaiblissent ; préparez leur avance au bon moment.
 
-# Les pions doublés | Deux pions sur la même colonne se protègent mal. En échange, ils ouvrent souvent une colonne et donnent la paire de fous. | w | id=158 level=4 order=4158
+# Les pions doublés | Deux pions sur la même colonne se protègent mal. En échange, ils ouvrent souvent une colonne et donnent la paire de fous. | w | id=158 level=2 order=2158
 e4 : Les Blancs occupent le centre.
 c5 : La défense sicilienne.
 Nf3 : Le cavalier se développe.
@@ -199,7 +199,7 @@ IDEA: Les avant-postes se trouvent souvent devant des pions isolés ou arriéré
 TRAP: Pour vous : amenez un cavalier sur l'avant-poste, même s'il faut plusieurs coups.
 TRAP: Contre vous : échangez le cavalier adverse installé sur un avant-poste, ou évitez de laisser de telles cases.
 
-# Bon fou et mauvais fou | Un fou est mauvais quand ses propres pions bloquent ses diagonales. On cherche à l'activer, à l'échanger, ou à mettre ses pions sur l'autre couleur. | b | id=162 level=4 order=4162
+# Bon fou et mauvais fou | Un fou est mauvais quand ses propres pions bloquent ses diagonales. On cherche à l'activer, à l'échanger, ou à mettre ses pions sur l'autre couleur. | b | id=162 level=3 order=3162
 d4 : Les Blancs occupent le centre.
 d5 : Les Noirs aussi.
 c4 : Le gambit dame.
@@ -249,7 +249,7 @@ IDEA: Avec la paire de fous, ouvrez la position ; sans elle, gardez-la fermée.
 TRAP: Pour vous : en finale ouverte, la paire de fous vaut souvent plus qu'un fou et un cavalier.
 TRAP: Contre vous : contre la paire de fous, échangez l'un des fous ou fermez le jeu.
 
-# La colonne ouverte | Une colonne sans pion est une autoroute pour les tours. Le premier qui l'occupe y fait entrer ses tours dans le camp adverse. | w | id=164 level=4 order=4164
+# La colonne ouverte | Une colonne sans pion est une autoroute pour les tours. Le premier qui l'occupe y fait entrer ses tours dans le camp adverse. | w | id=164 level=3 order=3164
 d4 : Les Blancs occupent le centre.
 d5 : Les Noirs aussi.
 c4 : Le gambit dame.
@@ -276,7 +276,7 @@ IDEA: Une fois la colonne prise, cherchez une case d'entrée sur la septième ra
 TRAP: Pour vous : doublez vos tours sur la colonne ouverte pour la contrôler.
 TRAP: Contre vous : opposez une tour à la tour adverse sur la colonne, sinon elle entrera chez vous.
 
-# La tour en septième rangée | Une tour sur la septième rangée attaque les pions restés chez eux et enferme le roi adverse. | w | id=165 level=4 order=4165
+# La tour en septième rangée | Une tour sur la septième rangée attaque les pions restés chez eux et enferme le roi adverse. | w | id=165 level=3 order=3165
 FEN: r5k1/pp3ppp/8/8/8/8/PP3PPP/2R3K1 w - - 0 1
 ?Rc7 : La tour entre sur la septième rangée. Elle attaque le pion b7.
 Rb8 : La tour noire doit protéger le pion b7 : elle devient passive.
@@ -427,7 +427,7 @@ IDEA: Un petit coup préventif peut valoir plus qu'une attaque.
 TRAP: Pour vous : un adversaire privé de son plan joue souvent des coups sans but.
 TRAP: Contre vous : se lancer à l'attaque sans regarder les menaces adverses peut coûter cher.
 
-# La pire pièce | Quand on ne sait pas quoi jouer, on améliore sa plus mauvaise pièce. Un cavalier mal placé fait parfois un long voyage pour trouver une bonne case. | w | id=171 level=4 order=4171
+# La pire pièce | Quand on ne sait pas quoi jouer, on améliore sa plus mauvaise pièce. Un cavalier mal placé fait parfois un long voyage pour trouver une bonne case. | w | id=171 level=2 order=2171
 e4 : Les Blancs occupent le centre.
 e5 : Les Noirs aussi.
 Nf3 : Le cavalier attaque le pion e5.

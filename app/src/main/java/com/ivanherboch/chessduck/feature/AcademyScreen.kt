@@ -100,6 +100,8 @@ fun AcademyScreen(
     onTrainTheme: (theme: String, level: Int) -> Unit = { _, _ -> },
     /** « Jouer cette position » : ouvre le Jeu Libre sur cette position (FEN), le joueur ayant le camp indiqué. */
     onPlayPosition: (fen: String, playerWhite: Boolean) -> Unit = { _, _ -> },
+    /** « Vision des cases » : ouvre l'exercice dans l'onglet Notation (passerelle de la leçon sur la notation). */
+    onVision: () -> Unit = {},
     /** Tiroir « Entraînements », ouvert depuis le bouton de l'en-tête de l'application. */
     trainingsOpen: Boolean = false,
     onTrainings: (Boolean) -> Unit = {},
@@ -155,7 +157,7 @@ fun AcademyScreen(
     // Parties modèles : le camp se choisit avant d'ouvrir le Jeu Libre (Blancs ou Noirs).
     var playChoice by remember { mutableStateOf<String?>(null) }
     val play: (String, Boolean) -> Unit = if (model) { fen, _ -> playChoice = fen } else onPlayPosition
-    val bridges: @Composable () -> Unit = { LessonBridges(l, endFen, onTrainTheme, play) }
+    val bridges: @Composable () -> Unit = { LessonBridges(l, endFen, onTrainTheme, play, onVision) }
     // Partie modèle : « Jouer cette position » à chaque coup (hors jugement et réfutation).
     val modelPlay = model && endFen != null && !s.judging && s.refute == null && !s.done
 

@@ -1,10 +1,10 @@
 # L'échiquier et la notation | L'échiquier compte 64 cases, repérées par une lettre de colonne et un chiffre de rangée. Apprenez à lire et à noter un coup. | w | id=115 level=1 order=1115
 SHOW 0: marks=a1,h1,a8,h8
 e4 : Les colonnes portent les lettres a à h, de gauche à droite vu des Blancs. Les rangées portent les chiffres 1 à 8. Ce pion part de la case e2 et arrive en e4 : on note simplement e4.
-e5 : Les Noirs répondent. Leur pion arrive en e5. Pour un pion, on ne note que la case d'arrivée.
-Nf3 : Pour une pièce, on note son nom et sa case d'arrivée : cavalier f3. La case a1, en bas à gauche, est toujours une case sombre.
-Nc6 : Le cavalier noir arrive en c6. Quand une pièce prend, on ajoute le signe « prend », et le signe « plus » quand elle donne échec.
-Bc4 : Le fou blanc arrive en c4. À retenir : chaque case a un nom unique, une lettre puis un chiffre. Noter ses parties permet de les rejouer et de les comprendre.
+e5 : Les Noirs répondent. Leur pion arrive en e5. Pour un pion, on ne note que la case d'arrivée. À vous : jouez le coup noté « cavalier f3 ».
+?Nf3 : Pour une pièce, on note son nom et sa case d'arrivée : cavalier f3. La case a1, en bas à gauche, est toujours une case sombre.
+Nc6 : Le cavalier noir arrive en c6. Quand une pièce prend, on ajoute le signe « prend », et le signe « plus » quand elle donne échec. À vous : jouez le coup noté « fou c4 ».
+?Bc4 : Le fou blanc arrive en c4. À retenir : chaque case a un nom unique, une lettre puis un chiffre. Noter ses parties permet de les rejouer et de les comprendre.
 IDEA: Les colonnes vont de a à h, de gauche à droite vu des Blancs ; les rangées vont de 1 à 8, en partant du côté des Blancs.
 IDEA: Une pièce se note par sa lettre (en anglais : K roi, Q dame, R tour, B fou, N cavalier) suivie de sa case d'arrivée ; un pion par sa seule case d'arrivée.
 IDEA: Les signes à connaître : x pour une prise, + pour un échec, # pour le mat, O-O et O-O-O pour les roques.
@@ -214,7 +214,7 @@ IDEA: Parfois, une autre pièce est meilleure : un cavalier qui donne échec, ou
 TRAP: Pour vous : un pion passé proche de la promotion oblige l'adversaire à immobiliser une pièce pour l'arrêter.
 TRAP: Contre vous : une dame promue sans réfléchir peut mettre le roi adverse pat ; vérifiez avant de choisir.
 
-# La guerre des pions | Avec seulement des pions, le premier qui va à dame gagne. Ce petit jeu apprend à compter les coups et à créer un pion passé. | w | id=130 level=1 order=1130
+# La guerre des pions | Avec seulement des pions, le premier qui va à dame gagne. Ce petit jeu apprend à compter les coups et à créer un pion passé. | w | id=130 level=1 order=1130 drill=PAWN_WAR
 FEN: 4k3/ppp5/8/8/8/8/PPP5/4K3 w - - 0 1
 ?b4 : Le pion b avance de deux cases. Les Blancs avancent leurs pions ensemble pour qu'ils se protègent.
 Kd7 : Le roi noir se dirige vers les pions.
