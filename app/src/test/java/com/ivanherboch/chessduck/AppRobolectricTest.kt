@@ -537,7 +537,11 @@ class AppRobolectricTest {
         desc("Aller à la fin").performClick(); settle(800); shot("2e_fin_lecon")
         desc("Jouer cette position contre l'Ordinateur dans le Jeu Libre").performClick(); settle(2000)
         shot("2f_jouer_position")
-        rule.onNodeWithText("Position de la leçon", substring = true).assertExists()
+        // Le Jeu Libre prépare la partie en tâche de fond : on attend son bandeau.
+        rule.waitUntil(15_000) {
+            shadowOf(Looper.getMainLooper()).idle()
+            rule.onAllNodesWithText("Position de la leçon", substring = true).fetchSemanticsNodes().isNotEmpty()
+        }
         rule.onNodeWithText("Académie").performClick(); settle(1200)
         rule.onNodeWithText("Défi").performClick(); settle(1500); shot("2b_defi")
         desc("Ouvrir le catalogue des leçons").performClick(); settle(1200); shot("2c_catalogue_lecons")
