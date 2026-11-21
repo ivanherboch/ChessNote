@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material.icons.rounded.Info
 import com.ivanherboch.chessduck.ui.HintButton
 import com.ivanherboch.chessduck.ui.HintIconButton
@@ -195,7 +196,9 @@ fun AcademyScreen(
             }
             Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 DuckSegmentedRow(
-                    listOf("Guidé", if (model) "Devinez le coup" else "Défi"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) },
+                    // Très grande police : libellé court, pour que la rangée (avec ses icônes) tienne sur une ligne.
+                    listOf("Guidé", if (!model) "Défi" else if (LocalDensity.current.fontScale > 1.3f) "Deviner" else "Devinez le coup"),
+                    if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) },
                     Modifier.weight(1f), icons = listOf(Icons.Rounded.Visibility, Icons.Rounded.SportsScore),
                 )
                 // Les variantes d'une ouverture se choisissent ici (mode Guidé), sans rangée de plus sous l'échiquier.

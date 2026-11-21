@@ -487,7 +487,7 @@ internal fun AcademyBoardInfo(s: AcademyState, l: Lesson, eg: EndgameSession?, r
             if (eg.thinking) CircularProgressIndicator(Modifier.padding(start = 8.dp).size(14.dp), color = c.goldRole.fill, strokeWidth = 2.dp)
             else if (toMove) Box(Modifier.padding(start = 8.dp).size(8.dp).clip(CircleShape).background(c.greenRole.fill))
             Spacer(Modifier.weight(1f))
-            StepDots(eg.results, eg.total, if (eg.finished) -1 else eg.index)
+            StepDots(eg.results, eg.total, if (eg.finished) -1 else eg.index, Modifier.padding(end = 4.dp))
         }
         return
     }
@@ -501,8 +501,8 @@ internal fun AcademyBoardInfo(s: AcademyState, l: Lesson, eg: EndgameSession?, r
         SideDot(white)
         Text(text, color = c.text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp).weight(1f))
         when {
-            rx != null -> StepDots(rx.results, rx.total, rx.index)
-            pr != null -> StepDots(pr.results, pr.ids.size, pr.index)
+            rx != null -> StepDots(rx.results, rx.total, rx.index, Modifier.padding(start = 6.dp, end = 4.dp))
+            pr != null -> StepDots(pr.results, pr.ids.size, pr.index, Modifier.padding(start = 6.dp, end = 4.dp))
         }
     }
 }
