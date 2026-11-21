@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.vm
 
+import kotlinx.coroutines.cancel
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.SavedStateHandle
 import com.ivanherboch.chessduck.chess.Move
 import com.ivanherboch.chessduck.chess.START_FEN
@@ -93,6 +95,9 @@ class ViewModelsTest {
         assertEquals(square, vm.shareStyle())
         prefs.setPalette(DuckPalette.BLUE_ORANGE.ordinal)
         assertEquals(DuckPalette.BLUE_ORANGE, vm.shareStyle().palette)
+        // Le chargement du problème au démarrage tourne hors du temps virtuel : on l'arrête avant la fin du test, sinon il
+        // reprend sur Dispatchers.Main après sa réinitialisation et fait échouer le test suivant.
+        vm.viewModelScope.cancel()
     }
 
     @Test
