@@ -31,6 +31,7 @@ import com.ivanherboch.chessduck.data.DuckDatabase
 import com.ivanherboch.chessduck.data.GameRecord
 import com.ivanherboch.chessduck.data.LessonProgress
 import com.ivanherboch.chessduck.data.PuzzleProgress
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
