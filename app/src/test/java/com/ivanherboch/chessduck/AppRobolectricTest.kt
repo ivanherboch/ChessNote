@@ -591,7 +591,7 @@ class AppRobolectricTest {
         rule.onNodeWithText("Filtres").performClick(); settle(500)
         rule.onNodeWithText("Parties modèles 0/8").performScrollTo().performClick(); settle(1000)
         rule.onNodeWithText("La partie de l'Opéra : Morphy, Paris 1858").performScrollTo().performClick(); settle(1200)
-        rule.onNodeWithText("Devinez le coup").performClick(); settle(1500); shot("2o_devinez")
+        rule.onNodeWithText("Deviner").performClick(); settle(1500); shot("2o_devinez")
         // Partie modèle : « Jouer cette position » à chaque coup, avec le choix du camp.
         desc("avec le camp de votre choix").performClick(); settle(800)
         rule.onNodeWithText("Jouer avec les Noirs").assertExists(); shot("2v_choix_camp")

@@ -3,6 +3,7 @@
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
 
 - L'icône « i » (fiche de la leçon) est disponible sur toutes les leçons, plus seulement sur les ouvertures et quelques finales. La fiche réunit l'objectif, la règle « À retenir », le thème tactique (son but et un conseil), les moments clés (les coups à trouver aux arrêts « À vous », avec leur explication) et, quand la leçon en a, les conditions, les idées et les pièges.
+- Parties modèles : le mode « Devinez le coup » s'appelle « Deviner » dans la rangée des modes, pour qu'elle tienne sur une ligne avec la fiche et « Jouer cette position » ; en très grande police, les petites icônes des modes disparaissent.
 
 ## ChessDuck 3.2.2 — des exercices qui disent quoi chercher
 

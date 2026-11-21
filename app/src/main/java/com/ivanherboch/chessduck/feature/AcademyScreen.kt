@@ -199,9 +199,11 @@ fun AcademyScreen(
             Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 DuckSegmentedRow(
                     // Très grande police : libellé court, pour que la rangée (avec ses icônes) tienne sur une ligne.
-                    listOf("Guidé", if (!model) "Défi" else if (LocalDensity.current.fontScale > 1.3f) "Deviner" else "Devinez le coup"),
-                    if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) },
-                    Modifier.weight(1f), icons = listOf(Icons.Rounded.Visibility, Icons.Rounded.SportsScore),
+                    // Partie modèle : libellé court (« Deviner »), la rangée porte aussi la fiche et « Jouer cette position ».
+                    // Très grande police : sans les petites icônes, pour que les libellés tiennent sur une ligne.
+                    listOf("Guidé", if (model) "Deviner" else "Défi"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) },
+                    Modifier.weight(1f),
+                    icons = if (LocalDensity.current.fontScale > 1.3f) null else listOf(Icons.Rounded.Visibility, Icons.Rounded.SportsScore),
                 )
                 // Les variantes d'une ouverture se choisissent ici (mode Guidé), sans rangée de plus sous l'échiquier.
                 if (!s.challenge && l.variants.isNotEmpty()) VariantMenu(l, s.variant, vm::setVariant)
