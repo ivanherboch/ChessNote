@@ -1,3 +1,22 @@
+## ChessDuck 3.8.0 — plus léger, plus rapide, plus fiable
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- APK deux fois plus léger : 15,8 Mo au lieu de 34,5 Mo (la base des 150 000 problèmes est maintenant compressée).
+- Démarrage : l'Ordinateur ne se lance plus à l'ouverture de l'application, mais au premier coup à juger (Défi, question « À vous », finale, exercices, Jeu Libre).
+- « Jouer cette position » : à la première ouverture du Jeu Libre, la position de la leçon n'est plus remplacée par une partie normale.
+- Partie accompagnée : une vérification de coup en cours est abandonnée proprement en cas d'annulation, d'abandon ou de nouvelle partie.
+- Problèmes :
+  - Le catalogue compte les problèmes par thème environ dix fois plus vite.
+  - « S'entraîner sur ce thème » ne tire plus deux problèmes d'affilée.
+  - Une résolution est toujours enregistrée, même si l'on passe aussitôt au problème suivant.
+- Fluidité : les positions de finale et les exercices de réflexes sont préparés hors du fil principal, les images des pièces sont chargées une seule fois, et les parties déjà analysées ne sont plus rejouées pour le bilan des points faibles.
+- Robustesse :
+  - L'Ordinateur ne peut plus bloquer l'application s'il cesse de répondre.
+  - Le moteur, la voix et les sons sont libérés en quittant l'application.
+  - Une image ratée n'est plus laissée dans la galerie.
+  - Une voix de synthèse défaillante ne fait plus planter l'application.
+
 ## ChessDuck 3.7.0 — audit de l'Académie, lot 4 : la partie accompagnée et des repères sur l'échiquier
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
