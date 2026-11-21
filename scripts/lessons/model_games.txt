@@ -32,6 +32,11 @@ Nxd7 : Le cavalier reprend. Les Noirs ont beaucoup plus de matériel, mais leur 
 Qb8+ : Un sacrifice de dame ! Elle se place en b8 pour attirer le cavalier loin de la case d8.
 Nxb8 : Le cavalier est obligé de prendre la dame.
 Rd8# : La tour donne échec et mat, protégée par le fou g5. À retenir : développez vite toutes vos pièces, ouvrez les lignes vers le roi resté au centre, et n'hésitez pas à sacrifier du matériel pour garder l'initiative.
+IDEA: Morphy développe une nouvelle pièce presque à chaque coup, pendant que les Noirs perdent du temps.
+IDEA: Il ouvre les lignes vers le roi noir resté au centre.
+IDEA: Il rend du matériel pour garder l'initiative et finit par un mat sur la dernière rangée.
+TRAP: Pour vous : contre un roi resté au centre, ouvrez les lignes, même au prix d'un sacrifice.
+TRAP: Contre vous : un retard de développement et un roi au centre se paient vite ; roquez à temps.
 
 
 # L'Immortelle : Anderssen contre Kieseritzky, Londres 1851 | Adolf Anderssen sacrifie un fou, deux tours et sa dame pour mater avec ses trois pièces mineures. La partie la plus célèbre de l'époque romantique. | w | id=188 level=4 kind=model_game
@@ -80,6 +85,11 @@ Kd8 : Le roi s'enfuit.
 Qf6+ : Le sacrifice final : la dame se donne pour dévier le cavalier g8.
 Nxf6 : Le cavalier prend la dame.
 Be7# : Le fou donne le mat. Trois pièces mineures matent un roi entouré de toute son armée. À retenir : l'avance de développement et l'activité des pièces comptent souvent plus que le matériel. Mais tous les sacrifices de cette partie ne sont pas corrects : à votre tour, vérifiez vos calculs.
+IDEA: Anderssen sacrifie un fou, deux tours et sa dame pour mater avec ses trois pièces mineures.
+IDEA: L'avance de développement et l'activité des pièces comptent plus que le matériel.
+IDEA: Le mat final est donné par des pièces mineures coordonnées autour du roi noir.
+TRAP: Pour vous : quand toutes vos pièces attaquent un roi isolé, le matériel compte moins.
+TRAP: Contre vous : tous les sacrifices de cette partie ne sont pas corrects ; vérifiez toujours vos calculs.
 
 # L'Immortelle de Rubinstein : Rotlewi contre Rubinstein, Lodz 1907 | Akiba Rubinstein centralise ses pièces, pointe ses deux fous vers le roi blanc, puis sacrifie sa dame et ses tours dans une combinaison célèbre. | b | id=189 level=5 kind=model_game
 d4 : Les Blancs ouvrent avec le pion dame.
@@ -132,6 +142,11 @@ Qxd2 : La dame prend la tour.
 Bxe4+ : Le fou prend le fou e4 avec échec.
 Qg2 : La dame s'interpose.
 Rh3 : La tour menace le mat en h2 : il est imparable. À retenir : développez toutes vos pièces, pointez-les vers le roi adverse, puis cherchez la combinaison. Ici, les deux fous de Rubinstein, alignés sur les grandes diagonales, ont fait tout le travail.
+IDEA: Rubinstein centralise ses pièces et pointe ses deux fous vers le roi blanc.
+IDEA: Il sacrifie sa dame et ses tours dans une combinaison célèbre.
+IDEA: Les deux fous alignés sur les grandes diagonales font tout le travail.
+TRAP: Pour vous : deux fous braqués vers le roque adverse préparent souvent une combinaison.
+TRAP: Contre vous : un roque visé par les deux fous adverses doit être renforcé ou les fous échangés.
 
 # Le double sacrifice des fous : Lasker contre Bauer, Amsterdam 1889 | Emanuel Lasker invente un motif nouveau : ses deux fous se sacrifient en h7 et en g7 pour mettre à nu le roi noir. | w | id=190 level=5 kind=model_game
 f4 : Lasker ouvre avec le pion f : l'ouverture Bird.
@@ -199,6 +214,11 @@ Ke8 : Le roi fuit.
 Qh8+ : La dame donne échec.
 Ke7 : Le roi fuit encore.
 Qg7+ : Les Noirs abandonnent : la tour b7 tombe et le mat approche. À retenir : deux fous qui visent le roque peuvent se sacrifier l'un après l'autre pour ouvrir le roi adverse. Ce motif porte depuis le nom de Lasker.
+IDEA: Lasker sacrifie ses deux fous en h7 et en g7 pour mettre à nu le roi noir.
+IDEA: La dame et une tour arrivent ensuite pour conclure.
+IDEA: Ce motif porte depuis le nom de Lasker.
+TRAP: Pour vous : deux fous qui visent le roque peuvent se sacrifier l'un après l'autre pour l'ouvrir.
+TRAP: Contre vous : un roque sans défenseur face à deux fous et une dame est en grand danger.
 
 # Le zugzwang immortel : Sämisch contre Nimzowitsch, Copenhague 1923 | Aron Nimzowitsch étouffe les Blancs : à la fin, toutes leurs pièces sont bloquées et chaque coup aggrave leur position. Ils abandonnent sans être matés. | b | id=191 level=5 kind=model_game
 d4 : Les Blancs ouvrent avec le pion dame.
@@ -251,6 +271,11 @@ Qe3 : La dame recule.
 Bd3 : Le fou prend la case d3 et immobilise le cavalier b1 et la tour c1. L'Ordinateur trouve une suite plus rapide, mais ce coup fige toute l'armée blanche.
 Rce1 : Les Blancs déplacent leur tour.
 h6 : Un simple coup d'attente ! Les Blancs n'ont plus de bon coup : chaque mouvement perd du matériel. Ils abandonnent. À retenir : bloquer toutes les pièces adverses peut gagner sans mat. Quand l'adversaire n'a plus que de mauvais coups, un coup d'attente suffit : c'est le zugzwang.
+IDEA: Nimzowitsch bloque peu à peu toutes les pièces blanches.
+IDEA: À la fin, chaque coup blanc aggrave la position : c'est le zugzwang.
+IDEA: Les Blancs abandonnent sans être matés.
+TRAP: Pour vous : quand l'adversaire n'a plus que de mauvais coups, un coup d'attente suffit.
+TRAP: Contre vous : des pièces sans activité peuvent se retrouver toutes bloquées ; gardez-les mobiles.
 
 # Le zugzwang d'Alekhine : Alekhine contre Nimzowitsch, San Remo 1930 | Alexandre Alekhine gagne de l'espace à l'aile dame, envahit la colonne c avec ses deux tours et sa dame, puis laisse les Noirs sans aucun coup utile. | w | id=192 level=5 kind=model_game
 e4 : Alekhine ouvre avec le pion roi.
@@ -316,6 +341,11 @@ h5 : Les Noirs jouent un coup de pion.
 Kh2 : Le roi blanc attend lui aussi.
 g6 : Le dernier coup de pion noir.
 g3 : Les Noirs sont en zugzwang : chaque coup perd du matériel. Ils abandonnent. L'Ordinateur trouve un gain encore plus direct, mais le coup d'attente d'Alekhine illustre parfaitement le zugzwang. À retenir : gagnez de l'espace, occupez la colonne ouverte avec toutes vos pièces lourdes, puis laissez l'adversaire sans coup utile.
+IDEA: Alekhine gagne de l'espace à l'aile dame.
+IDEA: Il envahit la colonne c avec ses deux tours et sa dame.
+IDEA: Il laisse les Noirs sans aucun coup utile.
+TRAP: Pour vous : trois pièces lourdes sur la même colonne ouverte dominent tout.
+TRAP: Contre vous : perdre la bataille d'une colonne ouverte peut paralyser tout votre camp.
 
 # La percée de Botvinnik : Botvinnik contre Capablanca, AVRO 1938 | Mikhaïl Botvinnik bâtit un centre de pions, sacrifie son pion a pour ouvrir le jeu, puis conclut par un sacrifice de fou et une marche du pion e jusqu'à la septième rangée. | w | id=193 level=5 kind=model_game
 d4 : Botvinnik ouvre avec le pion dame.
@@ -399,6 +429,11 @@ Qe4+ : Un nouvel échec.
 g4 : Le pion s'interpose.
 Qe1+ : Un dernier échec.
 Kh5 : Les échecs sont terminés : le pion e7 va à dame. Les Noirs abandonnent. À retenir : construisez un centre de pions, sacrifiez du matériel pour l'ouvrir au bon moment, et calculez précisément quand votre roi échappera aux échecs.
+IDEA: Botvinnik bâtit un centre de pions.
+IDEA: Il sacrifie son pion a pour ouvrir le jeu au bon moment.
+IDEA: Il conclut par un sacrifice de fou et la marche du pion e jusqu'à la septième rangée.
+TRAP: Pour vous : un pion central avancé, soutenu, peut décider la partie.
+TRAP: Contre vous : calculez précisément quand votre roi échappera aux échecs avant de lancer l'assaut.
 
 # La finale de Capablanca : Capablanca contre Tartakower, New York 1924 | José Raúl Capablanca transforme un petit avantage en gain : son roi traverse l'échiquier pendant que sa tour coupe le roi noir. Un modèle de finale de tours. | w | id=194 level=5 kind=model_game
 d4 : Capablanca ouvre avec le pion dame.
@@ -504,3 +539,8 @@ Ra1 : La tour noire attaque le pion a4.
 Kc6 : Le roi blanc protège le pion.
 Rxa4 : La tour noire prend le pion a4.
 d6 : Le pion d est trop rapide. Les Noirs abandonnent. À retenir : en finale de tours, un roi actif et une tour en septième rangée valent plus que quelques pions. Capablanca a donné deux pions pour activer son roi.
+IDEA: Capablanca transforme un petit avantage en gain.
+IDEA: Son roi traverse l'échiquier pendant que sa tour coupe le roi noir.
+IDEA: Il donne deux pions pour activer son roi : un modèle de finale de tours.
+TRAP: Pour vous : en finale de tours, un roi actif et une tour en septième rangée valent plus que quelques pions.
+TRAP: Contre vous : une tour passive qui défend des pions perd souvent contre une tour active.

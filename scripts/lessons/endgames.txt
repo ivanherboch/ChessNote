@@ -15,6 +15,11 @@ a4a3 : Le roi noir n'a plus que deux cases.
 d2c3 : Le roi blanc arrive au contact. Le mat approche.
 a3a4 : Le roi noir revient : c'est son seul coup.
 ?b6b4 : La dame se colle au roi, protégée par le roi blanc : échec et mat. À retenir : la dame enferme le roi à un saut de cavalier, le roi vient l'aider, et l'on garde toujours une case au roi adverse jusqu'au mat.
+IDEA: La dame enferme le roi adverse dans une boîte, en se plaçant à un saut de cavalier de lui.
+IDEA: Une fois le roi au bord, votre roi vient aider : la dame seule ne peut pas mater.
+IDEA: La dame mate au contact du roi, protégée par son roi, ou sur le bord à distance.
+TRAP: Pour vous : la méthode de la boîte mate en une dizaine de coups au plus, depuis n'importe quelle position.
+TRAP: Contre vous : une dame qui enferme trop le roi sans échec donne le pat ; laissez-lui toujours une case.
 
 # Le mat avec deux tours : l'escalier | Les deux tours avancent chacune à son tour, comme on monte un escalier, et repoussent le roi jusqu'au bord. | w | id=77 drill=KRRK level=2 order=2077
 FEN: 8/8/8/3k4/8/8/8/R3K2R w - - 0 1
@@ -27,6 +32,11 @@ b7b8 : Le roi noir recule d'une case.
 f5f7 : Troisième marche : la tour monte en septième rangée. Le roi noir est enfermé sur la dernière.
 b8c8 : Le roi noir se déplace, mais il est trop tard.
 ?h6h8 : Dernière marche : l'autre tour donne échec sur la huitième rangée. Échec et mat. À retenir : une tour garde une rangée, l'autre donne échec une rangée plus haut, et si le roi s'approche d'une tour, on l'éloigne sur l'autre aile.
+IDEA: Une tour garde une rangée, l'autre donne échec une rangée plus loin : c'est l'escalier.
+IDEA: Les tours avancent chacune à son tour et repoussent le roi jusqu'au bord.
+IDEA: Pas besoin du roi : deux tours suffisent pour mater.
+TRAP: Pour vous : l'escalier mate rapidement, sans calcul compliqué.
+TRAP: Contre vous : si le roi adverse s'approche d'une tour, éloignez-la sur l'autre aile au lieu de la laisser prendre.
 
 # Le mat avec une tour | Avec une seule tour, il faut l'aide du roi : la tour construit une boîte de plus en plus petite, le roi pousse, et l'on mate sur le bord. | w | id=78 drill=KRK level=2 order=2078
 FEN: 8/8/3k4/8/3K4/8/8/4R3 w - - 0 1
@@ -47,6 +57,11 @@ a7a8 : Le roi noir n'a plus que deux cases.
 c6c7 : Le roi blanc contrôle maintenant les cases b7 et b8. Il laisse une case au roi noir : pas de pat.
 a8a7 : Le roi noir n'a qu'un coup.
 ?c4a4 : La tour descend sur la colonne a : échec et mat, car le roi blanc garde toutes les cases de fuite. À retenir : la tour construit une boîte de plus en plus petite, le roi vient l'aider, et l'on mate sur le bord en laissant une case libre jusqu'au dernier coup.
+IDEA: Avec une seule tour, il faut l'aide du roi.
+IDEA: La tour construit une boîte de plus en plus petite autour du roi adverse.
+IDEA: Les rois se font face, et la tour mate sur le bord.
+TRAP: Pour vous : un coup d'attente de la tour force souvent le roi adverse à se placer en face du vôtre, pour le mat.
+TRAP: Contre vous : une tour trop près du roi adverse se fait attaquer ; gardez-la à distance.
 
 # Le mat avec les deux fous | Les deux fous, côte à côte, forment un mur. Avec l'aide de leur roi, ils poussent le roi adverse dans un coin. | w | id=79 drill=KBBK level=4 order=4079
 FEN: 8/8/3k4/8/4K3/4BB2/8/8 w - - 0 1
@@ -75,12 +90,22 @@ c8b8 : Le roi noir revient vers le coin.
 e7d6 : Nouvel échec : le roi noir doit entrer dans le coin.
 b8a8 : Le roi noir est dans le coin.
 ?g4f3 : Le fou de cases blanches donne échec sur la grande diagonale : échec et mat. À retenir : les deux fous côte à côte forment un mur, le roi vient les soutenir, et l'on pousse le roi adverse dans un coin en prenant garde au pat.
+IDEA: Les deux fous côte à côte forment un mur que le roi ne peut pas traverser.
+IDEA: Votre roi vient les soutenir et pousse le roi adverse vers un coin.
+IDEA: Le mat se donne dans le coin, avec les deux fous et le roi.
+TRAP: Pour vous : deux fous et un roi bien coordonnés matent depuis n'importe quelle position.
+TRAP: Contre vous : le pat menace souvent dans le coin ; laissez une case au roi adverse jusqu'au dernier coup.
 
 # Attention au pat ! | Quand on a beaucoup d'avance, le seul danger est le pat. Le roi adverse doit toujours garder au moins un coup légal. | w | id=80 level=2 order=2080
 FEN: 7k/8/5K2/8/8/8/8/6Q1 w - - 0 1
 ?Kf7 : Attention : si la dame allait en g6, le roi noir n'aurait plus aucun coup sans être en échec. Ce serait pat, et donc nulle. On approche plutôt le roi, en laissant la case h7.
 Kh7 : Le roi noir utilise la seule case qui lui reste.
 Qg7# : La dame mate, protégée par le roi. À retenir : avant chaque coup, demandez-vous si l'adversaire aura encore un coup légal.
+IDEA: Avec beaucoup d'avance, le seul danger est le pat.
+IDEA: Le roi adverse doit toujours garder au moins un coup légal.
+IDEA: Avant chaque coup, demandez-vous : l'adversaire aura-t-il encore un coup ?
+TRAP: Pour vous : en défense, un roi qui n'a plus aucun coup peut sauver la partie par le pat.
+TRAP: Contre vous : une dame qui coupe la dernière case du roi adverse sans échec transforme la victoire en nulle.
 
 # La règle du carré : le pion gagne la course | Pour savoir si un roi rattrape un pion, imaginez un carré entre le pion et sa case de promotion. Si le roi ne peut pas y entrer, le pion gagne. | w | id=81 theme=pawnEndgame level=2 order=2081
 FEN: 8/8/8/8/P6k/8/8/7K w - - 0 1
@@ -92,6 +117,11 @@ Kf6 : Le roi se rapproche, mais il reste en dehors du carré.
 a7 : Plus qu'un pas avant la promotion.
 Ke7 : Le roi arrive trop tard.
 a8=Q : Le pion devient une dame. À retenir : la règle du carré évite de compter les coups un par un.
+IDEA: Imaginez un carré entre le pion et sa case de promotion.
+IDEA: Si le roi, au trait, ne peut pas entrer dans ce carré, le pion gagne la course.
+IDEA: La règle du carré évite de compter les coups un par un.
+TRAP: Pour vous : un pion passé éloigné dont le roi adverse est hors du carré va à dame seul.
+TRAP: Contre vous : un pion sur sa case de départ peut avancer de deux cases ; mesurez le carré depuis la rangée suivante.
 
 # La règle du carré : le roi rattrape le pion | Si le roi peut entrer dans le carré du pion, il arrivera à temps pour l'arrêter. | b | id=82 level=2 order=2082
 FEN: 8/8/8/8/P4k2/8/8/7K b - - 0 1
@@ -104,6 +134,11 @@ a7 : Les Blancs tentent leur dernière chance.
 Kb7 : Le roi attaque le pion et contrôle la case de promotion.
 a8=Q+ : Le pion se promeut, mais la nouvelle dame n'est pas protégée.
 Kxa8 : Le roi prend la dame : partie nulle. À retenir : si le roi entre dans le carré, le pion seul ne passera pas.
+IDEA: Si le roi peut entrer dans le carré du pion, il arrivera à temps pour l'arrêter.
+IDEA: Le carré se déplace avec le pion : le roi doit y entrer à chaque coup.
+IDEA: Seul, le pion ne passera pas.
+TRAP: Pour vous : un roi qui entre dans le carré rattrape le pion, même s'il semble loin.
+TRAP: Contre vous : si une pièce bloque le chemin du roi, la règle du carré ne suffit plus ; comptez les coups.
 
 # Le roi en 6e rangée devant son pion | Voici la position gagnante à connaître : le roi devant son pion, sur la sixième rangée. Elle gagne même si c'est à l'adversaire de jouer. | w | id=83 theme=pawnEndgame drill=KPK_WIN level=2 order=2083
 CONDITIONS: Le roi du camp fort est devant son pion, sur la sixième rangée, et le pion n'est pas sur une colonne de tour. La position gagne, même si c'est à l'adversaire de jouer.
@@ -117,6 +152,11 @@ Kf7 : C'est le seul coup du roi noir. Il doit quitter la case de promotion.
 Kd7 : Le roi blanc protège maintenant la case de promotion.
 Kg6 : Les Noirs ne peuvent plus rien faire.
 e8=Q+ : Le pion devient une dame. À retenir : roi sur la sixième rangée devant son pion, la partie est gagnée.
+IDEA: Roi sur la sixième rangée devant son pion : la partie est gagnée, quel que soit le trait.
+IDEA: Le roi ouvre la route ; le pion avance quand les cases devant lui sont contrôlées.
+IDEA: Cette position clé vaut d'être reconnue d'un coup d'œil.
+TRAP: Pour vous : amenez votre roi devant le pion jusqu'à la sixième rangée, et la victoire est assurée.
+TRAP: Contre vous : un pion tour fait exception ; le défenseur dans le coin fait nulle.
 
 # Le roi d'abord, le pion ensuite | Dans une finale roi et pion, on avance d'abord le roi devant son pion. Le pion n'avance que quand la route est sûre. | w | id=84 theme=pawnEndgame drill=KPK_WIN level=2 order=2084
 FEN: 4k3/8/8/8/8/8/4P3/4K3 w - - 0 1
@@ -133,6 +173,11 @@ Kd8 : Les Noirs doivent céder un peu de terrain.
 Ke6 : Le roi blanc atteint la sixième rangée devant son pion. C'est la position gagnante que vous connaissez.
 Kc7 : Le roi noir ne peut plus s'y opposer.
 e4 : Maintenant seulement, le pion avance en toute sécurité. À retenir : en finale de pions, le roi passe toujours devant.
+IDEA: Dans une finale roi et pion, le roi passe devant son pion.
+IDEA: Le pion n'avance que quand la route est sûre.
+IDEA: Un pion poussé trop tôt devient une cible et ne passe plus.
+TRAP: Pour vous : un roi actif devant son pion gagne souvent une position qui semblait nulle.
+TRAP: Contre vous : pousser le pion trop vite laisse le roi adverse se placer devant lui, et c'est nul.
 
 # Le contournement | Quand le roi adverse est obligé de s'écarter, votre roi avance par le côté qu'il vient de libérer. | w | id=85 theme=pawnEndgame level=3 order=3085
 FEN: 8/8/8/4k3/8/4K3/4P3/8 b - - 0 1
@@ -156,6 +201,11 @@ Kd7 : Le roi noir arrive trop tard.
 Kf7 : Le roi blanc protège la case e8. Plus rien n'arrête le pion.
 Kd6 : Le roi noir ne peut qu'attendre.
 e8=Q : Le pion devient une dame, et les Blancs gagnent. À retenir : quand le roi adverse s'écarte, passez par le côté libéré, puis faites avancer le pion seulement quand votre roi contrôle les cases devant lui.
+IDEA: Quand le roi adverse s'écarte, votre roi avance par le côté libéré.
+IDEA: Le contournement gagne les cases clés devant le pion.
+IDEA: Le pion avance seulement quand votre roi contrôle les cases devant lui.
+TRAP: Pour vous : forcez le roi adverse à s'écarter par l'opposition, puis contournez-le.
+TRAP: Contre vous : un roi défenseur qui s'écarte trop tôt laisse passer le roi adverse.
 
 # L'opposition pour annuler | Le défenseur recule toujours tout droit et se replace en face du roi adverse : c'est l'opposition. Le pion ne passe pas. | b | id=86 level=3 order=3086
 CONDITIONS: Le roi défenseur se tient devant le pion adverse, et le pion n'a pas encore atteint la sixième rangée avec son roi devant lui. En reculant tout droit et en reprenant l'opposition, il fait nulle.
@@ -176,6 +226,11 @@ Kd8 : Le roi noir reprend l'opposition.
 e7+ : Le pion arrive sur la septième rangée en donnant échec. C'est le signe de la nulle.
 Ke8 : Le roi se place devant le pion, sur sa case de promotion.
 Ke6 : Pour protéger son pion, le roi blanc va en e6. Mais alors le roi noir n'a plus aucun coup : c'est pat, partie nulle. À retenir : reculez tout droit et gardez l'opposition.
+IDEA: Le défenseur recule tout droit et se replace en face du roi adverse : c'est l'opposition.
+IDEA: Avec l'opposition, le roi attaquant ne peut pas gagner les cases clés.
+IDEA: Le pion ne passe pas : la partie est nulle.
+TRAP: Pour vous : en défense, restez devant le pion et reprenez l'opposition à chaque coup.
+TRAP: Contre vous : un pas de côté du roi défenseur au mauvais moment laisse passer le roi adverse.
 
 # Le pion tour : nulle dans le coin | Avec un pion sur la colonne a ou h, il suffit au défenseur de mettre son roi dans le coin : on ne peut plus l'en chasser. | w | id=87 drill=ROOK_PAWN_DRAW level=3 order=3087
 CONDITIONS: Le pion est sur la colonne a ou h, et le roi défenseur peut atteindre le coin de promotion. On ne peut plus l'en chasser : c'est nulle.
@@ -184,6 +239,11 @@ FEN: 8/8/8/8/8/pk6/8/K7 w - - 0 1
 a2+ : Le pion avance et donne échec.
 Ka1 : Le roi se blottit sur la case de promotion.
 Ka3 : Pour garder son pion, le roi noir s'approche, mais le roi blanc n'a plus aucun coup : c'est pat. À retenir : le pion tour est le plus facile à arrêter.
+IDEA: Avec un pion sur la colonne a ou h, le défenseur met son roi dans le coin.
+IDEA: On ne peut plus l'en chasser : la partie est nulle.
+IDEA: Le pion tour est le plus facile à arrêter.
+TRAP: Pour vous : en défense contre un pion tour, foncez vers le coin de promotion.
+TRAP: Contre vous : avec un pion tour, empêchez le roi adverse d'atteindre le coin, sinon la nulle est certaine.
 
 # Le trébuchet | Deux pions bloqués et deux rois : dans cette position, celui qui doit jouer perd. Il faut donc compter qui jouera au bon moment. | w | id=88 theme=zugzwang level=4 order=4088
 FEN: 8/8/5K2/3p4/3P4/1k6/8/8 w - - 0 1
@@ -192,6 +252,11 @@ Kc4 : Le roi noir attaque le pion d4.
 Ke5 : Le roi blanc défend d4 et attaque d5. Et c'est aux Noirs de jouer : c'est le trébuchet.
 Kc3 : Le roi noir doit bouger, et chacun de ses coups abandonne le pion d5.
 Kxd5 : Le pion tombe, et la partie avec. À retenir : dans une finale de rois, comptez toujours qui devra jouer dans la position clé.
+IDEA: Deux pions bloqués et deux rois : celui qui doit jouer perd.
+IDEA: Il faut compter qui jouera dans la position clé.
+IDEA: Un coup d'attente du roi peut faire basculer le trait.
+TRAP: Pour vous : arrivez dans la position clé quand c'est à l'adversaire de jouer.
+TRAP: Contre vous : une marche directe du roi peut tomber dans le mauvais trait ; comptez avant d'avancer.
 
 # La percée de pions | Trois pions contre trois : en sacrifiant deux pions, on en fait passer un troisième jusqu'à la promotion. | w | id=89 theme=pawnEndgame level=4 order=4089
 FEN: 6k1/ppp5/8/PPP5/8/8/8/6K1 w - - 0 1
@@ -204,6 +269,11 @@ c5 : Les pions noirs avancent, mais ils sont trop lents.
 a7 : Plus qu'un pas avant la promotion.
 c4 : Les Noirs n'ont plus aucune défense.
 a8=Q+ : Le pion devient une dame avec échec. À retenir : sacrifier deux pions pour obtenir une dame est une excellente affaire.
+IDEA: En sacrifiant deux pions, on en fait passer un troisième jusqu'à la promotion.
+IDEA: La percée fonctionne quand les rois sont loin.
+IDEA: Calculez la course avant de lancer la percée.
+TRAP: Pour vous : trois pions contre trois, une percée bien préparée fait une dame.
+TRAP: Contre vous : face à une majorité avancée, gardez votre roi assez près pour arrêter une percée.
 
 # L'étude de Réti | Un roi qui avance en diagonale peut poursuivre deux objectifs à la fois. Pour lui, la diagonale est aussi courte que la ligne droite. | w | id=90 level=5 order=5090
 FEN: 7K/8/k1P5/7p/8/8/8/8 w - - 0 1
@@ -218,12 +288,22 @@ h2 : Chacun pousse son pion.
 c7 : Le pion blanc arrive lui aussi.
 h1=Q : Les Noirs font dame.
 c8=Q : Les Blancs font dame aussi : partie nulle. À retenir : en diagonale, un roi peut viser deux buts en même temps.
+IDEA: Un roi qui avance en diagonale peut poursuivre deux objectifs à la fois.
+IDEA: Pour le roi, la diagonale est aussi courte que la ligne droite.
+IDEA: Il rattrape le pion adverse tout en soutenant le sien.
+TRAP: Pour vous : une marche en diagonale du roi peut sauver une finale qui semblait perdue.
+TRAP: Contre vous : un roi adverse loin en apparence peut tout de même arriver à temps par la diagonale.
 
 # Finale de pions : le zugzwang | Le zugzwang, c'est l'obligation de jouer quand chaque coup aggrave la position. Ici, il fait perdre un pion. | PUZZLE gXycb | id=91 theme=zugzwang level=4 order=4091
 - Le roi blanc recule en f4 pour protéger son pion f5.
 -? Le roi noir attaque le pion f5. Le roi blanc est désormais obligé de rester à côté de lui.
 - Le roi blanc va en g4, toujours pour garder le pion.
 - Le roi noir se place en e5. Les Blancs doivent jouer, mais chaque coup abandonne le pion f5 : c'est le zugzwang. À retenir : parfois, le meilleur coup est celui qui laisse l'adversaire sans bon coup.
+IDEA: Le zugzwang, c'est l'obligation de jouer quand chaque coup aggrave la position.
+IDEA: En finale de pions, il fait souvent perdre un pion ou une case clé.
+IDEA: Un coup d'attente transfère le trait à l'adversaire.
+TRAP: Pour vous : gardez un coup de pion en réserve pour placer l'adversaire en zugzwang.
+TRAP: Contre vous : épuiser tous vos coups de pion peut vous laisser vous-même en zugzwang.
 
 # Dame contre pion en 7e : l'escalier | Contre un pion à un pas de la promotion, la dame oblige le roi à se placer devant son pion. Cela donne le temps au roi blanc de s'approcher. | w | id=92 level=3 order=3092
 FEN: 8/8/8/8/1Q6/8/3pk3/7K w - - 0 1
@@ -238,6 +318,11 @@ Kc1 : Le roi revient le protéger.
 Qc3+ : Échec : le roi est de nouveau obligé de se placer devant son pion.
 Kd1 : Le roi noir est devant son pion, qui ne peut plus avancer.
 Kf3 : Le roi blanc gagne encore une case, sans aller en f2, ce qui ferait pat. On répète jusqu'à ce que le roi aide sa dame. À retenir : cette méthode gagne contre un pion central ou un pion cavalier.
+IDEA: Contre un pion à un pas de la promotion, la dame oblige le roi à se placer devant son pion.
+IDEA: Chaque fois, le roi blanc gagne un coup pour s'approcher.
+IDEA: Cette méthode gagne contre un pion central ou un pion cavalier.
+TRAP: Pour vous : la dame qui alterne échecs et attaques du pion force le roi à bloquer sa case de promotion.
+TRAP: Contre vous : contre un pion fou ou un pion tour, le pat peut sauver le défenseur.
 
 # Dame contre pion tour en 7e : le pat sauveur | Contre un pion tour presque arrivé, le roi défenseur se cache dans le coin. La dame ne peut plus s'approcher sans faire pat. | b | id=93 level=3 order=3093
 FEN: 8/8/8/3Q4/8/8/pk6/7K w - - 0 1
@@ -249,6 +334,11 @@ Qc3+ : La dame continue ses échecs pour gagner du temps et approcher son roi.
 ?Kb1 : C'est le seul coup, et il garde le contact avec le pion.
 Qb3+ : Encore un échec. Attention au piège : le roi pourrait fuir en c1.
 Ka1 : Non, le roi retourne dans le coin. En c1, il abandonnerait son pion. Maintenant, si la dame s'approche sans donner échec, le roi noir n'a plus aucun coup : c'est pat. Les Blancs n'ont jamais le temps d'amener leur roi. À retenir : contre un pion tour, le roi défenseur reste collé à son pion et se cache dans le coin, et le pat le sauve.
+IDEA: Contre un pion tour presque arrivé, le roi défenseur se cache dans le coin.
+IDEA: La dame ne peut plus s'approcher sans faire pat.
+IDEA: Le roi défenseur reste collé à son pion.
+TRAP: Pour vous : en défense, le coin et le pat sauvent la partie contre une dame seule.
+TRAP: Contre vous : sans l'aide de votre roi tout proche, la dame seule ne gagne pas contre un pion tour en septième.
 
 # La position de Lucena : construire le pont | Quand le roi est bloqué devant son pion, la tour construit un « pont » pour le protéger des échecs. C'est la technique gagnante essentielle des finales de tours. | w | id=94 theme=rookEndgame drill=LUCENA level=3 order=3094
 FEN: 1K6/1P1k4/8/8/8/8/r7/2R5 w - - 0 1
@@ -267,6 +357,11 @@ Rc1+ : Toujours un échec.
 Kb5 : Le roi se rapproche de la quatrième rangée.
 Rb1+ : C'est le dernier échec possible.
 Rb4 : Le pont ! La tour s'interpose : il n'y a plus d'échec possible et le pion va à dame. À retenir : tour sur la quatrième rangée, puis le roi descend vers elle.
+IDEA: Quand le roi est bloqué devant son pion, la tour construit un « pont » pour le protéger des échecs.
+IDEA: La tour monte sur la quatrième rangée, puis le roi descend vers elle.
+IDEA: C'est la technique gagnante essentielle des finales de tours.
+TRAP: Pour vous : avec le roi devant le pion en septième, le pont gagne toujours.
+TRAP: Contre vous : sans le pont, les échecs de la tour adverse ne finissent jamais ; apprenez la méthode.
 
 # La défense de Philidor | La méthode de nulle à connaître : la tour garde la sixième rangée, puis donne des échecs par derrière dès que le pion avance. | b | id=95 drill=PHILIDOR_DRAW level=3 order=3095
 FEN: 4k3/7R/r7/3KP3/8/8/8/8 w - - 0 1
@@ -281,6 +376,11 @@ Ke5 : Le roi blanc cherche à s'échapper.
 Re1+ : Les échecs continuent.
 Kf6 : Le roi blanc tente encore sa chance.
 Rf1+ : Le roi blanc ne peut pas échapper aux échecs sans abandonner son pion : partie nulle. À retenir : sixième rangée d'abord, puis échecs par derrière.
+IDEA: La tour du défenseur garde sa troisième rangée (la sixième vue de l'attaquant).
+IDEA: Dès que le pion avance sur cette rangée, la tour donne des échecs par derrière.
+IDEA: Le roi attaquant ne trouve plus d'abri : la partie est nulle.
+TRAP: Pour vous : en défense, la position de Philidor annule de nombreuses finales tour et pion contre tour.
+TRAP: Contre vous : une tour passive sur la dernière rangée laisse le roi adverse avancer ; restez sur la troisième.
 
 # Finale de tours : l'enfilade du pion a7 | Quand une tour est devant son pion en septième rangée, une ruse permet de gagner la tour adverse. | w | id=96 theme=skewer level=3 order=3096
 FEN: R7/P4k2/8/8/8/8/r7/6K1 w - - 0 1
@@ -289,6 +389,11 @@ Rxa7 : La tour noire prend le pion. Elle tombe dans le piège.
 Rh7+ : Enfilade : la tour donne échec sur la septième rangée, et la tour noire est derrière le roi.
 Ke6 : Le roi doit s'écarter.
 Rxa7 : La tour blanche prend la tour noire. À retenir : dans cette finale, le roi défenseur doit rester en g7 ou h7.
+IDEA: Quand une tour est devant son pion en septième rangée, une ruse peut gagner la tour adverse.
+IDEA: La tour s'écarte avec menace de promotion ; si la tour adverse prend, une enfilade la gagne.
+IDEA: Le roi défenseur doit rester en g7 ou h7.
+TRAP: Pour vous : guettez le moment où le roi adverse quitte les cases g7 et h7.
+TRAP: Contre vous : en défense, gardez votre roi sur g7 ou h7 pour éviter l'enfilade.
 
 # Deux pions liés en 6e contre la tour | Deux pions côte à côte, sur la sixième rangée, battent une tour seule : elle ne peut pas les arrêter tous les deux. | w | id=97 theme=advancedPawn level=3 order=3097
 FEN: 8/8/1PP5/8/8/8/7K/r3k3 w - - 0 1
@@ -297,30 +402,55 @@ Rb1 : La tour se place derrière lui pour l'arrêter.
 c7 : Le second pion avance aussi. Il y a maintenant deux menaces de promotion.
 Rxb7 : La tour en élimine un.
 c8=Q : L'autre devient une dame. À retenir : deux pions liés très avancés sont plus forts qu'une tour.
+IDEA: Deux pions côte à côte sur la sixième rangée battent une tour seule.
+IDEA: La tour ne peut pas les arrêter tous les deux.
+IDEA: Ils avancent ensemble et se protègent.
+TRAP: Pour vous : deux pions liés très avancés valent plus qu'une tour.
+TRAP: Contre vous : une tour doit arrêter les pions liés avant qu'ils n'atteignent la sixième rangée.
 
 # Deux pions liés en 7e contre la tour | Deux pions côte à côte à un pas de la promotion : la tour ne peut en arrêter qu'un seul. | PUZZLE sB8S3 | id=98 theme=advancedPawn level=3 order=3098
 - Le roi blanc prend un pion en f4. Mais il s'éloigne des deux pions noirs, qui sont presque arrivés.
 -? Le pion e avance en e2. Les deux pions noirs sont côte à côte, à un pas de la promotion : la tour ne peut pas les arrêter tous les deux.
 - La tour prend le pion d2.
 - Le pion e devient une dame. À retenir : deux pions liés au bord de la promotion valent plus qu'une tour.
+IDEA: Deux pions côte à côte à un pas de la promotion : la tour ne peut en arrêter qu'un seul.
+IDEA: L'autre va à dame.
+IDEA: Le roi défenseur arrive trop tard pour aider.
+TRAP: Pour vous : deux pions liés en septième gagnent contre une tour seule.
+TRAP: Contre vous : ne laissez jamais deux pions liés atteindre la septième rangée.
 
 # Finale de tours : l'enfilade sur la rangée | Un roi et une tour sur la même ligne : un seul échec suffit pour gagner la tour. | PUZZLE F66eR | id=99 theme=skewer level=3 order=3099
 - Le roi blanc doit sortir de l'échec. Il va en d8, mais il se place ainsi sur la même rangée que sa propre tour, en a8.
 -? La tour noire donne échec sur la huitième rangée. La tour blanche se trouve derrière le roi : c'est une enfilade.
 - Le roi doit s'écarter de l'échec.
 - La tour noire prend la tour a8, restée derrière le roi. À retenir : ne placez jamais votre roi sur la même ligne que votre tour, si une tour adverse peut s'y installer.
+IDEA: Un roi et une tour sur la même ligne : un seul échec suffit pour gagner la tour.
+IDEA: Le roi doit s'écarter, et la tour derrière lui tombe.
+IDEA: C'est l'enfilade, une tactique fréquente en finale.
+TRAP: Pour vous : cherchez l'échec qui aligne roi et tour adverses.
+TRAP: Contre vous : en finale, évitez de placer votre roi et votre tour sur la même ligne.
 
 # Finale de tours : le filet de mat | Même avec peu de pièces, un roi qui s'avance trop loin peut se faire mater. | PUZZLE LU6Uv | id=100 theme=rookEndgame level=3 order=3100
 - Le roi blanc s'avance en f5, au milieu des pièces noires. C'est trop audacieux.
 -? La tour noire donne échec sur la colonne f. Le roi blanc n'a aucune case de fuite : il faut placer une pièce entre les deux.
 - La tour blanche s'interpose en f4.
 - L'autre tour noire vient en e5 : échec et mat. Elle est protégée par le pion f6. À retenir : en finale, le roi doit être actif, mais sans s'aventurer dans un filet de mat.
+IDEA: Même avec peu de pièces, un roi qui s'avance trop loin peut se faire mater.
+IDEA: Une tour et un roi suffisent pour mater un roi coincé sur le bord.
+IDEA: Le filet se resserre souvent avec un coup calme.
+TRAP: Pour vous : un roi adverse trop aventureux peut être pris dans un filet de mat.
+TRAP: Contre vous : en finale, gardez votre roi actif mais pas aventuré près du bord sans défense.
 
 # Finale de tours : le sacrifice qui mate | Un pion avancé près du roi adverse peut l'enfermer. Il prépare alors un mat sur la dernière rangée. | PUZZLE LDo4w | id=101 theme=rookEndgame level=3 order=3101
 - Les Noirs gagnent un pion en a3. Ils ne voient pas que leur roi est enfermé par le pion blanc g6, qui contrôle les cases f7 et h7.
 -? La tour se sacrifie en h8 avec échec. Elle attire le roi dans le coin.
 - Le roi est obligé de prendre la tour.
 - L'autre tour vient en f8 : échec et mat. Le pion g6 contrôle h7 et f7, le roi ne peut pas fuir. À retenir : un pion avancé près du roi adverse est un allié précieux pour mater.
+IDEA: Un pion avancé près du roi adverse peut l'enfermer.
+IDEA: Il prépare alors un mat sur la dernière rangée.
+IDEA: Un sacrifice peut ouvrir la route à la tour.
+TRAP: Pour vous : un pion en sixième rangée contre un roi au bord crée des menaces de mat.
+TRAP: Contre vous : un pion adverse avancé près de votre roi peut transformer une finale en attaque de mat.
 
 # Le fou de la mauvaise couleur | Un pion tour et un fou qui ne contrôle pas la case de promotion ne gagnent pas : le roi défenseur dans le coin fait nulle. | b | id=102 level=4 order=4102
 FEN: 7k/8/6K1/7P/8/3B4/8/8 b - - 0 1
@@ -328,72 +458,132 @@ FEN: 7k/8/6K1/7P/8/3B4/8/8 b - - 0 1
 h6 : Le pion avance.
 Kh8 : Le roi noir rejoint le coin. Le fou ne peut pas l'en chasser, car il ne contrôle pas la case h8.
 h7 : Le roi noir n'a plus aucun coup : c'est pat. Malgré un fou et un pion de plus, la partie est nulle. À retenir : vérifiez la couleur de la case de promotion.
+IDEA: Un pion tour et un fou qui ne contrôle pas la case de promotion ne gagnent pas.
+IDEA: Le roi défenseur dans le coin fait nulle.
+IDEA: Vérifiez toujours la couleur de la case de promotion.
+TRAP: Pour vous : en défense, foncez vers le coin de promotion si le fou adverse n'en a pas la couleur.
+TRAP: Contre vous : avant d'échanger vers une finale fou et pion tour, vérifiez la couleur du fou.
 
 # Finale de fous : dévier le défenseur | En finale aussi, on gagne une pièce en éliminant ou en détournant celle qui la protège. | PUZZLE yzVwQ | id=103 theme=deflection level=4 order=4103
 - Les Noirs avancent leur pion f. Mais leur fou d5 n'est protégé que par le pion c6.
 -? Le pion b avance en b5 et attaque le pion c6. S'il prend, il ne protège plus le fou d5.
 - Le pion c6 prend en b5 et abandonne le fou.
 - Le roi blanc prend le fou d5. À retenir : quand une pièce n'a qu'un seul défenseur, attaquez ce défenseur.
+IDEA: En finale aussi, on gagne une pièce en éliminant ou en détournant celle qui la protège.
+IDEA: Un échange au bon moment supprime le seul défenseur.
+IDEA: La pièce qui défend deux choses est la cible.
+TRAP: Pour vous : cherchez la pièce adverse surchargée, même avec peu de matériel.
+TRAP: Contre vous : en finale, une pièce qui défend seule est vulnérable à une déviation.
 
 # Finale de fous : promouvoir avec échec | Un échec bien choisi fait gagner le temps nécessaire pour promouvoir un pion. | PUZZLE 9bjA6 | id=104 theme=promotion level=4 order=4104
 - Le fou blanc s'occupe du pion f6. Mais il néglige le pion noir f2, qui est à un pas de la promotion.
 -? Le fou noir donne échec en g4. Le roi blanc n'a pas de bonne case : un fou doit s'interposer.
 - Le fou blanc s'interpose en e2. Mais il ne contrôle plus la case f1.
 - Le pion se promeut en f1 : échec et mat, car le fou e2 est cloué et ne peut pas prendre. À retenir : un échec peut détourner le défenseur de la case de promotion.
+IDEA: Un échec bien choisi fait gagner le temps nécessaire pour promouvoir un pion.
+IDEA: La promotion avec échec ne laisse pas de réponse à l'adversaire.
+IDEA: Comptez les temps : un seul coup peut tout changer.
+TRAP: Pour vous : cherchez un échec qui libère la case de promotion.
+TRAP: Contre vous : un roi sur la ligne d'un fou adverse peut subir l'échec qui fait passer le pion.
 
 # Deux pions liés contre le fou | Un fou ne contrôle qu'une seule couleur de cases. Deux pions qui avancent ensemble finissent par lui échapper. | PUZZLE 3QpLz | id=105 theme=advancedPawn level=4 order=4105
 - Le roi blanc attaque le pion c6. Mais les pions noirs f et g sont libres d'avancer.
 -? Le pion g avance. Les deux pions liés avancent ensemble en se protégeant l'un l'autre.
 - Le fou blanc essaie de les bloquer.
 - Le pion g avance encore. Le fou ne peut pas surveiller les deux cases à la fois. À retenir : des pions liés qui avancent ensemble sont très difficiles à arrêter pour un fou.
+IDEA: Un fou ne contrôle qu'une seule couleur de cases.
+IDEA: Deux pions qui avancent ensemble finissent par lui échapper.
+IDEA: Le pion qui avance sur l'autre couleur que le fou est le plus dangereux.
+TRAP: Pour vous : deux pions liés contre un fou gagnent souvent sans l'aide du roi.
+TRAP: Contre vous : un fou seul contre deux pions liés avancés ne tient pas longtemps.
 
 # Finale de cavaliers : dévier le roi bloqueur | Un pion sacrifié avec échec peut écarter le roi adverse de la case de promotion. | PUZZLE w2Qcq | id=106 theme=knightEndgame level=4 order=4106
 - Le cavalier noir part prendre un pion en g3. Mais il s'éloigne des pions blancs, qui sont dangereux.
 -? Le pion e avance en e7 et donne échec. Il se sacrifie pour écarter le roi noir de la case d8.
 - Le roi noir doit prendre le pion.
 - Le roi blanc vient en c7 et contrôle la case d8. Le pion d7 va devenir une dame, et le cavalier est trop loin. À retenir : un sacrifice avec échec peut dévier le roi bloqueur.
+IDEA: Un pion sacrifié avec échec peut écarter le roi adverse de la case de promotion.
+IDEA: Le cavalier en profite pour soutenir l'autre pion.
+IDEA: La déviation est aussi efficace en finale qu'en milieu de partie.
+TRAP: Pour vous : un pion avec échec qui attire le roi adverse libère la route d'un autre pion.
+TRAP: Contre vous : un roi bloqueur peut être dévié ; gardez une pièce pour couvrir la case de promotion.
 
 # Finale de cavaliers : la fourchette de pion | Même en finale, le plus modeste des pions peut attaquer deux pièces à la fois. | PUZZLE vzcax | id=107 theme=fork level=4 order=4107
 - Le roi blanc avance en f4 pour attaquer le pion e4. Mais il se place sur la même rangée que son cavalier h4.
 -? Le pion g avance de deux cases avec échec. C'est une fourchette : il attaque le roi et le cavalier.
 - Le roi doit sortir de l'échec. Il prend le pion e4.
 - Le pion g5 prend le cavalier h4. À retenir : en finale aussi, méfiez-vous des pions qui peuvent attaquer deux pièces voisines.
+IDEA: Même en finale, le plus modeste des pions peut attaquer deux pièces à la fois.
+IDEA: Une fourchette de pion gagne souvent une pièce entière.
+IDEA: Cherchez deux pièces adverses voisines sur une même rangée.
+TRAP: Pour vous : un pion qui avance entre roi et cavalier adverses peut gagner le cavalier.
+TRAP: Contre vous : en finale, évitez de placer roi et pièce à une case d'écart devant un pion adverse.
 
 # Le cavalier fait écran | Placer une pièce sur la route de la tour adverse pour l'empêcher d'arrêter un pion. | PUZZLE BU7yB | id=108 theme=knightEndgame level=4 order=4108
 - Les Blancs avancent leur pion g. Ils comptent sur leur tour a8 pour surveiller le pion noir a2, qui est presque arrivé.
 -? Le cavalier vient en a6, sur la colonne a. Il coupe la route entre la tour et le pion : c'est une interception.
 - La tour tente de revenir par la huitième rangée, mais il est trop tard.
 - Le pion devient une dame. À retenir : une pièce placée au bon endroit peut couper la défense adverse.
+IDEA: Placer une pièce sur la route de la tour adverse l'empêche d'arrêter un pion.
+IDEA: L'écran coupe la tour de la colonne ou de la rangée du pion.
+IDEA: Le pion passe pendant que la tour est bloquée.
+TRAP: Pour vous : un cavalier interposé avec gain de temps peut faire passer un pion.
+TRAP: Contre vous : une tour qui défend de loin peut être coupée par une pièce interposée.
 
 # Finale de dames : le roi participe au mat | Quand il reste peu de pièces, le roi n'est plus seulement à protéger : il devient une pièce d'attaque. | PUZZLE YrZ9M | id=109 theme=queenEndgame level=4 order=4109
 - Les Noirs poussent leur pion h. Mais leur roi est collé au bord de l'échiquier, tout près du roi blanc.
 -? La dame donne échec en g7. Elle est protégée par son roi f6.
 - Le roi noir n'a qu'une seule case : h5.
 - La dame prend le pion g6 : échec et mat. Elle est soutenue par le roi f6. À retenir : en finale, utilisez votre roi pour aider la dame à mater.
+IDEA: Quand il reste peu de pièces, le roi devient une pièce d'attaque.
+IDEA: Il aide la dame à couvrir les cases de fuite du roi adverse.
+IDEA: Un roi actif transforme une finale de dames en attaque de mat.
+TRAP: Pour vous : avec les dames sur l'échiquier, un roi qui s'approche peut participer au mat.
+TRAP: Contre vous : en finale de dames, votre roi exposé subit des échecs sans fin ; gardez-le à l'abri.
 
 # Finale de dames : l'enfilade en diagonale | Un roi et une dame sur la même diagonale : un seul échec de la dame adverse peut faire perdre la dame. | PUZZLE Ipsq8 | id=110 theme=skewer level=4 order=4110
 - Le roi blanc sort de l'échec en allant en f3. Mais il se place sur la grande diagonale, la même que sa dame en a8.
 -? La dame noire donne échec en h1, sur la grande diagonale. La dame blanche est derrière le roi : c'est une enfilade.
 - Le roi doit s'écarter de l'échec.
 - La dame noire prend la dame blanche en a8. À retenir : avant de déplacer votre roi, vérifiez qu'il ne s'aligne pas avec votre dame.
+IDEA: Un roi et une dame sur la même diagonale : un seul échec peut faire perdre la dame.
+IDEA: L'enfilade en diagonale est fréquente en finale de dames.
+IDEA: Le roi doit s'écarter, et la dame derrière lui tombe.
+TRAP: Pour vous : cherchez l'échec qui aligne roi et dame adverses.
+TRAP: Contre vous : en finale de dames, évitez d'aligner votre roi et votre dame.
 
 # Dame contre tour : séparer la tour de son roi | Une tour seule n'est en sécurité que près de son roi. Un échec bien placé peut les séparer. | w | id=111 theme=queenEndgame level=5 order=5111
 FEN: 8/8/8/8/8/2k5/1r6/K2Q4 w - - 0 1
 ?Qf3+ : La tour noire en b2 n'est protégée que par son roi. La dame donne échec pour obliger ce roi à bouger.
 Kd4 : Le roi noir sort de l'échec en s'éloignant. La tour reste seule.
 Kxb2 : Le roi blanc prend la tour. À retenir : contre une tour, la dame cherche à la séparer de son roi, ou à attaquer les deux à la fois.
+IDEA: Une tour seule n'est en sécurité que près de son roi.
+IDEA: La dame cherche à les séparer par un échec bien placé.
+IDEA: Elle peut aussi attaquer les deux à la fois par une fourchette.
+TRAP: Pour vous : une fourchette de dame sur le roi et la tour gagne la tour.
+TRAP: Contre vous : gardez votre tour près de votre roi contre une dame.
 
 # Le sacrifice de déviation pour promouvoir | Pour faire passer un pion, on peut écarter le roi adverse de la case de promotion, même en sacrifiant une tour. | PUZZLE s1kZC | id=112 theme=deflection level=4 order=4112
 - La dame noire prend la tour a7 et attaque le pion e7. Mais elle oublie que ce pion est à un pas de la promotion.
 -? La tour blanche se sacrifie en g7 avec échec. Le but est d'écarter le roi noir de la case e8.
 - Le roi noir est obligé de prendre la tour.
 - Le pion devient une dame. Les Blancs ont récupéré une dame et gardent des pions de plus. À retenir : pour promouvoir, écartez d'abord le roi qui garde la case.
+IDEA: Pour faire passer un pion, on peut écarter le roi adverse de la case de promotion.
+IDEA: Même une tour peut être sacrifiée pour cela.
+IDEA: La dame obtenue vaut bien plus que la tour donnée.
+TRAP: Pour vous : un sacrifice qui dévie le roi bloqueur peut décider la finale.
+TRAP: Contre vous : un roi seul devant un pion n'est pas toujours suffisant ; méfiez-vous des déviations.
 
 # La sous-promotion en cavalier | Le cavalier est la seule pièce dont la dame ne peut pas imiter le déplacement. Parfois, promouvoir en cavalier est le meilleur choix. | PUZZLE HfmsU | id=113 theme=underPromotion level=4 order=4113
 - Les Blancs font dame en d8. Ils menacent maintenant de donner des échecs décisifs.
 -? Le pion devient un cavalier, pas une dame ! Le cavalier donne échec tout de suite. Une dame aurait laissé aux Blancs le temps d'attaquer.
 - Le roi blanc n'a qu'une seule case : h4.
 - La tour vient en h2 : échec et mat. À retenir : au moment de promouvoir, pensez aussi au cavalier.
+IDEA: Le cavalier est la seule pièce dont la dame ne peut pas imiter le déplacement.
+IDEA: Une promotion en cavalier peut donner échec ou fourchette.
+IDEA: Parfois, c'est le seul coup gagnant.
+TRAP: Pour vous : avant de promouvoir en dame, regardez si un cavalier donne un échec décisif.
+TRAP: Contre vous : une sous-promotion adverse en cavalier peut surprendre ; regardez tous les échecs.
 
 # L'étude de Saavedra | La plus célèbre étude d'échecs : le pion va à dame, mais une dame permettrait un pat. Il faut promouvoir en tour ! | w | id=172 level=5 order=5172
 FEN: 8/8/1KP5/3r4/8/8/8/k7 w - - 0 1
@@ -410,6 +600,11 @@ Rd4 : Un piège ! Si le pion devient dame, la tour se sacrifie en c4 avec échec
 ?c8=R : Le pion devient une tour, pas une dame : il n'y a plus de pat possible. Les Blancs menacent le mat en a8.
 Ra4 : La tour noire empêche le mat.
 ?Kb3 : Le roi attaque la tour et menace le mat en c1 : les Noirs perdent leur tour ou sont matés. À retenir : avant de promouvoir, vérifiez le pat. Une sous-promotion en tour peut être le seul coup gagnant.
+IDEA: Le pion va à dame, mais une dame permettrait un pat.
+IDEA: Il faut promouvoir en tour : la tour menace le mat sans donner le pat.
+IDEA: Avant de promouvoir, vérifiez toujours le pat.
+TRAP: Pour vous : une sous-promotion en tour peut être le seul coup gagnant.
+TRAP: Contre vous : en défense, chercher le pat peut sauver une partie perdue.
 
 # La défense Vancura | Contre un pion tour soutenu par une tour devant lui, la tour du défenseur attaque le pion de côté et donne des échecs dès que le roi approche. | b | id=173 level=5 order=5173 drill=VANCURA_DRAW
 FEN: R7/6k1/P4r2/8/8/8/8/6K1 w - - 0 1
@@ -430,6 +625,11 @@ Kf5 : La position se répète.
 Ke4 : Le roi blanc change de chemin.
 ?Re6+ : La tour suit le roi, toujours sur la sixième rangée. À retenir : dans la défense Vancura, la tour attaque le pion tour par le côté et donne des échecs dès que le roi adverse s'approche. La partie est nulle.
 QUIZ: Où se place la tour du défenseur dans la défense Vancura ? | Sur la même rangée que le pion, pour l'attaquer de côté | Devant le pion | Derrière son propre roi | Attaqué de côté, le pion tour cloue la tour adverse devant lui ; le roi ne peut pas l'aider sans subir des échecs.
+IDEA: Contre un pion tour soutenu par une tour devant lui, la tour du défenseur attaque le pion de côté.
+IDEA: Elle donne des échecs dès que le roi adverse s'approche du pion.
+IDEA: Le roi défenseur reste près de la case de promotion : la partie est nulle.
+TRAP: Pour vous : en défense, la tour de côté immobilise la tour adverse devant son pion.
+TRAP: Contre vous : une tour passive derrière le pion tour perd ; attaquez-le de côté.
 
 # La défense du côté long | En finale de tours, le défenseur place son roi du côté court et donne des échecs avec sa tour depuis le côté long, le plus loin possible du roi adverse. | b | id=174 level=4 order=4174
 FEN: 5k2/7R/4K3/4P3/8/8/8/r7 b - - 0 1
@@ -444,6 +644,11 @@ Kc4 : Le roi blanc s'éloigne du pion.
 ?Rc1+ : La tour poursuit le roi.
 Kb3 : Le roi fuit.
 ?Re1 : La tour revient derrière le pion e7, que le roi noir bloque. À retenir : en défense, gardez votre roi devant le pion ou du côté court, et donnez les échecs de loin, du côté long. Une tour trop proche ne peut pas donner d'échecs utiles.
+IDEA: Le défenseur place son roi du côté court du pion.
+IDEA: Sa tour donne des échecs depuis le côté long, le plus loin possible du roi adverse.
+IDEA: Une tour trop proche ne peut pas donner d'échecs efficaces.
+TRAP: Pour vous : en défense, des échecs de loin, du côté long, annulent souvent.
+TRAP: Contre vous : une tour défenseur du mauvais côté laisse le roi adverse s'approcher d'elle.
 
 # La règle de Tarrasch | Les tours se placent derrière les pions passés : derrière le sien pour le pousser, derrière celui de l'adversaire pour le freiner. Une tour devant un pion devient passive. | w | id=175 level=4 order=4175
 FEN: r5k1/5ppp/8/P7/8/8/5PPP/R5K1 w - - 0 1
@@ -458,6 +663,11 @@ Ke7 : Le roi noir s'approche du pion a6.
 Kd6 : Le roi noir arrive.
 ?Kg3 : Le roi blanc avance. À retenir : placez votre tour derrière votre pion passé. Elle est active et pousse le pion, alors que la tour adverse, devant lui, devient passive.
 QUIZ: Où placer une tour avec un pion passé ? | Derrière le pion passé | Devant le pion passé | Sur la première rangée, loin du pion | Derrière le pion, la tour gagne en activité à chaque avance ; devant, elle perd de la place à chaque pas du pion.
+IDEA: Les tours se placent derrière les pions passés.
+IDEA: Derrière le sien, la tour le pousse ; derrière celui de l'adversaire, elle le freine.
+IDEA: Une tour devant un pion devient passive.
+TRAP: Pour vous : une tour derrière votre pion passé devient plus active à chaque avance du pion.
+TRAP: Contre vous : une tour placée devant le pion adverse perd sa liberté.
 
 # Dame contre pion central en septième | La dame gagne contre un pion central en septième rangée : elle force le roi adverse à se placer devant son pion, puis son propre roi s'approche. | w | id=176 level=4 order=4176 drill=KQKP
 FEN: 8/8/8/8/8/8/3pk3/K6Q w - - 0 1
@@ -471,6 +681,11 @@ Kd1 : Le roi bloque son propre pion. Les Blancs ont gagné un temps.
 ?Qe4 : Un coup tranquille : la dame garde la case b1 et prépare le mat avec l'aide du roi a1.
 Kc1 : Le roi noir quitte son pion.
 ?Qb1# : La dame donne le mat, protégée par le roi a1. À retenir : contre un pion en septième, forcez le roi adverse devant son pion par des échecs, puis profitez du temps gagné pour rapprocher votre roi.
+IDEA: La dame gagne contre un pion central en septième rangée.
+IDEA: Elle force le roi adverse à se placer devant son pion par des échecs.
+IDEA: Le temps gagné permet à son roi de s'approcher.
+TRAP: Pour vous : alternez échecs et attaques du pion jusqu'à ce que le roi bloque la case de promotion.
+TRAP: Contre vous : contre un pion fou ou tour, cette méthode échoue si votre roi est trop loin.
 
 # Dame contre pion fou en septième : le pat | Contre un pion fou en septième rangée, le défenseur se réfugie dans le coin : si la dame prend le pion, c'est pat. | b | id=177 level=4 order=4177 drill=QUEEN_BISHOP_PAWN_DRAW
 FEN: K7/8/8/8/1Q6/8/1kp5/8 b - - 0 1
@@ -480,6 +695,11 @@ Qa3+ : La dame donne échec.
 ?Kb1 : Le roi revient protéger le pion.
 Qb3+ : La dame donne encore échec.
 ?Ka1 : Le roi retourne dans le coin. Les Blancs n'ont pas le temps d'approcher leur roi : la partie est nulle. À retenir : contre un pion fou ou un pion tour en septième, le défenseur se cache dans le coin. Le pat sauve la partie si le roi de l'attaquant est trop loin.
+IDEA: Contre un pion fou en septième rangée, le défenseur se réfugie dans le coin.
+IDEA: Si la dame prend le pion, c'est pat.
+IDEA: Le pat sauve la partie si le roi de l'attaquant est trop loin.
+TRAP: Pour vous : en défense, le coin et le pat annulent contre une dame seule.
+TRAP: Contre vous : avec la dame, rapprochez d'abord votre roi avant de prendre le pion.
 
 # Deux tours contre une dame | Deux tours valent un peu plus qu'une dame. Elles doivent rester ensemble, se protéger et attaquer les pions adverses. | w | id=178 level=5 order=5178
 FEN: q5k1/5ppp/8/8/8/8/5PPP/3RR1K1 w - - 0 1
@@ -490,6 +710,11 @@ Qc8 : La dame protège sa première rangée.
 ?g3 : Le roi blanc gagne encore une case.
 f5 : Les Noirs protègent leur pion.
 ?Rd4 : La seconde tour s'active sur la quatrième rangée. À retenir : avec deux tours contre une dame, gardez les tours protégées l'une par l'autre et attaquez les pions ensemble. La dame seule ne peut pas défendre deux cibles.
+IDEA: Deux tours valent un peu plus qu'une dame.
+IDEA: Elles doivent rester ensemble, se protéger et attaquer les pions adverses.
+IDEA: La dame seule ne peut pas défendre deux cibles à la fois.
+TRAP: Pour vous : deux tours protégées l'une par l'autre attaquent les pions sans risque.
+TRAP: Contre vous : des tours séparées se font prendre par une fourchette de la dame.
 
 # Les fous de couleurs opposées | Avec des fous de couleurs différentes, le défenseur bloque les pions sur les cases de son fou : même avec un ou deux pions de moins, la partie est souvent nulle. | b | id=179 level=4 order=4179
 FEN: 8/8/4k3/2b5/2P1P3/3BK3/8/8 w - - 0 1
@@ -502,6 +727,11 @@ Bb1 : Les Blancs manœuvrent.
 ?Ba3 : Le fou attend.
 Kd3 : Le roi blanc revient.
 ?Bf8 : Le fou attend toujours. Les pions ne peuvent pas avancer : la case c5 et la case e5 sont tenues par les Noirs. À retenir : avec des fous de couleurs opposées, bloquez les pions adverses sur les cases de votre fou. La nulle est souvent possible avec du matériel en moins.
+IDEA: Avec des fous de couleurs opposées, le défenseur bloque les pions sur les cases de son fou.
+IDEA: Même avec un ou deux pions de moins, la partie est souvent nulle.
+IDEA: Le fou attaquant ne peut pas chasser le fou défenseur.
+TRAP: Pour vous : en défense, les fous de couleurs opposées sauvent souvent la partie.
+TRAP: Contre vous : en attaque, des pions passés sur deux ailes éloignées sont nécessaires pour gagner.
 
 # Roi et pion contre fou | Un fou arrête facilement un pion seul : il contrôle la case de promotion ou se sacrifie pour lui. La partie est nulle. | b | id=180 level=3 order=3180
 FEN: 8/8/8/3k4/8/2K5/3P4/5b2 w - - 0 1
@@ -513,6 +743,11 @@ Kb3 : Le roi blanc tourne autour.
 ?Bd3 : Le fou bloque la route du roi blanc.
 Ka3 : Le roi blanc ne trouve pas de chemin.
 ?Kc4 : Le roi noir s'approche du pion. À retenir : contre un pion seul, le fou contrôle la case de promotion et le roi bloque. Si besoin, le fou se sacrifie contre le pion : roi contre roi, c'est nul.
+IDEA: Un fou arrête facilement un pion seul : il contrôle la case de promotion.
+IDEA: Le roi défenseur bloque le pion.
+IDEA: Si besoin, le fou se sacrifie : roi contre roi, c'est nul.
+TRAP: Pour vous : en défense, un fou contre un pion seul fait toujours nulle.
+TRAP: Contre vous : un seul pion ne gagne pas contre un fou ; il faut d'autres pions.
 
 # Le pion passé éloigné | Un pion passé loin des autres pions attire le roi adverse. Pendant qu'il l'arrête, votre roi gagne les pions de l'autre aile. | w | id=181 level=3 order=3181
 FEN: 8/5pk1/6p1/8/P7/6P1/5PK1/8 w - - 0 1
@@ -524,6 +759,11 @@ Kf5 : Le roi noir est trop loin : il essaie d'attaquer l'aile roi blanche.
 ?Kh3 : Le roi blanc protège ses pions.
 Ke4 : Le roi noir s'approche.
 ?f4 : Le pion se met à l'abri. Le pion a ira bientôt à dame. À retenir : un pion passé éloigné détourne le roi adverse. Pendant que le roi le poursuit, l'autre aile est sans défense.
+IDEA: Un pion passé loin des autres pions attire le roi adverse.
+IDEA: Pendant qu'il l'arrête, votre roi gagne les pions de l'autre aile.
+IDEA: Le pion passé éloigné est souvent décisif en finale de pions.
+TRAP: Pour vous : créez un pion passé sur l'aile opposée aux rois.
+TRAP: Contre vous : un pion passé éloigné adverse détourne votre roi ; gardez-le assez près.
 
 # Le pion passé protégé | Un pion passé protégé par un autre pion n'a pas besoin du roi : le roi est libre d'aller gagner les pions adverses. | w | id=182 level=3 order=3182
 FEN: 8/8/3k4/2pP4/2P5/8/4K3/8 w - - 0 1
@@ -541,6 +781,11 @@ Kd7 : Le roi bloque le pion.
 ?Kd5 : Le roi blanc vise le pion c5.
 Kd8 : Le roi noir attend.
 ?Kxc5 : Le roi blanc gagne le pion c5. À retenir : un pion passé protégé immobilise le roi adverse. Votre roi est libre d'aller chercher les autres pions.
+IDEA: Un pion passé protégé par un autre pion n'a pas besoin du roi.
+IDEA: Le roi est libre d'aller gagner les pions adverses.
+IDEA: Le roi adverse, lui, est immobilisé devant le pion.
+TRAP: Pour vous : un pion passé protégé immobilise le roi adverse : votre roi peut partir à l'attaque.
+TRAP: Contre vous : bloquer un pion passé protégé ne suffit pas ; vos pions de l'autre aile sont en danger.
 
 # Pions liés contre pion isolé | Deux pions voisins se protègent l'un l'autre. Le roi peut les laisser seuls pour aller prendre le pion isolé adverse. | w | id=183 level=4 order=4183
 FEN: 8/p7/8/4k3/8/8/5PP1/4K3 w - - 0 1
@@ -555,6 +800,11 @@ a6 : Le pion fuit.
 ?Kb4 : Le roi blanc le poursuit.
 a5+ : Le pion avance avec échec.
 ?Kxa5 : Le roi blanc gagne le pion. Ses pions liés vont maintenant avancer. À retenir : des pions liés se protègent mutuellement. Un pion isolé, lui, a besoin de son roi.
+IDEA: Deux pions voisins se protègent l'un l'autre.
+IDEA: Le roi peut les laisser seuls pour aller prendre le pion isolé adverse.
+IDEA: Un pion isolé, lui, a besoin de son roi.
+TRAP: Pour vous : des pions liés libèrent votre roi pour l'attaque.
+TRAP: Contre vous : avec un pion isolé, votre roi est attaché à sa défense.
 
 # Le zugzwang mutuel | Dans certaines positions, le camp qui a le trait perd : c'est le zugzwang mutuel. Il faut savoir s'y placer quand c'est à l'adversaire de jouer. | w | id=184 level=3 order=3184
 FEN: 4k3/8/4K3/4P3/8/8/8/8 b - - 0 1
@@ -568,6 +818,11 @@ Kb6 : Le roi noir ne peut plus rien faire.
 Kb5 : Le roi noir est trop loin.
 ?e8=Q+ : Le pion devient dame. À retenir : dans cette position, le camp au trait perd. Avec les Blancs au trait, les Noirs prennent l'opposition et annulent ; avec les Noirs au trait, les Blancs gagnent.
 QUIZ: Que se passe-t-il si les Blancs ont le trait dans la position de départ ? | La partie est nulle | Les Blancs gagnent quand même | Les Noirs gagnent | Avec les Blancs au trait, le roi noir garde l'opposition devant le pion : c'est un zugzwang mutuel, celui qui joue perd.
+IDEA: Dans certaines positions, le camp qui a le trait perd : c'est le zugzwang mutuel.
+IDEA: Il faut savoir s'y placer quand c'est à l'adversaire de jouer.
+IDEA: Un coup d'attente ou une triangulation du roi change le trait.
+TRAP: Pour vous : la triangulation du roi perd un temps et place l'adversaire en zugzwang.
+TRAP: Contre vous : en défense, prenez l'opposition au bon moment pour annuler.
 
 # Tour contre fou : le bon coin | Avec un fou contre une tour, le défenseur réfugie son roi dans le coin de la couleur que son fou ne contrôle pas. La partie est alors nulle. | b | id=185 level=5 order=5185
 FEN: 7k/8/5K2/8/8/8/4b3/6R1 b - - 0 1
@@ -581,6 +836,11 @@ Kf6+ : Le roi blanc donne échec à la découverte.
 ?Kh7 : Le roi retourne dans le coin.
 Ra1 : La tour cherche un mat.
 ?Bc4 : Le fou attend. Il interposera sur g8 si besoin. À retenir : contre une tour, gardez votre roi dans le coin opposé à la couleur de votre fou. Le fou pourra toujours s'interposer et le mat est impossible.
+IDEA: Avec un fou contre une tour, le défenseur réfugie son roi dans le coin que son fou ne contrôle pas.
+IDEA: Le fou pourra toujours s'interposer contre les échecs de la tour.
+IDEA: Le mat est alors impossible : la partie est nulle.
+TRAP: Pour vous : en défense, choisissez le bon coin, celui de la couleur opposée à votre fou.
+TRAP: Contre vous : dans le coin de la couleur du fou, le défenseur peut être maté.
 
 # Finale de pions : prendre l'opposition | Quand les rois se font face, le roi qui n'a pas le trait a l'opposition : l'autre doit céder le passage. | PUZZLE pQF4g | id=186 theme=pawnEndgame level=3 order=3186
 - Le roi blanc recule en c3. C'est une erreur : il laisse le roi noir prendre l'opposition.
@@ -589,6 +849,11 @@ Ra1 : La tour cherche un mat.
 -? Le roi noir pénètre en b4, vers le pion a4.
 - Le roi blanc revient au centre.
 -? Le roi prend le pion a4. Les Noirs vont gagner les pions de l'aile dame. À retenir : quand les rois se font face avec une case entre eux, le camp qui n'a pas le trait a l'opposition. L'autre roi doit céder le passage.
+IDEA: Quand les rois se font face, le roi qui n'a pas le trait a l'opposition.
+IDEA: L'autre doit céder le passage.
+IDEA: L'opposition décide de nombreuses finales de pions.
+TRAP: Pour vous : prenez l'opposition pour forcer le roi adverse à s'écarter.
+TRAP: Contre vous : perdre l'opposition au mauvais moment laisse passer le roi adverse.
 
 # Finale de pions : le roi le plus actif | En finale de pions, chaque coup de roi compte. Placer l'adversaire en zugzwang l'oblige à céder une case clé. | PUZZLE cHCBN | id=187 theme=zugzwang level=4 order=4187
 - Le roi noir recule en d6. Les pions sont bloqués : seuls les rois peuvent jouer.
@@ -599,6 +864,11 @@ Ra1 : La tour cherche un mat.
 -? Le roi blanc s'approche du pion a6.
 - Le roi noir attaque à l'aile roi.
 -? Le roi blanc prend le pion a6. Il ira ensuite prendre le pion b5, et le pion a ira à dame. À retenir : quand les pions sont bloqués, celui dont le roi est le plus actif gagne. Cherchez la case qui place l'adversaire en zugzwang.
+IDEA: En finale de pions, chaque coup de roi compte.
+IDEA: Placer l'adversaire en zugzwang l'oblige à céder une case clé.
+IDEA: Le roi le plus actif gagne souvent la partie.
+TRAP: Pour vous : amenez votre roi au centre et devant les pions adverses.
+TRAP: Contre vous : un roi passif en finale de pions perd souvent même à matériel égal.
 
 # Le cavalier contre le pion | Un cavalier arrête un pion seul s'il contrôle sa case de promotion ou se place devant lui. Il faut seulement éviter les cases où il serait pris ou trop loin. | w | id=211 level=3 order=3211
 FEN: 8/8/8/8/8/1p6/8/1N2K2k w - - 0 1
@@ -612,3 +882,8 @@ b2 : Le pion avance d'une case.
 ?Nb1 : Le cavalier revient bloquer la case de promotion, juste devant le pion.
 Kh4 : Le roi noir ne peut pas aider son pion.
 ?Kf4 : Le roi blanc reste proche. La partie est nulle. À retenir : un cavalier arrête un pion en se plaçant devant lui ou en contrôlant sa case de promotion. Il peut aussi le prendre dès qu'il n'est plus protégé.
+IDEA: Un cavalier arrête un pion seul en se plaçant devant lui ou en contrôlant sa case de promotion.
+IDEA: Il peut aussi le prendre dès qu'il n'est plus protégé.
+IDEA: Le cavalier doit éviter les cases où il serait pris ou trop loin.
+TRAP: Pour vous : en défense, un cavalier devant le pion suffit souvent à la nulle.
+TRAP: Contre vous : un pion tour est le plus difficile à arrêter pour un cavalier, qui a peu de cases au bord.

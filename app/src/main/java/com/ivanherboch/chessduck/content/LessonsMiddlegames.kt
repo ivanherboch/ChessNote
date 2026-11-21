@@ -24,6 +24,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "fork",
         pauseSteps = setOf(1),
         takeaway = "Avant chaque coup, regardez où les cavaliers adverses peuvent sauter, surtout s'ils peuvent toucher votre roi et une grosse pièce.",
+        ideas = listOf("Le cavalier attaque des cases d'une autre couleur que la sienne : cherchez deux cibles placées sur cette couleur, à un saut de cavalier.", "La fourchette la plus forte attaque le roi : il doit fuir, et l'autre pièce tombe.", "Les pièces non protégées et les pièces lourdes (dame, tours) sont les cibles idéales."),
+        traps = listOf("Pour vous : un échec de cavalier qui touche aussi la dame ou une tour gagne presque toujours du matériel.", "Contre vous : avant de placer roi, dame et tour à un saut de cavalier l'un de l'autre, vérifiez où le cavalier adverse peut sauter."),
     ),
     LessonData(
         id = 39,
@@ -42,6 +44,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "fork",
         pauseSteps = setOf(1),
         takeaway = "Deux pièces voisines sont une proie facile pour un pion.",
+        ideas = listOf("Un pion qui avance entre deux pièces adverses voisines les attaque toutes les deux.", "Le pion ne vaut qu'un point : même s'il est repris, la pièce gagnée vaut bien plus.", "Les pièces placées côte à côte, sur la même rangée et à une case d'écart, sont la cible idéale."),
+        traps = listOf("Pour vous : une poussée de pion au centre qui attaque deux pièces gagne souvent une pièce entière.", "Contre vous : ne développez pas deux pièces sur des cases qu'un simple pion peut attaquer en même temps."),
     ),
     LessonData(
         id = 40,
@@ -60,6 +64,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "fork",
         pauseSteps = setOf(1),
         takeaway = "Cherchez l'échec qui attaque aussi une pièce non défendue.",
+        ideas = listOf("La dame attaque dans huit directions : un seul coup peut viser deux cibles.", "Cherchez un échec qui touche aussi une pièce sans défense : le roi doit répondre, la pièce tombe.", "Les pièces non protégées et le roi mal abrité sont les meilleures cibles."),
+        traps = listOf("Pour vous : une pièce adverse sans défense est une invitation à la double attaque de la dame.", "Contre vous : gardez vos pièces protégées ; une pièce en l'air plus un roi exposé, c'est une double attaque qui attend."),
     ),
     LessonData(
         id = 41,
@@ -81,6 +87,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             2 to StepVisuals(marks = listOf(18), arrows = listOf(25 to 4)),
         ),
+        ideas = listOf("Une pièce clouée ne peut pas bouger sans exposer une pièce plus précieuse placée derrière elle.", "Le clouage absolu (devant le roi) interdit tout mouvement ; le clouage relatif (devant la dame) le rend très coûteux.", "Une fois la pièce clouée, attaquez-la encore : elle ne peut pas s'enfuir."),
+        traps = listOf("Pour vous : ajoutez un attaquant contre la pièce clouée, souvent un pion, pour la gagner.", "Contre vous : un fou adverse sur la diagonale de votre roi ou de votre dame peut clouer une pièce ; décalez-les à temps."),
     ),
     LessonData(
         id = 42,
@@ -100,6 +108,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "skewer",
         pauseSteps = setOf(1),
         takeaway = "Ne laissez pas vos pièces alignées sur une ligne qu'une pièce adverse peut occuper.",
+        ideas = listOf("L'enfilade est un clouage inversé : la pièce la plus précieuse est devant.", "Quand la pièce de devant s'écarte, celle de derrière est prise.", "Tours, fous et dame, qui agissent de loin, sont les pièces de l'enfilade."),
+        traps = listOf("Pour vous : un échec qui aligne le roi adverse et une pièce derrière lui gagne cette pièce.", "Contre vous : évitez d'aligner votre roi et votre dame (ou une tour) sur une même ligne ouverte."),
     ),
     LessonData(
         id = 43,
@@ -119,6 +129,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "discoveredAttack",
         pauseSteps = setOf(1),
         takeaway = "Si une de vos pièces masque une ligne vers le roi adverse, cherchez un coup utile pour la déplacer.",
+        ideas = listOf("Une pièce s'écarte et démasque l'attaque de la pièce placée derrière elle : deux menaces en un seul coup.", "La pièce qui s'écarte doit créer sa propre menace : elle attaque, prend ou donne échec.", "L'adversaire ne peut souvent parer qu'une seule des deux menaces."),
+        traps = listOf("Pour vous : repérez vos pièces placées devant une tour, un fou ou une dame : chacune peut préparer une attaque à la découverte.", "Contre vous : une pièce adverse placée devant une autre, sur la ligne de votre dame, prépare peut-être une découverte."),
     ),
     LessonData(
         id = 44,
@@ -138,6 +150,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "discoveredCheck",
         pauseSteps = setOf(1),
         takeaway = "L'échec à la découverte offre un coup gratuit à la pièce qui démasque.",
+        ideas = listOf("La pièce démasquée donne échec : l'adversaire doit sauver son roi d'abord.", "Pendant ce temps, la pièce qui a bougé est libre : elle peut prendre n'importe quoi, même protégé.", "C'est l'une des tactiques les plus puissantes : préparez l'alignement avant de la déclencher."),
+        traps = listOf("Pour vous : avec un échec à la découverte, la pièce qui bouge peut prendre la dame adverse sans risque.", "Contre vous : une pièce adverse entre son fou (ou sa tour) et votre roi est une bombe ; mettez votre roi hors de la ligne."),
     ),
     LessonData(
         id = 45,
@@ -157,6 +171,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "doubleCheck",
         pauseSteps = setOf(1),
         takeaway = "L'échec double oblige toujours le roi à bouger. C'est l'arme la plus forcée du jeu.",
+        ideas = listOf("Deux pièces donnent échec en même temps : on ne peut ni prendre les deux, ni s'interposer deux fois.", "Le roi est obligé de bouger, ce qui conduit souvent au mat.", "L'échec double naît d'un échec à la découverte où la pièce qui bouge donne aussi échec."),
+        traps = listOf("Pour vous : un échec double permet même de laisser une pièce en prise : le roi n'a pas le temps de la prendre.", "Contre vous : un roi sans case de fuite contre un échec double est maté ; gardez de l'air autour de lui."),
     ),
     LessonData(
         id = 46,
@@ -176,6 +192,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "deflection",
         pauseSteps = setOf(1),
         takeaway = "Pour percer une défense, forcez le défenseur à quitter son poste.",
+        ideas = listOf("Dévier, c'est forcer un défenseur à quitter le poste qu'il protège.", "On le dévie par une prise, un échec ou une offre qu'il ne peut pas refuser.", "Ce qu'il protégeait, une pièce, une case ou une ligne, devient alors sans défense."),
+        traps = listOf("Pour vous : repérez la pièce adverse dont tout dépend, et offrez-lui une cible ailleurs.", "Contre vous : quand une seule de vos pièces défend quelque chose d'important, l'adversaire cherchera à l'en écarter."),
     ),
     LessonData(
         id = 47,
@@ -195,6 +213,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "attraction",
         pauseSteps = setOf(1),
         takeaway = "Un sacrifice peut servir d'appât pour attirer le roi sur une case fatale.",
+        ideas = listOf("Attirer une pièce adverse, souvent le roi, sur une case où elle devient vulnérable.", "Le sacrifice sert d'appât : la pièce qui le prend se retrouve exposée à une fourchette, une enfilade ou un mat.", "Calculez la suite jusqu'au bout : l'attraction n'a de sens que si elle rapporte plus que l'appât."),
+        traps = listOf("Pour vous : sacrifier sur une case voisine du roi peut l'attirer dans un réseau de mat.", "Contre vous : un cadeau trop beau près de votre roi est souvent une attraction ; demandez-vous pourquoi on vous l'offre."),
     ),
     LessonData(
         id = 48,
@@ -216,6 +236,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "sacrifice",
         pauseSteps = setOf(1),
         takeaway = "On peut donner un peu pour reprendre beaucoup plus.",
+        ideas = listOf("Un sacrifice donne du matériel pour obtenir plus : du matériel, une attaque décisive ou un mat.", "Il doit être calculé, ou justifié par une attaque très forte contre le roi.", "Après le sacrifice, chaque coup doit être forçant : échecs, prises, menaces."),
+        traps = listOf("Pour vous : un sacrifice qui ouvre le roi adverse vaut souvent plus que la pièce donnée.", "Contre vous : un sacrifice non calculé n'est qu'une perte de matériel ; vérifiez la meilleure défense adverse."),
     ),
     LessonData(
         id = 49,
@@ -234,6 +256,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "hangingPiece",
         pauseSteps = setOf(1),
         takeaway = "Après chaque coup adverse, demandez-vous quelle pièce n'est plus défendue.",
+        ideas = listOf("Une pièce que personne ne défend peut être prise gratuitement.", "À chaque coup, faites le tour des pièces adverses : laquelle n'est protégée par rien ?", "Vérifiez aussi les vôtres : une pièce en l'air est une cible facile."),
+        traps = listOf("Pour vous : l'adversaire qui vient de bouger une pièce a peut-être retiré la protection d'une autre.", "Contre vous : avant de prendre une pièce « gratuite », vérifiez qu'elle n'est pas un appât."),
     ),
     LessonData(
         id = 50,
@@ -253,6 +277,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "trappedPiece",
         pauseSteps = setOf(1),
         takeaway = "Une pièce qui s'aventure chez l'adversaire doit toujours garder un chemin de retour.",
+        ideas = listOf("Une pièce sans case de fuite est perdue, même la dame : il suffit de l'attaquer.", "Les pièces aventurées en territoire adverse et les fous enfermés par des pions sont souvent menacés.", "Avant d'attaquer, comptez les cases de fuite de la pièce visée."),
+        traps = listOf("Pour vous : un pion qui attaque une pièce sans retraite la gagne.", "Contre vous : avant d'envoyer une pièce en profondeur, assurez-vous qu'elle pourra revenir."),
     ),
     LessonData(
         id = 51,
@@ -272,6 +298,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "capturingDefender",
         pauseSteps = setOf(1),
         takeaway = "Pour gagner une pièce, occupez-vous d'abord de celle qui la protège.",
+        ideas = listOf("Quand une pièce n'a qu'un seul défenseur, éliminez ce défenseur.", "On l'élimine en le prenant (même au prix d'un échange) ou en le détournant.", "La pièce qu'il protégeait tombe ensuite."),
+        traps = listOf("Pour vous : un échange qui supprime le seul défenseur d'une pièce gagne cette pièce.", "Contre vous : ne laissez pas une pièce importante sous la garde d'un seul défenseur échangeable."),
     ),
     LessonData(
         id = 52,
@@ -291,6 +319,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "clearance",
         pauseSteps = setOf(1),
         takeaway = "Si une de vos pièces gêne les autres, déplacez-la en gagnant du temps.",
+        ideas = listOf("Parfois, une de vos propres pièces bloque une case ou une ligne utile aux autres.", "En la déplaçant avec gain de temps (échec, prise, menace), vous libérez la voie.", "Le dégagement prépare souvent un mat ou une fourchette décisive."),
+        traps = listOf("Pour vous : si une de vos pièces gêne votre attaque, cherchez à la jouer avec échec.", "Contre vous : une pièce adverse qui bloque sa propre attaque peut s'écarter d'un coup ; anticipez la ligne qu'elle libérera."),
     ),
     LessonData(
         id = 53,
@@ -310,6 +340,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "interference",
         pauseSteps = setOf(1),
         takeaway = "Quand deux pièces se protègent sur une ligne, glissez une pièce entre elles.",
+        ideas = listOf("Intercepter, c'est placer une pièce entre deux pièces adverses qui se protègent.", "Le lien coupé, l'une des deux pièces se retrouve sans défense.", "Le coup d'interception est souvent un sacrifice : peu importe, si la ligne est coupée."),
+        traps = listOf("Pour vous : une pièce adverse protégée de loin, par une tour ou un fou, peut être coupée de son défenseur.", "Contre vous : une défense à distance est fragile ; une pièce adverse peut se glisser sur la ligne."),
     ),
     LessonData(
         id = 54,
@@ -329,6 +361,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "intermezzo",
         pauseSteps = setOf(1),
         takeaway = "Avant une reprise automatique, cherchez un échec.",
+        ideas = listOf("Avant de reprendre comme on s'y attend, cherchez un coup plus fort : un échec ou une menace.", "La reprise peut souvent attendre un coup : elle sera toujours possible ensuite.", "Le coup intermédiaire change l'ordre des coups et surprend l'adversaire."),
+        traps = listOf("Pour vous : quand l'adversaire croit l'échange obligatoire, un échec intermédiaire peut tout changer.", "Contre vous : ne reprenez pas automatiquement ; vérifiez d'abord les échecs et les menaces de l'adversaire."),
     ),
     LessonData(
         id = 55,
@@ -348,6 +382,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "xRayAttack",
         pauseSteps = setOf(1),
         takeaway = "Une pièce adverse placée sur votre ligne n'est pas un vrai obstacle si vous pouvez la forcer à partir.",
+        ideas = listOf("Une pièce agit à travers une autre pièce placée sur la même ligne, comme si elle voyait au travers.", "Les rayons X permettent de défendre ou d'attaquer une case malgré une pièce intermédiaire.", "Ils apparaissent surtout avec les tours, les fous et la dame alignés."),
+        traps = listOf("Pour vous : deux pièces lourdes sur la même colonne défendent la case d'arrivée l'une de l'autre, même au travers d'un échange.", "Contre vous : une case qui semble défendue une seule fois l'est parfois deux fois, par rayon X ; comptez toute la ligne."),
     ),
     LessonData(
         id = 56,
@@ -367,6 +403,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "quietMove",
         pauseSteps = setOf(1),
         takeaway = "Ne cherchez pas seulement les échecs et les prises, un coup calme peut suffire.",
+        ideas = listOf("Ni échec ni prise : un coup calme peut créer une menace imparable.", "Le coup tranquille resserre le filet : il coupe une case de fuite ou prépare un mat.", "Après les coups forçants, pensez aux coups calmes : ce sont souvent les plus forts."),
+        traps = listOf("Pour vous : quand l'adversaire n'a plus de bon coup, un coup d'attente peut le forcer à céder.", "Contre vous : un coup adverse qui ne prend rien n'est pas forcément anodin ; cherchez ce qu'il menace."),
     ),
     LessonData(
         id = 57,
@@ -386,6 +424,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "defensiveMove",
         pauseSteps = setOf(1),
         takeaway = "Face à une menace, cherchez la parade la plus simple qui garde votre avantage.",
+        ideas = listOf("Face à une dernière menace, gardez votre sang-froid : une parade précise conserve l'avantage.", "Comptez les menaces adverses avant de chercher la vôtre.", "La meilleure défense crée souvent elle-même une menace."),
+        traps = listOf("Pour vous : une défense qui gagne un temps (en attaquant) retourne souvent la situation.", "Contre vous : la première parade venue n'est pas toujours la bonne ; vérifiez qu'elle ne perd pas autre chose."),
     ),
     LessonData(
         id = 58,
@@ -404,6 +444,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "backRankMate",
         pauseSteps = setOf(1),
         takeaway = "Pensez à donner une case de sortie à votre roi.",
+        ideas = listOf("Un roi enfermé derrière ses propres pions peut être maté sur la dernière rangée par une tour ou une dame.", "Le mat arrive quand plus aucune pièce ne défend cette rangée.", "Une case de fuite (un pion avancé d'une case devant le roi) suffit souvent à l'éviter."),
+        traps = listOf("Pour vous : surchargez ou déviez la dernière pièce qui défend la rangée du fond adverse.", "Contre vous : faites de l'air à votre roi en avançant un pion devant lui avant que la rangée ne soit attaquée."),
     ),
     LessonData(
         id = 59,
@@ -423,6 +465,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "smotheredMate",
         pauseSteps = setOf(1),
         takeaway = "Quand le roi n'a plus d'air, pensez au cavalier.",
+        ideas = listOf("Un roi complètement entouré de ses propres pièces peut être maté par un seul cavalier.", "Le motif classique : échec de la dame près du roi, sacrifice de la dame, et mat du cavalier.", "Le roi dans le coin, derrière ses pions et une tour, est la victime typique."),
+        traps = listOf("Pour vous : un roi adverse dans le coin, sans case libre, est une cible pour un cavalier qui donne échec.", "Contre vous : ne bouchez pas toutes les cases autour de votre roi ; gardez-lui une sortie."),
     ),
     LessonData(
         id = 60,
@@ -442,6 +486,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "anastasiaMate",
         pauseSteps = setOf(1),
         takeaway = "Un cavalier près du roi prépare souvent un mat sur la bande.",
+        ideas = listOf("Un cavalier ferme les cases de fuite du roi, et une tour ou une dame le mate sur le bord.", "Le roi doit être coincé sur le bord, derrière un de ses pions.", "Une colonne ouverte vers le roi suffit à la tour ou à la dame pour conclure."),
+        traps = listOf("Pour vous : un cavalier installé près du roi adverse prépare souvent ce mat avec une pièce lourde.", "Contre vous : un cavalier adverse planté à côté de votre roi roqué est un signal d'alarme."),
     ),
     LessonData(
         id = 61,
@@ -461,6 +507,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "arabianMate",
         pauseSteps = setOf(1),
         takeaway = "Tour et cavalier forment un duo redoutable contre un roi dans le coin.",
+        ideas = listOf("Tour et cavalier coopèrent contre un roi dans le coin : le cavalier protège la tour et couvre la case de fuite.", "La tour donne le mat sur la rangée ou la colonne du bord.", "C'est l'un des plus vieux mats connus : retenez la position des trois pièces."),
+        traps = listOf("Pour vous : une tour sur la septième rangée et un cavalier près du coin menacent ce mat.", "Contre vous : un roi au coin face à une tour et un cavalier coordonnés n'a souvent plus de défense."),
     ),
     LessonData(
         id = 62,
@@ -480,6 +528,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "bodenMate",
         pauseSteps = setOf(1),
         takeaway = "Deux fous croisés suffisent pour mater.",
+        ideas = listOf("Deux fous sur des diagonales qui se croisent matent un roi gêné par ses propres pièces.", "Ce mat suit souvent un sacrifice qui ouvre les diagonales devant le grand roque.", "Les pièces du défenseur bouchent ses propres cases de fuite."),
+        traps = listOf("Pour vous : contre un grand roque, un sacrifice qui ouvre une diagonale peut préparer ce mat.", "Contre vous : après le grand roque, méfiez-vous des fous adverses qui visent les cases autour de votre roi."),
     ),
     LessonData(
         id = 63,
@@ -499,6 +549,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "doubleBishopMate",
         pauseSteps = setOf(1),
         takeaway = "Ouvrez les diagonales vers le roi, et les fous feront le reste.",
+        ideas = listOf("Deux fous sur des diagonales voisines contrôlent tout le coin du roi.", "Ils enferment le roi sur le bord : l'un donne échec, l'autre couvre les cases de fuite.", "La paire de fous est une arme d'attaque redoutable contre un roi découvert."),
+        traps = listOf("Pour vous : gardez vos deux fous quand le roi adverse est exposé.", "Contre vous : échangez l'un des fous adverses si votre roi est sur leurs diagonales."),
     ),
     LessonData(
         id = 64,
@@ -518,6 +570,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "dovetailMate",
         pauseSteps = setOf(1),
         takeaway = "Un roi qui sort de son abri devient une cible.",
+        ideas = listOf("La dame mate au contact du roi, protégée par une autre pièce.", "Les cases derrière le roi sont bouchées par ses propres pions.", "Le roi ne peut ni prendre la dame protégée, ni fuir."),
+        traps = listOf("Pour vous : une dame qui arrive au contact du roi, avec un soutien, conclut souvent la partie.", "Contre vous : gardez une case de fuite derrière votre roi et un défenseur des cases voisines."),
     ),
     LessonData(
         id = 65,
@@ -537,6 +591,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "hookMate",
         pauseSteps = setOf(1),
         takeaway = "Des pièces qui se protègent en chaîne sont très solides.",
+        ideas = listOf("Tour, cavalier et pion forment une chaîne : chaque pièce protège la suivante.", "La tour donne le mat, le cavalier la protège, le pion protège le cavalier.", "Le roi n'a ni fuite ni prise possible."),
+        traps = listOf("Pour vous : un pion avancé peut servir de point d'appui à un cavalier qui protège la tour de mat.", "Contre vous : un pion adverse avancé près de votre roi, soutenant une pièce, prépare souvent un mat."),
     ),
     LessonData(
         id = 66,
@@ -556,6 +612,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "mateIn2",
         pauseSteps = setOf(1),
         takeaway = "Une tour soutenue par un fou peut mater sur la dernière rangée.",
+        ideas = listOf("Une tour mate sur la dernière rangée, protégée par un fou placé sur la diagonale.", "Le roi est bloqué par ses propres pièces sur la rangée.", "Ce mat conclut la célèbre partie de l'Opéra jouée par Morphy en 1858."),
+        traps = listOf("Pour vous : une colonne ouverte vers la dernière rangée adverse, plus un fou qui couvre la case de mat, suffisent.", "Contre vous : ne laissez pas la case devant votre roi sans défense quand un fou adverse la vise."),
     ),
     LessonData(
         id = 67,
@@ -574,6 +632,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "attackingF2F7",
         pauseSteps = setOf(1),
         takeaway = "Trois pièces bien coordonnées valent mieux qu'une dame. Méfiez-vous des cadeaux trop beaux.",
+        ideas = listOf("On laisse prendre sa dame pour mater avec les pièces légères.", "Le piège fonctionne parce que l'adversaire a cloué un cavalier qui, en fait, peut bouger.", "Le point f7, protégé par le seul roi en début de partie, est la cible."),
+        traps = listOf("Pour vous : un clouage relatif (devant la dame) n'empêche pas de bouger si le gain est plus grand.", "Contre vous : avant de prendre une dame offerte, vérifiez les échecs et le mat qui suivent."),
     ),
     LessonData(
         id = 68,
@@ -593,6 +653,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "kingsideAttack",
         pauseSteps = setOf(1),
         takeaway = "Contre un roi mal protégé, sacrifier pour ouvrir des lignes est souvent payant.",
+        ideas = listOf("Contre un roi dont les pions protecteurs ont disparu, chaque pièce qui s'approche crée une nouvelle menace.", "Amenez d'abord vos pièces (dame, tours, cavaliers) près du roi, puis ouvrez les lignes.", "Ouvrez les colonnes devant le roi adverse : les pièces lourdes s'y engouffrent."),
+        traps = listOf("Pour vous : une attaque avec plus de pièces que le défenseur ne peut en opposer finit souvent par réussir.", "Contre vous : ne poussez pas les pions devant votre roi roqué sans raison ; chaque trou attire l'attaque."),
     ),
     LessonData(
         id = 69,
@@ -612,6 +674,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "queensideAttack",
         pauseSteps = setOf(1),
         takeaway = "Quand une pièce n'est défendue que par le roi, un échec peut éloigner ce défenseur.",
+        ideas = listOf("Un roi qui a fait le grand roque est souvent moins bien protégé : le pion a est loin de lui, et la case b2 (ou b7) est un point sensible.", "Un sacrifice peut éloigner son dernier défenseur.", "Les colonnes b et c, ouvertes, sont les routes de l'attaque."),
+        traps = listOf("Pour vous : une avance des pions de l'aile dame ouvre des lignes contre le grand roque adverse.", "Contre vous : après le grand roque, protégez le pion a2 (ou a7) et gardez une pièce près du roi."),
     ),
     LessonData(
         id = 70,
@@ -631,6 +695,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "exposedKing",
         pauseSteps = setOf(1),
         takeaway = "Doublez vos pièces lourdes sur une colonne ouverte qui mène au roi adverse.",
+        ideas = listOf("Un roi sans pions devant lui attire les tours et la dame sur les colonnes ouvertes.", "Chaque échec gagne du temps et rapproche une nouvelle pièce.", "Le défenseur manque souvent de pièces pour couvrir toutes les cases."),
+        traps = listOf("Pour vous : contre un roi exposé, amenez les pièces lourdes avec échec.", "Contre vous : un roi sans abri en milieu de partie est en danger ; recherchez les échanges de dames."),
     ),
     LessonData(
         id = 71,
@@ -650,6 +716,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "advancedPawn",
         pauseSteps = setOf(1),
         takeaway = "Au moment de promouvoir, examinez toutes les pièces possibles, pas seulement la dame.",
+        ideas = listOf("À un pas de la promotion, un pion devient une arme redoutable : il occupe une pièce adverse.", "Le moment de la promotion demande de la réflexion : la dame n'est pas toujours le meilleur choix.", "Une pièce sacrifiée pour libérer la case de promotion est souvent un bon investissement."),
+        traps = listOf("Pour vous : la menace de promotion force souvent l'adversaire à donner une pièce.", "Contre vous : un pion adverse sur votre deuxième rangée doit être surveillé à chaque coup."),
     ),
     LessonData(
         id = 72,
@@ -669,6 +737,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "enPassant",
         pauseSteps = setOf(1),
         takeaway = "La prise en passant n'est permise qu'au coup qui suit l'avance de deux cases.",
+        ideas = listOf("Un pion qui avance de deux cases à côté d'un pion adverse peut être pris en passant.", "Cette prise peut rouvrir une ligne d'attaque que l'adversaire croyait fermée.", "Elle n'est possible qu'au coup suivant immédiatement."),
+        traps = listOf("Pour vous : la prise en passant ouvre parfois une diagonale ou une colonne vers le roi adverse.", "Contre vous : avant d'avancer un pion de deux cases pour fermer le jeu, vérifiez qu'il ne sera pas pris en passant."),
     ),
     LessonData(
         id = 73,
@@ -687,6 +757,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "castling",
         pauseSteps = setOf(1),
         takeaway = "Le roque peut être un excellent coup de défense.",
+        ideas = listOf("Le roque met le roi à l'abri et active la tour en un seul coup.", "Au bon moment, il peut aussi parer une menace ou connecter les tours.", "Un roque tardif expose le roi aux attaques sur les colonnes centrales."),
+        traps = listOf("Pour vous : un roque qui active la tour sur une colonne ouverte peut créer une menace immédiate.", "Contre vous : un roque sur une aile où l'adversaire attaque déjà peut précipiter le mat."),
     ),
     LessonData(
         id = 74,
@@ -708,6 +780,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "mateIn3",
         pauseSteps = setOf(1),
         takeaway = "Quand chaque coup est un échec, l'adversaire n'a pas le choix, et le calcul devient facile.",
+        ideas = listOf("Pour calculer, commencez par les coups forcés : les échecs, puis les prises, puis les menaces.", "Imaginez la position après chaque coup, avec toutes les réponses possibles de l'adversaire.", "Un mat en trois coups commence souvent par un sacrifice qui force la réponse."),
+        traps = listOf("Pour vous : quand le roi adverse n'a qu'une ou deux réponses à chaque échec, calculez jusqu'au mat.", "Contre vous : oublier une seule défense adverse fait échouer tout le calcul ; vérifiez chaque réponse."),
     ),
     LessonData(
         id = 75,
@@ -726,6 +800,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "opening",
         pauseSteps = setOf(1),
         takeaway = "Chaque pièce que vous développez doit rester protégée. Vérifiez vos défenseurs avant de jouer.",
+        ideas = listOf("Un coup qui semble naturel peut être une faute : vérifiez qu'il ne laisse rien sans protection.", "Les pièges d'ouverture exploitent surtout le point f7 (ou f2) et les pièces clouées.", "Développez vos pièces en gardant un œil sur les menaces adverses."),
+        traps = listOf("Pour vous : connaître les pièges classiques vous permet de les tendre et d'en profiter.", "Contre vous : un gain de matériel trop facile en ouverture cache souvent un piège."),
     ),
     LessonData(
         id = 131,
@@ -742,6 +818,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "mateIn1",
         pauseSteps = setOf(1),
         takeaway = "Regardez toujours, dans l'ordre, vos échecs, vos prises puis vos menaces, et faites la même revue pour l'adversaire.",
+        ideas = listOf("À chaque coup, passez en revue dans l'ordre vos échecs, vos prises, puis vos menaces.", "Les échecs limitent les réponses de l'adversaire : ce sont les coups les plus faciles à calculer.", "Faites le même examen pour l'adversaire : quels échecs, prises et menaces a-t-il ?"),
+        traps = listOf("Pour vous : le coup gagnant se cache souvent parmi les échecs, même ceux qui semblent impossibles.", "Contre vous : jouer le premier coup venu sans cet examen laisse passer les tactiques adverses."),
     ),
     LessonData(
         id = 132,
@@ -765,6 +843,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "opening",
         pauseSteps = setOf(6),
         takeaway = "Avant chaque coup, posez-vous la question : après ce coup, quel est le meilleur coup de l'adversaire ? Si vous ne trouvez pas de réponse dangereuse, jouez.",
+        ideas = listOf("Avant de jouer, demandez-vous : après ce coup, quel est le meilleur coup de l'adversaire ?", "Cherchez en particulier ses échecs, ses prises et ses menaces.", "Cette vérification de quelques secondes évite la plupart des gaffes."),
+        traps = listOf("Pour vous : l'adversaire pressé qui ne fait pas ce contrôle laisse souvent une pièce ou un mat.", "Contre vous : un coup qui gagne du matériel peut ouvrir une ligne vers votre roi ; vérifiez avant de prendre."),
     ),
     LessonData(
         id = 133,
@@ -783,6 +863,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "hangingPiece",
         pauseSteps = setOf(1, 3),
         takeaway = "Comptez les attaquants et les défenseurs de chaque pièce. Si les attaquants sont plus nombreux, la pièce est en danger.",
+        ideas = listOf("Une pièce est en danger quand elle est attaquée plus de fois qu'elle n'est défendue.", "Comptez attaquants et défenseurs avant de prendre ou de laisser une pièce.", "Tenez compte de la valeur des pièces : une pièce défendue peut être perdue si elle est prise par une pièce plus faible."),
+        traps = listOf("Pour vous : ajoutez un attaquant de plus sur une pièce adverse : elle tombera.", "Contre vous : un défenseur qui s'en va (échangé ou dévié) change tout le compte."),
     ),
     LessonData(
         id = 134,
@@ -801,6 +883,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "middlegame",
         pauseSteps = setOf(1, 3),
         takeaway = "Quand tout semble perdu, listez vos échecs, vos prises et vos menaces. Le coup forçant renverse souvent la situation.",
+        ideas = listOf("Avant de calculer, dressez la liste des coups candidats, les plus forçants d'abord.", "Calculez-les un par un, en commençant par les échecs.", "Comparez leurs résultats avant de choisir : le premier bon coup n'est pas toujours le meilleur."),
+        traps = listOf("Pour vous : un coup candidat surprenant (un sacrifice) est souvent celui qui gagne.", "Contre vous : calculer un seul coup à fond fait oublier les autres ; gardez votre liste en tête."),
     ),
     LessonData(
         id = 135,
@@ -828,6 +912,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "defensiveMove",
         pauseSteps = setOf(12),
         takeaway = "Avant de chercher votre plan, demandez-vous toujours ce que veut l'adversaire, et empêchez-le si c'est bon marché.",
+        ideas = listOf("Après chaque coup adverse, demandez-vous ce qu'il menace et ce qu'il prépare.", "Un petit coup préventif évite souvent de gros problèmes : c'est la prophylaxie.", "Empêcher le plan adverse vaut parfois mieux que poursuivre le sien."),
+        traps = listOf("Pour vous : un adversaire sans plan clair se perd souvent si vous neutralisez ses meilleures pièces.", "Contre vous : ignorer la menace adverse pour suivre son propre plan coûte souvent la partie."),
     ),
     LessonData(
         id = 136,
@@ -846,6 +932,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "hangingPiece",
         pauseSteps = setOf(1, 3),
         takeaway = "À chaque coup, regardez quelles pièces adverses ne sont protégées par rien. Et laissez toujours une case de fuite à votre roi.",
+        ideas = listOf("Une pièce que personne ne défend peut être prise gratuitement.", "À chaque coup, regardez quelles pièces adverses ne sont protégées par rien.", "Après une prise, vérifiez que votre pièce ne sera pas prise à son tour."),
+        traps = listOf("Pour vous : l'adversaire qui oublie de protéger une pièce vous offre du matériel.", "Contre vous : laissez toujours une case de fuite à votre roi, et protégez vos pièces."),
     ),
     LessonData(
         id = 137,
@@ -862,6 +950,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "mateIn1",
         pauseSteps = setOf(1),
         takeaway = "Avant de reprendre du matériel, cherchez toujours s'il existe un mat en un coup.",
+        ideas = listOf("Quand le roi adverse est mal protégé, cherchez d'abord un mat en un coup.", "Regardez tous les échecs possibles : l'un d'eux est peut-être le mat.", "Un roi coincé sur le bord, sans case de fuite, est la victime typique."),
+        traps = listOf("Pour vous : avant de prendre du matériel, vérifiez si un mat est possible.", "Contre vous : un roi sans case libre peut être maté par un seul échec ; donnez-lui de l'air."),
     ),
     LessonData(
         id = 138,
@@ -880,6 +970,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "fork",
         pauseSteps = setOf(1, 3),
         takeaway = "Cherchez les coups qui donnent échec tout en attaquant une pièce non protégée.",
+        ideas = listOf("La dame peut donner échec et attaquer une autre pièce en même temps.", "Le roi doit se sauver, et la pièce attaquée tombe.", "Cherchez les échecs de la dame qui touchent aussi une pièce sans défense."),
+        traps = listOf("Pour vous : une pièce adverse non protégée et un roi accessible sont une double cible pour la dame.", "Contre vous : ne laissez pas une pièce sans protection quand la dame adverse peut donner échec."),
     ),
     LessonData(
         id = 139,
@@ -899,6 +991,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "intermezzo",
         pauseSteps = setOf(1, 3),
         takeaway = "Avant de reprendre par réflexe, cherchez s'il existe un coup plus fort, surtout un échec.",
+        ideas = listOf("Reprendre une pièce semble obligatoire, mais un coup plus fort existe parfois.", "Un échec intermédiaire peut changer le résultat de l'échange.", "Avant de reprendre, regardez les échecs et les menaces de l'adversaire comme les vôtres."),
+        traps = listOf("Pour vous : quand l'adversaire reprend automatiquement, un coup intermédiaire peut le punir.", "Contre vous : la reprise automatique est punie quand l'adversaire a un échec ou une menace plus forte."),
     ),
     LessonData(
         id = 140,
@@ -918,6 +1012,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "fork",
         pauseSteps = setOf(1, 3),
         takeaway = "Avant chaque prise, demandez-vous quelle pièce adverse va reprendre et ce qu'elle attaquera depuis sa nouvelle case.",
+        ideas = listOf("Une prise peut libérer une ligne pour une pièce adverse.", "Avant de prendre, regardez quelle pièce reprendra et ce qu'elle attaquera ensuite.", "Une ligne ouverte vers votre roi ou votre dame peut coûter bien plus que le matériel gagné."),
+        traps = listOf("Pour vous : offrez une prise qui ouvre une ligne pour vos pièces lourdes.", "Contre vous : une prise gourmande qui ouvre une colonne ou une diagonale adverse est souvent une faute."),
     ),
     LessonData(
         id = 141,
@@ -937,6 +1033,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "trappedPiece",
         pauseSteps = setOf(1, 3),
         takeaway = "Avant d'envoyer votre dame chercher un pion dans le camp adverse, vérifiez qu'elle pourra revenir.",
+        ideas = listOf("Un pion offert loin de chez soi peut être un piège.", "La dame qui le prend s'éloigne du jeu et risque de se retrouver enfermée.", "Pendant ce temps, l'adversaire développe ses pièces avec gain de temps."),
+        traps = listOf("Pour vous : offrir un pion pour attirer la dame adverse au loin peut rapporter beaucoup.", "Contre vous : avant de prendre un pion éloigné avec la dame, comptez ses cases de retraite."),
     ),
     LessonData(
         id = 142,
@@ -960,6 +1058,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             0 to StepVisuals(marks = listOf(60, 36, 59), arrows = listOf()),
         ),
+        ideas = listOf("Une pièce surchargée doit défendre deux choses à la fois.", "Attaquez l'une des deux : elle ne pourra plus protéger l'autre.", "Repérez les pièces adverses qui ont plusieurs devoirs."),
+        traps = listOf("Pour vous : un échange sur l'une des cibles force le défenseur à choisir.", "Contre vous : ne confiez pas deux missions à une même pièce ; ajoutez un défenseur."),
     ),
     LessonData(
         id = 143,
@@ -990,6 +1090,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             0 to StepVisuals(marks = listOf(45, 54), arrows = listOf(45 to 63)),
         ),
+        ideas = listOf("Une tour et un fou alternent échec simple et échec à la découverte.", "À chaque tour du moulin, la tour prend une pièce sans que l'adversaire puisse réagir.", "Le moulin fonctionne tant que le roi adverse ne peut pas échapper au mécanisme."),
+        traps = listOf("Pour vous : une fois le moulin en place, prenez tout ce qui est sur le chemin de la tour.", "Contre vous : un roi coincé derrière un fou adverse et une tour qui va et vient peut tout perdre."),
     ),
     LessonData(
         id = 144,
@@ -1009,6 +1111,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "attackingF2F7",
         pauseSteps = setOf(1, 3),
         takeaway = "Une pièce attaquée peut parfois rapporter plus en prenant qu'en reculant. C'est le desperado.",
+        ideas = listOf("Quand une pièce attaquée va être perdue, faites-la payer le plus cher possible.", "Prenez quelque chose avec elle avant qu'elle ne disparaisse.", "Le desperado apparaît surtout quand deux pièces sont attaquées en même temps."),
+        traps = listOf("Pour vous : une pièce condamnée qui prend un pion ou une pièce limite la perte.", "Contre vous : en échangeant, vérifiez que la pièce adverse attaquée n'a pas une prise à faire avant de disparaître."),
     ),
     LessonData(
         id = 145,
@@ -1034,6 +1138,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             0 to StepVisuals(marks = listOf(14, 1), arrows = listOf()),
         ),
+        ideas = listOf("Une série d'échecs sans fin fait répéter la position : la partie est nulle.", "Quand vous êtes perdu, cherchez un échec perpétuel.", "Il faut que le roi adverse ne puisse pas échapper aux échecs."),
+        traps = listOf("Pour vous : une dame qui donne échec de deux cases différentes peut forcer la nulle.", "Contre vous : en position gagnante, gardez un abri pour votre roi contre les échecs de la dame adverse."),
     ),
     LessonData(
         id = 146,
@@ -1054,6 +1160,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             0 to StepVisuals(marks = listOf(56, 57, 49), arrows = listOf()),
         ),
+        ideas = listOf("Un camp sans coup légal, sans être en échec, est pat : la partie est nulle.", "Celui qui perd cherche à se débarrasser de ses dernières pièces mobiles.", "Une pièce qui se sacrifie en donnant échec sans arrêt peut forcer le pat."),
+        traps = listOf("Pour vous : dans une position perdue, un roi sans coup légal transforme la défaite en nulle.", "Contre vous : avec un gros avantage, laissez toujours un coup légal à l'adversaire."),
     ),
     LessonData(
         id = 147,
@@ -1075,6 +1183,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "kingsideAttack",
         pauseSteps = setOf(1, 3, 5),
         takeaway = "Le sacrifice grec réussit quand le cavalier peut venir en g5 et la dame en h5, et qu'aucune pièce noire ne défend la case h7.",
+        ideas = listOf("Le fou se sacrifie en h7 pour ouvrir le roque.", "Le cavalier en g5 et la dame en h5 arrivent ensuite pour l'attaque de mat.", "Le sacrifice marche quand aucun cavalier ne défend le roque et que la dame peut rejoindre la colonne h."),
+        traps = listOf("Pour vous : un roque adverse sans cavalier en f6 (ou f3) est vulnérable à ce sacrifice.", "Contre vous : gardez un cavalier près de votre roque, et ne laissez pas le fou adverse viser h7 (ou h2)."),
     ),
     LessonData(
         id = 148,
@@ -1096,6 +1206,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "sacrifice",
         pauseSteps = setOf(1, 3, 5),
         takeaway = "Deux fous qui visent le roque peuvent se sacrifier l'un après l'autre pour détruire la protection du roi.",
+        ideas = listOf("Deux fous sacrifiés de suite démolissent l'abri du roi.", "La dame et une tour arrivent ensuite pour l'attaque de mat.", "Lasker inventa ce motif en 1889 contre Bauer."),
+        traps = listOf("Pour vous : deux fous braqués sur le roque adverse peuvent être sacrifiés pour l'ouvrir.", "Contre vous : deux fous adverses visant votre roque appellent une défense active ou un échange."),
     ),
     LessonData(
         id = 149,
@@ -1117,6 +1229,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             0 to StepVisuals(marks = listOf(62), arrows = listOf(26 to 62)),
         ),
+        ideas = listOf("Un fou contrôle la case de fuite du roi réfugié dans le coin.", "Une pièce lourde donne le mat sur la colonne ouverte.", "Un fou sur la diagonale qui mène à g8 et une colonne h ouverte suffisent."),
+        traps = listOf("Pour vous : ouvrez la colonne h contre un roi en h8 quand votre fou vise g8.", "Contre vous : un roi en coin derrière ses pions, face à un fou adverse sur la diagonale, est en danger."),
     ),
     LessonData(
         id = 150,
@@ -1140,6 +1254,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             0 to StepVisuals(marks = listOf(55, 54), arrows = listOf()),
         ),
+        ideas = listOf("La dame mate en h7, protégée par un pion en g6.", "Souvent, une tour se sacrifie d'abord pour ouvrir la colonne h.", "Un pion avancé en g6 est un poignard planté devant le roque."),
+        traps = listOf("Pour vous : un pion avancé près du roque adverse soutient la dame pour le mat.", "Contre vous : ne laissez pas un pion adverse s'installer en g6 (ou g3) près de votre roi."),
     ),
     LessonData(
         id = 151,
@@ -1159,6 +1275,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "mateIn2",
         pauseSteps = setOf(1, 3),
         takeaway = "Un pion en f6 et une dame qui atteint la case g7 forment un filet de mat classique.",
+        ideas = listOf("La dame mate en g7, protégée par un pion en f6.", "Ce pion avancé est un poignard planté dans le roque adverse.", "La dame arrive souvent par la colonne h ou la diagonale."),
+        traps = listOf("Pour vous : un pion en f6 contre un roque en g8 prépare le mat de la dame en g7.", "Contre vous : éliminez vite un pion adverse installé en f6 (ou f3) devant votre roque."),
     ),
     LessonData(
         id = 152,
@@ -1178,6 +1296,8 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "mateIn2",
         pauseSteps = setOf(1, 3),
         takeaway = "Quand vos fous contrôlent les cases de fuite, une colonne ouverte suffit pour mater avec une tour.",
+        ideas = listOf("Une tour mate sur une colonne ouverte pendant qu'un fou contrôle les cases de fuite.", "Le fou agit souvent sur la grande diagonale vers le roi.", "Ce mat suit souvent un sacrifice qui ouvre la colonne g."),
+        traps = listOf("Pour vous : une colonne g ouverte et un fou sur la grande diagonale forment une batterie de mat.", "Contre vous : quand la colonne devant votre roi s'ouvre, gardez une pièce pour la défendre."),
     ),
     LessonData(
         id = 153,
@@ -1197,5 +1317,7 @@ internal val MIDDLEGAME_LESSONS: List<LessonData> = listOf(
         theme = "mateIn2",
         pauseSteps = setOf(1, 3),
         takeaway = "Un fou sur la grande diagonale et une tour sur la colonne g forment un piège mortel pour un roi en h1.",
+        ideas = listOf("Un fou mate le roi réfugié dans le coin, pendant qu'une tour lui coupe la retraite sur la colonne voisine.", "Le pion devant le roi bloque sa fuite.", "À ne pas confondre avec le mat de l'Opéra, où c'est la tour qui mate."),
+        traps = listOf("Pour vous : une tour qui contrôle la colonne g et un fou sur la grande diagonale peuvent mater un roi en h8.", "Contre vous : un roi en coin, sans case de fuite, est maté par un seul échec bien placé."),
     ),
 )

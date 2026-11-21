@@ -1,3 +1,11 @@
+## ChessDuck 3.3.0 — des idées et des pièges pour chaque leçon
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Les 158 leçons qui n'en avaient pas reçoivent leurs sections « Les idées » et « Les pièges » : les bases (16), la tactique et la méthode (61), la stratégie (18), les finales (55) et les parties modèles (8). Les 211 leçons ont désormais une fiche complète.
+- Chaque leçon a deux ou trois idées clés et deux pièges : « Pour vous » (ce qu'on peut exploiter chez l'adversaire) et « Contre vous » (l'erreur à ne pas commettre).
+- Ces sections s'affichent dans la fiche de la leçon (icône « i ») et sont lues par la voix à l'ouverture de la leçon, comme pour les ouvertures.
+
 ## ChessDuck 3.2.6 — des réflexes qui ont du sens
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

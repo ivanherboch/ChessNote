@@ -52,6 +52,8 @@ internal val MODEL_GAME_LESSONS: List<LessonData> = listOf(
         level = 3,
         kind = LessonKind.MODEL_GAME,
         takeaway = "Développez vite toutes vos pièces, ouvrez les lignes vers le roi resté au centre, et n'hésitez pas à sacrifier du matériel pour garder l'initiative.",
+        ideas = listOf("Morphy développe une nouvelle pièce presque à chaque coup, pendant que les Noirs perdent du temps.", "Il ouvre les lignes vers le roi noir resté au centre.", "Il rend du matériel pour garder l'initiative et finit par un mat sur la dernière rangée."),
+        traps = listOf("Pour vous : contre un roi resté au centre, ouvrez les lignes, même au prix d'un sacrifice.", "Contre vous : un retard de développement et un roi au centre se paient vite ; roquez à temps."),
     ),
     LessonData(
         id = 188,
@@ -110,6 +112,8 @@ internal val MODEL_GAME_LESSONS: List<LessonData> = listOf(
         level = 4,
         kind = LessonKind.MODEL_GAME,
         takeaway = "L'avance de développement et l'activité des pièces comptent souvent plus que le matériel. Mais tous les sacrifices de cette partie ne sont pas corrects : à votre tour, vérifiez vos calculs.",
+        ideas = listOf("Anderssen sacrifie un fou, deux tours et sa dame pour mater avec ses trois pièces mineures.", "L'avance de développement et l'activité des pièces comptent plus que le matériel.", "Le mat final est donné par des pièces mineures coordonnées autour du roi noir."),
+        traps = listOf("Pour vous : quand toutes vos pièces attaquent un roi isolé, le matériel compte moins.", "Contre vous : tous les sacrifices de cette partie ne sont pas corrects ; vérifiez toujours vos calculs."),
     ),
     LessonData(
         id = 189,
@@ -173,6 +177,8 @@ internal val MODEL_GAME_LESSONS: List<LessonData> = listOf(
         level = 5,
         kind = LessonKind.MODEL_GAME,
         takeaway = "Développez toutes vos pièces, pointez-les vers le roi adverse, puis cherchez la combinaison. Ici, les deux fous de Rubinstein, alignés sur les grandes diagonales, ont fait tout le travail.",
+        ideas = listOf("Rubinstein centralise ses pièces et pointe ses deux fous vers le roi blanc.", "Il sacrifie sa dame et ses tours dans une combinaison célèbre.", "Les deux fous alignés sur les grandes diagonales font tout le travail."),
+        traps = listOf("Pour vous : deux fous braqués vers le roque adverse préparent souvent une combinaison.", "Contre vous : un roque visé par les deux fous adverses doit être renforcé ou les fous échangés."),
     ),
     LessonData(
         id = 190,
@@ -251,6 +257,8 @@ internal val MODEL_GAME_LESSONS: List<LessonData> = listOf(
         level = 5,
         kind = LessonKind.MODEL_GAME,
         takeaway = "Deux fous qui visent le roque peuvent se sacrifier l'un après l'autre pour ouvrir le roi adverse. Ce motif porte depuis le nom de Lasker.",
+        ideas = listOf("Lasker sacrifie ses deux fous en h7 et en g7 pour mettre à nu le roi noir.", "La dame et une tour arrivent ensuite pour conclure.", "Ce motif porte depuis le nom de Lasker."),
+        traps = listOf("Pour vous : deux fous qui visent le roque peuvent se sacrifier l'un après l'autre pour l'ouvrir.", "Contre vous : un roque sans défenseur face à deux fous et une dame est en grand danger."),
     ),
     LessonData(
         id = 191,
@@ -314,6 +322,8 @@ internal val MODEL_GAME_LESSONS: List<LessonData> = listOf(
         level = 5,
         kind = LessonKind.MODEL_GAME,
         takeaway = "Bloquer toutes les pièces adverses peut gagner sans mat. Quand l'adversaire n'a plus que de mauvais coups, un coup d'attente suffit : c'est le zugzwang.",
+        ideas = listOf("Nimzowitsch bloque peu à peu toutes les pièces blanches.", "À la fin, chaque coup blanc aggrave la position : c'est le zugzwang.", "Les Blancs abandonnent sans être matés."),
+        traps = listOf("Pour vous : quand l'adversaire n'a plus que de mauvais coups, un coup d'attente suffit.", "Contre vous : des pièces sans activité peuvent se retrouver toutes bloquées ; gardez-les mobiles."),
     ),
     LessonData(
         id = 192,
@@ -390,6 +400,8 @@ internal val MODEL_GAME_LESSONS: List<LessonData> = listOf(
         level = 5,
         kind = LessonKind.MODEL_GAME,
         takeaway = "Gagnez de l'espace, occupez la colonne ouverte avec toutes vos pièces lourdes, puis laissez l'adversaire sans coup utile.",
+        ideas = listOf("Alekhine gagne de l'espace à l'aile dame.", "Il envahit la colonne c avec ses deux tours et sa dame.", "Il laisse les Noirs sans aucun coup utile."),
+        traps = listOf("Pour vous : trois pièces lourdes sur la même colonne ouverte dominent tout.", "Contre vous : perdre la bataille d'une colonne ouverte peut paralyser tout votre camp."),
     ),
     LessonData(
         id = 193,
@@ -484,6 +496,8 @@ internal val MODEL_GAME_LESSONS: List<LessonData> = listOf(
         level = 5,
         kind = LessonKind.MODEL_GAME,
         takeaway = "Construisez un centre de pions, sacrifiez du matériel pour l'ouvrir au bon moment, et calculez précisément quand votre roi échappera aux échecs.",
+        ideas = listOf("Botvinnik bâtit un centre de pions.", "Il sacrifie son pion a pour ouvrir le jeu au bon moment.", "Il conclut par un sacrifice de fou et la marche du pion e jusqu'à la septième rangée."),
+        traps = listOf("Pour vous : un pion central avancé, soutenu, peut décider la partie.", "Contre vous : calculez précisément quand votre roi échappera aux échecs avant de lancer l'assaut."),
     ),
     LessonData(
         id = 194,
@@ -600,5 +614,7 @@ internal val MODEL_GAME_LESSONS: List<LessonData> = listOf(
         level = 5,
         kind = LessonKind.MODEL_GAME,
         takeaway = "En finale de tours, un roi actif et une tour en septième rangée valent plus que quelques pions. Capablanca a donné deux pions pour activer son roi.",
+        ideas = listOf("Capablanca transforme un petit avantage en gain.", "Son roi traverse l'échiquier pendant que sa tour coupe le roi noir.", "Il donne deux pions pour activer son roi : un modèle de finale de tours."),
+        traps = listOf("Pour vous : en finale de tours, un roi actif et une tour en septième rangée valent plus que quelques pions.", "Contre vous : une tour passive qui défend des pions perd souvent contre une tour active."),
     ),
 )

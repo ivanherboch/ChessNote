@@ -35,6 +35,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         pauseSteps = setOf(2, 14),
         takeaway = "La dame enferme le roi à un saut de cavalier, le roi vient l'aider, et l'on garde toujours une case au roi adverse jusqu'au mat.",
         drill = "KQK",
+        ideas = listOf("La dame enferme le roi adverse dans une boîte, en se plaçant à un saut de cavalier de lui.", "Une fois le roi au bord, votre roi vient aider : la dame seule ne peut pas mater.", "La dame mate au contact du roi, protégée par son roi, ou sur le bord à distance."),
+        traps = listOf("Pour vous : la méthode de la boîte mate en une dizaine de coups au plus, depuis n'importe quelle position.", "Contre vous : une dame qui enferme trop le roi sans échec donne le pat ; laissez-lui toujours une case."),
     ),
     LessonData(
         id = 77,
@@ -58,6 +60,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         pauseSteps = setOf(4, 8),
         takeaway = "Une tour garde une rangée, l'autre donne échec une rangée plus haut, et si le roi s'approche d'une tour, on l'éloigne sur l'autre aile.",
         drill = "KRRK",
+        ideas = listOf("Une tour garde une rangée, l'autre donne échec une rangée plus loin : c'est l'escalier.", "Les tours avancent chacune à son tour et repoussent le roi jusqu'au bord.", "Pas besoin du roi : deux tours suffisent pour mater."),
+        traps = listOf("Pour vous : l'escalier mate rapidement, sans calcul compliqué.", "Contre vous : si le roi adverse s'approche d'une tour, éloignez-la sur l'autre aile au lieu de la laisser prendre."),
     ),
     LessonData(
         id = 78,
@@ -89,6 +93,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         pauseSteps = setOf(2, 16),
         takeaway = "La tour construit une boîte de plus en plus petite, le roi vient l'aider, et l'on mate sur le bord en laissant une case libre jusqu'au dernier coup.",
         drill = "KRK",
+        ideas = listOf("Avec une seule tour, il faut l'aide du roi.", "La tour construit une boîte de plus en plus petite autour du roi adverse.", "Les rois se font face, et la tour mate sur le bord."),
+        traps = listOf("Pour vous : un coup d'attente de la tour force souvent le roi adverse à se placer en face du vôtre, pour le mat.", "Contre vous : une tour trop près du roi adverse se fait attaquer ; gardez-la à distance."),
     ),
     LessonData(
         id = 79,
@@ -129,6 +135,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         pauseSteps = setOf(14, 24),
         takeaway = "Les deux fous côte à côte forment un mur, le roi vient les soutenir, et l'on pousse le roi adverse dans un coin en prenant garde au pat.",
         drill = "KBBK",
+        ideas = listOf("Les deux fous côte à côte forment un mur que le roi ne peut pas traverser.", "Votre roi vient les soutenir et pousse le roi adverse vers un coin.", "Le mat se donne dans le coin, avec les deux fous et le roi."),
+        traps = listOf("Pour vous : deux fous et un roi bien coordonnés matent depuis n'importe quelle position.", "Contre vous : le pat menace souvent dans le coin ; laissez une case au roi adverse jusqu'au dernier coup."),
     ),
     LessonData(
         id = 80,
@@ -145,6 +153,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         order = 2080,
         pauseSteps = setOf(0),
         takeaway = "Avant chaque coup, demandez-vous si l'adversaire aura encore un coup légal.",
+        ideas = listOf("Avec beaucoup d'avance, le seul danger est le pat.", "Le roi adverse doit toujours garder au moins un coup légal.", "Avant chaque coup, demandez-vous : l'adversaire aura-t-il encore un coup ?"),
+        traps = listOf("Pour vous : en défense, un roi qui n'a plus aucun coup peut sauver la partie par le pat.", "Contre vous : une dame qui coupe la dernière case du roi adverse sans échec transforme la victoire en nulle."),
     ),
     LessonData(
         id = 81,
@@ -169,6 +179,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             0 to StepVisuals(marks = listOf(24, 28, 56, 60), arrows = listOf()),
         ),
+        ideas = listOf("Imaginez un carré entre le pion et sa case de promotion.", "Si le roi, au trait, ne peut pas entrer dans ce carré, le pion gagne la course.", "La règle du carré évite de compter les coups un par un."),
+        traps = listOf("Pour vous : un pion passé éloigné dont le roi adverse est hors du carré va à dame seul.", "Contre vous : un pion sur sa case de départ peut avancer de deux cases ; mesurez le carré depuis la rangée suivante."),
     ),
     LessonData(
         id = 82,
@@ -191,6 +203,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         order = 2082,
         pauseSteps = setOf(0),
         takeaway = "Si le roi entre dans le carré, le pion seul ne passera pas.",
+        ideas = listOf("Si le roi peut entrer dans le carré du pion, il arrivera à temps pour l'arrêter.", "Le carré se déplace avec le pion : le roi doit y entrer à chaque coup.", "Seul, le pion ne passera pas."),
+        traps = listOf("Pour vous : un roi qui entre dans le carré rattrape le pion, même s'il semble loin.", "Contre vous : si une pièce bloque le chemin du roi, la règle du carré ne suffit plus ; comptez les coups."),
     ),
     LessonData(
         id = 83,
@@ -216,6 +230,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         takeaway = "Roi sur la sixième rangée devant son pion, la partie est gagnée.",
         conditions = "Le roi du camp fort est devant son pion, sur la sixième rangée, et le pion n'est pas sur une colonne de tour. La position gagne, même si c'est à l'adversaire de jouer.",
         drill = "KPK_WIN",
+        ideas = listOf("Roi sur la sixième rangée devant son pion : la partie est gagnée, quel que soit le trait.", "Le roi ouvre la route ; le pion avance quand les cases devant lui sont contrôlées.", "Cette position clé vaut d'être reconnue d'un coup d'œil."),
+        traps = listOf("Pour vous : amenez votre roi devant le pion jusqu'à la sixième rangée, et la victoire est assurée.", "Contre vous : un pion tour fait exception ; le défenseur dans le coin fait nulle."),
     ),
     LessonData(
         id = 84,
@@ -244,6 +260,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         pauseSteps = setOf(0),
         takeaway = "En finale de pions, le roi passe toujours devant.",
         drill = "KPK_WIN",
+        ideas = listOf("Dans une finale roi et pion, le roi passe devant son pion.", "Le pion n'avance que quand la route est sûre.", "Un pion poussé trop tôt devient une cible et ne passe plus."),
+        traps = listOf("Pour vous : un roi actif devant son pion gagne souvent une position qui semblait nulle.", "Contre vous : pousser le pion trop vite laisse le roi adverse se placer devant lui, et c'est nul."),
     ),
     LessonData(
         id = 85,
@@ -279,6 +297,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "pawnEndgame",
         pauseSteps = setOf(13),
         takeaway = "Quand le roi adverse s'écarte, passez par le côté libéré, puis faites avancer le pion seulement quand votre roi contrôle les cases devant lui.",
+        ideas = listOf("Quand le roi adverse s'écarte, votre roi avance par le côté libéré.", "Le contournement gagne les cases clés devant le pion.", "Le pion avance seulement quand votre roi contrôle les cases devant lui."),
+        traps = listOf("Pour vous : forcez le roi adverse à s'écarter par l'opposition, puis contournez-le.", "Contre vous : un roi défenseur qui s'écarte trop tôt laisse passer le roi adverse."),
     ),
     LessonData(
         id = 86,
@@ -310,6 +330,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         pauseSteps = setOf(10),
         takeaway = "Reculez tout droit et gardez l'opposition.",
         conditions = "Le roi défenseur se tient devant le pion adverse, et le pion n'a pas encore atteint la sixième rangée avec son roi devant lui. En reculant tout droit et en reprenant l'opposition, il fait nulle.",
+        ideas = listOf("Le défenseur recule tout droit et se replace en face du roi adverse : c'est l'opposition.", "Avec l'opposition, le roi attaquant ne peut pas gagner les cases clés.", "Le pion ne passe pas : la partie est nulle."),
+        traps = listOf("Pour vous : en défense, restez devant le pion et reprenez l'opposition à chaque coup.", "Contre vous : un pas de côté du roi défenseur au mauvais moment laisse passer le roi adverse."),
     ),
     LessonData(
         id = 87,
@@ -330,6 +352,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         takeaway = "Le pion tour est le plus facile à arrêter.",
         conditions = "Le pion est sur la colonne a ou h, et le roi défenseur peut atteindre le coin de promotion. On ne peut plus l'en chasser : c'est nulle.",
         drill = "ROOK_PAWN_DRAW",
+        ideas = listOf("Avec un pion sur la colonne a ou h, le défenseur met son roi dans le coin.", "On ne peut plus l'en chasser : la partie est nulle.", "Le pion tour est le plus facile à arrêter."),
+        traps = listOf("Pour vous : en défense contre un pion tour, foncez vers le coin de promotion.", "Contre vous : avec un pion tour, empêchez le roi adverse d'atteindre le coin, sinon la nulle est certaine."),
     ),
     LessonData(
         id = 88,
@@ -350,6 +374,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "zugzwang",
         pauseSteps = setOf(0),
         takeaway = "Dans une finale de rois, comptez toujours qui devra jouer dans la position clé.",
+        ideas = listOf("Deux pions bloqués et deux rois : celui qui doit jouer perd.", "Il faut compter qui jouera dans la position clé.", "Un coup d'attente du roi peut faire basculer le trait."),
+        traps = listOf("Pour vous : arrivez dans la position clé quand c'est à l'adversaire de jouer.", "Contre vous : une marche directe du roi peut tomber dans le mauvais trait ; comptez avant d'avancer."),
     ),
     LessonData(
         id = 89,
@@ -374,6 +400,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "pawnEndgame",
         pauseSteps = setOf(0),
         takeaway = "Sacrifier deux pions pour obtenir une dame est une excellente affaire.",
+        ideas = listOf("En sacrifiant deux pions, on en fait passer un troisième jusqu'à la promotion.", "La percée fonctionne quand les rois sont loin.", "Calculez la course avant de lancer la percée."),
+        traps = listOf("Pour vous : trois pions contre trois, une percée bien préparée fait une dame.", "Contre vous : face à une majorité avancée, gardez votre roi assez près pour arrêter une percée."),
     ),
     LessonData(
         id = 90,
@@ -399,6 +427,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         order = 5090,
         pauseSteps = setOf(0),
         takeaway = "En diagonale, un roi peut viser deux buts en même temps.",
+        ideas = listOf("Un roi qui avance en diagonale peut poursuivre deux objectifs à la fois.", "Pour le roi, la diagonale est aussi courte que la ligne droite.", "Il rattrape le pion adverse tout en soutenant le sien."),
+        traps = listOf("Pour vous : une marche en diagonale du roi peut sauver une finale qui semblait perdue.", "Contre vous : un roi adverse loin en apparence peut tout de même arriver à temps par la diagonale."),
     ),
     LessonData(
         id = 91,
@@ -418,6 +448,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "zugzwang",
         pauseSteps = setOf(1),
         takeaway = "Parfois, le meilleur coup est celui qui laisse l'adversaire sans bon coup.",
+        ideas = listOf("Le zugzwang, c'est l'obligation de jouer quand chaque coup aggrave la position.", "En finale de pions, il fait souvent perdre un pion ou une case clé.", "Un coup d'attente transfère le trait à l'adversaire."),
+        traps = listOf("Pour vous : gardez un coup de pion en réserve pour placer l'adversaire en zugzwang.", "Contre vous : épuiser tous vos coups de pion peut vous laisser vous-même en zugzwang."),
     ),
     LessonData(
         id = 92,
@@ -443,6 +475,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         order = 3092,
         pauseSteps = setOf(0),
         takeaway = "Cette méthode gagne contre un pion central ou un pion cavalier.",
+        ideas = listOf("Contre un pion à un pas de la promotion, la dame oblige le roi à se placer devant son pion.", "Chaque fois, le roi blanc gagne un coup pour s'approcher.", "Cette méthode gagne contre un pion central ou un pion cavalier."),
+        traps = listOf("Pour vous : la dame qui alterne échecs et attaques du pion force le roi à bloquer sa case de promotion.", "Contre vous : contre un pion fou ou un pion tour, le pat peut sauver le défenseur."),
     ),
     LessonData(
         id = 93,
@@ -465,6 +499,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         order = 3093,
         pauseSteps = setOf(1, 5),
         takeaway = "Contre un pion tour, le roi défenseur reste collé à son pion et se cache dans le coin, et le pat le sauve.",
+        ideas = listOf("Contre un pion tour presque arrivé, le roi défenseur se cache dans le coin.", "La dame ne peut plus s'approcher sans faire pat.", "Le roi défenseur reste collé à son pion."),
+        traps = listOf("Pour vous : en défense, le coin et le pat sauvent la partie contre une dame seule.", "Contre vous : sans l'aide de votre roi tout proche, la dame seule ne gagne pas contre un pion tour en septième."),
     ),
     LessonData(
         id = 94,
@@ -498,6 +534,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
             3 to StepVisuals(marks = listOf(27), arrows = listOf(27 to 25)),
         ),
         drill = "LUCENA",
+        ideas = listOf("Quand le roi est bloqué devant son pion, la tour construit un « pont » pour le protéger des échecs.", "La tour monte sur la quatrième rangée, puis le roi descend vers elle.", "C'est la technique gagnante essentielle des finales de tours."),
+        traps = listOf("Pour vous : avec le roi devant le pion en septième, le pont gagne toujours.", "Contre vous : sans le pont, les échecs de la tour adverse ne finissent jamais ; apprenez la méthode."),
     ),
     LessonData(
         id = 95,
@@ -524,6 +562,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         takeaway = "Sixième rangée d'abord, puis échecs par derrière.",
         conditions = "Le roi défenseur est sur la case de promotion du pion, et sa tour peut garder la sixième rangée tant que le pion n'y est pas arrivé.",
         drill = "PHILIDOR_DRAW",
+        ideas = listOf("La tour du défenseur garde sa troisième rangée (la sixième vue de l'attaquant).", "Dès que le pion avance sur cette rangée, la tour donne des échecs par derrière.", "Le roi attaquant ne trouve plus d'abri : la partie est nulle."),
+        traps = listOf("Pour vous : en défense, la position de Philidor annule de nombreuses finales tour et pion contre tour.", "Contre vous : une tour passive sur la dernière rangée laisse le roi adverse avancer ; restez sur la troisième."),
     ),
     LessonData(
         id = 96,
@@ -544,6 +584,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "skewer",
         pauseSteps = setOf(0),
         takeaway = "Dans cette finale, le roi défenseur doit rester en g7 ou h7.",
+        ideas = listOf("Quand une tour est devant son pion en septième rangée, une ruse peut gagner la tour adverse.", "La tour s'écarte avec menace de promotion ; si la tour adverse prend, une enfilade la gagne.", "Le roi défenseur doit rester en g7 ou h7."),
+        traps = listOf("Pour vous : guettez le moment où le roi adverse quitte les cases g7 et h7.", "Contre vous : en défense, gardez votre roi sur g7 ou h7 pour éviter l'enfilade."),
     ),
     LessonData(
         id = 97,
@@ -564,6 +606,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "advancedPawn",
         pauseSteps = setOf(0),
         takeaway = "Deux pions liés très avancés sont plus forts qu'une tour.",
+        ideas = listOf("Deux pions côte à côte sur la sixième rangée battent une tour seule.", "La tour ne peut pas les arrêter tous les deux.", "Ils avancent ensemble et se protègent."),
+        traps = listOf("Pour vous : deux pions liés très avancés valent plus qu'une tour.", "Contre vous : une tour doit arrêter les pions liés avant qu'ils n'atteignent la sixième rangée."),
     ),
     LessonData(
         id = 98,
@@ -583,6 +627,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "advancedPawn",
         pauseSteps = setOf(1),
         takeaway = "Deux pions liés au bord de la promotion valent plus qu'une tour.",
+        ideas = listOf("Deux pions côte à côte à un pas de la promotion : la tour ne peut en arrêter qu'un seul.", "L'autre va à dame.", "Le roi défenseur arrive trop tard pour aider."),
+        traps = listOf("Pour vous : deux pions liés en septième gagnent contre une tour seule.", "Contre vous : ne laissez jamais deux pions liés atteindre la septième rangée."),
     ),
     LessonData(
         id = 99,
@@ -602,6 +648,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "skewer",
         pauseSteps = setOf(1),
         takeaway = "Ne placez jamais votre roi sur la même ligne que votre tour, si une tour adverse peut s'y installer.",
+        ideas = listOf("Un roi et une tour sur la même ligne : un seul échec suffit pour gagner la tour.", "Le roi doit s'écarter, et la tour derrière lui tombe.", "C'est l'enfilade, une tactique fréquente en finale."),
+        traps = listOf("Pour vous : cherchez l'échec qui aligne roi et tour adverses.", "Contre vous : en finale, évitez de placer votre roi et votre tour sur la même ligne."),
     ),
     LessonData(
         id = 100,
@@ -621,6 +669,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "rookEndgame",
         pauseSteps = setOf(1),
         takeaway = "En finale, le roi doit être actif, mais sans s'aventurer dans un filet de mat.",
+        ideas = listOf("Même avec peu de pièces, un roi qui s'avance trop loin peut se faire mater.", "Une tour et un roi suffisent pour mater un roi coincé sur le bord.", "Le filet se resserre souvent avec un coup calme."),
+        traps = listOf("Pour vous : un roi adverse trop aventureux peut être pris dans un filet de mat.", "Contre vous : en finale, gardez votre roi actif mais pas aventuré près du bord sans défense."),
     ),
     LessonData(
         id = 101,
@@ -640,6 +690,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "rookEndgame",
         pauseSteps = setOf(1),
         takeaway = "Un pion avancé près du roi adverse est un allié précieux pour mater.",
+        ideas = listOf("Un pion avancé près du roi adverse peut l'enfermer.", "Il prépare alors un mat sur la dernière rangée.", "Un sacrifice peut ouvrir la route à la tour."),
+        traps = listOf("Pour vous : un pion en sixième rangée contre un roi au bord crée des menaces de mat.", "Contre vous : un pion adverse avancé près de votre roi peut transformer une finale en attaque de mat."),
     ),
     LessonData(
         id = 102,
@@ -658,6 +710,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         order = 4102,
         pauseSteps = setOf(0),
         takeaway = "Vérifiez la couleur de la case de promotion.",
+        ideas = listOf("Un pion tour et un fou qui ne contrôle pas la case de promotion ne gagnent pas.", "Le roi défenseur dans le coin fait nulle.", "Vérifiez toujours la couleur de la case de promotion."),
+        traps = listOf("Pour vous : en défense, foncez vers le coin de promotion si le fou adverse n'en a pas la couleur.", "Contre vous : avant d'échanger vers une finale fou et pion tour, vérifiez la couleur du fou."),
     ),
     LessonData(
         id = 103,
@@ -677,6 +731,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "deflection",
         pauseSteps = setOf(1),
         takeaway = "Quand une pièce n'a qu'un seul défenseur, attaquez ce défenseur.",
+        ideas = listOf("En finale aussi, on gagne une pièce en éliminant ou en détournant celle qui la protège.", "Un échange au bon moment supprime le seul défenseur.", "La pièce qui défend deux choses est la cible."),
+        traps = listOf("Pour vous : cherchez la pièce adverse surchargée, même avec peu de matériel.", "Contre vous : en finale, une pièce qui défend seule est vulnérable à une déviation."),
     ),
     LessonData(
         id = 104,
@@ -696,6 +752,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "promotion",
         pauseSteps = setOf(1),
         takeaway = "Un échec peut détourner le défenseur de la case de promotion.",
+        ideas = listOf("Un échec bien choisi fait gagner le temps nécessaire pour promouvoir un pion.", "La promotion avec échec ne laisse pas de réponse à l'adversaire.", "Comptez les temps : un seul coup peut tout changer."),
+        traps = listOf("Pour vous : cherchez un échec qui libère la case de promotion.", "Contre vous : un roi sur la ligne d'un fou adverse peut subir l'échec qui fait passer le pion."),
     ),
     LessonData(
         id = 105,
@@ -715,6 +773,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "advancedPawn",
         pauseSteps = setOf(1),
         takeaway = "Des pions liés qui avancent ensemble sont très difficiles à arrêter pour un fou.",
+        ideas = listOf("Un fou ne contrôle qu'une seule couleur de cases.", "Deux pions qui avancent ensemble finissent par lui échapper.", "Le pion qui avance sur l'autre couleur que le fou est le plus dangereux."),
+        traps = listOf("Pour vous : deux pions liés contre un fou gagnent souvent sans l'aide du roi.", "Contre vous : un fou seul contre deux pions liés avancés ne tient pas longtemps."),
     ),
     LessonData(
         id = 106,
@@ -734,6 +794,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "knightEndgame",
         pauseSteps = setOf(1),
         takeaway = "Un sacrifice avec échec peut dévier le roi bloqueur.",
+        ideas = listOf("Un pion sacrifié avec échec peut écarter le roi adverse de la case de promotion.", "Le cavalier en profite pour soutenir l'autre pion.", "La déviation est aussi efficace en finale qu'en milieu de partie."),
+        traps = listOf("Pour vous : un pion avec échec qui attire le roi adverse libère la route d'un autre pion.", "Contre vous : un roi bloqueur peut être dévié ; gardez une pièce pour couvrir la case de promotion."),
     ),
     LessonData(
         id = 107,
@@ -753,6 +815,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "fork",
         pauseSteps = setOf(1),
         takeaway = "En finale aussi, méfiez-vous des pions qui peuvent attaquer deux pièces voisines.",
+        ideas = listOf("Même en finale, le plus modeste des pions peut attaquer deux pièces à la fois.", "Une fourchette de pion gagne souvent une pièce entière.", "Cherchez deux pièces adverses voisines sur une même rangée."),
+        traps = listOf("Pour vous : un pion qui avance entre roi et cavalier adverses peut gagner le cavalier.", "Contre vous : en finale, évitez de placer roi et pièce à une case d'écart devant un pion adverse."),
     ),
     LessonData(
         id = 108,
@@ -772,6 +836,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "knightEndgame",
         pauseSteps = setOf(1),
         takeaway = "Une pièce placée au bon endroit peut couper la défense adverse.",
+        ideas = listOf("Placer une pièce sur la route de la tour adverse l'empêche d'arrêter un pion.", "L'écran coupe la tour de la colonne ou de la rangée du pion.", "Le pion passe pendant que la tour est bloquée."),
+        traps = listOf("Pour vous : un cavalier interposé avec gain de temps peut faire passer un pion.", "Contre vous : une tour qui défend de loin peut être coupée par une pièce interposée."),
     ),
     LessonData(
         id = 109,
@@ -791,6 +857,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "queenEndgame",
         pauseSteps = setOf(1),
         takeaway = "En finale, utilisez votre roi pour aider la dame à mater.",
+        ideas = listOf("Quand il reste peu de pièces, le roi devient une pièce d'attaque.", "Il aide la dame à couvrir les cases de fuite du roi adverse.", "Un roi actif transforme une finale de dames en attaque de mat."),
+        traps = listOf("Pour vous : avec les dames sur l'échiquier, un roi qui s'approche peut participer au mat.", "Contre vous : en finale de dames, votre roi exposé subit des échecs sans fin ; gardez-le à l'abri."),
     ),
     LessonData(
         id = 110,
@@ -810,6 +878,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "skewer",
         pauseSteps = setOf(1),
         takeaway = "Avant de déplacer votre roi, vérifiez qu'il ne s'aligne pas avec votre dame.",
+        ideas = listOf("Un roi et une dame sur la même diagonale : un seul échec peut faire perdre la dame.", "L'enfilade en diagonale est fréquente en finale de dames.", "Le roi doit s'écarter, et la dame derrière lui tombe."),
+        traps = listOf("Pour vous : cherchez l'échec qui aligne roi et dame adverses.", "Contre vous : en finale de dames, évitez d'aligner votre roi et votre dame."),
     ),
     LessonData(
         id = 111,
@@ -828,6 +898,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "queenEndgame",
         pauseSteps = setOf(0),
         takeaway = "Contre une tour, la dame cherche à la séparer de son roi, ou à attaquer les deux à la fois.",
+        ideas = listOf("Une tour seule n'est en sécurité que près de son roi.", "La dame cherche à les séparer par un échec bien placé.", "Elle peut aussi attaquer les deux à la fois par une fourchette."),
+        traps = listOf("Pour vous : une fourchette de dame sur le roi et la tour gagne la tour.", "Contre vous : gardez votre tour près de votre roi contre une dame."),
     ),
     LessonData(
         id = 112,
@@ -847,6 +919,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "deflection",
         pauseSteps = setOf(1),
         takeaway = "Pour promouvoir, écartez d'abord le roi qui garde la case.",
+        ideas = listOf("Pour faire passer un pion, on peut écarter le roi adverse de la case de promotion.", "Même une tour peut être sacrifiée pour cela.", "La dame obtenue vaut bien plus que la tour donnée."),
+        traps = listOf("Pour vous : un sacrifice qui dévie le roi bloqueur peut décider la finale.", "Contre vous : un roi seul devant un pion n'est pas toujours suffisant ; méfiez-vous des déviations."),
     ),
     LessonData(
         id = 113,
@@ -866,6 +940,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "underPromotion",
         pauseSteps = setOf(1),
         takeaway = "Au moment de promouvoir, pensez aussi au cavalier.",
+        ideas = listOf("Le cavalier est la seule pièce dont la dame ne peut pas imiter le déplacement.", "Une promotion en cavalier peut donner échec ou fourchette.", "Parfois, c'est le seul coup gagnant."),
+        traps = listOf("Pour vous : avant de promouvoir en dame, regardez si un cavalier donne un échec décisif.", "Contre vous : une sous-promotion adverse en cavalier peut surprendre ; regardez tous les échecs."),
     ),
     LessonData(
         id = 172,
@@ -893,6 +969,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         order = 5172,
         pauseSteps = setOf(0, 2, 4, 6, 8, 10, 12),
         takeaway = "Avant de promouvoir, vérifiez le pat. Une sous-promotion en tour peut être le seul coup gagnant.",
+        ideas = listOf("Le pion va à dame, mais une dame permettrait un pat.", "Il faut promouvoir en tour : la tour menace le mat sans donner le pat.", "Avant de promouvoir, vérifiez toujours le pat."),
+        traps = listOf("Pour vous : une sous-promotion en tour peut être le seul coup gagnant.", "Contre vous : en défense, chercher le pat peut sauver une partie perdue."),
     ),
     LessonData(
         id = 173,
@@ -926,6 +1004,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
             0 to StepVisuals(marks = listOf(40, 45), arrows = listOf(45 to 40)),
         ),
         drill = "VANCURA_DRAW",
+        ideas = listOf("Contre un pion tour soutenu par une tour devant lui, la tour du défenseur attaque le pion de côté.", "Elle donne des échecs dès que le roi adverse s'approche du pion.", "Le roi défenseur reste près de la case de promotion : la partie est nulle."),
+        traps = listOf("Pour vous : en défense, la tour de côté immobilise la tour adverse devant son pion.", "Contre vous : une tour passive derrière le pion tour perd ; attaquez-le de côté."),
         quiz = LessonQuiz("Où se place la tour du défenseur dans la défense Vancura ?", "Sur la même rangée que le pion, pour l'attaquer de côté", listOf("Devant le pion", "Derrière son propre roi"), "Attaqué de côté, le pion tour cloue la tour adverse devant lui ; le roi ne peut pas l'aider sans subir des échecs."),
     ),
     LessonData(
@@ -952,6 +1032,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         order = 4174,
         pauseSteps = setOf(0, 2, 4, 6, 8, 10),
         takeaway = "En défense, gardez votre roi devant le pion ou du côté court, et donnez les échecs de loin, du côté long. Une tour trop proche ne peut pas donner d'échecs utiles.",
+        ideas = listOf("Le défenseur place son roi du côté court du pion.", "Sa tour donne des échecs depuis le côté long, le plus loin possible du roi adverse.", "Une tour trop proche ne peut pas donner d'échecs efficaces."),
+        traps = listOf("Pour vous : en défense, des échecs de loin, du côté long, annulent souvent.", "Contre vous : une tour défenseur du mauvais côté laisse le roi adverse s'approcher d'elle."),
     ),
     LessonData(
         id = 175,
@@ -978,6 +1060,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             0 to StepVisuals(marks = listOf(0, 56), arrows = listOf(0 to 32)),
         ),
+        ideas = listOf("Les tours se placent derrière les pions passés.", "Derrière le sien, la tour le pousse ; derrière celui de l'adversaire, elle le freine.", "Une tour devant un pion devient passive."),
+        traps = listOf("Pour vous : une tour derrière votre pion passé devient plus active à chaque avance du pion.", "Contre vous : une tour placée devant le pion adverse perd sa liberté."),
         quiz = LessonQuiz("Où placer une tour avec un pion passé ?", "Derrière le pion passé", listOf("Devant le pion passé", "Sur la première rangée, loin du pion"), "Derrière le pion, la tour gagne en activité à chaque avance ; devant, elle perd de la place à chaque pas du pion."),
     ),
     LessonData(
@@ -1004,6 +1088,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         takeaway = "Contre un pion en septième, forcez le roi adverse devant son pion par des échecs, puis profitez du temps gagné pour rapprocher votre roi.",
         conditions = "Pion central ou pion cavalier en septième rangée ; la dame peut donner des échecs. Contre un pion fou ou un pion tour, le défenseur trouve souvent un pat.",
         drill = "KQKP",
+        ideas = listOf("La dame gagne contre un pion central en septième rangée.", "Elle force le roi adverse à se placer devant son pion par des échecs.", "Le temps gagné permet à son roi de s'approcher."),
+        traps = listOf("Pour vous : alternez échecs et attaques du pion jusqu'à ce que le roi bloque la case de promotion.", "Contre vous : contre un pion fou ou tour, cette méthode échoue si votre roi est trop loin."),
     ),
     LessonData(
         id = 177,
@@ -1025,6 +1111,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         takeaway = "Contre un pion fou ou un pion tour en septième, le défenseur se cache dans le coin. Le pat sauve la partie si le roi de l'attaquant est trop loin.",
         conditions = "Pion fou en septième rangée soutenu par le roi ; le roi de l'attaquant est loin. La dame ne peut pas prendre le pion sans pat.",
         drill = "QUEEN_BISHOP_PAWN_DRAW",
+        ideas = listOf("Contre un pion fou en septième rangée, le défenseur se réfugie dans le coin.", "Si la dame prend le pion, c'est pat.", "Le pat sauve la partie si le roi de l'attaquant est trop loin."),
+        traps = listOf("Pour vous : en défense, le coin et le pat annulent contre une dame seule.", "Contre vous : avec la dame, rapprochez d'abord votre roi avant de prendre le pion."),
     ),
     LessonData(
         id = 178,
@@ -1046,6 +1134,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         order = 5178,
         pauseSteps = setOf(0, 2, 4, 6),
         takeaway = "Avec deux tours contre une dame, gardez les tours protégées l'une par l'autre et attaquez les pions ensemble. La dame seule ne peut pas défendre deux cibles.",
+        ideas = listOf("Deux tours valent un peu plus qu'une dame.", "Elles doivent rester ensemble, se protéger et attaquer les pions adverses.", "La dame seule ne peut pas défendre deux cibles à la fois."),
+        traps = listOf("Pour vous : deux tours protégées l'une par l'autre attaquent les pions sans risque.", "Contre vous : des tours séparées se font prendre par une fourchette de la dame."),
     ),
     LessonData(
         id = 179,
@@ -1071,6 +1161,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             0 to StepVisuals(marks = listOf(34, 36), arrows = listOf()),
         ),
+        ideas = listOf("Avec des fous de couleurs opposées, le défenseur bloque les pions sur les cases de son fou.", "Même avec un ou deux pions de moins, la partie est souvent nulle.", "Le fou attaquant ne peut pas chasser le fou défenseur."),
+        traps = listOf("Pour vous : en défense, les fous de couleurs opposées sauvent souvent la partie.", "Contre vous : en attaque, des pions passés sur deux ailes éloignées sont nécessaires pour gagner."),
     ),
     LessonData(
         id = 180,
@@ -1093,6 +1185,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         order = 3180,
         pauseSteps = setOf(1, 3, 5, 7),
         takeaway = "Contre un pion seul, le fou contrôle la case de promotion et le roi bloque. Si besoin, le fou se sacrifie contre le pion : roi contre roi, c'est nul.",
+        ideas = listOf("Un fou arrête facilement un pion seul : il contrôle la case de promotion.", "Le roi défenseur bloque le pion.", "Si besoin, le fou se sacrifie : roi contre roi, c'est nul."),
+        traps = listOf("Pour vous : en défense, un fou contre un pion seul fait toujours nulle.", "Contre vous : un seul pion ne gagne pas contre un fou ; il faut d'autres pions."),
     ),
     LessonData(
         id = 181,
@@ -1117,6 +1211,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             0 to StepVisuals(marks = listOf(24), arrows = listOf()),
         ),
+        ideas = listOf("Un pion passé loin des autres pions attire le roi adverse.", "Pendant qu'il l'arrête, votre roi gagne les pions de l'autre aile.", "Le pion passé éloigné est souvent décisif en finale de pions."),
+        traps = listOf("Pour vous : créez un pion passé sur l'aile opposée aux rois.", "Contre vous : un pion passé éloigné adverse détourne votre roi ; gardez-le assez près."),
     ),
     LessonData(
         id = 182,
@@ -1147,6 +1243,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             0 to StepVisuals(marks = listOf(35, 26), arrows = listOf()),
         ),
+        ideas = listOf("Un pion passé protégé par un autre pion n'a pas besoin du roi.", "Le roi est libre d'aller gagner les pions adverses.", "Le roi adverse, lui, est immobilisé devant le pion."),
+        traps = listOf("Pour vous : un pion passé protégé immobilise le roi adverse : votre roi peut partir à l'attaque.", "Contre vous : bloquer un pion passé protégé ne suffit pas ; vos pions de l'autre aile sont en danger."),
     ),
     LessonData(
         id = 183,
@@ -1172,6 +1270,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         order = 4183,
         pauseSteps = setOf(0, 2, 4, 6, 8, 10),
         takeaway = "Des pions liés se protègent mutuellement. Un pion isolé, lui, a besoin de son roi.",
+        ideas = listOf("Deux pions voisins se protègent l'un l'autre.", "Le roi peut les laisser seuls pour aller prendre le pion isolé adverse.", "Un pion isolé, lui, a besoin de son roi."),
+        traps = listOf("Pour vous : des pions liés libèrent votre roi pour l'attaque.", "Contre vous : avec un pion isolé, votre roi est attaché à sa défense."),
     ),
     LessonData(
         id = 184,
@@ -1197,6 +1297,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             0 to StepVisuals(marks = listOf(44, 60), arrows = listOf()),
         ),
+        ideas = listOf("Dans certaines positions, le camp qui a le trait perd : c'est le zugzwang mutuel.", "Il faut savoir s'y placer quand c'est à l'adversaire de jouer.", "Un coup d'attente ou une triangulation du roi change le trait."),
+        traps = listOf("Pour vous : la triangulation du roi perd un temps et place l'adversaire en zugzwang.", "Contre vous : en défense, prenez l'opposition au bon moment pour annuler."),
         quiz = LessonQuiz("Que se passe-t-il si les Blancs ont le trait dans la position de départ ?", "La partie est nulle", listOf("Les Blancs gagnent quand même", "Les Noirs gagnent"), "Avec les Blancs au trait, le roi noir garde l'opposition devant le pion : c'est un zugzwang mutuel, celui qui joue perd."),
     ),
     LessonData(
@@ -1222,6 +1324,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         pauseSteps = setOf(0, 2, 4, 6, 8),
         takeaway = "Contre une tour, gardez votre roi dans le coin opposé à la couleur de votre fou. Le fou pourra toujours s'interposer et le mat est impossible.",
         conditions = "Le roi du défenseur est dans le coin de la couleur opposée à celle de son fou. Dans le mauvais coin, l'attaquant gagne souvent.",
+        ideas = listOf("Avec un fou contre une tour, le défenseur réfugie son roi dans le coin que son fou ne contrôle pas.", "Le fou pourra toujours s'interposer contre les échecs de la tour.", "Le mat est alors impossible : la partie est nulle."),
+        traps = listOf("Pour vous : en défense, choisissez le bon coin, celui de la couleur opposée à votre fou.", "Contre vous : dans le coin de la couleur du fou, le défenseur peut être maté."),
     ),
     LessonData(
         id = 186,
@@ -1243,6 +1347,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "pawnEndgame",
         pauseSteps = setOf(1, 3, 5),
         takeaway = "Quand les rois se font face avec une case entre eux, le camp qui n'a pas le trait a l'opposition. L'autre roi doit céder le passage.",
+        ideas = listOf("Quand les rois se font face, le roi qui n'a pas le trait a l'opposition.", "L'autre doit céder le passage.", "L'opposition décide de nombreuses finales de pions."),
+        traps = listOf("Pour vous : prenez l'opposition pour forcer le roi adverse à s'écarter.", "Contre vous : perdre l'opposition au mauvais moment laisse passer le roi adverse."),
     ),
     LessonData(
         id = 187,
@@ -1266,6 +1372,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         theme = "zugzwang",
         pauseSteps = setOf(1, 3, 5, 7),
         takeaway = "Quand les pions sont bloqués, celui dont le roi est le plus actif gagne. Cherchez la case qui place l'adversaire en zugzwang.",
+        ideas = listOf("En finale de pions, chaque coup de roi compte.", "Placer l'adversaire en zugzwang l'oblige à céder une case clé.", "Le roi le plus actif gagne souvent la partie."),
+        traps = listOf("Pour vous : amenez votre roi au centre et devant les pions adverses.", "Contre vous : un roi passif en finale de pions perd souvent même à matériel égal."),
     ),
     LessonData(
         id = 211,
@@ -1292,5 +1400,7 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         stepVisuals = mapOf(
             0 to StepVisuals(marks = listOf(1, 9), arrows = listOf()),
         ),
+        ideas = listOf("Un cavalier arrête un pion seul en se plaçant devant lui ou en contrôlant sa case de promotion.", "Il peut aussi le prendre dès qu'il n'est plus protégé.", "Le cavalier doit éviter les cases où il serait pris ou trop loin."),
+        traps = listOf("Pour vous : en défense, un cavalier devant le pion suffit souvent à la nulle.", "Contre vous : un pion tour est le plus difficile à arrêter pour un cavalier, qui a peu de cases au bord."),
     ),
 )

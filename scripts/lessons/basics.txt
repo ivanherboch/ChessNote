@@ -5,6 +5,11 @@ e5 : Les Noirs répondent. Leur pion arrive en e5. Pour un pion, on ne note que 
 Nf3 : Pour une pièce, on note son nom et sa case d'arrivée : cavalier f3. La case a1, en bas à gauche, est toujours une case sombre.
 Nc6 : Le cavalier noir arrive en c6. Quand une pièce prend, on ajoute le signe « prend », et le signe « plus » quand elle donne échec.
 Bc4 : Le fou blanc arrive en c4. À retenir : chaque case a un nom unique, une lettre puis un chiffre. Noter ses parties permet de les rejouer et de les comprendre.
+IDEA: Les colonnes vont de a à h, de gauche à droite vu des Blancs ; les rangées vont de 1 à 8, en partant du côté des Blancs.
+IDEA: Une pièce se note par sa lettre (en anglais : K roi, Q dame, R tour, B fou, N cavalier) suivie de sa case d'arrivée ; un pion par sa seule case d'arrivée.
+IDEA: Les signes à connaître : x pour une prise, + pour un échec, # pour le mat, O-O et O-O-O pour les roques.
+TRAP: Pour vous : noter vos parties permet de retrouver le coup où tout a basculé, et d'en tirer la leçon.
+TRAP: Contre vous : on confond facilement les cases vues du côté des Noirs ; repérez toujours la case a1, sombre, en bas à gauche des Blancs.
 
 # Le pion | Le pion avance tout droit, d'une case, ou de deux cases lors de son premier coup. Il prend en diagonale, vers l'avant, et ne recule jamais. | w | id=116 level=1 order=1116
 ?e4 : Lors de son premier coup, un pion peut avancer d'une ou de deux cases. Ce pion avance de deux cases vers le centre.
@@ -14,6 +19,11 @@ Qxd5 : La dame noire reprend le pion.
 Nc3 : Le cavalier sort en attaquant la dame. Il gagne du temps.
 Qa5 : La dame se met à l'abri.
 d4 : Ce pion avance tout droit. À retenir : le pion avance tout droit mais prend en diagonale. Il ne recule jamais : chaque poussée de pion est définitive.
+IDEA: Le pion avance tout droit mais prend en diagonale : un pion bloqué de face peut encore prendre.
+IDEA: Au premier coup, il peut avancer de deux cases : c'est ainsi qu'on occupe vite le centre.
+IDEA: Des pions côte à côte se soutiennent ; des pions en chaîne, en diagonale, se protègent l'un l'autre.
+TRAP: Pour vous : un pion qui attaque deux pièces à la fois (une fourchette de pion) gagne souvent du matériel.
+TRAP: Contre vous : un pion ne recule jamais ; une poussée irréfléchie laisse des cases faibles derrière lui.
 
 # La tour | La tour se déplace en ligne droite, sur les colonnes et les rangées, aussi loin qu'elle le veut tant que le chemin est libre. | w | id=117 level=1 order=1117
 FEN: 6k1/5ppp/8/8/8/8/p4PPP/R5K1 w - - 0 1
@@ -24,6 +34,11 @@ Ke7 : Le roi sort de la rangée attaquée.
 Ra7+ : La tour donne encore échec, cette fois sur la septième rangée.
 Kf6 : Le roi monte. Le pion f7 est maintenant protégé par le roi.
 Rb7 : La tour reste sur la septième rangée, d'où elle attaque les pions. À retenir : la tour est forte sur les lignes ouvertes, surtout sur la septième rangée. Elle vaut cinq pions.
+IDEA: La tour aime les colonnes ouvertes, sans pion : elle y agit d'un bout à l'autre de l'échiquier.
+IDEA: Sur la septième rangée, une tour attaque les pions adverses restés sur leur case de départ.
+IDEA: Deux tours reliées sur la même ligne se protègent et doublent leur force.
+TRAP: Pour vous : une tour qui entre sur la septième rangée gagne souvent un pion, parfois plus.
+TRAP: Contre vous : une tour enfermée dans un coin, derrière ses pions, ne participe pas au jeu ; sortez-la par le roque ou une colonne ouverte.
 
 # Le fou | Le fou se déplace en diagonale, aussi loin qu'il le veut. Il reste toute la partie sur des cases de la même couleur. | w | id=118 level=1 order=1118
 e4 : Le pion avance et ouvre la diagonale du fou f1.
@@ -35,6 +50,11 @@ a6 : Le pion chasse le fou.
 Ba4 : Le fou recule, toujours en diagonale. Il garde le cavalier c6 dans sa ligne de mire.
 Nf6 : Les Noirs développent leur second cavalier.
 O-O : Le roi se met à l'abri. À retenir : un fou ne change jamais de couleur de case. Les fous aiment les longues diagonales ouvertes et valent environ trois pions.
+IDEA: Le fou reste toute la partie sur les cases de sa couleur : deux fous se complètent et couvrent toutes les cases.
+IDEA: Un fou est fort sur une longue diagonale ouverte, faible derrière ses propres pions bloqués sur sa couleur.
+IDEA: Le fou agit de loin : il peut attaquer une pièce depuis l'autre bout de l'échiquier.
+TRAP: Pour vous : un fou peut clouer une pièce devant le roi ou la dame adverse, qui n'ose plus bouger.
+TRAP: Contre vous : si vos pions sont fixés sur la couleur de votre fou, il devient un « mauvais fou », qui ne fait que les défendre.
 
 # La dame | La dame se déplace comme une tour et comme un fou à la fois. C'est la pièce la plus forte, mais elle ne doit pas sortir trop tôt. | w | id=119 level=1 order=1119
 e4 : Le pion ouvre la route à la dame et au fou.
@@ -50,6 +70,11 @@ Bd7 : Les Noirs se défendent.
 Bxc6 : Le fou prend le cavalier.
 Bxc6 : Le fou noir reprend.
 Nc3 : Les Blancs développent une nouvelle pièce. À retenir : la dame combine la tour et le fou et vaut neuf pions. Ne la sortez pas trop tôt, car l'adversaire gagne du temps en l'attaquant.
+IDEA: La dame combine la tour et le fou : elle attaque dans huit directions à la fois.
+IDEA: C'est la pièce idéale pour les attaques doubles : elle vise souvent deux cibles d'un seul coup.
+IDEA: Elle vaut neuf pions : on ne l'échange que contre la dame adverse, ou contre beaucoup de matériel.
+TRAP: Pour vous : une dame adverse sortie trop tôt vous permet de développer vos pièces en l'attaquant, avec gain de temps.
+TRAP: Contre vous : sortie trop tôt, votre dame se fait chasser par les pièces adverses et vous perdez du temps.
 
 # Le cavalier | Le cavalier saute en forme de L : deux cases dans une direction, puis une sur le côté. C'est la seule pièce qui peut sauter par-dessus les autres. | w | id=120 level=1 order=1120
 FEN: r3k3/8/8/1N6/8/8/5PPP/6K1 w - - 0 1
@@ -59,6 +84,11 @@ Kd7 : Le roi doit sortir d'échec. Il ne peut pas protéger sa tour.
 Nxa8 : Le cavalier prend la tour. Les Blancs gagnent cinq points pour rien.
 Kc8 : Le roi noir s'approche pour attaquer le cavalier, coincé dans le coin.
 Kf1 : Le roi blanc vient aider. À retenir : le cavalier saute en L et attaque des cases d'une autre couleur que la sienne. Il est redoutable pour les fourchettes et vaut environ trois pions.
+IDEA: Le cavalier saute en L et change de couleur de case à chaque coup.
+IDEA: C'est la seule pièce qui saute par-dessus les autres : il est utile dans les positions fermées, pleines de pions.
+IDEA: Au centre, un cavalier contrôle jusqu'à huit cases ; au bord, beaucoup moins.
+TRAP: Pour vous : le cavalier est le roi des fourchettes ; cherchez la case d'où il attaque deux pièces à la fois.
+TRAP: Contre vous : un cavalier au bord de l'échiquier est souvent mal placé (« cavalier au bord, cavalier mort »).
 
 # Le roi | Le roi se déplace d'une case dans toutes les directions. Il ne peut jamais se placer sur une case attaquée. En finale, il devient une pièce active. | w | id=121 level=1 order=1121
 FEN: 4k3/8/8/8/8/8/4P3/4K3 w - - 0 1
@@ -69,6 +99,11 @@ Kd6 : Le roi noir se place face au roi blanc.
 Ke4 : Le roi blanc passe devant son pion. Le pion e2 a encore des coups de réserve.
 Ke6 : Le roi noir bloque la route.
 e3 : Le pion avance d'une case et oblige le roi noir à céder du terrain. À retenir : le roi se déplace d'une case à la fois, ne s'approche jamais du roi adverse et ne va jamais sur une case attaquée. En finale, sortez-le !
+IDEA: Le roi se déplace d'une case dans toutes les directions et ne va jamais sur une case attaquée.
+IDEA: Les deux rois ne peuvent jamais être côte à côte : une case les sépare toujours.
+IDEA: En début de partie, le roi se met à l'abri ; en finale, il devient une pièce active qui attaque et défend.
+TRAP: Pour vous : en finale, un roi actif au centre vaut souvent un pion de plus.
+TRAP: Contre vous : un roi resté au centre en début de partie s'expose aux attaques dès que les colonnes s'ouvrent.
 
 # La valeur des pièces | Pion 1, cavalier 3, fou 3, tour 5, dame 9. Comptez avant d'échanger : on ne donne pas une pièce forte contre une pièce faible. | w | id=122 level=1 order=1122
 FEN: 6k1/5ppp/4p3/3n4/8/2N5/5PPP/3R2K1 w - - 0 1
@@ -77,6 +112,11 @@ exd5 : Le pion reprend le cavalier. Le matériel est égal.
 Rxd5 : La tour prend le pion d5, qui n'est plus protégé. Les Blancs gagnent un point.
 Kf8 : Le roi noir se rapproche du centre.
 Rd7 : La tour s'installe sur la septième rangée et attaque les pions. À retenir : avant chaque prise, comptez la valeur de ce que vous prenez et de ce que vous risquez de perdre.
+IDEA: Les valeurs approximatives : pion 1, cavalier 3, fou 3, tour 5, dame 9 ; le roi est sans prix.
+IDEA: Avant d'échanger, comptez ce que vous prenez et ce que vous risquez de perdre.
+IDEA: Ces valeurs sont des repères : une pièce active vaut souvent plus qu'une pièce passive de même valeur.
+TRAP: Pour vous : prendre une pièce non protégée, c'est gagner du matériel gratuitement ; vérifiez chaque pièce adverse.
+TRAP: Contre vous : prendre un pion protégé avec votre dame, c'est la perdre contre un pion.
 
 # L'échec et les parades | Le roi attaqué est en échec. Il faut toujours y répondre : déplacer le roi, s'interposer ou prendre la pièce qui donne échec. | w | id=123 level=1 order=1123
 d4 : Le pion occupe le centre.
@@ -90,12 +130,22 @@ Bxd2+ : Le fou noir prend et donne à nouveau échec.
 ?Qxd2 : Deuxième parade : prendre la pièce qui donne échec. La dame capture le fou.
 d5 : Les Noirs prennent leur part du centre.
 Nc3 : Le jeu continue normalement. À retenir : en échec, cherchez dans l'ordre : prendre la pièce qui attaque, vous interposer, ou déplacer le roi. Si aucune parade n'existe, c'est l'échec et mat.
+IDEA: Le roi en échec doit être sauvé tout de suite : aucun autre coup n'est permis.
+IDEA: Trois parades : prendre la pièce qui donne échec, s'interposer, ou déplacer le roi.
+IDEA: Choisissez la parade qui garde votre position solide : la fuite du roi n'est pas toujours la meilleure.
+TRAP: Pour vous : un échec qui attaque en même temps une autre pièce (un échec double ou une fourchette) gagne souvent du matériel.
+TRAP: Contre vous : en fuyant un échec sans réfléchir, le roi peut se placer sur une case où un nouvel échec gagne une pièce.
 
 # L'échec et mat | Le mat, c'est un échec auquel on ne peut pas répondre : le roi est attaqué et n'a ni case de fuite, ni parade. La partie est alors terminée. | w | id=124 level=1 order=1124
 FEN: 7k/8/8/6K1/8/8/8/1Q6 w - - 0 1
 ?Kg6 : Le roi blanc s'approche. Avec la dame, qui surveille déjà h7, il contrôle maintenant les cases g7 et h7.
 Kg8 : Le roi noir n'a plus qu'une seule case.
 ?Qb8# : La dame donne échec sur la huitième rangée. Le roi ne peut ni fuir, ni s'abriter, ni prendre la dame : c'est échec et mat. À retenir : pour mater, il faut attaquer le roi et contrôler toutes les cases autour de lui. Le roi qui attaque aide souvent la dame.
+IDEA: Le mat : le roi est en échec et n'a aucune parade ; la partie est finie.
+IDEA: Pour mater, il faut attaquer le roi et contrôler toutes les cases autour de lui.
+IDEA: Le roi qui attaque aide souvent la dame ou la tour à couvrir les cases de fuite.
+TRAP: Pour vous : un roi coincé au bord de l'échiquier, derrière ses pions, est souvent maté sur sa rangée.
+TRAP: Contre vous : laissez toujours une case de fuite à votre roi, par exemple en poussant un pion devant lui.
 
 # Le pat | Si le joueur au trait n'est pas en échec mais n'a aucun coup légal, il est pat : la partie est nulle. Attention quand vous êtes largement en avance. | w | id=125 level=1 order=1125
 FEN: 7k/8/5K2/8/8/8/8/6Q1 w - - 0 1
@@ -103,12 +153,22 @@ SHOW 0: marks=g6
 ?Kf7 : Un coup prudent. Si la dame allait en g6, le roi noir ne serait pas en échec mais n'aurait plus aucune case : ce serait pat, et donc nulle.
 Kh7 : Le roi noir a encore une case, h7. Il n'est pas pat.
 ?Qh1# : La dame donne échec sur la colonne h et le roi n'a plus de case : c'est mat. À retenir : avant chaque coup, vérifiez qu'il reste un coup légal à l'adversaire. Un pat transforme une victoire en nulle.
+IDEA: Le pat : le joueur au trait n'est pas en échec mais n'a aucun coup légal ; la partie est nulle.
+IDEA: Le pat menace surtout quand l'adversaire n'a plus que son roi.
+IDEA: Avant chaque coup, demandez-vous : l'adversaire aura-t-il encore un coup légal ?
+TRAP: Pour vous : en position perdue, cherchez à vous retrouver sans coup légal ; un pat sauve la partie.
+TRAP: Contre vous : avec une dame de plus, un coup trop pressé qui enferme le roi adverse sans échec donne une nulle.
 
 # Les autres nulles | Une partie est nulle par pat, par accord, par triple répétition, par la règle des cinquante coups, ou quand il ne reste pas assez de matériel pour mater. | b | id=126 level=1 order=1126
 FEN: 8/8/8/4k3/4P3/8/8/N3K3 b - - 0 1
 ?Kxe4 : Le roi prend le dernier pion. Il ne reste aux Blancs qu'un roi et un cavalier : c'est trop peu pour mater. La partie est nulle par manque de matériel.
 Nb3 : Les Blancs peuvent encore jouer, mais ne pourront jamais gagner.
 Kd3 : Le roi noir se promène. Un roi seul, un roi et un fou, ou un roi et un cavalier ne peuvent pas mater. À retenir : il y a aussi nulle si la même position revient trois fois, ou après cinquante coups de chaque camp sans prise ni mouvement de pion.
+IDEA: Nulle par répétition : la même position revient trois fois.
+IDEA: Nulle par la règle des cinquante coups : cinquante coups de chaque camp sans prise ni mouvement de pion.
+IDEA: Nulle par matériel insuffisant : un roi seul, ou un roi avec un fou ou un cavalier, ne peut pas mater.
+TRAP: Pour vous : en position difficile, un échec perpétuel (des échecs répétés) force la répétition et la nulle.
+TRAP: Contre vous : en position gagnante, évitez de répéter les coups ; changez de plan avant la troisième répétition.
 
 # Le roque | Le roque est un coup spécial du roi et d'une tour. Il met le roi à l'abri et active la tour. Il obéit à des conditions précises. | w | id=127 level=1 order=1127
 e4 : Le pion ouvre la route au fou f1.
@@ -121,6 +181,11 @@ d3 : Un coup solide qui protège le pion e4.
 Be7 : Le fou noir se développe à son tour, prêt pour le roque.
 ?O-O : Le petit roque : le roi va de e1 en g1, et la tour de h1 en f1, en un seul coup.
 O-O : Les Noirs roquent aussi. À retenir : on ne peut roquer que si le roi et la tour n'ont jamais bougé, si les cases entre eux sont vides, et si le roi n'est pas en échec ni ne traverse une case attaquée.
+IDEA: Le roque est le seul coup où deux pièces bougent : le roi de deux cases, la tour de l'autre côté du roi.
+IDEA: Il met le roi à l'abri derrière ses pions et rapproche la tour du centre.
+IDEA: Conditions : roi et tour n'ont jamais bougé, cases vides entre eux, roi pas en échec et ne traversant pas de case attaquée.
+TRAP: Pour vous : un échec qui force le roi adverse à bouger lui retire à jamais le droit de roquer.
+TRAP: Contre vous : après le roque, pousser les pions devant votre roi ouvre des brèches pour l'attaque adverse.
 
 # La règle de la prise en passant | Un pion qui avance de deux cases et se retrouve à côté d'un pion adverse peut être pris en passant, comme s'il n'avait avancé que d'une case. | w | id=128 level=1 order=1128
 d4 : Le pion blanc avance de deux cases.
@@ -130,6 +195,11 @@ e5 : Le pion noir avance de deux cases et se place juste à côté du pion d5.
 ?dxe6 : Le pion d5 prend en passant : il va en e6, comme si le pion noir n'avait avancé que d'une case, et le pion e5 disparaît.
 fxe6 : Les Noirs reprennent avec le pion f7.
 e4 : Les Blancs occupent le centre. À retenir : la prise en passant n'est possible qu'au coup qui suit immédiatement l'avance de deux cases. Après, c'est trop tard.
+IDEA: Un pion qui avance de deux cases à côté d'un pion adverse peut être pris comme s'il n'avait avancé que d'une case.
+IDEA: Seul un pion peut prendre en passant, et seulement un pion.
+IDEA: C'est maintenant ou jamais : la prise n'est possible qu'au coup qui suit immédiatement.
+TRAP: Pour vous : la prise en passant empêche un pion adverse de passer en douce à côté du vôtre.
+TRAP: Contre vous : en avançant un pion de deux cases, vérifiez qu'il ne se fait pas prendre en passant.
 
 # La promotion | Un pion qui atteint la dernière rangée se transforme en dame, en tour, en fou ou en cavalier, au choix. Presque toujours, on choisit la dame. | w | id=129 level=1 order=1129
 FEN: 8/8/4P3/8/8/8/k7/4K3 w - - 0 1
@@ -138,6 +208,11 @@ Kb3 : Le roi noir tente de revenir.
 ?e8=Q : Le pion atteint la huitième rangée et devient une dame. Les Blancs ont maintenant une dame contre un roi seul.
 Kc4 : Le roi noir s'enfuit.
 Kd2 : Le roi blanc vient aider la dame pour préparer le mat. À retenir : un pion promu peut devenir n'importe quelle pièce sauf un roi. On peut avoir deux dames sur l'échiquier.
+IDEA: Un pion qui atteint la dernière rangée devient la pièce de votre choix, sauf un roi.
+IDEA: On choisit presque toujours la dame, la pièce la plus forte.
+IDEA: Parfois, une autre pièce est meilleure : un cavalier qui donne échec, ou une tour pour éviter le pat.
+TRAP: Pour vous : un pion passé proche de la promotion oblige l'adversaire à immobiliser une pièce pour l'arrêter.
+TRAP: Contre vous : une dame promue sans réfléchir peut mettre le roi adverse pat ; vérifiez avant de choisir.
 
 # La guerre des pions | Avec seulement des pions, le premier qui va à dame gagne. Ce petit jeu apprend à compter les coups et à créer un pion passé. | w | id=130 level=1 order=1130
 FEN: 4k3/ppp5/8/8/8/8/PPP5/4K3 w - - 0 1
@@ -148,3 +223,8 @@ Kc6 : Le roi noir arrive pour bloquer.
 Kd2 : Le roi blanc vient soutenir ses pions. En finale de pions, le roi est un joueur essentiel.
 Kd5 : Le roi noir devient actif lui aussi.
 Kd3 : Le roi blanc garde la case c4. À retenir : des pions côte à côte se protègent. Un pion passé, qu'aucun pion adverse ne peut arrêter, vaut souvent la victoire. Comptez toujours les coups jusqu'à la promotion.
+IDEA: Avec seulement des pions, le premier qui va à dame gagne : comptez les coups jusqu'à la promotion.
+IDEA: Un pion passé, qu'aucun pion adverse ne peut arrêter, est souvent décisif.
+IDEA: Des pions côte à côte se protègent et avancent ensemble.
+TRAP: Pour vous : une percée (sacrifier un pion pour en libérer un autre) crée parfois un pion passé imparable.
+TRAP: Contre vous : un pion isolé, sans voisin pour le protéger, est une cible facile.
