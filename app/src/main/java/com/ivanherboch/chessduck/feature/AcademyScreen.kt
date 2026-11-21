@@ -422,10 +422,13 @@ fun AcademyScreen(
                         if (asking) HintIconButton(s.hintStage, vm::guideHint, enabled = !s.judging && s.hintStage == 0)
                         else DuckIconButton(Icons.Rounded.SkipPrevious, "Revenir au début", vm::rewind, enabled = cur > 0)
                         // Fin de leçon : le QCM ou la finale à jouer prend la place de Lecture.
+                        // La voix qui lit (l'objectif à l'ouverture, ou un commentaire) compte comme une lecture en cours :
+                        // le bouton dit alors « Pause » et la suspend ; « Lecture » reprend la voix puis déroule les coups.
+                        val running = s.playing || speaking
                         if (cur < line.size || !EndOfLessonAction(vm, l)) DuckButton(
-                            if (s.playing) "Pause" else "Lecture", vm::togglePlay, Modifier.weight(1f), accent = c.blue, filled = true,
-                            icon = if (s.playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                            contentDescription = if (asking && !s.playing) "Lecture : découvrir le coup de la leçon et continuer" else null,
+                            if (running) "Pause" else "Lecture", { if (!s.playing && speaking) vm.pause() else vm.togglePlay() }, Modifier.weight(1f),
+                            accent = c.blue, filled = true, icon = if (running) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                            contentDescription = if (asking && !running) "Lecture : découvrir le coup de la leçon et continuer" else null,
                         )
                         DuckIconButton(Icons.Rounded.SkipNext, "Aller à la fin", vm::last, enabled = cur < line.size)
                     }

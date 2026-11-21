@@ -106,7 +106,8 @@ class AppRobolectricTest {
         settle(800); shot("4g_revue_pont")
         rule.onNodeWithText("Travailler ce point dans l'Académie").performClick(); settle(3000)
         shot("2q_pont_academie")
-        rule.onNodeWithText("Méthode : le contrôle anti-gaffe", substring = true, useUnmergedTree = true).assertExists()
+        // Le titre de la leçon figure dans l'en-tête de séance et dans le rappel de l'énoncé.
+        assertTrue(rule.onAllNodesWithText("Méthode : le contrôle anti-gaffe", substring = true, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
         rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1500)
         // Le bilan relit les parties en tâche de fond : on attend qu'il soit publié. S'il tarde (invalidation Room
         // sous Robolectric), on referme le tiroir plus de 5 s pour que le bilan soit recalculé à la réouverture.
