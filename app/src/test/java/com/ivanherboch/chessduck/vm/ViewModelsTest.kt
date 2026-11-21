@@ -707,6 +707,10 @@ class ViewModelsTest {
             assertEquals(k, pr.index)
             val line = pr.line!!
             if (k == 0) {
+                // L'énoncé dit quoi chercher (le thème) et rappelle la règle de la leçon.
+                val msg = vm.state.value.practice!!.message
+                assertTrue(msg, "Rappel de la leçon « ${l.title} » : ${l.takeaway}" in msg)
+                com.ivanherboch.chessduck.content.PuzzleThemes.byKey[l.theme]?.let { assertTrue(msg, "À chercher : ${it.name.lowercase()}" in msg) }
                 // Mauvais coup : réfuté (comme dans les Problèmes), puis « Réessayer » ; résolu ensuite, il ne compte pas.
                 vm.practiceMove(line.positions[1].legalMoves.first { it != line.moves[1] && !line.positions[1].play(it).isCheckmate })
                 assertNotNull(vm.state.value.practice!!.refute)

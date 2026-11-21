@@ -1,3 +1,9 @@
+## ChessDuck 3.2.2 — des exercices qui disent quoi chercher
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Validation et révision sur problèmes : l'énoncé ne dit plus « les Blancs appliquent l'idée de la leçon ». Il nomme ce qu'il faut chercher (par exemple « À chercher : fourchette (attaquer deux cibles à la fois avec une seule pièce) ») et rappelle la règle « À retenir » de la leçon.
+
 ## ChessDuck 3.2.1 — le Défi n'est plus sauté
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.content.PuzzleThemes
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -914,17 +915,25 @@ class AcademyViewModel(
         }
         val side = if (line.positions[1].whiteToMove) "Blancs" else "Noirs"
         val kind = state.value.practice?.kind
+        // Validation ou révision : on dit concrètement quoi chercher (le thème du problème, issu de la leçon) et on
+        // rappelle la règle de la leçon, plutôt qu'une « idée de la leçon » que l'élève n'a plus sous les yeux.
+        val l = lesson
+        val theme = PuzzleThemes.byKey[l.theme]
         val goal = when (kind) {
-            PracticeKind.LESSON, PracticeKind.REVIEW -> "appliquent l'idée de la leçon"
-            PracticeKind.ONLY_MOVE -> "trouvent la seule défense"
-            else -> "trouvent la meilleure suite"
+            PracticeKind.LESSON, PracticeKind.REVIEW -> buildString {
+                append("les $side jouent")
+                if (theme != null) append(". À chercher : ${theme.name.lowercase()} (${theme.goal.replaceFirstChar { it.lowercase() }.removeSuffix(".")})")
+                append(".\n\nRappel de la leçon « ${l.title} » : ${l.takeaway}")
+            }
+            PracticeKind.ONLY_MOVE -> "les $side trouvent la seule défense."
+            else -> "les $side trouvent la meilleure suite."
         }
         _state.update { s ->
             s.copy(
                 practice = s.practice?.copy(
                     index = index, line = line, cursor = 0, progress = 0, hintStage = 0, failed = false, solved = false, anim = null, tone = Tone.INFO,
                     refute = null, refuteUntil = 0L, hadError = false,
-                    message = "Problème ${index + 1} sur ${ids.size} : les $side $goal.",
+                    message = "Problème ${index + 1} sur ${ids.size} : $goal",
                 ),
             )
         }
