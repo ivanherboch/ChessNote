@@ -3,6 +3,7 @@ package com.ivanherboch.chessduck.feature
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Star
 import com.ivanherboch.chessduck.ui.HintButton
 import com.ivanherboch.chessduck.ui.HintIconButton
 import androidx.compose.foundation.border
@@ -230,6 +231,12 @@ fun AcademyScreen(
                 // Fiche de la leçon (pour toutes les leçons) et, pour une partie modèle, « Jouer cette position » à chaque
                 // coup : des icônes ici, pour que l'échiquier garde toute sa taille.
                 DuckIconButton(Icons.Rounded.Info, "Fiche de la leçon", { brief = true }, accent = c.blue)
+                // Partie modèle en mode Deviner : ne deviner que les moments clés (les autres coups se jouent seuls).
+                if (model && s.challenge && l.pauseSteps.isNotEmpty()) DuckIconButton(
+                    Icons.Rounded.Star,
+                    if (s.keyMoments) "Moments clés seulement (activé) : deviner tous les coups" else "Ne deviner que les ${l.pauseSteps.size} moments clés",
+                    { vm.setKeyMoments(!s.keyMoments) }, accent = c.gold, selected = s.keyMoments,
+                )
                 if (modelPlay) DuckIconButton(
                     Icons.Rounded.SportsEsports, "Jouer cette position contre l'Ordinateur, avec le camp de votre choix", { playChoice = endFen }, accent = c.blue,
                 )

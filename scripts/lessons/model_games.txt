@@ -17,21 +17,21 @@ Nc3 : Morphy ne prend pas le pion b7 : il préfère sortir une pièce de plus.
 c6 : Les Noirs protègent la case b7 et préparent b5.
 Bg5 : Le fou cloue le cavalier f6 devant la dame. Tous les Blancs participent à l'attaque.
 b5 : Les Noirs chassent le fou c4, mais affaiblissent leur aile dame.
-Nxb5 : Un sacrifice : le cavalier se donne pour ouvrir les lignes vers le roi noir.
+?Nxb5 : Un sacrifice : le cavalier se donne pour ouvrir les lignes vers le roi noir.
 cxb5 : Les Noirs acceptent le cadeau.
-Bxb5+ : Le fou reprend avec échec. Le roi noir est toujours au centre.
+?Bxb5+ : Le fou reprend avec échec. Le roi noir est toujours au centre.
 Nbd7 : Le cavalier s'interpose, mais il est cloué sur le roi.
-O-O-O : Le grand roque met le roi à l'abri et amène la tour sur la colonne d, face au cavalier cloué.
+?O-O-O : Le grand roque met le roi à l'abri et amène la tour sur la colonne d, face au cavalier cloué.
 Rd8 : La tour noire protège le cavalier d7.
-Rxd7 : Morphy prend le cavalier : encore un sacrifice pour garder l'initiative.
+?Rxd7 : Morphy prend le cavalier : encore un sacrifice pour garder l'initiative.
 Rxd7 : La tour noire reprend.
-Rd1 : La seconde tour arrive sur la colonne ouverte. Toutes les pièces blanches attaquent.
+?Rd1 : La seconde tour arrive sur la colonne ouverte. Toutes les pièces blanches attaquent.
 Qe6 : La dame noire tente de soulager sa position.
 Bxd7+ : Le fou prend la tour avec échec.
 Nxd7 : Le cavalier reprend. Les Noirs ont beaucoup plus de matériel, mais leur roi est sans défense.
-Qb8+ : Un sacrifice de dame ! Elle se place en b8 pour attirer le cavalier loin de la case d8.
+?Qb8+ : Un sacrifice de dame ! Elle se place en b8 pour attirer le cavalier loin de la case d8.
 Nxb8 : Le cavalier est obligé de prendre la dame.
-Rd8# : La tour donne échec et mat, protégée par le fou g5. À retenir : développez vite toutes vos pièces, ouvrez les lignes vers le roi resté au centre, et n'hésitez pas à sacrifier du matériel pour garder l'initiative.
+?Rd8# : La tour donne échec et mat, protégée par le fou g5. À retenir : développez vite toutes vos pièces, ouvrez les lignes vers le roi resté au centre, et n'hésitez pas à sacrifier du matériel pour garder l'initiative.
 IDEA: Morphy développe une nouvelle pièce presque à chaque coup, pendant que les Noirs perdent du temps.
 IDEA: Il ouvre les lignes vers le roi noir resté au centre.
 IDEA: Il rend du matériel pour garder l'initiative et finit par un mat sur la dernière rangée.
@@ -56,17 +56,17 @@ d3 : Le pion protège le pion e4 et libère le fou c1.
 Nh5 : Le cavalier menace d'aller en g3.
 Nh4 : Le cavalier empêche le cavalier noir d'aller en g3. L'Ordinateur préférerait un coup de développement, mais Anderssen prépare déjà l'attaque.
 Qg5 : La dame attaque le cavalier h4.
-Nf5 : Le cavalier s'installe en f5, d'où il attaque la case g7.
+?Nf5 : Le cavalier s'installe en f5, d'où il attaque la case g7.
 c6 : Le pion attaque le fou b5.
 g4 : Les Blancs chassent le cavalier h5 et gagnent de l'espace. L'Ordinateur trouve ce coup trop ambitieux, mais il garde l'initiative.
 Nf6 : Le cavalier recule.
 Rg1 : Anderssen laisse son fou b5 en prise : il veut ouvrir des lignes vers le roi noir.
 cxb5 : Les Noirs prennent le fou.
-h4 : Le pion chasse la dame.
+?h4 : Le pion chasse la dame.
 Qg6 : La dame recule.
-h5 : Le pion continue.
+?h5 : Le pion continue.
 Qg5 : La dame revient.
-Qf3 : La dame menace d'enfermer la dame noire : le fou c1 pourra prendre le pion f4 avec gain de temps.
+?Qf3 : La dame menace d'enfermer la dame noire : le fou c1 pourra prendre le pion f4 avec gain de temps.
 Ng8 : Le cavalier recule pour libérer la case f6 à sa dame.
 Bxf4 : Le fou prend le pion f4 et chasse la dame.
 Qf6 : La dame se replie.
@@ -78,13 +78,13 @@ Bd6 : Un coup incroyable : Anderssen laisse prendre ses deux tours. L'Ordinateur
 Bxg1 : Le fou prend la tour g1.
 e5 : Le pion coupe la dame noire de la case g7. L'Ordinateur préfère une autre suite, mais le piège est tendu.
 Qxa1+ : La dame prend la seconde tour avec échec.
-Ke2 : Le roi s'écarte. Les Blancs n'ont plus de tours. L'Ordinateur indique que les Noirs pouvaient se défendre, mais la menace de mat est très difficile à voir.
+?Ke2 : Le roi s'écarte. Les Blancs n'ont plus de tours. L'Ordinateur indique que les Noirs pouvaient se défendre, mais la menace de mat est très difficile à voir.
 Na6 : Les Noirs veulent couvrir la case c7.
-Nxg7+ : Le cavalier prend le pion g7 avec échec.
+?Nxg7+ : Le cavalier prend le pion g7 avec échec.
 Kd8 : Le roi s'enfuit.
 Qf6+ : Le sacrifice final : la dame se donne pour dévier le cavalier g8.
 Nxf6 : Le cavalier prend la dame.
-Be7# : Le fou donne le mat. Trois pièces mineures matent un roi entouré de toute son armée. À retenir : l'avance de développement et l'activité des pièces comptent souvent plus que le matériel. Mais tous les sacrifices de cette partie ne sont pas corrects : à votre tour, vérifiez vos calculs.
+?Be7# : Le fou donne le mat. Trois pièces mineures matent un roi entouré de toute son armée. À retenir : l'avance de développement et l'activité des pièces comptent souvent plus que le matériel. Mais tous les sacrifices de cette partie ne sont pas corrects : à votre tour, vérifiez vos calculs.
 IDEA: Anderssen sacrifie un fou, deux tours et sa dame pour mater avec ses trois pièces mineures.
 IDEA: L'avance de développement et l'activité des pièces comptent plus que le matériel.
 IDEA: Le mat final est donné par des pièces mineures coordonnées autour du roi noir.
@@ -123,7 +123,7 @@ Bb7 : Le second fou s'installe sur la grande diagonale. Les deux fous noirs vise
 O-O : Les Blancs roquent.
 Ne5 : Le cavalier propose l'échange pour ouvrir les diagonales.
 Nxe5 : Les Blancs échangent.
-Bxe5 : Le fou reprend et vise la case h2.
+?Bxe5 : Le fou reprend et vise la case h2.
 f4 : Les Blancs chassent le fou.
 Bc7 : Le fou recule en gardant la diagonale vers h2.
 e4 : Les Blancs avancent au centre.
@@ -131,15 +131,15 @@ Rac8 : La seconde tour rejoint la colonne c.
 e5 : Le pion attaque le cavalier f6.
 Bb6+ : Le fou donne échec sur la diagonale a7-g1.
 Kh1 : Le roi se cache dans le coin.
-Ng4 : Le cavalier attaque la case h2 et ouvre la diagonale du fou b7.
+?Ng4 : Le cavalier attaque la case h2 et ouvre la diagonale du fou b7.
 Be4 : Le fou blanc bloque la grande diagonale.
-Qh4 : La dame menace le mat en h2. L'Ordinateur trouve un gain encore plus net, mais ce coup prépare la combinaison qui a rendu la partie célèbre.
+?Qh4 : La dame menace le mat en h2. L'Ordinateur trouve un gain encore plus net, mais ce coup prépare la combinaison qui a rendu la partie célèbre.
 g3 : Les Blancs attaquent la dame.
-Rxc3 : Le sacrifice commence : la tour prend le cavalier c3 en laissant la dame en prise.
+?Rxc3 : Le sacrifice commence : la tour prend le cavalier c3 en laissant la dame en prise.
 gxh4 : Les Blancs prennent la dame.
-Rd2 : La seconde tour attaque la dame blanche et ouvre la route du fou b7.
+?Rd2 : La seconde tour attaque la dame blanche et ouvre la route du fou b7.
 Qxd2 : La dame prend la tour.
-Bxe4+ : Le fou prend le fou e4 avec échec.
+?Bxe4+ : Le fou prend le fou e4 avec échec.
 Qg2 : La dame s'interpose.
 Rh3 : La tour menace le mat en h2 : il est imparable. À retenir : développez toutes vos pièces, pointez-les vers le roi adverse, puis cherchez la combinaison. Ici, les deux fous de Rubinstein, alignés sur les grandes diagonales, ont fait tout le travail.
 IDEA: Rubinstein centralise ses pièces et pointe ses deux fous vers le roi blanc.
@@ -177,17 +177,17 @@ Qe2 : La dame protège l'aile roi.
 a6 : Les Noirs préparent b5.
 Nh5 : Le cavalier attaque le cavalier f6, défenseur du roi noir.
 Nxh5 : Les Noirs prennent.
-Bxh7+ : Premier sacrifice : le fou prend le pion h7 avec échec.
+?Bxh7+ : Premier sacrifice : le fou prend le pion h7 avec échec.
 Kxh7 : Le roi prend le fou.
-Qxh5+ : La dame reprend le cavalier avec échec.
+?Qxh5+ : La dame reprend le cavalier avec échec.
 Kg8 : Le roi recule.
-Bxg7 : Second sacrifice : le fou prend le pion g7. Le roi noir est à découvert.
+?Bxg7 : Second sacrifice : le fou prend le pion g7. Le roi noir est à découvert.
 Kxg7 : Le roi prend le fou.
-Qg4+ : La dame donne échec.
+?Qg4+ : La dame donne échec.
 Kh7 : Le roi s'enfuit.
 Rf3 : La tour arrive par la troisième rangée pour mater en h3.
 e5 : Les Noirs ouvrent une case pour leur dame.
-Rh3+ : La tour donne échec.
+?Rh3+ : La tour donne échec.
 Qh6 : La dame s'interpose.
 Rxh6+ : La tour prend la dame.
 Kxh6 : Le roi reprend.
@@ -199,7 +199,7 @@ Rf1 : La tour rejoint l'attaque. L'Ordinateur trouve un gain encore plus rapide,
 Rab8 : La tour attaque la dame.
 Qd7 : La dame se replace.
 Rfd8 : La tour chasse encore la dame.
-Qg4+ : La dame donne échec.
+?Qg4+ : La dame donne échec.
 Kf8 : Le roi fuit.
 fxe5 : Le pion prend en e5 et ouvre la colonne f.
 Bg7 : Le fou protège le roi.
@@ -209,7 +209,7 @@ Qg6 : La dame attaque le pion f7.
 f6 : Le pion bloque la colonne.
 Rxf6+ : La tour prend le pion avec échec.
 Bxf6 : Le fou prend la tour.
-Qxf6+ : La dame reprend avec échec.
+?Qxf6+ : La dame reprend avec échec.
 Ke8 : Le roi fuit.
 Qh8+ : La dame donne échec.
 Ke7 : Le roi fuit encore.
@@ -238,7 +238,7 @@ d5 : Les Noirs prennent leur part du centre.
 Ne5 : Le cavalier saute au centre.
 c6 : Le pion ferme la grande diagonale.
 cxd5 : Les Blancs échangent.
-cxd5 : Le pion reprend.
+?cxd5 : Le pion reprend.
 Bf4 : Le fou se développe.
 a6 : Les Noirs préparent b5.
 Rc1 : La tour occupe la colonne c.
@@ -246,7 +246,7 @@ b5 : Les Noirs gagnent de l'espace à l'aile dame.
 Qb3 : La dame se développe.
 Nc6 : Le cavalier propose l'échange.
 Nxc6 : Les Blancs échangent.
-Bxc6 : Le fou reprend.
+?Bxc6 : Le fou reprend.
 h3 : Les Blancs empêchent le cavalier de venir en g4.
 Qd7 : La dame vise la case h3.
 Kh2 : Le roi protège le pion h3.
@@ -254,15 +254,15 @@ Nh5 : Le cavalier attaque le fou f4.
 Bd2 : Le fou recule.
 f5 : Le pion contrôle la case e4 et prépare l'attaque. L'Ordinateur préfère un autre coup, mais Nimzowitsch suit un plan clair.
 Qd1 : La dame se replie.
-b4 : Le pion chasse le cavalier c3.
+?b4 : Le pion chasse le cavalier c3.
 Nb1 : Le cavalier recule sur sa case de départ.
 Bb5 : Le fou vise la case f1 et la colonne f.
 Rg1 : La tour protège le pion g3.
 Bd6 : Le fou vise le pion g3.
 e4 : Les Blancs veulent se libérer.
-fxe4 : Les Noirs prennent et ouvrent la colonne f.
+?fxe4 : Les Noirs prennent et ouvrent la colonne f.
 Qxh5 : La dame prend le cavalier h5.
-Rxf2 : La tour prend le pion f2 : elle entre sur la deuxième rangée.
+?Rxf2 : La tour prend le pion f2 : elle entre sur la deuxième rangée.
 Qg5 : La dame défend.
 Raf8 : La seconde tour double sur la colonne f.
 Kh1 : Le roi se cache.
@@ -290,7 +290,7 @@ Bd2 : Le fou déloue le cavalier.
 Ne7 : Le cavalier se développe.
 Nb5 : Le cavalier attaque le fou et vise la case d6.
 Bxd2+ : Les Noirs échangent le fou.
-Qxd2 : La dame reprend.
+?Qxd2 : La dame reprend.
 O-O : Les Noirs roquent.
 c3 : Le pion protège le pion d4.
 b6 : Le fou c8 ira en a6.
@@ -298,11 +298,11 @@ f4 : Les Blancs consolident le pion e5.
 Ba6 : Le fou attaque le cavalier b5.
 Nf3 : Le cavalier se développe.
 Qd7 : La dame attaque le cavalier b5.
-a4 : Le pion protège le cavalier.
+?a4 : Le pion protège le cavalier.
 Nbc6 : Le cavalier se développe.
 b4 : Les Blancs gagnent de l'espace à l'aile dame.
 cxb4 : Les Noirs prennent.
-cxb4 : Les Blancs reprennent : la colonne c s'ouvre.
+?cxb4 : Les Blancs reprennent : la colonne c s'ouvre.
 Bb7 : Le fou recule.
 Nd6 : Le cavalier s'installe en d6, un avant-poste.
 f5 : Les Noirs ferment l'aile roi.
@@ -310,7 +310,7 @@ a5 : Le pion avance et gêne l'aile dame noire.
 Nc8 : Les Noirs veulent échanger le cavalier d6.
 Nxb7 : Le cavalier prend le fou.
 Qxb7 : La dame reprend.
-a6 : Le pion chasse la dame.
+?a6 : Le pion chasse la dame.
 Qf7 : La dame recule.
 Bb5 : Le fou occupe une belle case.
 N8e7 : Le cavalier revient.
@@ -320,11 +320,11 @@ Rfc1 : La tour occupe la colonne c.
 Rfc8 : Les Noirs contestent la colonne.
 Rc2 : La tour se prépare à doubler.
 Qe8 : La dame noire se replie.
-Rac1 : Les deux tours sont doublées sur la colonne c.
+?Rac1 : Les deux tours sont doublées sur la colonne c.
 Rab8 : La tour noire se place.
 Qe3 : La dame rejoint l'aile dame.
 Rc7 : La tour noire bloque la colonne.
-Rc3 : Les Blancs préparent le triplement.
+?Rc3 : Les Blancs préparent le triplement.
 Qd7 : La dame noire défend.
 R1c2 : Les tours et la dame se placent les unes derrière les autres sur la colonne c.
 Kf8 : Le roi noir s'approche.
@@ -332,7 +332,7 @@ Qc1 : La dame arrive derrière les tours : la colonne c est triplée.
 Rbc8 : Les Noirs défendent la case c8.
 Ba4 : Le fou se replace.
 b5 : Les Noirs proposent un pion.
-Bxb5 : Le fou prend le pion.
+?Bxb5 : Le fou prend le pion.
 Ke8 : Le roi noir défend.
 Ba4 : Le fou revient.
 Kd8 : Le roi noir protège la case c7.
@@ -400,7 +400,7 @@ Rxe1 : La tour reprend.
 Re8 : La tour conteste la colonne.
 Re6 : La tour envahit.
 Rxe6 : Les Noirs échangent.
-fxe6 : Le pion reprend : il est maintenant en e6, tout près de la promotion.
+?fxe6 : Le pion reprend : il est maintenant en e6, tout près de la promotion.
 Kg7 : Le roi bloque.
 Qf4 : La dame vise la case e5.
 Qe8 : La dame noire bloque le pion.
@@ -410,25 +410,25 @@ Ba3 : Un sacrifice de fou : il attire la dame noire loin du pion e6.
 Qxa3 : La dame noire prend le fou.
 Nh5+ : Un second sacrifice : le cavalier se donne pour ouvrir le roi.
 gxh5 : Le pion prend le cavalier.
-Qg5+ : La dame donne échec.
+?Qg5+ : La dame donne échec.
 Kf8 : Le roi fuit.
-Qxf6+ : La dame prend le cavalier avec échec.
+?Qxf6+ : La dame prend le cavalier avec échec.
 Kg8 : Le roi recule.
 e7 : Le pion arrive en septième rangée.
 Qc1+ : Les Noirs cherchent un échec perpétuel.
-Kf2 : Le roi blanc s'échappe.
+?Kf2 : Le roi blanc s'échappe.
 Qc2+ : Un nouvel échec.
 Kg3 : Le roi monte.
 Qd3+ : Encore un échec.
-Kh4 : Le roi fuit vers l'aile roi.
+?Kh4 : Le roi fuit vers l'aile roi.
 Qe4+ : Un échec de plus.
-Kxh5 : Le roi prend le pion h5.
+?Kxh5 : Le roi prend le pion h5.
 Qe2+ : Les échecs continuent.
 Kh4 : Le roi recule.
 Qe4+ : Un nouvel échec.
 g4 : Le pion s'interpose.
 Qe1+ : Un dernier échec.
-Kh5 : Les échecs sont terminés : le pion e7 va à dame. Les Noirs abandonnent. À retenir : construisez un centre de pions, sacrifiez du matériel pour l'ouvrir au bon moment, et calculez précisément quand votre roi échappera aux échecs.
+?Kh5 : Les échecs sont terminés : le pion e7 va à dame. Les Noirs abandonnent. À retenir : construisez un centre de pions, sacrifiez du matériel pour l'ouvrir au bon moment, et calculez précisément quand votre roi échappera aux échecs.
 IDEA: Botvinnik bâtit un centre de pions.
 IDEA: Il sacrifie son pion a pour ouvrir le jeu au bon moment.
 IDEA: Il conclut par un sacrifice de fou et la marche du pion e jusqu'à la septième rangée.
@@ -486,7 +486,7 @@ cxd5 : Les Blancs échangent.
 exd5 : Le pion reprend.
 Qxe8+ : Les Blancs échangent les dames.
 Qxe8 : La dame reprend.
-Rxe8+ : La tour prend la dame.
+?Rxe8+ : La tour prend la dame.
 Kxe8 : Le roi reprend. C'est une finale de tours : le roi noir est loin de l'aile roi.
 h5 : Le pion h attaque le pion g6.
 Rf6 : La tour défend le pion g6.
@@ -504,15 +504,15 @@ Kf3 : Le roi s'approche.
 Nf5 : Le cavalier bloque le pion f4.
 Bxf5 : Les Blancs échangent le fou contre le cavalier.
 gxf5 : Le pion reprend.
-Kg3 : Le roi blanc vise la case h4 puis g5. Capablanca laisse tomber le pion c3 : son roi et sa tour comptent davantage.
+?Kg3 : Le roi blanc vise la case h4 puis g5. Capablanca laisse tomber le pion c3 : son roi et sa tour comptent davantage.
 Rxc3+ : La tour prend le pion avec échec.
-Kh4 : Le roi blanc avance.
+?Kh4 : Le roi blanc avance.
 Rf3 : La tour attaque le pion f4.
-g6 : Le pion avance : la tour en septième et le pion g coupent le roi noir.
+?g6 : Le pion avance : la tour en septième et le pion g coupent le roi noir.
 Rxf4+ : La tour prend le pion avec échec.
-Kg5 : Le roi blanc s'approche.
+?Kg5 : Le roi blanc s'approche.
 Re4 : La tour noire se replace.
-Kf6 : Le roi blanc entre : le roi noir est coupé sur la huitième rangée.
+?Kf6 : Le roi blanc entre : le roi noir est coupé sur la huitième rangée.
 Kg8 : Le roi noir se met devant le pion.
 Rg7+ : La tour donne échec.
 Kh8 : Le roi s'écarte.
@@ -522,7 +522,7 @@ Kxf5 : Le roi blanc prend le pion f5.
 Re4 : La tour noire attaque le pion d4.
 Kf6 : Le roi blanc revient.
 Rf4+ : La tour donne échec.
-Ke5 : Le roi blanc avance vers les pions de l'aile dame.
+?Ke5 : Le roi blanc avance vers les pions de l'aile dame.
 Rg4 : La tour attaque le pion g6.
 g7+ : Le pion avance avec échec.
 Kg8 : Le roi bloque le pion.

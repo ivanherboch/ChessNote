@@ -997,6 +997,22 @@ class ViewModelsTest {
     }
 
     @Test
+    fun modelGameKeyMomentsAreTheOnlyGuesses() = test {
+        val vm = academy()
+        advanceUntilIdle()
+        val l = Lessons.all.first { it.kind == com.ivanherboch.chessduck.content.LessonKind.MODEL_GAME }
+        assertTrue(l.pauseSteps.size >= 5)
+        vm.open(l.id)
+        vm.setChallenge(true)
+        vm.setKeyMoments(true)
+        assertTrue(vm.state.value.message.contains("moments clés"))
+        playChallenge(vm)
+        // Seuls les moments clés sont devinés (3 points chacun) ; les autres coups se sont joués seuls.
+        assertEquals(3 * l.pauseSteps.size, vm.state.value.guessMax)
+        assertEquals(vm.state.value.guessMax, vm.state.value.guessScore)
+    }
+
+    @Test
     fun academyResumesAnInterruptedChallenge() = test {
         // Défi de la leçon 1 interrompu par Android au 3e demi-coup, avec une erreur déjà commise.
         val saved = SavedStateHandle(mapOf("academy_lesson" to 1, "academy_challenge" to true, "academy_cursor" to 2, "academy_errors" to 1))

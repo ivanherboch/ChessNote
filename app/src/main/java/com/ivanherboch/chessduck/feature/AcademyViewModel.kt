@@ -156,6 +156,8 @@ data class AcademyState(
     /** Partie modèle (« Devinez le coup ») : points gagnés et points possibles. */
     val guessScore: Int = 0,
     val guessMax: Int = 0,
+    /** Partie modèle, mode Deviner : seuls les moments clés sont à deviner ; les autres coups se jouent seuls. */
+    val keyMoments: Boolean = false,
     /** L'Ordinateur juge le coup proposé : l'échiquier attend. */
     val judging: Boolean = false,
     /** Réfutation d'un mauvais coup du Défi : position après la réponse adverse, compte à rebours avant le retour. */
@@ -618,7 +620,8 @@ class AcademyViewModel(
     private fun startChallenge() {
         val l = lesson
         val intro = if (l.kind == LessonKind.MODEL_GAME) {
-            "Devinez les coups des ${sideName(l)} : 3 points pour le coup du maître, 1 ou 2 points pour un coup presque aussi bon."
+            (if (state.value.keyMoments) "Devinez les ${l.pauseSteps.size} moments clés des ${sideName(l)} (les autres coups se jouent seuls)" else "Devinez les coups des ${sideName(l)}") +
+                " : 3 points pour le coup du maître, 1 ou 2 points pour un coup presque aussi bon."
         } else "À vous de jouer les coups des ${sideName(l)} sur l'échiquier. ${l.summary}"
         _state.update {
             it.copy(
@@ -652,7 +655,17 @@ class AcademyViewModel(
 
     private fun heroToMove(cursor: Int): Boolean {
         val ln = line()
-        return cursor < ln.size && ln.positions[cursor].whiteToMove == lesson.heroWhite
+        val l = lesson
+        if (cursor >= ln.size || ln.positions[cursor].whiteToMove != l.heroWhite) return false
+        // « Moments clés » : seuls les arrêts de la partie modèle sont à deviner.
+        return !(state.value.keyMoments && l.kind == LessonKind.MODEL_GAME && l.pauseSteps.isNotEmpty() && cursor !in l.pauseSteps)
+    }
+
+    /** Partie modèle : deviner tous les coups, ou seulement les moments clés (le Défi repart du début). */
+    fun setKeyMoments(on: Boolean) {
+        if (state.value.keyMoments == on) return
+        _state.update { it.copy(keyMoments = on) }
+        if (state.value.challenge) restartChallenge()
     }
 
     /**
@@ -666,7 +679,9 @@ class AcademyViewModel(
             while (state.value.cursor < ln.size && !heroToMove(state.value.cursor)) {
                 delay(650)
                 val cur = state.value.cursor
-                val reply = "Réponse ${ln.sans[cur]} : ${tx[cur]}"
+                // Coup du joueur joué seul (« Moments clés ») : ce n'est pas une réponse adverse.
+                val own = ln.positions[cur].whiteToMove == lesson.heroWhite
+                val reply = if (own) "${ln.sans[cur]} : ${tx[cur]}" else "Réponse ${ln.sans[cur]} : ${tx[cur]}"
                 _state.update {
                     it.copy(
                         cursor = cur + 1, anim = moveAnim(ln.positions[cur], ln.moves[cur]), hintStage = 0,
