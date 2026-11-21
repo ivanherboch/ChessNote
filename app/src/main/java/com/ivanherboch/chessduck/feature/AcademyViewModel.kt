@@ -255,6 +255,14 @@ class AcademyViewModel(
 
     fun checkVoice() = narrator.prepare()
 
+    /** Active la lecture vocale (réglage enregistré) et lit tout de suite le commentaire affiché. */
+    fun enableNarration() {
+        viewModelScope.launch {
+            prefs.setNarration(true)
+            if (!active()) narrator.speak(spokenStep())
+        }
+    }
+
     init {
         viewModelScope.launch {
             val restoredId = saved.get<Int>(KEY_LESSON)
@@ -287,8 +295,14 @@ class AcademyViewModel(
     private fun pulse(good: Boolean) = _state.update { it.copy(pulse = Pulse(++pulses, good)) }
 
     /** Montre tout de suite le coup de l'élève, là où il l'a joué, pendant que l'Ordinateur le juge. */
-    private fun showTentative(pos: Position, m: Move) =
-        _state.update { it.copy(judging = true, tentative = Refutation(pos.play(m), m, null), anim = moveAnim(pos, m)) }
+    private fun showTentative(pos: Position, m: Move) = _state.update {
+        val wait = "L'Ordinateur analyse ${pos.san(m)}…"
+        it.copy(
+            judging = true, tentative = Refutation(pos.play(m), m, null), anim = moveAnim(pos, m),
+            message = if (it.challenge) wait else it.message, tone = if (it.challenge) Tone.INFO else it.tone,
+            note = if (it.challenge) it.note else wait, noteTone = if (it.challenge) it.noteTone else Tone.INFO,
+        )
+    }
 
     /** Temps laissé pour voir son propre coup avant que la leçon ne reprenne le sien. */
     private val tentativeHold = 1_200L

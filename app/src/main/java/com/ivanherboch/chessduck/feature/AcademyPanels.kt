@@ -429,6 +429,40 @@ internal fun ReviewNextButton(vm: AcademyViewModel, r: ReviewSession, modifier: 
 }
 
 /**
+ * Pastilles d'avancement d'une série : vert coché (réussi), rouge barré (manqué), or (en cours), neutre (à venir).
+ * Une seule description pour TalkBack.
+ */
+@Composable
+internal fun StepDots(results: List<Boolean>, total: Int, current: Int, modifier: Modifier = Modifier) {
+    val c = LocalDuck.current
+    if (total <= 0) return
+    val ok = results.count { it }
+    Row(
+        modifier.clearAndSetSemantics {
+            contentDescription = "Avancement : $ok réussi${if (ok > 1) "s" else ""}, ${results.size - ok} manqué${if (results.size - ok > 1) "s" else ""}, sur $total"
+        },
+        horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically,
+    ) {
+        for (i in 0 until total) {
+            val r = results.getOrNull(i)
+            val fill = when {
+                r == true -> c.greenRole.fill
+                r == false -> c.redRole.fill
+                i == current -> c.goldRole.fill
+                else -> c.surfaceHi
+            }
+            Box(Modifier.size(14.dp).clip(CircleShape).background(fill).border(1.dp, c.outlineStrong, CircleShape), contentAlignment = Alignment.Center) {
+                when (r) {
+                    true -> Icon(Icons.Rounded.Check, null, tint = c.greenRole.onFill, modifier = Modifier.size(10.dp))
+                    false -> Icon(Icons.Rounded.Close, null, tint = c.redRole.onFill, modifier = Modifier.size(10.dp))
+                    null -> Unit
+                }
+            }
+        }
+    }
+}
+
+/**
  * Ligne d'information au-dessus de l'échiquier, comme dans les autres modes : bandeau de l'Ordinateur en finale
  * (réflexion), sinon le camp au trait dans une série ou un réflexe. Rien pour la leçon (Guidé, Défi) : l'échiquier y
  * garde toute la hauteur disponible et le titre du Défi nomme déjà le camp joué.
@@ -452,6 +486,8 @@ internal fun AcademyBoardInfo(s: AcademyState, l: Lesson, eg: EndgameSession?, r
             Text("🤖 Ordinateur", color = c.text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
             if (eg.thinking) CircularProgressIndicator(Modifier.padding(start = 8.dp).size(14.dp), color = c.goldRole.fill, strokeWidth = 2.dp)
             else if (toMove) Box(Modifier.padding(start = 8.dp).size(8.dp).clip(CircleShape).background(c.greenRole.fill))
+            Spacer(Modifier.weight(1f))
+            StepDots(eg.results, eg.total, if (eg.finished) -1 else eg.index)
         }
         return
     }
@@ -461,9 +497,13 @@ internal fun AcademyBoardInfo(s: AcademyState, l: Lesson, eg: EndgameSession?, r
         pr != null && pr.line != null && !pr.finished -> pr.heroWhite to "Vous jouez les ${if (pr.heroWhite) "Blancs" else "Noirs"}"
         else -> return
     }
-    Row(Modifier.fillMaxWidth().heightIn(min = 28.dp).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 28.dp), verticalAlignment = Alignment.CenterVertically) {
         SideDot(white)
-        Text(text, color = c.text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
+        Text(text, color = c.text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp).weight(1f))
+        when {
+            rx != null -> StepDots(rx.results, rx.total, rx.index)
+            pr != null -> StepDots(pr.results, pr.ids.size, pr.index)
+        }
     }
 }
 

@@ -1,3 +1,29 @@
+## ChessDuck 3.2.0 — une Académie alignée sur le reste de l'application
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Mauvais coups : la même réfutation que dans les Problèmes, partout dans l'Académie. Le coup est joué, l'Ordinateur répond (flèche rouge) en nommant la conséquence (mat, pièce perdue, avantage rendu), un compte à rebours annule le coup, la pause le garde affiché, et la pièce revient en glissant.
+- Séries de problèmes (validation, révision, « Le seul coup », placement, examen) : on réessaie après une erreur au lieu de voir tout de suite la solution. Un problème résolu après une erreur, ou avec la flèche de l'indice, ne compte pas : les seuils (4 sur 5, 8 sur 10) restent exigeants. « Solution » après une erreur, et ‹ › pour revoir les coups.
+- Finales contre l'Ordinateur :
+  - indice en deux temps (la pièce, puis la flèche) ;
+  - sur un coup perdant, l'Ordinateur joue sa réponse (flèche rouge) ;
+  - la jauge d'évaluation apparaît une fois la position terminée ;
+  - « Rejouer » pour s'entraîner sur une position manquée, sans changer le score ;
+  - bandeau de l'Ordinateur au-dessus de l'échiquier (réflexion, trait).
+- En-tête de séance commun (Académie, Revue de partie, Vision des cases) : flèche de retour à gauche, titre jamais coupé, retournement de l'échiquier disponible pendant les séances. Les boutons « Arrêter » en double disparaissent.
+- Pastilles d'avancement (réussi, manqué, en cours) dans les séries, les réflexes et les finales, sur la ligne au-dessus de l'échiquier.
+- Couleurs unifiées : vert pour l'indice et la bonne case, rouge pour l'erreur et la menace, bleu pour les démonstrations de la leçon (les flèches du mode Guidé ne sont plus rouges).
+- Préparation des exercices : un écran d'attente au lieu de l'échiquier de la leçon, et un message clair si aucun exercice n'est disponible.
+- Fiche de la leçon (objectif, à retenir, conditions, idées, pièges) dans un tiroir, ouvert par l'icône « i » : la carte de départ ne montre plus que le résumé et la règle.
+- Parties modèles : « Jouer cette position » à chaque coup (icône manette), avec le choix de jouer les Blancs ou les Noirs. « Devinez le coup » affiche le numéro du coup et montre brièvement la réfutation d'un coup à 0 point.
+- Mode Guidé : indice pendant un arrêt « À vous » (la pièce à jouer) ; en fin de leçon, « Passer au Défi » remplace Lecture ; l'Ordinateur affiche « analyse votre coup… » pendant le jugement.
+- Fin de Défi : « Revoir » relit la leçon en mode Guidé. La variante jouée s'affiche dans le titre du Défi.
+- Haut-parleur : barré quand la voix est coupée ; un second toucher l'active, sans effacer le commentaire.
+- Entraînements : les tests (placement, examen) remontent sous les priorités ; les 11 finales sont regroupées dans une section dépliable (Gagner / Tenir la nulle) ; le compteur du bouton inclut les priorités.
+- Catalogue : raccourci « Aller à la leçon en cours », compteurs sur les filtres Statut et Palier, mention « Validation restante » (aussi sur la carte de la leçon : « À valider »).
+- Tablette : en mode Guidé, le tableau complet des coups s'affiche à droite.
+- Retours haptiques en finale et dans les réflexes, et au toucher d'une case.
+
 ## ChessDuck 3.1.2 — leçons numérotées dans l'ordre
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

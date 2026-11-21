@@ -361,7 +361,8 @@ fun AcademyScreen(
                         l.summary + "\n\nÀ retenir : " + l.takeaway + if (asking) "" else "\n\nTouchez Lecture pour dérouler la leçon coup par coup."
                     } else texts[cur - 1]
                     val text = when {
-                        voiceTip != null -> voiceTip!!
+                        // L'aide sur la voix s'ajoute au commentaire, qui reste lisible.
+                        voiceTip != null -> voiceTip + "\n\n" + base
                         stuck != null && asking -> stuck!!
                         s.note != null -> s.note + "\n\n" + base
                         asking -> base + "\n\nJouez votre coup sur l'échiquier, ou touchez Lecture pour découvrir celui de la leçon."
@@ -375,7 +376,7 @@ fun AcademyScreen(
                         else -> Tone.INFO
                     }
                     FeedbackCard(
-                        text, tone, Modifier.padding(top = 4.dp).then(if (wide) Modifier.heightIn(max = 220.dp) else Modifier.weight(1f)), title = title,
+                        text, tone, Modifier.padding(top = 4.dp).then(if (wide) Modifier.heightIn(max = 220.dp) else Modifier.weight(1f)), title = title, busy = s.judging,
                         action = when {
                             cur == line.size -> bridges
                             else -> null
@@ -385,16 +386,19 @@ fun AcademyScreen(
                     EqualRow(Modifier.padding(vertical = 6.dp)) {
                         // Toujours visible : relit ou arrête la voix, ou explique comment l'activer.
                         DuckIconButton(
-                            if (speaking) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp,
+                            // Voix coupée : icône barrée, atténuée ; voix active : haut-parleur (ou arrêt pendant la lecture).
+                            if (speaking || !narration) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp,
                             when {
+                                voiceTip != null && voice != false && !narration -> "Activer la lecture vocale"
                                 voiceTip != null -> "Fermer l'aide sur la lecture vocale"
-                                !narration -> "Lecture vocale : comment l'activer"
+                                !narration -> "Lecture vocale désactivée : comment l'activer"
                                 speaking -> "Arrêter la lecture à voix haute"
                                 else -> "Réécouter le commentaire"
                             },
                             {
                                 when {
-                                    // Second toucher : l'aide se referme et le commentaire de la position revient.
+                                    // Second toucher, voix coupée mais disponible : on l'active tout de suite.
+                                    voiceTip != null && voice != false && !narration -> { voiceTip = null; vm.enableNarration() }
                                     voiceTip != null -> voiceTip = null
                                     narration -> vm.toggleSpeech()
                                     voice == false -> {
@@ -403,7 +407,7 @@ fun AcademyScreen(
                                     }
                                     else -> {
                                         vm.checkVoice()
-                                        voiceTip = "La lecture vocale est désactivée : activez-la dans Paramètres, section Audio, voix et retours."
+                                        voiceTip = "La lecture vocale est désactivée. Touchez de nouveau le haut-parleur pour l'activer (réglage aussi dans Paramètres, section Audio, voix et retours)."
                                     }
                                 }
                             },
@@ -435,7 +439,7 @@ fun AcademyScreen(
                             " · coup $turn sur ${line.turnOf(line.size - 1, first = 1)}"
                     }
                     FeedbackCard(
-                        stuck ?: s.message, if (stuck != null) Tone.GOLD else s.tone, Modifier.padding(top = 4.dp).weight(1f), title = title,
+                        stuck ?: s.message, if (stuck != null) Tone.GOLD else s.tone, Modifier.padding(top = 4.dp).weight(1f), title = title, busy = s.judging,
                         action = if (s.done && s.review == null && s.repertoire == null) bridges else null,
                     )
                     if (s.refute != null && s.refuteUntil > 0) RefuteCountdown(s.refuteUntil, s.refuteHold, vm::holdRefutation)

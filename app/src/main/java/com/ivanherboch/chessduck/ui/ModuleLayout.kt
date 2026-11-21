@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.ui
 
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.animation.core.animateIntAsState
@@ -80,6 +81,8 @@ fun FeedbackCard(
     title: String? = null,
     /** Commande placée sous le texte, dans la carte ; sa hauteur réelle est prise sur celle du texte. */
     action: (@Composable () -> Unit)? = null,
+    /** L'Ordinateur travaille (jugement d'un coup) : un petit indicateur remplace l'icône, sans changer la hauteur. */
+    busy: Boolean = false,
 ) {
     val c = LocalDuck.current
     val role = toneRole(tone)
@@ -115,7 +118,8 @@ fun FeedbackCard(
             // Enfant 0 : icône, titre, texte et, si besoin, le lien « Lire la suite ».
             Column {
                 Row(Modifier.weight(1f, fill = false), verticalAlignment = Alignment.Top) {
-                    Icon(icon, contentDescription = null, tint = role.text, modifier = Modifier.padding(top = 1.dp, end = 8.dp).size(18.dp))
+                    if (busy) CircularProgressIndicator(Modifier.padding(top = 1.dp, end = 8.dp).size(18.dp), color = role.text, strokeWidth = 2.dp)
+                    else Icon(icon, contentDescription = null, tint = role.text, modifier = Modifier.padding(top = 1.dp, end = 8.dp).size(18.dp))
                     Column(Modifier.weight(1f)) {
                         if (title != null) Text(title, style = titleStyle, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(bottom = 2.dp))
                         BasicText(
