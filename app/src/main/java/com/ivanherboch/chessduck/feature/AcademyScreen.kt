@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.layout.Arrangement
 import android.content.Intent
 import android.speech.tts.TextToSpeech
 import androidx.compose.foundation.background
@@ -83,6 +84,9 @@ fun AcademyScreen(
     onTrainTheme: (theme: String, level: Int) -> Unit = { _, _ -> },
     /** « Jouer cette position » : ouvre le Jeu Libre sur cette position (FEN), le joueur ayant le camp indiqué. */
     onPlayPosition: (fen: String, playerWhite: Boolean) -> Unit = { _, _ -> },
+    /** Tiroir « Entraînements », ouvert depuis le bouton de l'en-tête de l'application. */
+    trainingsOpen: Boolean = false,
+    onTrainings: (Boolean) -> Unit = {},
 ) {
     val s by vm.state.collectAsStateWithLifecycle()
     val mastered by vm.mastered.collectAsStateWithLifecycle()
@@ -101,7 +105,6 @@ fun AcademyScreen(
     val line = vm.line(s)
     val texts = vm.texts(s)
     var catalog by remember { mutableStateOf(false) }
-    var trainings by remember { mutableStateOf(false) }
     val total = Lessons.all.size
     val cur = s.cursor.coerceIn(0, line.size)
     val stars = progress[l.id]?.stars ?: 0
@@ -119,52 +122,57 @@ fun AcademyScreen(
     var voiceTip by remember(s.lessonId, s.cursor) { mutableStateOf<String?>(null) }
     val voice by vm.voice.collectAsStateWithLifecycle()
     var catalogStatus by rememberSaveable { mutableIntStateOf(0) }
+    var catalogLevel by rememberSaveable { mutableIntStateOf(0) }
     val context = LocalContext.current
     ModuleLayout(
         bottomMin = 190.dp,
         top = {
-            val training = vm.trainingTitle(s, eg, rx)
-            if (training != null) {
-                TrainingHeader(training, vm::closeTraining)
+            val session = vm.sessionTitle(s, eg, rx)
+            if (session != null) {
+                TrainingHeader(session, vm::closeTraining)
                 return@ModuleLayout
             }
             // Sélecteur de leçon : précédente / leçon courante (ouvre le catalogue) / suivante.
-            Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Leçon précédente", vm::prevLesson)
                 Column(
                     Modifier.weight(1f).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
                         .clickable(role = Role.Button, onClickLabel = "Ouvrir le catalogue des leçons") { catalog = true }
                         .clearAndSetSemantics {
                             role = Role.Button
-                            contentDescription = "Leçon ${l.id} : ${l.title}, ${l.category.label}, palier ${levelName(l.level)}" +
+                            contentDescription = "Leçon ${l.id} : ${l.title}, ${l.category.label}, palier ${levelSpoken(l.level)}" +
                                 (if (l.id in mastered) ", maîtrisée" else "") + (if (stars > 0) ", ${starsText(stars)}" else "") +
                                 ". ${mastered.size} leçons maîtrisées sur $total. Ouvrir le catalogue des leçons"
                             onClick { catalog = true; true }
                         }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
                 ) {
+                    // Badges aérés : catégorie (abrégée si besoin) et palier à gauche, progression à droite.
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        InfoPill(l.category.label, accent = c.blue)
-                        Text("  P${l.level}", color = c.muted, style = MaterialTheme.typography.labelMedium)
-                        if (l.id in mastered) Icon(Icons.Rounded.CheckCircle, "Maîtrisée", tint = c.greenText, modifier = Modifier.padding(start = 6.dp).size(18.dp))
-                        if (stars > 0) StarRow(stars, Modifier.padding(start = 6.dp))
-                        Spacer(Modifier.weight(1f))
-                        Text("${mastered.size}/$total", color = c.goldText, style = MaterialTheme.typography.labelLarge)
+                        InfoPill(l.category.label, Modifier.weight(1f, fill = false), accent = c.blue)
+                        Text("P${l.level}", color = c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 8.dp))
+                        Spacer(Modifier.weight(0.01f).padding(start = 8.dp))
+                        Text("${mastered.size}/$total", color = c.goldText, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 8.dp))
                         Icon(Icons.Rounded.ExpandMore, contentDescription = null, tint = c.muted, modifier = Modifier.size(20.dp))
                     }
-                    Text(
-                        "${l.id}. ${l.title}", color = c.text, style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
+                    // Titre, puis maîtrise et étoiles à sa suite.
+                    Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("${l.id}. ${l.title}", color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f, fill = false))
+                        if (l.id in mastered) Icon(Icons.Rounded.CheckCircle, "Maîtrisée", tint = c.greenText, modifier = Modifier.padding(start = 6.dp).size(18.dp))
+                        if (stars > 0) StarRow(stars, Modifier.padding(start = 6.dp))
+                    }
                 }
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Leçon suivante", vm::nextLesson)
             }
-            AcademyBanner(vm, s, home) { trainings = true }
-            Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+            AcademyBanner(vm, s, home)
+            Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 DuckSegmentedRow(
                     listOf("Guidé", if (model) "Devinez le coup" else "Défi"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) },
                     Modifier.weight(1f), icons = listOf(Icons.Rounded.Visibility, Icons.Rounded.SportsScore),
                 )
+                // Les variantes d'une ouverture se choisissent ici (mode Guidé), sans rangée de plus sous l'échiquier.
+                if (!s.challenge && l.variants.isNotEmpty()) VariantMenu(l, s.variant, vm::setVariant)
+                // Le retournement ne concerne que l'échiquier de la leçon : il n'apparaît pas pendant une séance.
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
             }
         },
@@ -269,7 +277,6 @@ fun AcademyScreen(
                 pr != null -> PracticePanel(vm, pr, s.review)
                 quiz != null -> QuizPanel(vm, l, quiz)
                 !s.challenge -> {
-                    if (l.variants.isNotEmpty()) VariantChips(l, s.variant, vm::setVariant)
                     // Progression dans la leçon : chaque coup est cliquable.
                     MoveStrip(
                         line, cur, Modifier.padding(top = 4.dp), onSelect = vm::jump, onPrev = { vm.step(-1) }, onNext = { vm.step(1) },
@@ -307,12 +314,15 @@ fun AcademyScreen(
                         DuckIconButton(
                             if (speaking) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp,
                             when {
+                                voiceTip != null -> "Fermer l'aide sur la lecture vocale"
                                 !narration -> "Lecture vocale : comment l'activer"
                                 speaking -> "Arrêter la lecture à voix haute"
                                 else -> "Réécouter le commentaire"
                             },
                             {
                                 when {
+                                    // Second toucher : l'aide se referme et le commentaire de la position revient.
+                                    voiceTip != null -> voiceTip = null
                                     narration -> vm.toggleSpeech()
                                     voice == false -> {
                                         voiceTip = "Aucune voix française n'est installée sur ce téléphone : choisissez-en une dans les réglages vocaux d'Android qui s'ouvrent."
@@ -337,11 +347,8 @@ fun AcademyScreen(
                     }
                 }
                 else -> {
-                    // Défi réussi : la leçon redevient consultable coup par coup.
-                    if (s.done) MoveStrip(
-                        line, cur, Modifier.padding(top = 4.dp), onSelect = vm::jump, onPrev = { vm.step(-1) }, onNext = { vm.step(1) },
-                        emptyText = "", firstTurn = 1,
-                    )
+                    // Défi réussi : le bilan et les passerelles gardent toute la hauteur ; la leçon se relit coup par coup en
+                    // mode Guidé (aucune bande de coups ajoutée ici, qui tronquerait le bilan).
                     // Même numérotation par tour que le mode Guidé (depuis le début de la leçon).
                     val turn = line.turnOf(cur.coerceAtMost(line.size - 1), first = 1)
                     val side = if (l.heroWhite) "Blancs" else "Noirs"
@@ -404,6 +411,6 @@ fun AcademyScreen(
         },
     )
 
-    if (catalog) LessonCatalog(vm, s, mastered, catalogStatus, { catalogStatus = it }) { catalog = false }
-    if (trainings) TrainingsSheet(vm, home) { trainings = false }
+    if (catalog) LessonCatalog(vm, s, mastered, catalogStatus, { catalogStatus = it }, catalogLevel, { catalogLevel = it }) { catalog = false }
+    if (trainingsOpen) TrainingsSheet(vm, home, s, eg, rx) { onTrainings(false) }
 }

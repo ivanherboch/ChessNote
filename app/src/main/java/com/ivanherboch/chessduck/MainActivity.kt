@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
@@ -83,6 +84,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ivanherboch.chessduck.data.Settings
 import com.ivanherboch.chessduck.feature.AcademyScreen
 import com.ivanherboch.chessduck.feature.AcademyViewModel
+import com.ivanherboch.chessduck.feature.AcademyTrainingsButton
 import com.ivanherboch.chessduck.feature.ReviewTopic
 import com.ivanherboch.chessduck.feature.KidScreen
 import com.ivanherboch.chessduck.feature.KidViewModel
@@ -219,6 +221,7 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
         }
     }
 
+    var academyTrainings by rememberSaveable { mutableStateOf(false) }
     val header: @Composable (Modifier) -> Unit = { m ->
         Row(m.fillMaxWidth().height(50.dp).padding(start = 12.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Image(painterResource(R.drawable.mascot), contentDescription = null, modifier = Modifier.size(34.dp))
@@ -226,6 +229,13 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                 "ChessDuck", style = MaterialTheme.typography.titleLarge, color = c.text,
                 modifier = Modifier.padding(start = 8.dp).weight(1f).semantics { heading() },
             )
+            // Académie : le tiroir « Entraînements » s'ouvre depuis l'en-tête, sans prendre de place au-dessus de l'échiquier.
+            if (tab == 1) {
+                val avm = viewModel<AcademyViewModel>(factory = DuckViewModels.Factory)
+                val active by avm.trainingActive.collectAsStateWithLifecycle()
+                AcademyTrainingsButton(academyTrainings, active) { academyTrainings = true }
+                Spacer(Modifier.width(4.dp))
+            }
             DuckIconButton(Icons.Rounded.Settings, "Paramètres", { showSettings = true })
         }
     }
@@ -252,6 +262,7 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                             avm,
                             onTrainTheme = { theme, level -> trainTheme = theme to level; select(2) },
                             onPlayPosition = { fen, white -> playPosition = fen to white; select(3) },
+                            trainingsOpen = academyTrainings, onTrainings = { academyTrainings = it },
                         )
                     }
                     2 -> {

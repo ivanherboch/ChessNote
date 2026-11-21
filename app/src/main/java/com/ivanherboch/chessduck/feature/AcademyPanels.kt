@@ -1,5 +1,24 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.stateDescription
+import com.ivanherboch.chessduck.ui.DuckIconButton
+import com.ivanherboch.chessduck.ui.InfoPill
+import com.ivanherboch.chessduck.ui.icons.ExpandMore
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.horizontalScroll
@@ -74,74 +93,110 @@ internal fun StarRow(stars: Int, modifier: Modifier = Modifier, size: Dp = 16.dp
  * Bandeau d'accueil de l'Académie : leçon à reprendre, révisions du jour, leçon conseillée, et accès aux
  * entraînements. Pendant une séance (révisions, répertoire), il en montre l'avancement et permet de la quitter.
  */
+/**
+ * Bandeau contextuel sous la carte de la leçon : révisions du jour, leçon à reprendre, leçon conseillée, ou barre
+ * d'une séance de révision / de répertoire. Une seule ligne ; rien du tout (0 dp) quand il n'y a rien d'utile.
+ * Chaque puce se partage la largeur et abrège son libellé, sans jamais passer à la ligne.
+ */
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
-internal fun AcademyBanner(vm: AcademyViewModel, s: AcademyState, home: AcademyHome, onTrainings: () -> Unit) {
+internal fun AcademyBanner(vm: AcademyViewModel, s: AcademyState, home: AcademyHome) {
     val c = LocalDuck.current
-    // Une seule rangée qui passe à la ligne (grandes polices) : aucune puce ne défile sous « Entraînements » ni ne le
-    // pousse hors de l'écran ; un titre plus large que l'écran est abrégé avec des points de suspension.
-    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        run {
-            val r = s.review
-            val rep = s.repertoire
-            when {
-                r != null -> {
-                    DuckChip("Révision ${r.index + 1} sur ${r.queue.size}", true, {}, accent = c.gold)
-                    DuckChip("Quitter", false, vm::closeReviews, icon = Icons.Rounded.Close)
+    val r = s.review
+    val rep = s.repertoire
+    val cont = home.continueId
+    val rec = home.recommended?.takeIf { it != s.lessonId && it != cont }
+    if (r == null && rep == null && home.due.isEmpty() && cont == null && rec == null) return
+    Row(
+        Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val share = Modifier.weight(1f, fill = false)
+        when {
+            // Barre de séance : la progression est une information, seul « Quitter » est un bouton.
+            r != null -> {
+                InfoPill("Révision ${r.index + 1} sur ${r.queue.size}", share, icon = Icons.Rounded.School, accent = c.gold)
+                DuckChip("Quitter", false, vm::closeReviews, icon = Icons.Rounded.Close)
+            }
+            rep != null -> {
+                InfoPill("Répertoire ${rep.index + 1} sur ${rep.items.size}", share, icon = Icons.Rounded.School, accent = c.blue)
+                DuckChip("Quitter", false, vm::closeRepertoire, icon = Icons.Rounded.Close)
+            }
+            else -> {
+                if (home.due.isNotEmpty()) DuckChip(
+                    "Révisions : ${home.due.size}", false, vm::startReviews,
+                    share.semantics { contentDescription = "Révisions du jour : ${home.due.size}. Commencer" }, accent = c.gold,
+                )
+                cont?.let { id ->
+                    val t = Lessons.byId(id).title
+                    DuckChip("Reprendre : $t", false, { vm.open(id) }, share.semantics { contentDescription = "Reprendre la leçon : $t" }, accent = c.blue)
                 }
-                rep != null -> {
-                    DuckChip("Répertoire ${rep.index + 1} sur ${rep.items.size}", true, {}, accent = c.blue)
-                    DuckChip("Quitter", false, vm::closeRepertoire, icon = Icons.Rounded.Close)
-                }
-                else -> {
-                    if (home.due.isNotEmpty()) DuckChip("Révisions du jour : ${home.due.size}", false, vm::startReviews, accent = c.gold)
-                    home.continueId?.let { id -> DuckChip("Continuer : ${Lessons.byId(id).title}", false, { vm.open(id) }, accent = c.blue) }
-                    home.recommended?.takeIf { it != s.lessonId }?.let { id ->
-                        DuckChip("Conseillée : ${Lessons.byId(id).title}", false, { vm.open(id) }, accent = c.green)
-                    }
-                    if (home.due.isEmpty() && home.continueId == null && (home.recommended == null || home.recommended == s.lessonId)) {
-                        DuckChip("Palier ${levelName(home.level)}", false, onTrainings, accent = c.green)
-                    }
+                rec?.let { id ->
+                    val t = Lessons.byId(id).title
+                    DuckChip("Conseillée : $t", false, { vm.open(id) }, share.semantics { contentDescription = "Leçon conseillée : $t" }, accent = c.green)
                 }
             }
         }
-        DuckChip("Entraînements", false, onTrainings, accent = c.gold, icon = Icons.Rounded.School)
     }
 }
 
 /**
- * En-tête d'un entraînement indépendant de la leçon (réflexes, finale, tests) : il remplace le sélecteur de leçon et
- * les modes Guidé/Défi, pour qu'on sache toujours ce que montre l'échiquier, et permet de revenir à la leçon.
+ * En-tête d'une séance (entraînement, validation, révision, finale, question) : il remplace le sélecteur de leçon et
+ * les modes Guidé/Défi, pour qu'on sache toujours ce que montre l'échiquier. Une croix compacte revient à la leçon.
  */
 @Composable
-internal fun TrainingHeader(title: String, onClose: () -> Unit) {
+internal fun TrainingHeader(t: SessionTitle, onClose: () -> Unit) {
     val c = LocalDuck.current
     Row(
         Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
-            .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+            .padding(start = 12.dp, end = 4.dp, top = 2.dp, bottom = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(Icons.Rounded.School, contentDescription = null, tint = c.goldText, modifier = Modifier.size(22.dp))
         Column(Modifier.padding(start = 10.dp).weight(1f).semantics(mergeDescendants = true) { heading() }) {
-            Text("Entraînement", color = c.muted, style = MaterialTheme.typography.labelMedium)
-            Text(title, color = c.text, style = MaterialTheme.typography.titleMedium)
+            Text(t.label, color = c.muted, style = MaterialTheme.typography.labelMedium)
+            Text(t.title, color = c.text, style = MaterialTheme.typography.titleMedium)
         }
-        DuckButton("Revenir à la leçon", onClose, accent = c.blue, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Close)
+        DuckIconButton(Icons.Rounded.Close, "Revenir à la leçon", onClose, accent = c.blue)
     }
 }
 
-/** Tiroir des entraînements : réflexes, finales jouables, répertoire, placement et examen de palier. */
+/**
+ * Bouton « Entraînements » de l'en-tête de l'application (onglet Académie) : surligné quand le tiroir est ouvert ou
+ * qu'une séance est en cours. Avec une très grande police, il se réduit à son icône pour ne pas chevaucher le titre.
+ */
 @Composable
-internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, onClose: () -> Unit) {
+fun AcademyTrainingsButton(open: Boolean, active: Boolean, onClick: () -> Unit) {
+    val c = LocalDuck.current
+    val on = open || active
+    val desc = "Entraînements" + if (active) ", séance en cours" else ""
+    if (LocalDensity.current.fontScale > 1.3f) {
+        DuckIconButton(Icons.Rounded.School, desc, onClick, accent = c.gold, selected = on, badge = if (active) "•" else null)
+    } else {
+        DuckButton(
+            "Entraînements", onClick, Modifier.semantics { selected = on }, accent = c.gold, height = 44.dp,
+            icon = Icons.Rounded.School, variant = if (on) ButtonVariant.PRIMARY else ButtonVariant.OUTLINED,
+            contentDescription = if (active) desc else null,
+        )
+    }
+}
+
+/**
+ * Tiroir des entraînements : vos 3 priorités, réflexes, exercices avancés, finales jouables, répertoire et tests.
+ * L'entraînement en cours est surligné (« En cours ») ; les finales et tests déjà validés sont marqués.
+ */
+@Composable
+internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, s: AcademyState, eg: EndgameSession?, rx: ReflexSession?, onClose: () -> Unit) {
     val c = LocalDuck.current
     fun go(action: () -> Unit): () -> Unit = { onClose(); action() }
     val priorities by vm.priorities.collectAsStateWithLifecycle()
+    val pk = s.practice?.kind
     DuckSheet("Entraînements", onClose) {
         Text(
             "Votre palier : ${levelName(home.level)}." + if (home.placementDone) "" else " Un court test de placement peut l'ajuster.",
             color = c.muted, style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.semantics { contentDescription = "Votre palier : ${levelSpoken(home.level)}." + if (home.placementDone) "" else " Un court test de placement peut l'ajuster." },
         )
-        // Bilan des thèmes faibles : les 3 priorités du moment (parties analysées, Défis et exercices).
+        // Bilan des thèmes faibles : des cartes à part, avant le catalogue des exercices.
         SectionTitle("Vos 3 priorités")
         if (priorities.isEmpty()) {
             Text(
@@ -150,45 +205,103 @@ internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, onClose: ()
             )
         }
         priorities.forEachIndexed { i, p ->
-            Text("${i + 1}. ${p.title}", color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 6.dp))
-            Text(p.reason, color = c.muted, style = MaterialTheme.typography.bodyMedium)
-            TrainingButton(if (p.theme.isEmpty()) "Revoir la leçon" else "Travailler ce point : leçon et 5 exercices", go { vm.trainTopic(p.lessonId, p.theme) })
+            Column(
+                Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
+                    .border(1.dp, c.goldRole.fill, RoundedCornerShape(DuckRadius.M)).padding(12.dp),
+            ) {
+                Text("${i + 1}. ${p.title}", color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
+                Text(p.reason, color = c.muted, style = MaterialTheme.typography.bodyMedium)
+                DuckButton(
+                    if (p.theme.isEmpty()) "Revoir la leçon" else "Travailler ce point : leçon et 5 exercices", go { vm.trainTopic(p.lessonId, p.theme) },
+                    Modifier.fillMaxWidth().padding(top = 8.dp), accent = c.gold, filled = true, icon = Icons.Rounded.School,
+                )
+            }
         }
         SectionTitle("Réflexes")
-        TrainingButton(ReflexKind.THREAT.label, go { vm.startReflex(ReflexKind.THREAT) })
-        TrainingButton("Le seul coup", go(vm::startOnlyMove))
-        TrainingButton(ReflexKind.CAPTURE.label, go { vm.startReflex(ReflexKind.CAPTURE) })
+        TrainingButton(ReflexKind.THREAT.label, go { vm.startReflex(ReflexKind.THREAT) }, active = rx?.kind == ReflexKind.THREAT)
+        TrainingButton("Le seul coup", go(vm::startOnlyMove), active = pk == PracticeKind.ONLY_MOVE)
+        TrainingButton(ReflexKind.CAPTURE.label, go { vm.startReflex(ReflexKind.CAPTURE) }, active = rx?.kind == ReflexKind.CAPTURE)
         SectionTitle("Exercices avancés")
-        TrainingButton("Calcul à l'aveugle (palier 5)", go { vm.startReflex(ReflexKind.BLIND) })
+        TrainingButton("Calcul à l'aveugle (palier 5)", go { vm.startReflex(ReflexKind.BLIND) }, active = rx?.kind == ReflexKind.BLIND)
         SectionTitle("Finales contre l'Ordinateur")
         for (f in EndgameFamily.entries) {
-            TrainingButton("${if (f.goal == EndgameGoal.WIN) "Gagnez" else "Tenez la nulle"} : ${f.label}", go { vm.startEndgame(f) })
+            TrainingButton(
+                "${if (f.goal == EndgameGoal.WIN) "Gagnez" else "Tenez la nulle"} : ${f.label}", go { vm.startEndgame(f) },
+                active = eg?.family == f, done = f in home.endgamesDone,
+            )
         }
         SectionTitle("Répertoire")
-        TrainingButton("Réviser mon répertoire avec les Blancs", go { vm.startRepertoire(true) })
-        TrainingButton("Réviser mon répertoire avec les Noirs", go { vm.startRepertoire(false) })
+        TrainingButton("Réviser mon répertoire avec les Blancs", go { vm.startRepertoire(true) }, active = s.repertoire?.white == true)
+        TrainingButton("Réviser mon répertoire avec les Noirs", go { vm.startRepertoire(false) }, active = s.repertoire?.white == false)
         SectionTitle("Tests")
-        TrainingButton("Test de placement : 12 positions", go(vm::startPlacement))
-        TrainingButton("Examen du palier ${levelName(home.level.coerceAtLeast(2))} : 10 positions", go(vm::startExam))
+        TrainingButton("Test de placement : 12 positions", go(vm::startPlacement), active = pk == PracticeKind.PLACEMENT, done = home.placementDone)
+        val examLevel = home.level.coerceAtLeast(2)
+        TrainingButton(
+            "Examen du palier ${levelName(examLevel)} : 10 positions", go(vm::startExam), active = pk == PracticeKind.EXAM,
+            done = examLevel in home.examsPassed,
+        )
     }
 }
 
+/**
+ * Bouton d'un entraînement. [active] : séance en cours, surlignée et annoncée « En cours » ; [done] : déjà validé,
+ * marqué d'une coche discrète.
+ */
 @Composable
-private fun TrainingButton(label: String, onClick: () -> Unit) =
-    DuckButton(label, onClick, Modifier.fillMaxWidth().padding(vertical = 3.dp), variant = ButtonVariant.OUTLINED)
-
-/** Choix de la ligne d'une ouverture : principale ou écart de l'adversaire (« Si 3… Nf6 »). */
-@Composable
-internal fun VariantChips(l: Lesson, selected: Int, onSelect: (Int) -> Unit) {
+private fun TrainingButton(label: String, onClick: () -> Unit, active: Boolean = false, done: Boolean = false) {
     val c = LocalDuck.current
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        DuckChip("Ligne principale", selected == 0, { onSelect(0) }, accent = c.blue)
-        l.variants.forEachIndexed { i, v ->
-            val line = l.lineFor(i + 1)
-            val turn = line.turnOf(v.from, first = 1)
-            val first = line.sans[v.from]
-            val label = "Si " + if (line.positions[v.from].whiteToMove) "$turn. $first" else "$turn… $first"
-            DuckChip(label, selected == i + 1, { onSelect(i + 1) }, accent = c.blue)
+    val state = when {
+        active -> "En cours"
+        done -> "Validé"
+        else -> null
+    }
+    DuckButton(
+        if (active) "$label · En cours" else label, onClick,
+        Modifier.fillMaxWidth().padding(vertical = 3.dp).semantics {
+            selected = active
+            if (state != null) stateDescription = state
+        },
+        accent = if (active) c.gold else null, variant = if (active) ButtonVariant.PRIMARY else ButtonVariant.OUTLINED,
+        icon = when {
+            active -> Icons.Rounded.PlayArrow
+            done -> Icons.Rounded.CheckCircle
+            else -> null
+        },
+    )
+}
+
+/** Libellé d'une ligne d'ouverture : « Ligne principale » ou l'écart de l'adversaire (« Si 3… Nf6 »). */
+internal fun variantLabel(l: Lesson, v: Int): String {
+    if (v == 0) return "Ligne principale"
+    val vv = l.variants[v - 1]
+    val line = l.lineFor(v)
+    val turn = line.turnOf(vv.from, first = 1)
+    val first = line.sans[vv.from]
+    return "Si " + if (line.positions[vv.from].whiteToMove) "$turn. $first" else "$turn… $first"
+}
+
+/**
+ * Choix de la ligne d'une ouverture, en une puce à menu placée à côté des modes Guidé/Défi : aucune rangée
+ * supplémentaire sous l'échiquier.
+ */
+@Composable
+internal fun VariantMenu(l: Lesson, selected: Int, onSelect: (Int) -> Unit) {
+    val c = LocalDuck.current
+    var open by remember { mutableStateOf(false) }
+    Box {
+        DuckChip(
+            if (selected == 0) "Variantes" else "Variante $selected", selected != 0, { open = true },
+            Modifier.semantics { contentDescription = "Ligne affichée : ${variantLabel(l, selected)}. Choisir une autre ligne" },
+            accent = c.blue, icon = Icons.Rounded.ExpandMore,
+        )
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }, containerColor = c.surface) {
+            for (v in 0..l.variants.size) {
+                DropdownMenuItem(
+                    text = { Text(variantLabel(l, v), style = MaterialTheme.typography.bodyMedium, color = c.text) },
+                    onClick = { open = false; onSelect(v) },
+                    leadingIcon = { if (v == selected) Icon(Icons.Rounded.Check, contentDescription = "sélectionnée", tint = c.blueText) else Spacer(Modifier.size(24.dp)) },
+                )
+            }
         }
     }
 }
@@ -214,9 +327,32 @@ internal fun ColumnScope.QuizPanel(vm: AcademyViewModel, l: Lesson, q: QuizState
                 DuckButton(choice, { vm.answerQuiz(i) }, Modifier.fillMaxWidth(), accent = c.blue, variant = ButtonVariant.OUTLINED)
             }
         }
-    } else EqualRow(Modifier.padding(vertical = 6.dp)) {
+    } else {
+        // Récapitulatif : le choix touché reste visible, en vert s'il est juste, en rouge sinon, avec la bonne réponse.
+        Column(Modifier.fillMaxWidth().padding(top = 6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            if (picked != q.correct) QuizChoice(q.choices[picked], false, "Votre réponse")
+            QuizChoice(q.choices[q.correct], true, if (picked == q.correct) "Votre réponse" else "Bonne réponse")
+        }
+    }
+    if (picked != null) EqualRow(Modifier.padding(vertical = 6.dp)) {
         DuckButton("Revoir la leçon", vm::closeQuiz, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
         DuckButton("Leçon suivante", { vm.closeQuiz(); vm.nextLesson() }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
+    }
+}
+
+/** Choix du QCM après la réponse : juste (vert, coche) ou faux (rouge, croix), avec son rôle annoncé à TalkBack. */
+@Composable
+private fun QuizChoice(text: String, right: Boolean, what: String) {
+    val c = LocalDuck.current
+    val role = if (right) c.greenRole else c.redRole
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
+            .border(2.dp, role.fill, RoundedCornerShape(DuckRadius.M)).padding(horizontal = 12.dp, vertical = 8.dp)
+            .semantics(mergeDescendants = true) { contentDescription = "$what : $text, ${if (right) "juste" else "fausse"}" },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(if (right) Icons.Rounded.CheckCircle else Icons.Rounded.Close, contentDescription = null, tint = role.text, modifier = Modifier.size(20.dp))
+        Text(text, color = c.text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 8.dp))
     }
 }
 
@@ -299,7 +435,11 @@ internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, 
             }
             else -> {
                 DuckButton("Arrêter", vm::closeEndgame, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
-                DuckButton("Indice", vm.endgame::hint, Modifier.weight(1.4f), enabled = eg.heroToMove, accent = c.green, icon = Icons.Rounded.Lightbulb)
+                DuckButton(
+                    if (eg.hinting) "Recherche…" else "Indice", vm.endgame::hint, Modifier.weight(1.4f),
+                    enabled = eg.heroToMove && !eg.hinting, accent = c.green, icon = Icons.Rounded.Lightbulb,
+                    contentDescription = if (eg.hinting) "Indice : l'Ordinateur cherche un bon coup" else null,
+                )
             }
         }
     }
@@ -333,8 +473,10 @@ internal fun ColumnScope.ReflexPanel(vm: AcademyViewModel, rx: ReflexSession) {
                 DuckButton("Non", { vm.reflex.answer(false) }, Modifier.weight(1f), accent = c.red, filled = true)
             }
             rx.blind != null -> {
-                // La voix peut être coupée (ou TalkBack actif) : les coups annoncés restent écrits dans la carte.
-                DuckButton("Réécouter", { vm.reflex.announce() }, Modifier.weight(1f), accent = c.blue, icon = Icons.AutoMirrored.Rounded.VolumeUp)
+                // La voix peut être coupée (ou TalkBack actif) : les coups annoncés restent écrits dans la carte, et
+                // « Réécouter » explique alors comment activer la voix.
+                DuckButton("Arrêter", vm::closeReflex, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
+                DuckIconButton(Icons.AutoMirrored.Rounded.VolumeUp, "Réécouter les coups annoncés", vm::replayBlind, accent = c.blue)
                 DuckButton(
                     "Revoir l'échiquier", vm.reflex::showBoard, Modifier.weight(1.3f), enabled = !rx.shown, icon = Icons.Rounded.Visibility,
                     contentDescription = "Réafficher l'échiquier après les coups annoncés ; la réponse ne comptera plus",
@@ -349,13 +491,15 @@ internal fun ColumnScope.ReflexPanel(vm: AcademyViewModel, rx: ReflexSession) {
 @Composable
 internal fun LessonBridges(l: Lesson, endFen: String?, onTrainTheme: (String, Int) -> Unit, onPlayPosition: (String, Boolean) -> Unit) {
     val c = LocalDuck.current
+    // Position finale de mat ou de pat : rien à jouer, le bouton n'apparaît pas (plutôt que désactivé sans raison).
+    if (l.theme.isEmpty() && endFen == null) return
     Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         if (l.theme.isNotEmpty()) DuckButton(
             "S'entraîner", { onTrainTheme(l.theme, l.level) }, Modifier.weight(1f), accent = c.blue, variant = ButtonVariant.OUTLINED,
             icon = Icons.Rounded.Extension, contentDescription = "S'entraîner sur ce thème dans l'onglet Problèmes",
         )
-        DuckButton(
-            "Jouer cette position", { endFen?.let { onPlayPosition(it, l.heroWhite) } }, Modifier.weight(1f), enabled = endFen != null,
+        if (endFen != null) DuckButton(
+            "Jouer cette position", { onPlayPosition(endFen, l.heroWhite) }, Modifier.weight(1f),
             accent = c.blue, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.SportsEsports,
             contentDescription = "Jouer cette position contre l'Ordinateur dans le Jeu Libre",
         )

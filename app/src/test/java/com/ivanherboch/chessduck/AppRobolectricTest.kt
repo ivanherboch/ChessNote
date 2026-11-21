@@ -119,6 +119,11 @@ class AppRobolectricTest {
             rule.onAllNodesWithText("Coups annoncés", substring = true).fetchSemanticsNodes().isNotEmpty()
         }
         settle(800); shot("2s_aveugle")
+        // Tiroir rouvert pendant la séance : l'exercice en cours est surligné et annoncé « En cours ».
+        rule.onNodeWithText("Entraînements").performClick(); settle(1000)
+        rule.onNodeWithText("Calcul à l'aveugle (palier 5) · En cours").performScrollTo()
+            .assert(androidx.compose.ui.test.SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Selected, true))
+        settle(400); shot("2t_entrainement_en_cours")
     }
 
     private fun seedGame() = runBlocking {
@@ -479,7 +484,10 @@ class AppRobolectricTest {
         rule.onNodeWithContentDescription("e4, Pion blanc").assertExists()
     }
 
-    /** Grande police : les puces du bandeau de l'Académie passent à la ligne sans chevaucher « Entraînements ». */
+    /**
+     * Grande police : « Entraînements » devient une icône de l'en-tête, sans chevaucher le titre ChessDuck ni sortir de
+     * l'écran ; le bandeau tient sur une ligne et abrège la puce « Conseillée ».
+     */
     @Test
     @Config(fontScale = 1.6f)
     fun academyBannerChipsDoNotOverlapWithLargeFont() {
@@ -493,11 +501,15 @@ class AppRobolectricTest {
         }; settle(600)
         rule.onAllNodes(opera)[0].performClick(); settle(1200)
         shot("2p_bandeau_grande_police")
-        val trainings = rule.onNodeWithText("Entraînements").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val trainings = desc("Entraînements").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
         val root = rule.onRoot().fetchSemanticsNode().boundsInRoot
+        val title = rule.onNodeWithText("ChessDuck").fetchSemanticsNode().boundsInRoot
         assertTrue("« Entraînements » dépasse de l'écran", trainings.right <= root.right + 0.5f)
+        assertTrue("« Entraînements » chevauche le titre", !trainings.overlaps(title))
         val advised = rule.onNodeWithText("Conseillée", substring = true).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-        assertTrue("La puce « Conseillée » chevauche « Entraînements »", advised.right <= trainings.left + 0.5f || !advised.overlaps(trainings))
+        assertTrue("La puce « Conseillée » dépasse de l'écran", advised.right <= root.right + 0.5f)
+        // Une seule ligne : la puce tient dans la hauteur d'une puce (48 dp de cible tactile au plus).
+        assertTrue("Le bandeau passe à la ligne", advised.height <= 48f * rule.density.density + 0.5f)
         // On revient à la leçon conseillée (la leçon 1) : la leçon ouverte est mémorisée pour les tests suivants.
         rule.onNodeWithText("Conseillée", substring = true).performClick(); settle(1200)
     }
@@ -537,14 +549,17 @@ class AppRobolectricTest {
         rule.onNodeWithText("Arrêter").performClick(); settle(600)
         rule.onNodeWithText("Guidé").performClick(); settle(800)
         desc("Leçon suivante").performClick(); settle(1200) // la partie italienne : variantes et QCM
+        rule.onNodeWithText("Variantes").performClick(); settle(500)
         rule.onNodeWithText("Si 3… Nf6").performClick(); settle(1000); shot("2l_variante")
         desc("Aller à la fin").performClick(); settle(800)
+        rule.onNodeWithText("Variante 1").performClick(); settle(500)
         rule.onNodeWithText("Ligne principale").performClick(); settle(600)
         desc("Aller à la fin").performClick(); settle(800)
         rule.onNodeWithText("Quel est le plan ?").performClick(); settle(800); shot("2m_qcm")
         rule.onNodeWithText("Jouer c3 puis d4 pour construire un centre de deux pions").performClick(); settle(600); shot("2n_qcm_reponse")
         rule.onNodeWithText("Revoir la leçon").performClick(); settle(600)
         desc("Ouvrir le catalogue des leçons").performClick(); settle(1200)
+        rule.onNodeWithText("Filtres").performClick(); settle(500)
         rule.onNodeWithText("Parties modèles 0/8").performScrollTo().performClick(); settle(1000)
         rule.onNodeWithText("La partie de l'Opéra : Morphy, Paris 1858").performScrollTo().performClick(); settle(1200)
         rule.onNodeWithText("Devinez le coup").performClick(); settle(1500); shot("2o_devinez")

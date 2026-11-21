@@ -1,5 +1,10 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.icons.Tune
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.semantics.heading
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.items
 import com.ivanherboch.chessduck.ui.DuckRadius
 import com.ivanherboch.chessduck.ui.DuckLazySheet
@@ -58,17 +63,23 @@ internal fun LessonCatalog(
     vm: AcademyViewModel,
     s: AcademyState,
     mastered: Set<Int>,
-    /** Filtre d'état (0 toutes, 1 à maîtriser, 2 maîtrisées), conservé par l'écran entre deux ouvertures. */
+    /** Filtre d'état (0 toutes, 1 à maîtriser, 2 maîtrisées, 3 à revoir), conservé par l'écran entre deux ouvertures. */
     status: Int,
     onStatus: (Int) -> Unit,
+    /** Filtre de palier (0 : tous), conservé lui aussi entre deux ouvertures. */
+    levelFilter: Int,
+    onLevel: (Int) -> Unit,
     onClose: () -> Unit,
 ) {
     val c = LocalDuck.current
     val progress by vm.progress.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf("") }
-    var cat by remember { mutableStateOf(s.filter) }
-    // Palier du cursus (null : tous).
-    var level by remember { mutableStateOf<Int?>(null) }
+    // Catégorie : filtre du ViewModel (conservé, il oriente aussi Leçon précédente / suivante) ; il n'ouvre aucune leçon.
+    val cat = s.filter
+    val level = levelFilter.takeIf { it > 0 }
+    val active = (if (status != 0) 1 else 0) + (if (level != null) 1 else 0) + (if (cat != null) 1 else 0)
+    // Filtres repliés par défaut : les premières leçons sont visibles dès l'ouverture.
+    var showFilters by remember { mutableStateOf(false) }
     val total = Lessons.all.size
     val q = normalizeForSearch(query.trim())
     // Filtrage et compteurs mémorisés : recalculés seulement quand un filtre ou la progression change.
@@ -98,31 +109,47 @@ internal fun LessonCatalog(
                     trailingIcon = { if (query.isNotEmpty()) DuckIconButton(Icons.Rounded.Close, "Effacer la recherche", { query = "" }) },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                SectionTitle("Statut")
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("Toutes", "À maîtriser", "Maîtrisées", "À revoir").forEachIndexed { i, label -> DuckChip(label, status == i, { onStatus(i) }, accent = c.blue) }
+                // Une ligne récapitulative ; les trois filtres se déplient en rangées horizontales défilantes.
+                val summary = listOfNotNull(
+                    listOf("Toutes", "À maîtriser", "Maîtrisées", "À revoir")[status].takeIf { status != 0 },
+                    level?.let { "Palier ${levelName(it)}" }, cat?.label,
+                ).joinToString(" · ").ifEmpty { "Aucun filtre" }
+                Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    DuckChip(
+                        if (active > 0) "Filtres ($active)" else "Filtres", showFilters || active > 0, { showFilters = !showFilters },
+                        Modifier.semantics { contentDescription = "Filtres : $summary. ${if (showFilters) "Replier" else "Déplier"}" },
+                        accent = c.blue, icon = Icons.Rounded.Tune,
+                    )
+                    Text(summary, color = c.muted, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    if (active > 0) DuckChip("Effacer", false, { onStatus(0); onLevel(0); vm.setFilter(null) }, icon = Icons.Rounded.Close)
                 }
-                SectionTitle("Palier")
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    DuckChip("Tous", level == null, { level = null }, accent = c.blue)
-                    for (lv in 1..5) {
-                        val n = Lessons.all.count { it.level == lv }
-                        if (n > 0) DuckChip(levelName(lv), level == lv, { level = lv }, accent = c.blue)
+                if (showFilters) {
+                    FilterRow("Statut") {
+                        listOf("Toutes", "À maîtriser", "Maîtrisées", "À revoir").forEachIndexed { i, label -> DuckChip(label, status == i, { onStatus(i) }, accent = c.blue) }
                     }
-                }
-                SectionTitle("Catégorie")
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    DuckChip("Toutes", cat == null, { cat = null; vm.setFilter(null) }, accent = c.blue)
-                    for (k in Lessons.categories) {
-                        val (n, m) = perCategory.getValue(k)
-                        DuckChip("${k.label} $m/$n", cat == k, { cat = k; vm.setFilter(k) }, accent = c.blue)
+                    FilterRow("Palier") {
+                        DuckChip("Tous", level == null, { onLevel(0) }, accent = c.blue)
+                        for (lv in 1..5) {
+                            val n = Lessons.all.count { it.level == lv }
+                            if (n > 0) DuckChip(
+                                levelName(lv), level == lv, { onLevel(lv) },
+                                Modifier.semantics { contentDescription = "Palier ${levelSpoken(lv)}" }, accent = c.blue,
+                            )
+                        }
+                    }
+                    FilterRow("Catégorie") {
+                        DuckChip("Toutes", cat == null, { vm.setFilter(null) }, accent = c.blue)
+                        for (k in Lessons.categories) {
+                            val (n, m) = perCategory.getValue(k)
+                            DuckChip("${k.label} $m/$n", cat == k, { vm.setFilter(k) }, accent = c.blue)
+                        }
                     }
                 }
                 SectionTitle("${items.size} leçon${if (items.size > 1) "s" else ""} — toutes en accès libre")
                 if (items.isEmpty()) {
                     EmptyState(
                         Icons.Rounded.SearchOff, "Aucune leçon trouvée", "Essayez un autre mot ou retirez des filtres.",
-                        actionLabel = "Réinitialiser les filtres", onAction = { query = ""; onStatus(0); cat = null; level = null; vm.setFilter(null) },
+                        actionLabel = "Réinitialiser les filtres", onAction = { query = ""; onStatus(0); onLevel(0); vm.setFilter(null) },
                     )
                 }
             }
@@ -144,7 +171,7 @@ internal fun LessonCatalog(
                     .clickable(role = Role.Button) { vm.open(item.id); onClose() }
                     .semantics {
                         stateDescription = (if (done) "maîtrisée" else "à maîtriser") +
-                            (if (stars > 0) ", $stars étoile${if (stars > 1) "s" else ""} sur 3" else "") + ", palier ${levelName(item.level)}" +
+                            (if (stars > 0) ", $stars étoile${if (stars > 1) "s" else ""} sur 3" else "") + ", palier ${levelSpoken(item.level)}" +
                             (if (srsText != null) ", ${srsText.lowercase()}" else "") + if (current) ", leçon en cours" else ""
                     }
                     .padding(horizontal = 12.dp, vertical = 10.dp),
@@ -166,5 +193,15 @@ internal fun LessonCatalog(
                 Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = c.muted)
             }
         }
+    }
+}
+
+/** Rangée de filtres défilante horizontalement, précédée de son nom : une seule ligne de hauteur. */
+@Composable
+private fun FilterRow(label: String, content: @Composable () -> Unit) {
+    val c = LocalDuck.current
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, color = c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.width(72.dp).semantics { heading() })
+        Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) { content() }
     }
 }

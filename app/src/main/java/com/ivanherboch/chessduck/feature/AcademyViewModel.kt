@@ -103,6 +103,10 @@ data class AcademyHome(
     val due: List<Int> = emptyList(),
     val recommended: Int? = null,
     val continueId: Int? = null,
+    /** Paliers dont l'examen a été réussi. */
+    val examsPassed: Set<Int> = emptySet(),
+    /** Finales jouables validées (une leçon qui les entraîne est maîtrisée). */
+    val endgamesDone: Set<EndgameFamily> = emptySet(),
 )
 
 /** Comment une leçon se valide après le Défi. */
@@ -191,12 +195,16 @@ class AcademyViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
     val srs = SrsScheduler(clock)
     /** Accueil : leçon à reprendre, révisions dues, leçon conseillée selon le palier. */
-    val home: StateFlow<AcademyHome> = combine(lessons.progress(), prefs.settings, state.map { it.lessonId }.distinctUntilChanged()) { list, st, current ->
+    val home: StateFlow<AcademyHome> = combine(
+        lessons.progress(), prefs.settings, state.map { it.lessonId }.distinctUntilChanged(), lessons.assessments(),
+    ) { list, st, current, tests ->
         val byId = list.associateBy { it.lessonId }
         AcademyHome(
             level = st.academyLevel, placementDone = st.placementDone, due = srs.due(list),
             recommended = srs.recommended(Lessons.all, byId, st.academyLevel)?.id,
             continueId = srs.continueLesson(Lessons.all, byId, current)?.id,
+            examsPassed = tests.filter { it.kind == "exam" && it.passed }.map { it.level }.toSet(),
+            endgamesDone = Lessons.all.filter { it.drill.isNotEmpty() && byId[it.id]?.mastered == true }.mapNotNull { EndgameFamily.of(it.drill) }.toSet(),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AcademyHome())
 
@@ -328,10 +336,11 @@ class AcademyViewModel(
         if (save) narrate()
     }
 
-    fun setFilter(cat: LessonCategory?) {
-        _state.update { it.copy(filter = cat) }
-        if (cat != null && lesson.category != cat) open(Lessons.all.first { it.category == cat }.id)
-    }
+    /**
+     * Filtre de catégorie du catalogue, conservé entre deux ouvertures (il oriente aussi Leçon précédente / suivante).
+     * Il ne change jamais la leçon ouverte : c'est l'élève qui choisit une leçon dans la liste.
+     */
+    fun setFilter(cat: LessonCategory?) = _state.update { it.copy(filter = cat) }
 
     fun flip() = _state.update { it.copy(flipped = !it.flipped) }
 
@@ -1025,20 +1034,43 @@ class AcademyViewModel(
      * Titre de l'entraînement en cours s'il ne dépend pas de la leçon ouverte (réflexes, finale lancée depuis le
      * tiroir, « Le seul coup », placement, examen) ; null quand on travaille la leçon elle-même.
      */
-    fun trainingTitle(s: AcademyState, eg: EndgameSession?, rx: ReflexSession?): String? = when {
-        eg != null && endgameLesson == null && !endgameReview -> "Finale : ${eg.family.label}"
-        rx != null -> rx.kind.label
-        s.practice?.kind == PracticeKind.ONLY_MOVE -> "Le seul coup"
-        s.practice?.kind == PracticeKind.PLACEMENT -> "Test de placement"
-        s.practice?.kind == PracticeKind.EXAM -> "Examen du palier ${levelName(s.practice.level)}"
-        else -> null
+    /**
+     * En-tête d'une séance en cours (entraînement, validation, révision, finale, question de fin de leçon) : il
+     * remplace le sélecteur de leçon et les modes Guidé/Défi, pour qu'on sache toujours ce que montre l'échiquier.
+     * Null : la leçon elle-même est à l'écran.
+     */
+    fun sessionTitle(s: AcademyState, eg: EndgameSession?, rx: ReflexSession?): SessionTitle? {
+        val l = Lessons.byId(s.lessonId)
+        val pr = s.practice
+        return when {
+            eg != null && endgameReview -> SessionTitle("Révision", "Finale : ${eg.family.label}")
+            eg != null && endgameLesson != null -> SessionTitle("Finale de validation · ${eg.total} positions", l.title)
+            eg != null -> SessionTitle("Entraînement", "Finale : ${eg.family.label}")
+            rx != null -> SessionTitle("Entraînement", rx.kind.label)
+            pr?.kind == PracticeKind.ONLY_MOVE -> SessionTitle("Entraînement", "Le seul coup")
+            pr?.kind == PracticeKind.PLACEMENT -> SessionTitle("Test", "Test de placement")
+            pr?.kind == PracticeKind.EXAM -> SessionTitle("Test", "Examen du palier ${levelName(pr.level)}")
+            pr?.kind == PracticeKind.REVIEW -> SessionTitle("Révision · problèmes", l.title)
+            pr != null -> SessionTitle("Validation · ${if (pr.ids.isEmpty()) PRACTICE_SIZE else pr.ids.size} problèmes", l.title)
+            s.quiz != null -> SessionTitle("Question de fin de leçon", l.title)
+            else -> null
+        }
     }
+
+    /** Titre de l'entraînement en cours (voir [sessionTitle]). */
+    fun trainingTitle(s: AcademyState, eg: EndgameSession?, rx: ReflexSession?): String? = sessionTitle(s, eg, rx)?.title
+
+    /** Une séance lancée depuis le tiroir « Entraînements » (ou une révision) est en cours : le bouton est surligné. */
+    val trainingActive: StateFlow<Boolean> = combine(state, endgame.state, reflex.state) { s, eg, rx ->
+        eg != null || rx != null || s.practice != null || s.review != null || s.repertoire != null
+    }.distinctUntilChanged().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     /** Quitte l'entraînement en cours et revient à la leçon. */
     fun closeTraining() {
         closeEndgame()
         closeReflex()
         closePractice()
+        closeQuiz()
     }
 
     // ---- Réflexes ----
@@ -1049,6 +1081,21 @@ class AcademyViewModel(
         _state.update { it.copy(quiz = null, practice = null) }
         // Le calcul à l'aveugle est un exercice du palier 5.
         viewModelScope.launch { reflex.start(kind, if (kind == ReflexKind.BLIND) 5 else prefs.settings.first().academyLevel) }
+    }
+
+    /**
+     * Calcul à l'aveugle, « Réécouter » : relit les coups annoncés ; si la voix est coupée ou absente, l'explique
+     * dans la carte (les coups y restent écrits).
+     */
+    fun replayBlind() {
+        when {
+            narration.value && voice.value != false -> reflex.announce()
+            voice.value == false -> reflex.note("Aucune voix française n'est installée sur ce téléphone : choisissez-en une dans les réglages vocaux d'Android. Les coups annoncés restent écrits ci-dessus.")
+            else -> {
+                narrator.prepare()
+                reflex.note("La lecture vocale est désactivée : activez-la dans Paramètres, section Audio, voix et retours. Les coups annoncés restent écrits ci-dessus.")
+            }
+        }
     }
 
     fun closeReflex() {
@@ -1173,10 +1220,20 @@ class AcademyViewModel(
 const val ASK = "À vous : que jouez-vous ici ?"
 
 /** Nom d'un palier du cursus. */
-fun levelName(level: Int): String = when (level) {
-    1 -> "1, Les bases"
-    2 -> "2, Débutant"
-    3 -> "3, Novice"
-    4 -> "4, Club"
-    else -> "5, Confirmé"
+/** Nom d'un palier pour l'affichage : « 2 · Débutant ». */
+fun levelName(level: Int): String = "${level.coerceIn(1, 5)} · ${levelLabel(level)}"
+
+/** Nom d'un palier pour TalkBack et la voix : « 2, Débutant » (sans point médian). */
+fun levelSpoken(level: Int): String = "${level.coerceIn(1, 5)}, ${levelLabel(level)}"
+
+private fun levelLabel(level: Int) = when (level) {
+    1 -> "Les bases"
+    2 -> "Débutant"
+    3 -> "Novice"
+    4 -> "Club"
+    else -> "Confirmé"
 }
+
+/** En-tête d'une séance : nature (« Validation · 5 problèmes ») et sujet (titre de la leçon ou de l'exercice). */
+@Immutable
+data class SessionTitle(val label: String, val title: String)

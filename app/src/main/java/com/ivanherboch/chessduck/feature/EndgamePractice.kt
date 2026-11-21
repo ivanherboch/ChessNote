@@ -221,6 +221,8 @@ data class EndgameSession(
     val moves: Int = 0,
     val thinking: Boolean = false,
     val hint: Move? = null,
+    /** L'Ordinateur cherche un indice : le bouton est désactivé pendant la recherche. */
+    val hinting: Boolean = false,
     /** Position en cours terminée (gagnée, tenue ou perdue) ; série terminée. */
     val over: Boolean = false,
     val finished: Boolean = false,
@@ -249,6 +251,7 @@ class EndgameTrainer(
     private val _state = MutableStateFlow<EndgameSession?>(null)
     val state: StateFlow<EndgameSession?> = _state.asStateFlow()
     private var job: Job? = null
+    private var hintJob: Job? = null
 
     fun start(family: EndgameFamily, total: Int = 5) {
         job?.cancel()
@@ -258,14 +261,16 @@ class EndgameTrainer(
 
     fun stop() {
         job?.cancel()
+        hintJob?.cancel()
         _state.value = null
     }
 
     private fun show(index: Int) {
         val s = _state.value ?: return
         val p = EndgamePositions.generate(s.family, random)
+        hintJob?.cancel()
         _state.value = s.copy(
-            index = index, position = p, last = null, anim = null, moves = 0, thinking = false, hint = null, over = false,
+            index = index, position = p, last = null, anim = null, moves = 0, thinking = false, hint = null, hinting = false, over = false,
             tone = Tone.INFO, message = "Position ${index + 1} sur ${s.total} : ${s.family.instruction}",
         )
     }
@@ -285,10 +290,18 @@ class EndgameTrainer(
 
     fun hint() {
         val s = _state.value ?: return
-        if (!s.heroToMove) return
-        job = scope.launch {
-            val best = runCatchingSuspend { withTimeoutOrNull(3_000) { engine.search(s.position!!.toFen(), movetimeMs).best } }.getOrNull()
-            _state.update { it?.copy(hint = best, tone = Tone.GOLD, message = if (best != null) "Indice : la flèche montre un bon coup." else "Indice indisponible.") }
+        if (!s.heroToMove || s.hinting) return
+        // Une seule recherche d'indice à la fois, sans toucher à la réponse de l'Ordinateur en cours.
+        hintJob?.cancel()
+        val fen = s.position!!.toFen()
+        _state.update { it?.copy(hinting = true, tone = Tone.INFO, message = "L'Ordinateur cherche un bon coup…") }
+        hintJob = scope.launch {
+            val best = runCatchingSuspend { withTimeoutOrNull(3_000) { engine.search(fen, movetimeMs).best } }.getOrNull()
+            _state.update { cur ->
+                // La position a changé entre-temps (coup joué, position suivante) : l'indice est périmé.
+                if (cur == null || cur.position?.toFen() != fen) cur?.copy(hinting = false)
+                else cur.copy(hinting = false, hint = best, tone = Tone.GOLD, message = if (best != null) "Indice : la flèche montre un bon coup." else "Indice indisponible.")
+            }
         }
     }
 
@@ -297,9 +310,10 @@ class EndgameTrainer(
         val s = _state.value ?: return
         val pos = s.position ?: return
         if (!s.heroToMove || !pos.isLegal(m)) return
+        hintJob?.cancel()
         val after = pos.play(m)
         val moves = s.moves + 1
-        _state.value = s.copy(position = after, last = m, anim = moveAnim(pos, m), moves = moves, thinking = true, hint = null)
+        _state.value = s.copy(position = after, last = m, anim = moveAnim(pos, m), moves = moves, thinking = true, hint = null, hinting = false)
         job = scope.launch {
             val f = s.family
             val promoted = m.promo != 0

@@ -138,6 +138,8 @@ data class ReflexSession(
     /** Calcul à l'aveugle : case de départ touchée, et position après les coups annoncés réaffichée (aide). */
     val from: Int = -1,
     val shown: Boolean = false,
+    /** Énoncé de la question en cours, auquel s'ajoutent les précisions (case de départ, aide sur la voix). */
+    val prompt: String = "",
     /** Réponse donnée à la question en cours. */
     val answered: Boolean = false,
     /** Case touchée (menace). */
@@ -223,11 +225,11 @@ class ReflexTrainer(
         val item = queue[index]
         val blind = item as? BlindItem
         _state.update {
+            val prompt = "Question ${index + 1} sur ${queue.size}. ${it?.kind?.question.orEmpty()}" +
+                (blind?.let { b -> " Coups annoncés : ${ReflexDrills.announcedText(b)}." } ?: "")
             it?.copy(
                 index = index, answered = false, tapped = -1, from = -1, shown = false, tone = Tone.INFO,
-                threat = item as? ThreatItem, capture = item as? CaptureItem, blind = blind,
-                message = "Question ${index + 1} sur ${queue.size}. ${it.kind.question}" +
-                    (blind?.let { b -> " Coups annoncés : ${ReflexDrills.announcedText(b)}." } ?: ""),
+                threat = item as? ThreatItem, capture = item as? CaptureItem, blind = blind, prompt = prompt, message = prompt,
             )
         }
         blind?.let { announce(it) }
@@ -239,6 +241,9 @@ class ReflexTrainer(
         val side = if (item.after.whiteToMove) "des Blancs" else "des Noirs"
         speak(SpokenFr.text("Coups annoncés : ${SpokenFr.move(item.announced[0])}, puis ${SpokenFr.move(item.announced[1])}. Quel est le coup suivant $side ?"))
     }
+
+    /** Précision ajoutée à l'énoncé de la question en cours (par exemple : comment activer la voix). */
+    fun note(text: String) = _state.update { s -> s?.takeIf { !it.answered && !it.finished }?.copy(message = "${s.prompt}\n\n$text", tone = Tone.GOLD) ?: s }
 
     /** Calcul à l'aveugle : réaffiche l'échiquier après les coups annoncés (la réponse ne comptera plus). */
     fun showBoard() = _state.update { it?.takeIf { s -> s.blind != null && !s.answered }?.copy(shown = true) ?: it }
@@ -259,7 +264,12 @@ class ReflexTrainer(
     private fun blindTap(s: ReflexSession, b: BlindItem, sq: Int) {
         if (s.answered) return
         if (s.from < 0 || s.from == sq) {
-            _state.value = s.copy(from = if (s.from == sq) -1 else sq)
+            // Premier toucher : la case de départ est écrite dans la carte ; un second toucher l'annule.
+            val from = if (s.from == sq) -1 else sq
+            _state.value = s.copy(
+                from = from, tone = Tone.INFO,
+                message = if (from < 0) s.prompt else "${s.prompt}\n\nDépart : ${sqName(from)}. Touchez maintenant la case d'arrivée.",
+            )
             return
         }
         val right = s.from == b.expected.from && sq == b.expected.to

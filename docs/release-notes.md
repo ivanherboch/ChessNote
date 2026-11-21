@@ -1,3 +1,35 @@
+## ChessDuck 3.1.0 — une Académie plus lisible, un échiquier plus grand
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Échiquier plus grand sur téléphone :
+  - le bouton « Entraînements » passe dans l'en-tête de l'application, à côté de Paramètres ; avec une très grande police, il devient une icône ;
+  - la puce « Palier », qui doublait ce bouton, disparaît ;
+  - le bandeau (révisions du jour, leçon à reprendre, leçon conseillée) tient sur une ligne et ne s'affiche que s'il a quelque chose à proposer ;
+  - les variantes d'une ouverture se choisissent dans un menu « Variantes », à côté de Guidé / Défi.
+- Pendant une séance (validation sur 5 problèmes, révision, finale de validation, question de fin de leçon, entraînement), un en-tête dit clairement ce que montre l'échiquier. La croix permet de revenir à la leçon ; les modes Guidé / Défi et le retournement de l'échiquier, inopérants pendant la séance, n'y sont plus affichés.
+- Tiroir « Entraînements » :
+  - l'exercice en cours est surligné (« En cours ») ;
+  - les finales et les tests déjà validés sont cochés ;
+  - vos 3 priorités ont leurs propres cartes ;
+  - le bouton de l'en-tête est surligné quand une séance est en cours.
+- Pendant une révision ou un répertoire, la progression n'est plus une fausse puce cliquable ; seul « Quitter » est un bouton.
+- QCM : après la réponse, votre choix reste affiché, en vert s'il est juste, en rouge sinon, avec la bonne réponse.
+- Finales jouables : le bouton Indice est désactivé pendant que l'Ordinateur cherche (« Recherche… ») et ne lance jamais deux recherches à la fois.
+- Calcul à l'aveugle :
+  - le bouton Arrêter reste dans la zone du pouce ;
+  - la case de départ touchée est écrite dans la carte ;
+  - si la voix est coupée, « Réécouter » explique comment l'activer.
+- Catalogue des leçons :
+  - les filtres se replient derrière un bouton « Filtres » : les leçons apparaissent dès l'ouverture ;
+  - le palier, le statut et la catégorie sont gardés d'une ouverture à l'autre ;
+  - choisir une catégorie ne change plus la leçon ouverte.
+- Mode Guidé et Défi :
+  - un second toucher sur le haut-parleur referme l'aide sur la voix ;
+  - un Défi réussi garde toute la place pour son bilan ;
+  - « Jouer cette position » n'apparaît plus sur une position de mat ou de pat.
+- Les paliers s'écrivent « 2 · Débutant » ; TalkBack les lit naturellement.
+
 ## ChessDuck 3.0.0 — l'Académie complète : 211 leçons et un parcours personnalisé
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

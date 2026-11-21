@@ -431,6 +431,55 @@ class ViewModelsTest {
         assertTrue(vm.priorities.value.isEmpty())
     }
 
+    /** En-têtes de séance, indicateur « séance en cours » et filtre du catalogue qui n'ouvre aucune leçon. */
+    @Test
+    fun academySessionHeadersAndFilter() = test {
+        val vm = academy(puzzles = FakePuzzles(puzzleSet.map { it.copy(primaryTheme = "hangingPiece") }))
+        advanceUntilIdle()
+        val active = backgroundScope.launch { vm.trainingActive.collect {} }
+        assertNull(vm.sessionTitle(vm.state.value, null, null))
+        assertEquals(false, vm.trainingActive.value)
+        vm.trainTopic(136, "hangingPiece"); advanceUntilIdle()
+        val t = vm.sessionTitle(vm.state.value, vm.endgame.state.value, vm.reflex.state.value)!!
+        assertEquals("Validation · 5 problèmes", t.label)
+        assertEquals("Initiation : la pièce gratuite", t.title)
+        assertEquals(true, vm.trainingActive.value)
+        vm.closeTraining(); advanceUntilIdle()
+        assertNull(vm.state.value.practice)
+        assertEquals(false, vm.trainingActive.value)
+        // Le QCM de fin de leçon a lui aussi son en-tête, et « Revenir à la leçon » le ferme.
+        vm.open(2); vm.startQuiz()
+        assertEquals("Question de fin de leçon", vm.sessionTitle(vm.state.value, null, null)!!.label)
+        vm.closeTraining()
+        assertNull(vm.state.value.quiz)
+        // Filtrer une catégorie ne change pas la leçon ouverte.
+        vm.setFilter(com.ivanherboch.chessduck.content.LessonCategory.ENDGAME)
+        assertEquals(2, vm.state.value.lessonId)
+        assertEquals("2 · Débutant", com.ivanherboch.chessduck.feature.levelName(2))
+        assertEquals("2, Débutant", com.ivanherboch.chessduck.feature.levelSpoken(2))
+        active.cancel()
+    }
+
+    /** Calcul à l'aveugle : la case de départ est écrite, « Réécouter » explique la voix coupée. */
+    @Test
+    fun academyBlindFeedbackWithoutVoice() = test {
+        val voice = FakeNarrator()
+        val vm = academy(voice = voice, puzzles = FakePuzzles(listOf(PUZZLE_0000D.copy(rating = 2000))))
+        advanceUntilIdle()
+        vm.startReflex(com.ivanherboch.chessduck.feature.ReflexKind.BLIND); advanceUntilIdle()
+        val before = voice.spoken.size
+        vm.replayBlind()
+        assertEquals(before, voice.spoken.size)
+        assertTrue(vm.reflex.state.value!!.message, "lecture vocale est désactivée" in vm.reflex.state.value!!.message)
+        assertTrue("Coups annoncés" in vm.reflex.state.value!!.message)
+        vm.reflex.tap(com.ivanherboch.chessduck.chess.sqFromName("f6"))
+        assertTrue(vm.reflex.state.value!!.message, "Départ : f6" in vm.reflex.state.value!!.message)
+        vm.reflex.tap(com.ivanherboch.chessduck.chess.sqFromName("f6")) // second toucher : la case est désélectionnée
+        assertEquals(-1, vm.reflex.state.value!!.from)
+        assertTrue("Départ" !in vm.reflex.state.value!!.message)
+        vm.closeReflex()
+    }
+
     /** Réponse imposée au faux moteur : la position obtenue après [m] vaut [score] pour le camp au trait. */
     private fun FakeEngine.after(pos: Position, m: Move, score: Int) {
         val after = pos.play(m)
