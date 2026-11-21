@@ -1,3 +1,9 @@
+## ChessDuck 3.8.1 — l'Ordinateur prêt dès l'Académie
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- L'Ordinateur démarre de nouveau dès l'ouverture de l'Académie, en arrière-plan. Le premier entraînement (finale, réflexes, exercices, Défi) ne fait plus attendre son lancement, et l'échiquier répond tout de suite.
+
 ## ChessDuck 3.8.0 — plus léger, plus rapide, plus fiable
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

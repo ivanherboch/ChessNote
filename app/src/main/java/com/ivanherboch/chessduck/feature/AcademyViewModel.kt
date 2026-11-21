@@ -141,9 +141,9 @@ class AcademyViewModel(
     private var engineWarm = false
 
     /**
-     * Démarre le moteur en tâche de fond dès qu'un coup va devoir être jugé (arrêt « À vous », Défi, exercices,
-     * finale, réflexes) : le premier jugement n'attend pas son lancement, et un simple passage dans l'Académie
-     * (lecture d'une leçon) ne lance pas Stockfish.
+     * Démarre le moteur en tâche de fond, une seule fois : dès l'ouverture de l'Académie (init), pour que le premier
+     * coup jugé (arrêt « À vous », Défi, exercices, finale, réflexes) n'attende jamais son lancement ; les points
+     * d'entrée des séances le rappellent par sûreté (sans effet s'il est déjà démarré).
      */
     private fun warmEngine() {
         if (engineWarm) return
@@ -152,6 +152,8 @@ class AcademyViewModel(
     }
 
     init {
+        // L'Académie est l'onglet d'accueil : l'Ordinateur démarre aussitôt, en arrière-plan, sans bloquer l'écran.
+        warmEngine()
         viewModelScope.launch {
             val restoredId = saved.get<Int>(KEY_LESSON)
             val restoredChallenge = saved.get<Boolean>(KEY_CHALLENGE) ?: false

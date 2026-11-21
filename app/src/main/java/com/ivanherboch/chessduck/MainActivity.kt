@@ -206,8 +206,8 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
     var tab by rememberSaveable { mutableIntStateOf(1) }
     var showSettings by remember { mutableStateOf(false) }
     // Les ViewModels vivent au niveau de l'activité : l'état de chaque module est conservé d'un onglet à l'autre.
-    // Ils ne sont créés qu'à la première visite de leur onglet. Stockfish ne démarre qu'au premier vrai besoin
-    // (coup à juger, finale, exercice de l'Académie, Jeu Libre, Problèmes), jamais au simple lancement.
+    // Ils ne sont créés qu'à la première visite de leur onglet. Stockfish démarre en arrière-plan dès l'ouverture de
+    // l'Académie (onglet d'accueil), pour que le premier coup joué n'attende pas son lancement.
     val holder = rememberSaveableStateHolder()
     var kidUsed by rememberSaveable { mutableStateOf(st.kidMode) }
     val kid: KidViewModel? = if (st.kidMode || kidUsed) viewModel(factory = DuckViewModels.Factory) else null

@@ -1,6 +1,8 @@
 package com.ivanherboch.chessduck.vm
 
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
+import kotlinx.coroutines.cancelAndJoin
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.SavedStateHandle
 import com.ivanherboch.chessduck.chess.Move
@@ -112,9 +114,10 @@ class ViewModelsTest {
         assertEquals(square, vm.shareStyle())
         prefs.setPalette(DuckPalette.BLUE_ORANGE.ordinal)
         assertEquals(DuckPalette.BLUE_ORANGE, vm.shareStyle().palette)
-        // Le chargement du problème au démarrage tourne hors du temps virtuel : on l'arrête avant la fin du test, sinon il
-        // reprend sur Dispatchers.Main après sa réinitialisation et fait échouer le test suivant.
-        vm.viewModelScope.cancel()
+        // Le chargement du problème au démarrage tourne hors du temps virtuel : on l'arrête et on attend sa fin avant la fin
+        // du test, sinon un travail encore en cours sur Dispatchers.IO reprend sur Dispatchers.Main après sa
+        // réinitialisation et fait échouer le test suivant.
+        vm.viewModelScope.coroutineContext.job.cancelAndJoin()
     }
 
     @Test
@@ -1168,6 +1171,8 @@ class ViewModelsTest {
         assertEquals(1, vm.state.value.streak)
         advanceUntilIdle()
         assertEquals(1, settings.flow.value.notationBest)
+        // Exercice suivant généré sur Dispatchers.Default : on attend sa fin avant celle du test.
+        vm.viewModelScope.coroutineContext.job.cancelAndJoin()
     }
 
     /** Vision des cases : couleur (échiquier masqué), toucher la case, chemin du cavalier ; aucun chronomètre. */
@@ -1195,6 +1200,8 @@ class ViewModelsTest {
         assertTrue(vm.vision.value!!.correct)
         vm.closeVision()
         assertNull(vm.vision.value)
+        // La génération de l'exercice de notation tourne sur Dispatchers.Default : on attend sa fin avant celle du test.
+        vm.viewModelScope.coroutineContext.job.cancelAndJoin()
     }
 
     /** Calcul à l'aveugle (palier 5) : coups lus en français par la voix, écrits dans la carte, échiquier réaffichable. */
