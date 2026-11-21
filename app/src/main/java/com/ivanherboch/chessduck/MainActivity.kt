@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck
 
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.foundation.text.BasicText
 import kotlinx.coroutines.CoroutineScope
 import com.ivanherboch.chessduck.data.SettingsRepository
 import com.ivanherboch.chessduck.ui.Narrator
@@ -177,13 +181,23 @@ private val TABS = listOf(
 private fun TabIcon(t: TabSpec, selected: Boolean) = Icon(if (selected) t.selectedIcon() else t.icon(), contentDescription = null)
 
 @Composable
-private fun TabLabel(t: TabSpec, maxLines: Int = Int.MAX_VALUE) = Text(t.label, style = MaterialTheme.typography.labelMedium, maxLines = maxLines)
+private fun TabLabel(t: TabSpec, maxLines: Int = Int.MAX_VALUE) {
+    // Une ligne : en très grande police, le libellé se réduit (jusqu'à 11 sp) au lieu d'être coupé (« Académi »).
+    val color = LocalContentColor.current
+    val style = MaterialTheme.typography.labelMedium
+    if (maxLines == 1) BasicText(
+        t.label, style = style, color = { color }, maxLines = 1,
+        autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = style.fontSize, stepSize = 0.5.sp),
+    )
+    else Text(t.label, style = style, maxLines = maxLines)
+}
 
 @Composable
 fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, appScope: CoroutineScope) {
     val c = LocalDuck.current
     val fb = LocalFeedback.current
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+    // L'application s'ouvre sur l'Académie : le parcours d'apprentissage est la porte d'entrée.
+    var tab by rememberSaveable { mutableIntStateOf(1) }
     var showSettings by remember { mutableStateOf(false) }
     // Les ViewModels vivent au niveau de l'activité : l'état de chaque module est conservé d'un onglet à l'autre.
     // Ils ne sont créés qu'à la première visite de leur onglet (Stockfish et l'index des 150 000 problèmes
@@ -225,9 +239,12 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
     val header: @Composable (Modifier) -> Unit = { m ->
         Row(m.fillMaxWidth().height(50.dp).padding(start = 12.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Image(painterResource(R.drawable.mascot), contentDescription = null, modifier = Modifier.size(34.dp))
-            Text(
-                "ChessDuck", style = MaterialTheme.typography.titleLarge, color = c.text,
-                modifier = Modifier.padding(start = 8.dp).weight(1f).semantics { heading() },
+            // Le titre se réduit si la place manque (bouton « Entraînements · N », grande police), sans toucher les boutons.
+            val titleStyle = MaterialTheme.typography.titleLarge
+            BasicText(
+                "ChessDuck", style = titleStyle, color = { c.text }, maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = titleStyle.fontSize, stepSize = 0.5.sp),
+                modifier = Modifier.padding(start = 8.dp, end = 8.dp).weight(1f).semantics { heading() },
             )
             // Académie : le tiroir « Entraînements » s'ouvre depuis l'en-tête, sans prendre de place au-dessus de l'échiquier.
             if (tab == 1) {

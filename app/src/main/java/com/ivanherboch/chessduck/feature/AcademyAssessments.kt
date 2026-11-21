@@ -24,7 +24,8 @@ object AcademyAssessments {
 
     /** Tranche de classement des problèmes d'un palier (1 Les bases … 5 Confirmé). */
     fun levelRange(level: Int): IntRange = when (level) {
-        1, 2 -> 400..1100
+        // Les problèmes « débutant » de la base sont surtout entre 1100 et 1199 : la borne inclut cette tranche.
+        1, 2 -> 400..1199
         3 -> 1000..1500
         4 -> 1400..1900
         else -> 1800..2500

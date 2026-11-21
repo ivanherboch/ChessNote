@@ -24,12 +24,16 @@ class ReflexDrillsTest {
 
     @Test
     fun threatIsThePieceTheSolutionWins() {
-        val t = ReflexDrills.threatFrom(fork)
+        // Fourchette avec échec : l'élève doit d'abord parer l'échec, la question n'est pas posée.
+        assertNull(ReflexDrills.threatFrom(fork))
+        // Fourchette sans échec : le cavalier c2 attaque la dame e1 et la tour a1 ; la cible principale est la dame.
+        val quiet = Puzzle("FORK2", "6k1/8/8/8/3n4/8/8/R3Q1K1 w - - 0 1", "g1h1 d4c2", 900, 90, 100, " fork ", "fork")
+        val t = ReflexDrills.threatFrom(quiet)
         assertNotNull(t)
-        assertEquals(sqFromName("a1"), t!!.target)
+        assertEquals(sqFromName("e1"), t!!.target)
         assertEquals(sqFromName("c2"), t.attacker)
+        assertEquals(setOf(sqFromName("e1"), sqFromName("a1")), t.targets.toSet())
         assertTrue(t.position.whiteToMove)
-        assertEquals("Le cavalier c2 menace de prendre votre tour en a1 : elle n'est pas protégée.", t.explanation)
         // #0000D : après Qd6 Rd8, la dame d6 est attaquée par la tour d8 ; protégée par la tour d1, elle vaut plus qu'elle.
         val q = ReflexDrills.threatFrom(PUZZLE_0000D)!!
         assertEquals(sqFromName("d6"), q.target)

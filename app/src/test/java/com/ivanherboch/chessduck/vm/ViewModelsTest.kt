@@ -226,6 +226,19 @@ class ViewModelsTest {
     }
 
     @Test
+    fun newStudentStartsWithTheBasics() = test {
+        // Premier lancement : la première leçon du cursus (« L'échiquier et la notation ») et le palier 1.
+        val fresh = com.ivanherboch.chessduck.data.Settings()
+        assertEquals(Lessons.all[0].id, fresh.lessonId)
+        assertEquals(1, fresh.academyLevel)
+        val vm = academy(prefs = FakeSettings(fresh))
+        advanceUntilIdle()
+        assertEquals(Lessons.all[0].id, vm.state.value.lessonId)
+        // Le palier choisi à la main est enregistré.
+        vm.setLevel(3); advanceUntilIdle()
+    }
+
+    @Test
     fun academyCatalogOpensGuidedAndDrawerSessionsReturnToTheDrawer() = test {
         val vm = academy()
         advanceUntilIdle()
@@ -497,8 +510,12 @@ class ViewModelsTest {
 
     @Test
     fun academyReflexesAndOnlyMove() = test {
-        val fork = com.ivanherboch.chessduck.data.Puzzle("FORK1", "4k3/8/8/8/3n4/1p6/4K3/R7 w - - 0 1", "e2e1 d4c2 e1d2 c2a1", 600, 90, 100, " fork ", "fork")
-        val vm = academy(puzzles = FakePuzzles(listOf(fork) + puzzleSet.map { it.copy(primaryTheme = "defensiveMove") }))
+        // Fourchette sans échec : le cavalier c2 attaque la dame e1 et la tour a1.
+        val fork = com.ivanherboch.chessduck.data.Puzzle("FORK2", "6k1/8/8/8/3n4/8/8/R3Q1K1 w - - 0 1", "g1h1 d4c2", 600, 90, 100, " fork ", "fork")
+        // L'Ordinateur confirme la menace : s'il rejouait, il prendrait la dame e1.
+        val engine = FakeEngine()
+        engine.scripted["6k1/8/8/8/8/8/2n5/R3Q2K b - -"] = SearchResult(Move.fromUci("c2e1"), listOf(PvLine(Move.fromUci("c2e1"), 900)))
+        val vm = academy(puzzles = FakePuzzles(listOf(fork) + puzzleSet.map { it.copy(primaryTheme = "defensiveMove") }), engine = engine)
         advanceUntilIdle()
         vm.startReflex(com.ivanherboch.chessduck.feature.ReflexKind.THREAT)
         advanceUntilIdle()
@@ -506,7 +523,7 @@ class ViewModelsTest {
         assertEquals(1, rx.total)
         // L'en-tête annonce l'entraînement à la place de la leçon ouverte.
         assertEquals("Quelle est la menace ?", vm.trainingTitle(vm.state.value, vm.endgame.state.value, rx))
-        vm.reflex.tap(com.ivanherboch.chessduck.chess.sqFromName("a1"))
+        vm.reflex.tap(com.ivanherboch.chessduck.chess.sqFromName("e1"))
         assertEquals(listOf(true), vm.reflex.state.value!!.results)
         vm.reflex.next()
         assertTrue(vm.reflex.state.value!!.finished)

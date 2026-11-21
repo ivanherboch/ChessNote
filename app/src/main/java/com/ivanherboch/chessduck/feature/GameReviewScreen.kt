@@ -225,7 +225,7 @@ private fun NoteCount(note: String, n: Int) {
 
 /** Tableau algébrique complet sur deux colonnes (Blancs | Noirs), cliquable — affiché sur tablette (revue et partie). */
 @Composable
-internal fun MoveTable(line: Line, cursor: Int, notes: List<String?>, onSelect: (Int) -> Unit, modifier: Modifier) {
+internal fun MoveTable(line: Line, cursor: Int, notes: List<String?>, onSelect: (Int) -> Unit, modifier: Modifier, hiddenFrom: Int = Int.MAX_VALUE) {
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     val state = rememberLazyListState()
@@ -240,7 +240,10 @@ internal fun MoveTable(line: Line, cursor: Int, notes: List<String?>, onSelect: 
                 for (col in 0..1) {
                     val i = row * 2 + col - first
                     Box(Modifier.weight(1f)) {
-                        if (i in 0 until line.size) {
+                        if (i in 0 until line.size && i >= hiddenFrom) {
+                            // Coup à trouver plus loin dans la leçon : masqué.
+                            Text("…", color = c.muted, style = MaterialTheme.typography.chessMove, modifier = Modifier.padding(horizontal = 8.dp))
+                        } else if (i in 0 until line.size) {
                             val current = i == cursor - 1
                             Row(
                                 Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(2.dp).clip(RoundedCornerShape(DuckRadius.S))

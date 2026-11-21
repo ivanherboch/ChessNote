@@ -71,6 +71,8 @@ object ReflexDrills {
         val line = runCatching { Line.fromUci(p.fen, p.moves) }.getOrNull() ?: return null
         if (line.size < 2) return null
         val pos = line.positions[2.coerceAtMost(line.size)]
+        // En échec, la question « quelle pièce est menacée ? » n'a pas de sens : il faut d'abord parer l'échec.
+        if (pos.inCheck) return null
         val threats = threatsIn(pos)
         if (threats.isEmpty()) return null
         // Cible principale : la pièce la plus précieuse menacée (puis celle que prend l'attaquant le moins cher).

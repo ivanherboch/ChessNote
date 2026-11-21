@@ -161,6 +161,13 @@ internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, s: AcademyS
             color = c.muted, style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.semantics { contentDescription = "Votre palier : ${levelSpoken(home.level)}." + if (home.placementDone) "" else " Un court test de placement peut l'ajuster." },
         )
+        // Choix manuel du palier : les leçons conseillées, les exercices et l'examen suivent ce palier.
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            for (lv in 1..5) DuckChip(
+                levelName(lv), home.level == lv, { vm.setLevel(lv) },
+                Modifier.semantics { contentDescription = "Palier ${levelSpoken(lv)}" }, accent = c.blue,
+            )
+        }
         // À faire maintenant : révisions du jour, leçon à reprendre, leçon conseillée. Placées ici plutôt qu'au-dessus
         // de l'échiquier, elles ne prennent aucune place à la grille.
         val cont = home.continueId
@@ -202,7 +209,7 @@ internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, s: AcademyS
         // Les tests (placement, examen) juste après les priorités : ce sont eux qui font avancer le palier.
         SectionTitle("Tests")
         TrainingButton("Test de placement : 12 positions", session(vm::startPlacement), active = pk == PracticeKind.PLACEMENT, done = home.placementDone)
-        val examLevel = home.level.coerceAtLeast(2)
+        val examLevel = home.level
         TrainingButton(
             "Examen du palier ${levelName(examLevel)} : 10 positions", session(vm::startExam), active = pk == PracticeKind.EXAM,
             done = examLevel in home.examsPassed,
@@ -316,7 +323,8 @@ internal fun ColumnScope.QuizPanel(vm: AcademyViewModel, l: Lesson, q: QuizState
     val text = when {
         picked == null -> quiz.question
         picked == q.correct -> "Exact ! " + quiz.explanation
-        else -> "Pas tout à fait. La bonne réponse : ${quiz.answer}. " + quiz.explanation
+        // Mauvaise réponse : la bonne n'est pas dévoilée, on réfléchit et on réessaie (l'explication vient avec la bonne réponse).
+        else -> "Pas tout à fait : ce n'est pas la bonne réponse. Repensez à l'idée de la leçon, puis réessayez."
     }
     FeedbackCard(
         text, if (picked == null) Tone.INFO else if (picked == q.correct) Tone.GOOD else Tone.BAD,
@@ -332,10 +340,14 @@ internal fun ColumnScope.QuizPanel(vm: AcademyViewModel, l: Lesson, q: QuizState
         // Récapitulatif : le choix touché reste visible, en vert s'il est juste, en rouge sinon, avec la bonne réponse.
         Column(Modifier.fillMaxWidth().padding(top = 6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (picked != q.correct) QuizChoice(q.choices[picked], false, "Votre réponse")
-            QuizChoice(q.choices[q.correct], true, if (picked == q.correct) "Votre réponse" else "Bonne réponse")
+            else QuizChoice(q.choices[q.correct], true, "Votre réponse")
         }
     }
-    if (picked != null) EqualRow(Modifier.padding(vertical = 6.dp)) {
+    if (picked != null && picked != q.correct) EqualRow(Modifier.padding(vertical = 6.dp)) {
+        DuckButton("Revoir la leçon", vm::closeQuiz, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
+        DuckButton("Réessayer", vm::retryQuiz, Modifier.weight(1f), accent = c.gold, filled = true, icon = Icons.Rounded.RestartAlt)
+    }
+    if (picked != null && picked == q.correct) EqualRow(Modifier.padding(vertical = 6.dp)) {
         DuckButton("Revoir la leçon", vm::closeQuiz, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
         // Le parcours continue par le Défi tant qu'il n'est pas réussi ; ensuite seulement, la leçon suivante.
         if (needsChallenge) DuckButton(
@@ -478,7 +490,10 @@ internal fun AcademyBoardInfo(s: AcademyState, l: Lesson, eg: EndgameSession?, r
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SideDot(computerWhite)
-            Text("🤖 Ordinateur", color = c.text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
+            Text(
+                "🤖 Ordinateur · vous jouez les ${if (eg.family.heroWhite) "Blancs" else "Noirs"}", color = c.text,
+                style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp).weight(1f, fill = false),
+            )
             if (eg.thinking) CircularProgressIndicator(Modifier.padding(start = 8.dp).size(14.dp), color = c.goldRole.fill, strokeWidth = 2.dp)
             else if (toMove) Box(Modifier.padding(start = 8.dp).size(8.dp).clip(CircleShape).background(c.greenRole.fill))
             Spacer(Modifier.weight(1f))
@@ -528,7 +543,8 @@ internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, 
             }
             eg.over -> {
                 // Position perdue : on peut la rejouer pour s'entraîner (le score de la série ne change pas).
-                if (eg.results.lastOrNull() == false) DuckButton(
+                // Rejeu possible après un échec, tant que le rejeu d'entraînement n'a pas été réussi.
+                if (eg.results.lastOrNull() == false && eg.replayOk != true) DuckButton(
                     if (eg.before != null) "Reprendre le coup" else "Rejouer", vm.endgame::retry, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt,
                     contentDescription = if (eg.before != null) "Revenir juste avant l'erreur pour s'entraîner, sans changer le score"
                     else "Rejouer cette position pour s'entraîner, sans changer le score",

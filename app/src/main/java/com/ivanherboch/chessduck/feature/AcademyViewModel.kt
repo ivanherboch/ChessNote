@@ -376,6 +376,11 @@ class AcademyViewModel(
      */
     fun setFilter(cat: LessonCategory?) = _state.update { it.copy(filter = cat) }
 
+    /** Choix manuel du palier (tiroir « Entraînements ») : les leçons conseillées et les exercices suivent ce palier. */
+    fun setLevel(level: Int) {
+        viewModelScope.launch { prefs.setAcademyLevel(level.coerceIn(1, 5)) }
+    }
+
     /** Retourne l'échiquier : celui de la séance en cours (finale, série, réflexes), sinon celui de la leçon. */
     fun flip() = _state.update {
         if (it.practice != null || endgame.state.value != null || reflex.state.value != null) it.copy(sessionFlipped = !it.sessionFlipped)
@@ -508,6 +513,13 @@ class AcademyViewModel(
         if (q.picked != null || i !in q.choices.indices) return
         pulse(i == q.correct)
         _state.update { it.copy(quiz = q.copy(picked = i)) }
+    }
+
+    /** Après une mauvaise réponse : la question revient, choix remélangés (la bonne réponse n'a pas été dévoilée). */
+    fun retryQuiz() {
+        val q = lesson.quiz ?: return
+        val choices = (listOf(q.answer) + q.wrong).shuffled(random)
+        _state.update { it.copy(quiz = QuizState(choices, choices.indexOf(q.answer))) }
     }
 
     fun closeQuiz() = _state.update { it.copy(quiz = null) }
@@ -868,7 +880,7 @@ class AcademyViewModel(
      */
     fun trainTopic(lessonId: Int, theme: String) {
         openedExplicitly = true
-        open(lessonId)
+        open(lessonId, guided = true)
         if (theme.isEmpty()) return
         viewModelScope.launch {
             val level = prefs.settings.first().academyLevel.coerceAtLeast(2)
@@ -890,7 +902,8 @@ class AcademyViewModel(
     /** Examen du palier en cours (10 positions mélangées, réussite à 8). */
     fun startExam() {
         viewModelScope.launch {
-            val level = prefs.settings.first().academyLevel.coerceAtLeast(2)
+            // Examen du palier en cours : le réussir fait passer au palier suivant (1 → 2, 2 → 3…).
+            val level = prefs.settings.first().academyLevel.coerceIn(1, 5)
             startSeries(PracticeKind.EXAM, AcademyAssessments.examSpecs(level, random), level)
         }
     }
@@ -1346,15 +1359,18 @@ class AcademyViewModel(
         val id = r.queue[r.index]
         lessons.progress(id)?.let { lessons.save(srs.reviewed(it, success)) }
         _state.update { it.copy(review = r.copy(passed = r.passed + if (success) 1 else 0)) }
-        _state.update {
-            it.copy(message = it.message + if (success) "\n\nRévision réussie : prochaine révision dans ${srs.daysUntil(lessons.progress(id))} jours." else "\n\nRévision ratée : cette leçon reviendra demain.")
-        }
+        val text = if (success) "\n\nRévision réussie : prochaine révision dans ${srs.daysUntil(lessons.progress(id))} jours." else "\n\nRévision ratée : cette leçon reviendra demain."
+        // Révision d'une finale : le bilan s'affiche dans la carte de la finale, pas sous la leçon masquée.
+        if (endgame.state.value != null) endgame.note(text) else _state.update { it.copy(message = it.message + text) }
     }
 
     /** Révision suivante, ou fin de la séance. */
     fun nextReview() {
         val r = state.value.review ?: return
-        closeEndgame()
+        // Passage à la révision suivante : la finale se ferme sans renvoyer au tiroir (la séance continue).
+        endgame.stop()
+        endgameLesson = null
+        endgameReview = false
         _state.update { it.copy(practice = null) }
         if (r.index + 1 < r.queue.size) openReview(r.index + 1)
         else _state.update { it.copy(review = r.copy(finished = true)) }

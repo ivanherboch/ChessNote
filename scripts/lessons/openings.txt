@@ -1,4 +1,4 @@
-# Les trois principes de l'ouverture | Toute ouverture suit trois principes : occuper le centre, sortir ses pièces et mettre son roi à l'abri. Observez-les coup après coup. | w | id=1 level=2 order=2001
+# Les trois principes de l'ouverture | Toute ouverture suit trois principes : occuper le centre, sortir ses pièces et mettre son roi à l'abri. Observez-les coup après coup. | w | id=1 level=2 order=2000
 e4 : Premier principe : occuper le centre. Le pion avance de deux cases vers le milieu de l'échiquier. Il ouvre aussi la route au fou f1 et à la dame.
 e5 : Les Noirs appliquent la même recette : ils prennent eux aussi leur part du centre.
 Nf3 : Deuxième principe : sortir ses pièces. Le cavalier se développe vers le centre, et il attaque déjà le pion e5.
@@ -1240,7 +1240,7 @@ VARIANT 1 | Si les Noirs sortent d'abord le cavalier
 > e6 : Les Noirs préparent l'avance de leur pion d.
 > e4 : Les Blancs prennent le centre.
 
-# Le mat du berger et sa parade | Apprenez à reconnaître le mat du berger, une attaque de la dame et du fou sur f7, et à le repousser en gagnant du temps. | b | id=37 level=2 order=2037
+# Le mat du berger et sa parade | Apprenez à reconnaître le mat du berger, une attaque de la dame et du fou sur f7, et à le repousser en gagnant du temps. | b | id=37 level=2 order=2001
 e4 : Les Blancs occupent le centre.
 e5 : Les Noirs répondent au centre.
 Qh5 : La dame blanche sort très tôt. Elle attaque le pion e5 et vise déjà la case f7.

@@ -39,7 +39,12 @@ class TabletRobolectricTest {
 
     /** Les réglages (DataStore) survivent d'un test à l'autre : chaque test démarre hors du mode enfant. */
     @Before
-    fun leaveKidMode() = runBlocking { ApplicationProvider.getApplicationContext<ChessDuckApp>().prefs.setKidMode(false) }
+    fun leaveKidMode() = runBlocking {
+        val prefs = ApplicationProvider.getApplicationContext<ChessDuckApp>().prefs
+        prefs.setKidMode(false)
+        prefs.setLesson(1)
+        prefs.setAcademyLevel(2)
+    }
 
     /** Ajoute une courte partie terminée à l'historique de l'application (mat du berger). */
     private fun seedGame() = runBlocking {
@@ -86,7 +91,8 @@ class TabletRobolectricTest {
     @Test
     @Config(qualifiers = "w760dp-h360dp-land-xxhdpi")
     fun phoneLandscape() {
-        settle(2500); shot("o1_telephone_paysage_notation")
+        settle(2500)
+        rule.onNodeWithText("Notation").performClick(); settle(1500); shot("o1_telephone_paysage_notation")
         rule.onNodeWithText("Jeu Libre").performClick(); settle(2000); shot("o2_telephone_paysage_jeu")
     }
 
@@ -94,13 +100,15 @@ class TabletRobolectricTest {
     @Test
     @Config(qualifiers = "w800dp-h1280dp-port-xhdpi")
     fun tabletPortrait() {
-        settle(2500); shot("o3_tablette_portrait_notation")
+        settle(2500)
+        rule.onNodeWithText("Notation").performClick(); settle(1500); shot("o3_tablette_portrait_notation")
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("o4_tablette_portrait_academie")
     }
 
     @Test
     fun tabletLandscape() {
-        settle(2500); shot("t1_notation")
+        settle(2500)
+        rule.onNodeWithText("Notation").performClick(); settle(1500); shot("t1_notation")
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("t2_academie")
         rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000); shot("t9_entrainements")
         rule.onNodeWithText("Gagnez : Roi et dame contre roi").performScrollTo().performClick(); settle(1500); shot("t10_finale")

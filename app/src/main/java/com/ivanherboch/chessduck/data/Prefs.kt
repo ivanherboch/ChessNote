@@ -69,9 +69,10 @@ data class Settings(
     val puzzleTheme: String = "",
     val puzzleId: String = "",
     val notationLevel: Int = 0,
-    val lessonId: Int = 1,
-    /** Palier de l'Académie choisi ou atteint (1 Les bases … 5 Confirmé). */
-    val academyLevel: Int = 2,
+    /** Leçon ouverte : au premier lancement, la première du cursus (« L'échiquier et la notation »). */
+    val lessonId: Int = 115,
+    /** Palier de l'Académie choisi ou atteint (1 Les bases … 5 Confirmé) : un nouvel élève commence aux bases. */
+    val academyLevel: Int = 1,
     /** Le test de placement de l'Académie a été passé (ou écarté). */
     val placementDone: Boolean = false,
     /** Format des images exportées : nom de ShareFormat (« PORTRAIT » ou « SQUARE »). */
@@ -142,8 +143,8 @@ class Prefs(private val context: Context) : SettingsRepository {
             puzzleTheme = p[K.theme] ?: "",
             puzzleId = p[K.puzzleId] ?: "",
             notationLevel = p[K.level] ?: 0,
-            lessonId = p[K.lesson] ?: 1,
-            academyLevel = p[K.academyLevel] ?: 2,
+            lessonId = p[K.lesson] ?: 115,
+            academyLevel = p[K.academyLevel] ?: 1,
             placementDone = p[K.placementDone] ?: false,
             shareFormat = p[SHARE_FORMAT] ?: "PORTRAIT",
             shareLight = p[SHARE_LIGHT] ?: false,

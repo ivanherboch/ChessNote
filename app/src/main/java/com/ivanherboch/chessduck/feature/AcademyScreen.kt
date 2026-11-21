@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material.icons.rounded.Info
 import com.ivanherboch.chessduck.ui.HintButton
@@ -110,6 +111,10 @@ fun AcademyScreen(
     val rx by vm.reflex.state.collectAsStateWithLifecycle()
     val narration by vm.narration.collectAsStateWithLifecycle()
     val speaking by vm.speaking.collectAsStateWithLifecycle()
+    // Retour Android pendant une séance (finale, réflexes, série, question, révision, répertoire) : on la quitte, on ne
+    // quitte pas l'Académie.
+    val inSession = eg != null || rx != null || s.practice != null || s.quiz != null || s.review != null || s.repertoire != null
+    BackHandler(enabled = inSession) { vm.closeTraining() }
     // La voix se tait dès que l'Académie n'est plus à l'écran (autre onglet, application en arrière-plan).
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { vm.silence() }
     DisposableEffect(vm) { onDispose { vm.silence() } }
@@ -129,13 +134,21 @@ fun AcademyScreen(
     val asking = vm.asking(s)
     val model = l.kind == LessonKind.MODEL_GAME
     // Retour haptique des coups jugés (bon coup, coup équivalent, erreur), y compris après le jugement de l'Ordinateur.
-    LaunchedEffect(s.pulse?.id) { s.pulse?.let { if (it.good) fb?.success() else fb?.error() } }
+    // Les vibrations ne sont jouées qu'au moment de l'événement : en revenant sur l'onglet Académie, la dernière
+    // réussite (ou erreur) déjà signalée n'est pas rejouée (seul reste le petit retour du toucher de l'onglet).
+    val seenPulses = remember { longArrayOf(s.pulse?.id ?: -1, eg?.pulse?.id ?: -1, rx?.pulse?.id ?: -1) }
+    fun buzz(slot: Int, p: Pulse?) {
+        if (p == null || p.id == seenPulses[slot]) return
+        seenPulses[slot] = p.id
+        if (p.good) fb?.success() else fb?.error()
+    }
+    LaunchedEffect(s.pulse?.id) { buzz(0, s.pulse) }
     // Séance lancée depuis le tiroir « Entraînements » : on y revient quand elle se termine.
     val backLabel = if (s.fromDrawer) "Revenir aux entraînements" else "Revenir à la leçon"
     var drawerSeen by remember { mutableIntStateOf(s.drawerReturn) }
     LaunchedEffect(s.drawerReturn) { if (s.drawerReturn != drawerSeen) { drawerSeen = s.drawerReturn; onTrainings(true) } }
-    LaunchedEffect(eg?.pulse?.id) { eg?.pulse?.let { if (it.good) fb?.success() else fb?.error() } }
-    LaunchedEffect(rx?.pulse?.id) { rx?.pulse?.let { if (it.good) fb?.success() else fb?.error() } }
+    LaunchedEffect(eg?.pulse?.id) { buzz(1, eg?.pulse) }
+    LaunchedEffect(rx?.pulse?.id) { buzz(2, rx?.pulse) }
     val endFen = line.positions[cur].takeIf { it.legalMoves.isNotEmpty() }?.toFen()
     // Parties modèles : le camp se choisit avant d'ouvrir le Jeu Libre (Blancs ou Noirs).
     var playChoice by remember { mutableStateOf<String?>(null) }
@@ -372,9 +385,12 @@ fun AcademyScreen(
                 !s.challenge -> {
                     // Progression dans la leçon : chaque coup est cliquable (sur tablette, tableau complet sous le commentaire).
                     val wide = LocalIsTwoPane.current
+                    // Pas de solution en clair : les coups des questions « À vous » encore à résoudre (et la suite) sont masqués.
+                    val ownLine = s.variant == 0
+                    val hiddenFrom = if (!ownLine) Int.MAX_VALUE else l.pauseSteps.filter { it >= cur && it !in s.answered && it < line.size }.minOrNull() ?: Int.MAX_VALUE
                     if (!wide) MoveStrip(
                         line, cur, Modifier.padding(top = 4.dp), onSelect = vm::jump, onPrev = { vm.step(-1) }, onNext = { vm.step(1) },
-                        emptyText = "Les coups de la leçon s'afficheront ici.", firstTurn = 1,
+                        emptyText = "Les coups de la leçon s'afficheront ici.", firstTurn = 1, hiddenFrom = hiddenFrom,
                     )
                     // Dans une leçon, les tours sont numérotés depuis son début, quelle que soit la partie d'origine.
                     val inVariant = s.variant > 0 && cur > l.variants[s.variant - 1].from
@@ -410,7 +426,7 @@ fun AcademyScreen(
                             else -> null
                         },
                     )
-                    if (wide) MoveTable(line, cur, emptyList(), vm::jump, Modifier.padding(top = 6.dp).weight(1f))
+                    if (wide) MoveTable(line, cur, emptyList(), vm::jump, Modifier.padding(top = 6.dp).weight(1f), hiddenFrom = hiddenFrom)
                     EqualRow(Modifier.padding(vertical = 6.dp)) {
                         // Toujours visible : relit ou arrête la voix, ou explique comment l'activer.
                         DuckIconButton(

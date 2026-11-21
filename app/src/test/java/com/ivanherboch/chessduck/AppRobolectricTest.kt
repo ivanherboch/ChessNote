@@ -66,7 +66,13 @@ class AppRobolectricTest {
 
     /** Les réglages (DataStore) survivent d'un test à l'autre : chaque test démarre hors du mode enfant. */
     @Before
-    fun leaveKidMode() = runBlocking { ApplicationProvider.getApplicationContext<ChessDuckApp>().prefs.setKidMode(false) }
+    fun leaveKidMode() = runBlocking {
+        val prefs = ApplicationProvider.getApplicationContext<ChessDuckApp>().prefs
+        prefs.setKidMode(false)
+        // Scénarios écrits pour un élève déjà engagé : leçon « Les trois principes de l'ouverture », palier 2.
+        prefs.setLesson(1)
+        prefs.setAcademyLevel(2)
+    }
 
     /** Ajoute une courte partie terminée à l'historique de l'application (mat du berger). */
     /**
@@ -167,6 +173,7 @@ class AppRobolectricTest {
     @Test
     fun step3Screens() {
         settle(2500)
+        rule.onNodeWithText("Notation").performClick(); settle(1500)
         rule.onNodeWithText("Niveau : Tous").performClick(); settle(500)
         rule.onNodeWithText("Vision des cases (exercice)").performClick(); settle(800); shot("1c_vision")
         rule.onNodeWithText("Vision des cases").assertExists()
@@ -538,12 +545,20 @@ class AppRobolectricTest {
     }
 
     private fun desc(text: String) = rule.onNodeWithContentDescription(text, substring = true)
+
+    /** Ouvre une leçon par la recherche du catalogue (elle s'ouvre en mode Guidé). */
+    private fun openLesson(query: String, title: String) {
+        desc("Ouvrir le catalogue des leçons").performClick(); settle(1000)
+        rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput(query); settle(800)
+        rule.onNodeWithText(title).performClick(); settle(1500)
+    }
     private fun close() = rule.onAllNodesWithContentDescription("Fermer").onLast().performClick()
 
     /** Clavier de Notation : touches assez grandes pour le doigt (hauteurs 44 et 48 dp) sur un téléphone de 360 dp. */
     @Test
     fun notationKeysStayLargeEnough() {
         settle(2500)
+        rule.onNodeWithText("Notation").performClick(); settle(1500)
         val density = rule.activity.resources.displayMetrics.density
         fun size(label: String) = rule.onNodeWithContentDescription(label).fetchSemanticsNode().boundsInRoot.let { it.width / density to it.height / density }
         for (key in listOf("colonne a", "rangée 8", "x, prise", "petit roque")) {
@@ -601,10 +616,14 @@ class AppRobolectricTest {
     @Test
     fun screens() {
         settle(2500)
+        // L'application s'ouvre sur l'Académie ; on commence la visite par la Notation.
+        desc("Ouvrir le catalogue des leçons").assertExists()
+        rule.onNodeWithText("Notation").performClick(); settle(1500)
         shot("1_notation")
         desc("Mémo anglais").performClick(); settle(800); shot("1b_memo")
         close(); settle(800)
-        rule.onNodeWithText("Académie").performClick(); settle(1500); shot("2_academie")
+        rule.onNodeWithText("Académie").performClick(); settle(1500)
+        openLesson("trois principes", "Les trois principes de l'ouverture"); shot("2_academie")
         // Toute leçon a sa fiche (ici une leçon des bases, sans idées ni pièges rédigés) : objectif, règle, moments clés.
         desc("Fiche de la leçon").performClick(); settle(800); shot("2w_fiche_bases")
         rule.onNodeWithText("Les moments clés").performScrollTo().assertExists()
@@ -643,7 +662,9 @@ class AppRobolectricTest {
         desc("Revenir aux entraînements").performClick(); settle(1000)
         close(); settle(800)
         rule.onNodeWithText("Guidé").performClick(); settle(800)
-        desc("Leçon suivante").performClick(); settle(1200) // la partie italienne : variantes et QCM
+        // Après « Les trois principes » vient « Le mat du berger », puis la partie italienne (variantes et QCM).
+        desc("Leçon suivante").performClick(); settle(1200)
+        desc("Leçon suivante").performClick(); settle(1200)
         // Position de départ : résumé seul ; la fiche complète (idées, pièges) s'ouvre dans un tiroir.
         desc("Fiche de la leçon").performClick(); settle(800); shot("2u_fiche")
         rule.onNodeWithText("Les pièges").performScrollTo().assertExists()

@@ -25,7 +25,8 @@ import kotlinx.coroutines.flow.update
 import kotlin.random.Random
 
 /** Réglages en mémoire. */
-class FakeSettings(initial: Settings = Settings()) : SettingsRepository {
+/** Réglages en mémoire. Par défaut, ceux d'un élève déjà engagé (leçon 1, palier 2) : les tests visent la logique. */
+class FakeSettings(initial: Settings = Settings(lessonId = 1, academyLevel = 2)) : SettingsRepository {
     val flow = MutableStateFlow(initial)
     override val settings: Flow<Settings> = flow
     override suspend fun setNotationBest(v: Int) = flow.update { if (v > it.notationBest) it.copy(notationBest = v) else it }

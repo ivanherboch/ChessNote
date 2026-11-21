@@ -71,6 +71,8 @@ fun MoveStrip(
     nextEnabled: Boolean = cursor < line.size,
     emptyText: String = "Les coups de la partie s'afficheront ici.",
     firstTurn: Int = line.positions[0].fullmove,
+    /** Coups masqués à partir de cet indice (questions « À vous » à venir) : « … », ni lus ni cliquables. */
+    hiddenFrom: Int = Int.MAX_VALUE,
 ) {
     val c = LocalDuck.current
     val fb = LocalFeedback.current
@@ -104,12 +106,13 @@ fun MoveStrip(
                     for (i in plies) {
                         val white = line.positions[i].whiteToMove
                         val current = i == cursor - 1
-                        val label = moveLabel(turn, white, line.sans[i])
+                        val hidden = i >= hiddenFrom
+                        val label = if (hidden) "coup masqué, à trouver" else moveLabel(turn, white, line.sans[i])
                         Box(
                             Modifier
                                 .fillMaxHeight()
                                 .then(
-                                    if (onSelect != null) Modifier.clickable(role = Role.Button, onClickLabel = "Aller au coup $label") { fb?.key(); onSelect(i + 1) }
+                                    if (onSelect != null && !hidden) Modifier.clickable(role = Role.Button, onClickLabel = "Aller au coup $label") { fb?.key(); onSelect(i + 1) }
                                     else Modifier,
                                 )
                                 .semantics { selected = current },
@@ -120,7 +123,7 @@ fun MoveStrip(
                                     .padding(horizontal = 6.dp, vertical = 4.dp),
                             ) {
                                 Text(
-                                    line.sans[i], color = if (current) c.goldRole.onFill else if (white) c.text else c.muted,
+                                    if (hidden) "…" else line.sans[i], color = if (current) c.goldRole.onFill else if (white) c.text else c.muted,
                                     style = if (current) MaterialTheme.typography.chessMove else MaterialTheme.typography.labelMedium,
                                     // TalkBack annonce le coup avec son numéro : « 6. O-O ».
                                     modifier = Modifier.clearAndSetSemantics { contentDescription = label },

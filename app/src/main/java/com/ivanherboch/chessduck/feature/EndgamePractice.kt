@@ -260,6 +260,8 @@ data class EndgameSession(
     val start: Position? = null,
     /** Position rejouée pour s'entraîner : son résultat ne compte pas. */
     val replay: Boolean = false,
+    /** Issue du dernier rejeu d'entraînement (null : pas de rejeu terminé). */
+    val replayOk: Boolean? = null,
     val pulse: Pulse? = null,
     /** Coup qu'il fallait jouer à la place du coup perdant (flèche verte quand on reprend le coup). */
     val better: Move? = null,
@@ -318,6 +320,9 @@ class EndgameTrainer(
         show(0)
     }
 
+    /** Ajoute une précision au bilan affiché (par exemple, la date de la prochaine révision). */
+    fun note(text: String) = _state.update { it?.copy(message = it.message + text) }
+
     fun stop() {
         job?.cancel()
         hintJob?.cancel()
@@ -333,7 +338,7 @@ class EndgameTrainer(
         hintJob?.cancel()
         _state.value = s.copy(
             index = index, position = p, start = p, last = null, anim = null, moves = 0, thinking = false, hint = null, hintStage = 0, hinting = false,
-            over = false, evalWhite = null, punish = null, replay = false,
+            over = false, evalWhite = null, punish = null, replay = false, replayOk = null,
             better = null, before = null, beforeMoves = 0,
             tone = Tone.INFO, message = "Position ${index + 1} sur ${s.total} : ${s.family.instruction}\n\nMéthode : ${s.family.method}",
         )
@@ -366,8 +371,13 @@ class EndgameTrainer(
         if (s.index + 1 < s.total) show(s.index + 1)
         else {
             _state.value = s.copy(
-                finished = true, tone = if (s.score >= PASS) Tone.GOOD else Tone.GOLD,
-                message = "${s.score} sur ${s.total} : " + if (s.score >= PASS) "vous maîtrisez cette finale." else "il en faut $PASS pour valider. Relisez la leçon, puis réessayez.",
+                // Seuil : 3 positions sur 5 ; une révision n'en joue qu'une, qu'il suffit de réussir.
+                finished = true, tone = if (s.score >= minOf(PASS, s.total)) Tone.GOOD else Tone.GOLD,
+                message = when {
+                    s.total == 1 -> if (s.score == 1) "Position réussie." else "Position manquée."
+                    s.score >= PASS -> "${s.score} sur ${s.total} : vous maîtrisez cette finale."
+                    else -> "${s.score} sur ${s.total} : il en faut $PASS pour valider. Relisez la leçon, puis réessayez."
+                },
             )
             job = scope.launch { onFinished(s.family, s.score, s.total) }
         }
@@ -500,6 +510,7 @@ class EndgameTrainer(
             }
             s.copy(
                 over = true, thinking = false, results = if (s.replay) s.results else s.results + ok, tone = if (ok) Tone.GOOD else Tone.BAD,
+                replayOk = if (s.replay) ok else null,
                 message = if (s.replay) "$text (entraînement, hors score)" else text, evalWhite = ev, pulse = Pulse(++pulses, ok),
             )
         }
