@@ -1,3 +1,9 @@
+## ChessDuck 3.2.3 — une fiche pour chaque leçon
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- L'icône « i » (fiche de la leçon) est disponible sur toutes les leçons, plus seulement sur les ouvertures et quelques finales. La fiche réunit l'objectif, la règle « À retenir », le thème tactique (son but et un conseil), les moments clés (les coups à trouver aux arrêts « À vous », avec leur explication) et, quand la leçon en a, les conditions, les idées et les pièges.
+
 ## ChessDuck 3.2.2 — des exercices qui disent quoi chercher
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

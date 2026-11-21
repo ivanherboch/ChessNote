@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.moveLabel
+import com.ivanherboch.chessduck.content.PuzzleThemes
 import com.ivanherboch.chessduck.ui.icons.ExpandLess
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.ivanherboch.chessduck.content.LessonKind
@@ -627,10 +629,10 @@ internal fun ChooseColorSheet(fen: String, l: Lesson, onPick: (Boolean) -> Unit,
     }
 }
 
-/** La leçon a-t-elle une fiche détaillée (conditions, idées, pièges) à ouvrir dans un tiroir ? */
-internal fun hasBrief(l: Lesson) = l.conditions.isNotEmpty() || l.ideas.isNotEmpty() || l.traps.isNotEmpty()
-
-/** Fiche de la leçon dans un tiroir : objectif, règle, conditions, idées et pièges (l'échiquier garde toute sa taille). */
+/**
+ * Fiche de la leçon dans un tiroir, pour toutes les leçons : objectif, règle, thème tactique, moments clés (coups des arrêts
+ * « À vous »), et, quand la leçon en a, conditions, idées et pièges. L'échiquier garde toute sa taille.
+ */
 @Composable
 internal fun LessonBriefSheet(l: Lesson, onClose: () -> Unit) {
     val c = LocalDuck.current
@@ -640,6 +642,20 @@ internal fun LessonBriefSheet(l: Lesson, onClose: () -> Unit) {
         Text(l.summary, color = c.text, style = MaterialTheme.typography.bodyMedium)
         SectionTitle("À retenir")
         Text(l.takeaway, color = c.text, style = MaterialTheme.typography.bodyMedium)
+        // Thème tactique de la leçon : son but et le conseil des Problèmes.
+        PuzzleThemes.byKey[l.theme]?.let { t ->
+            SectionTitle("Thème : ${t.name}")
+            Text(t.goal + if (t.tip.isNotEmpty()) " ${t.tip}" else "", color = c.text, style = MaterialTheme.typography.bodyMedium)
+        }
+        // Moments clés : les coups à trouver aux arrêts « À vous », avec leur commentaire.
+        val key = l.pauseSteps.filter { it < l.line.size }.sorted()
+        if (key.isNotEmpty()) {
+            SectionTitle("Les moments clés")
+            for (i in key) {
+                val label = moveLabel(l.line.turnOf(i, first = 1), l.line.positions[i].whiteToMove, l.line.sans[i])
+                Text("• $label : ${l.texts[i]}", color = c.text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 4.dp))
+            }
+        }
         if (l.conditions.isNotEmpty()) {
             SectionTitle("Conditions")
             Text(l.conditions, color = c.text, style = MaterialTheme.typography.bodyMedium)

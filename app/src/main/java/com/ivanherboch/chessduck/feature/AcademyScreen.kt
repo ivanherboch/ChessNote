@@ -205,9 +205,9 @@ fun AcademyScreen(
                 )
                 // Les variantes d'une ouverture se choisissent ici (mode Guidé), sans rangée de plus sous l'échiquier.
                 if (!s.challenge && l.variants.isNotEmpty()) VariantMenu(l, s.variant, vm::setVariant)
-                // Fiche complète (conditions, idées, pièges) et, pour une partie modèle, « Jouer cette position » à chaque
+                // Fiche de la leçon (pour toutes les leçons) et, pour une partie modèle, « Jouer cette position » à chaque
                 // coup : des icônes ici, pour que l'échiquier garde toute sa taille.
-                if (hasBrief(l)) DuckIconButton(Icons.Rounded.Info, "Fiche de la leçon : idées et pièges", { brief = true }, accent = c.blue)
+                DuckIconButton(Icons.Rounded.Info, "Fiche de la leçon", { brief = true }, accent = c.blue)
                 if (modelPlay) DuckIconButton(
                     Icons.Rounded.SportsEsports, "Jouer cette position contre l'Ordinateur, avec le camp de votre choix", { playChoice = endFen }, accent = c.blue,
                 )

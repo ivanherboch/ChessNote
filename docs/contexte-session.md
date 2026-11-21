@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `3.2.2` (`versionCode = 56`), publiée en release GitHub `v3.2.2`.
+- **Version actuelle** : `3.2.3` (`versionCode = 57`), publiée en release GitHub `v3.2.3`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -172,6 +172,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
   mode enfant et paramètres). Interface adulte et commentaires de revue au vouvoiement ; mode enfant au tutoiement.
 - **2.7.0** : refonte de l'Académie, étape 2 sur 3 : finales jouables, réflexes, révisions espacées, paliers,
   placement et examens, variantes, QCM, répertoire, partie modèle et « Devinez le coup ».
+- **3.2.3** : `LessonBriefSheet` pour toutes les leçons (icône « i » toujours présente) : objectif, à retenir, thème (`PuzzleThemes` : but et conseil), moments clés (`pauseSteps` : coup et commentaire), puis conditions, idées, pièges s'il y en a.
 - **3.2.2** : énoncé des séries LESSON/REVIEW (`showPractice`) : thème du problème (`PuzzleThemes.byKey[l.theme]` : nom et but) et rappel « À retenir » de la leçon. Bouton Lecture/Pause : « Pause » aussi quand la voix parle (`speaking`), qui appelle `vm.pause()` (voix suspendue, reprise par `togglePlay`).
 - **3.2.1** : parcours Guidé → Défi garanti : `QuizPanel` et `EndgamePanel` reçoivent `needsChallenge` (leçon non maîtrisée, moins de 2 étoiles, hors révision/répertoire) et proposent « Passer au Défi » au lieu de « Leçon suivante ».
 - **3.2.0** : plan UI/UX Académie (P0-P2). Réfutation partagée `ui/Refutation.kt` (`Refutation(position, last, arrow: Move?)`, `REFUTE_HOLD`, `RefuteCountdown`, `refuteArrow`) + `feature/RefutationLogic.kt` (réponse et texte communs Problèmes/Académie). `Practice` aligné sur les Problèmes (`refute`, `hadError`, `progress`, `retryPractice`, `practiceSolution`, `practiceBack/Forward`). `EndgameSession` : `hintStage`, `evalWhite`, `punish`, `start`/`replay` (`retry()`), `pulse` ; `ReflexSession.pulse`. `ui/SessionHeader.kt` (Académie, Revue, Vision). `AcademyState.sessionFlipped` (`flip()` en séance). `AcademyBoardInfo` + `StepDots` en `overBoard` (rien pour la leçon). `LessonBriefSheet`, `ChooseColorSheet`, `guideHint`, `enableNarration`, `FeedbackCard(busy)`. Convention de couleurs : vert indice/bonne case, rouge erreur/menace, bleu démonstration, `select` sélection, or repère.

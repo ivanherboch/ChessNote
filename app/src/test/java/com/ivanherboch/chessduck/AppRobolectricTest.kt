@@ -532,6 +532,10 @@ class AppRobolectricTest {
         desc("Mémo anglais").performClick(); settle(800); shot("1b_memo")
         close(); settle(800)
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("2_academie")
+        // Toute leçon a sa fiche (ici une leçon des bases, sans idées ni pièges rédigés) : objectif, règle, moments clés.
+        desc("Fiche de la leçon").performClick(); settle(800); shot("2w_fiche_bases")
+        rule.onNodeWithText("Les moments clés").performScrollTo().assertExists()
+        close(); settle(600)
         // Guidé actif : la leçon 1 s'arrête avant le 5e demi-coup et demande « À vous : que jouez-vous ici ? ».
         repeat(4) { desc("Coup suivant").performClick(); settle(500) }
         rule.onNodeWithText(com.ivanherboch.chessduck.feature.ASK).assertExists(); shot("2d_a_vous")
