@@ -1,3 +1,10 @@
+## ChessDuck 3.3.5 — un échiquier qui ne se bloque plus
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- L'Ordinateur démarre dès l'ouverture de l'Académie : le premier coup jugé (Défi, finale) n'attend plus son lancement, pendant lequel l'échiquier semblait bloqué.
+- Après un mauvais coup, pendant que la réfutation est affichée, un simple toucher sur l'échiquier remet la position : on rejoue tout de suite, sans attendre la fin du compte à rebours ni chercher le bouton. Vaut pour le Défi, les séries de problèmes et l'onglet Problèmes.
+
 ## ChessDuck 3.3.4 — des finales enfin jouables
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

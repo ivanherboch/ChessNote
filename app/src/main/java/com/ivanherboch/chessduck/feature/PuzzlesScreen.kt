@@ -156,6 +156,8 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                 arrows = listOfNotNull(refuteArrow(r), if (next != null && s.hintStage >= 2) Arrow(next.from, next.to, c.green) else null),
                 marks = if (next != null && s.hintStage >= 1) listOf(next.from to c.green) else emptyList(),
                 onIllegalTouch = { stuck = GameLogic.whyStuck(pos, it) },
+                // Réfutation affichée : un toucher sur l'échiquier remet tout de suite la position pour rejouer.
+                onSquareTap = if (r != null) { _ -> vm.retry() } else null,
                 onMove = { m ->
                     when (vm.onMove(m)) {
                         2 -> fb?.success()

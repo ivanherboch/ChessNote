@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import kotlinx.coroutines.withTimeoutOrNull
 import com.ivanherboch.chessduck.content.PuzzleThemes
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
@@ -269,6 +270,8 @@ class AcademyViewModel(
     }
 
     init {
+        // Le moteur démarre tout de suite, en tâche de fond : le premier coup jugé (Défi, finale) n'attend pas son lancement.
+        viewModelScope.launch { runCatchingSuspend { withTimeoutOrNull(10_000) { engine.search(com.ivanherboch.chessduck.chess.START_FEN, 50) } } }
         viewModelScope.launch {
             val restoredId = saved.get<Int>(KEY_LESSON)
             val restoredChallenge = saved.get<Boolean>(KEY_CHALLENGE) ?: false

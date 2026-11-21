@@ -24,7 +24,7 @@ class RefutationReply(val reply: Move?, val position: Position, val text: String
  * remplace. Le texte nomme la conséquence : mat, pièce perdue, avantage rendu, égalisation.
  */
 object RefutationLogic {
-    const val AUTO_UNDO = " Le coup sera annulé automatiquement."
+    const val AUTO_UNDO = " Touchez l'échiquier pour rejouer tout de suite (sinon, le coup s'annule seul)."
 
     suspend fun reply(engine: ChessEngine, pos: Position, m: Move, minShow: Long = 650): RefutationReply {
         val t0 = System.currentTimeMillis()

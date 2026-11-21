@@ -317,6 +317,8 @@ fun AcademyScreen(
                         },
                         marks = if (pTurn && pr.hintStage >= 1 && pnext != null) listOf(pnext.from to c.green) else emptyList(),
                         onIllegalTouch = { stuck = GameLogic.whyStuck(ppos, it) },
+                        // Réfutation affichée : un toucher sur l'échiquier remet la position pour rejouer aussitôt.
+                        onSquareTap = if (r != null) { _ -> vm.retryPractice() } else null,
                         onMove = vm::practiceMove,
                     )
                 }
@@ -351,6 +353,8 @@ fun AcademyScreen(
                             else -> emptyList()
                         },
                         onIllegalTouch = { stuck = GameLogic.whyStuck(pos, it) },
+                        // Réfutation affichée : un toucher sur l'échiquier revient au coup manqué pour rejouer aussitôt.
+                        onSquareTap = if (s.refute != null) { _ -> vm.resumeAtMiss() } else null,
                         onMove = { m -> if (s.challenge) vm.challengeMove(m) else vm.guideMove(m) },
                     )
                 }

@@ -92,6 +92,40 @@ class AppRobolectricTest {
         )
     }
 
+    /** Leçon 9 en Défi : chaque coup se joue en touchant la pièce puis sa case d'arrivée, y compris la prise Qxd2. */
+    @Test
+    fun challengeCaptureByTaps() {
+        settle(2500)
+        rule.onNodeWithText("Académie").performClick(); settle(1500)
+        desc("Ouvrir le catalogue des leçons").performClick(); settle(1000)
+        rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("parades"); settle(800)
+        rule.onNodeWithText("L'échec et les parades").performClick(); settle(1500)
+        rule.onNodeWithText("Défi").performClick(); settle(1500)
+        fun cell(name: String) = rule.onNode(
+            androidx.compose.ui.test.SemanticsMatcher("case $name") {
+                it.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.ContentDescription)?.firstOrNull()?.startsWith("$name,") == true
+            },
+            useUnmergedTree = true,
+        )
+        fun play(from: String, to: String) {
+            cell(from).performTouchInput { click() }; settle(300)
+            cell(to).performTouchInput { click() }
+            settle(3500)
+        }
+        play("d2", "d4"); play("c2", "c4"); play("g1", "f3"); play("c1", "d2")
+        shot("2z_defi_avant_prise")
+        // Comme sur la capture signalée : l'indice, puis un toucher sur le fou f1 qui ne peut pas parer l'échec.
+        rule.onNodeWithText("Indice", substring = true).performClick(); settle(800)
+        cell("f1").performTouchInput { click() }; settle(800)
+        cell("d1").performTouchInput { click() }; settle(500)
+        shot("2z_defi_dame_choisie")
+        cell("d2").performTouchInput { click() }; settle(3500)
+        shot("2z_defi_apres_prise")
+        rule.onAllNodesWithText("La dame capture le fou", substring = true).fetchSemanticsNodes().let {
+            assertTrue("la prise Qxd2 doit être acceptée", it.isNotEmpty())
+        }
+    }
+
     /** Finale contre l'Ordinateur : toucher son roi montre ses destinations, puis toucher une destination joue le coup. */
     @Test
     fun endgameKingTapShowsTargets() {
@@ -711,6 +745,7 @@ class AppRobolectricTest {
         shot("3h_theme_masque")
         val mates = com.ivanherboch.chessduck.content.PuzzleThemes.all.filter { it.group == com.ivanherboch.chessduck.content.PuzzleThemes.G_MATE }.map { it.name }
         val seen = HashSet<String>()
+        var shown: List<String> = emptyList()
         repeat(16) {
             // Un problème déjà révélé plus tôt (tirage au hasard) affiche directement son thème : rien à révéler.
             rule.waitUntil(20_000) {
@@ -728,9 +763,10 @@ class AppRobolectricTest {
                     rule.onNodeWithText("Révéler le thème").performClick()
                 }
                 // Le thème affiché doit être celui du nouveau problème (une catégorie de mat), pas l'ancien en cours de remplacement.
-                mates.count { name -> rule.onAllNodesWithText("Type de problème : $name").fetchSemanticsNodes().isNotEmpty() } == 1
+                // Il est lu et retenu ici même : l'écran peut encore évoluer juste après.
+                shown = mates.filter { name -> rule.onAllNodesWithText("Type de problème : $name").fetchSemanticsNodes().isNotEmpty() }
+                shown.size == 1
             }
-            val shown = mates.filter { name -> rule.onAllNodesWithText("Type de problème : $name").fetchSemanticsNodes().isNotEmpty() }
             assertEquals(1, shown.size)
             seen.addAll(shown)
             desc("Problème aléatoire").performClick(); settle(2000)
