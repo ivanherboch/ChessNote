@@ -33,6 +33,11 @@ enum class Verdict {
  *   plus de 12 points.
  */
 class MoveJudge(private val engine: ChessEngine, private val movetimeMs: Int = 250) {
+    /**
+     * Attente maximale d'une réponse, file d'attente comprise : le moteur peut être en train de démarrer ou de finir
+     * une autre analyse (pré-chauffage, indice). Trop courte, elle faisait refuser de bons coups au premier essai.
+     */
+    private val waitMs = maxOf(movetimeMs * 4L + 500, JUDGE_WAIT)
 
     suspend fun judge(position: Position, played: Move, expected: Move, endgame: Boolean): Verdict {
         if (played == expected) return Verdict.EXACT
@@ -57,7 +62,7 @@ class MoveJudge(private val engine: ChessEngine, private val movetimeMs: Int = 2
         // Une recherche MultiPV (4 meilleures suites) suffit le plus souvent : les deux coups y figurent avec des scores
         // comparables. Sinon, la position obtenue après chacun des deux coups est évaluée à part.
         val lines = runCatchingSuspend {
-            withTimeoutOrNull(movetimeMs * 4L + 500) { engine.search(position.toFen(), movetimeMs, multiPv = 4).lines }
+            withTimeoutOrNull(waitMs) { engine.search(position.toFen(), movetimeMs, multiPv = 4).lines }
         }.getOrNull().orEmpty().associate { it.move to it.score }
         val both = played in lines && expected in lines
         val mine = (if (both) lines[played] else score(position.play(played))) ?: return null
@@ -70,12 +75,14 @@ class MoveJudge(private val engine: ChessEngine, private val movetimeMs: Int = 2
         after.isCheckmate -> com.ivanherboch.chessduck.engine.MATE
         after.legalMoves.isEmpty() -> 0 // pat
         else -> runCatchingSuspend {
-            withTimeoutOrNull(movetimeMs * 4L + 500) { engine.search(after.toFen(), movetimeMs).score }
+            withTimeoutOrNull(waitMs) { engine.search(after.toFen(), movetimeMs).score }
         }.getOrNull()?.let { -it }
     }
 
     companion object {
         const val MAX_LOSS = 6.0
+        /** Attente minimale d'un jugement (démarrage du moteur sur un téléphone lent compris). */
+        const val JUDGE_WAIT = 5_000L
 
         /** Règle de comparaison, isolée pour les tests : [mine] et [target] du point de vue du joueur. */
         fun compare(mine: Int, target: Int, endgame: Boolean): Verdict {

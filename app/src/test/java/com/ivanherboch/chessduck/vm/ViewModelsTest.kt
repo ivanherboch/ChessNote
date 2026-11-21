@@ -799,6 +799,29 @@ class ViewModelsTest {
         assertTrue(vm.state.value.message.contains("retrouvez son coup"))
     }
 
+    /** L'Ordinateur ne répond pas (démarrage lent, occupé) : le coup est à rejouer, sans erreur comptée. */
+    @Test
+    fun challengeMoveIsNotCountedWrongWhenTheEngineCannotJudge() = test {
+        val engine = FakeEngine()
+        val vm = academy(engine = engine)
+        advanceUntilIdle()
+        val l = Lessons.byId(1)
+        vm.open(l.id)
+        vm.setChallenge(true)
+        advanceUntilIdle()
+        val pos = l.line.positions[0]
+        val other = pos.legalMoves.first { it != l.line.moves[0] }
+        fun key(p: com.ivanherboch.chessduck.chess.Position) = p.toFen().split(' ').take(4).joinToString(" ")
+        for (p in listOf(pos, pos.play(other), pos.play(l.line.moves[0]))) engine.scripted[key(p)] = null
+        assertFalse(vm.challengeMove(other))
+        advanceUntilIdle()
+        assertEquals(0, vm.state.value.errors)
+        assertFalse(vm.state.value.judging)
+        assertTrue(vm.state.value.message, vm.state.value.message.contains("pas pu juger"))
+        // Le coup de la leçon reste jouable aussitôt.
+        assertTrue(vm.challengeMove(l.line.moves[0]))
+    }
+
     @Test
     fun academyGuidedPausesAskForTheMove() = test {
         val engine = FakeEngine()

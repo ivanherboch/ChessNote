@@ -315,8 +315,10 @@ fun ChessBoard(
                         if (position.isCheckmate) ", échec et mat" else if (position.inCheck) ", échec au roi" else ""
                 }
                 .pointerInput(position, flipped, interactive, onSquareTap) {
-                    val s = size.width / 8f
-                    fun at(o: Offset): Int = BoardGeometry.squareAt(o.x, o.y, s, flipped)
+                    // Taille de case lue à chaque toucher : l'échiquier peut changer de taille sans que ce gestionnaire
+                    // redémarre (message plus long sous l'échiquier, jauge d'évaluation, rotation). Calculée une fois au
+                    // démarrage, elle donnait une case décalée : le toucher tombait sur une case vide et semblait ignoré.
+                    fun at(o: Offset): Int = BoardGeometry.squareAt(o.x, o.y, size.width / 8f, flipped)
                     if (onSquareTap != null) {
                         awaitEachGesture {
                             val down = awaitFirstDown()

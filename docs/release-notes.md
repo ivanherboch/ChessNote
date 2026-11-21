@@ -1,3 +1,14 @@
+## ChessDuck 3.8.2 — plus d'échiquier gelé
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Échiquier gelé corrigé (finales, Défi, exercices, Problèmes, Jeu Libre).
+  - Quand l'échiquier changeait de taille, par exemple pour laisser de la place à un message plus long, les touchers continuaient d'utiliser l'ancienne taille des cases. On touchait sa pièce, l'application « voyait » une case voisine vide, et rien ne se passait.
+  - Le même défaut expliquait que les points des destinations n'apparaissent qu'en touchant ailleurs.
+  - Le seul remède était de quitter l'Académie puis d'y revenir. Ce n'est plus nécessaire.
+- Défi et mode Guidé : si l'Ordinateur ne peut pas juger un coup à temps (démarrage sur un téléphone lent, autre analyse en cours), le coup n'est plus refusé ni compté comme une erreur : il suffit de le rejouer. Il dispose aussi de plus de temps pour juger (5 secondes au lieu de 1,5).
+- « Deviner le coup » (parties modèles) : dans ce même cas, plus de 0 point injuste.
+
 ## ChessDuck 3.8.1 — l'Ordinateur prêt dès l'Académie
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

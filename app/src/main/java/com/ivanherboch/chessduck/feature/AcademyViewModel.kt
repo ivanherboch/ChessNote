@@ -384,6 +384,13 @@ class AcademyViewModel(
                         )
                     }
                 }
+                Verdict.UNAVAILABLE -> _state.update {
+                    // L'Ordinateur n'a pas répondu à temps : le coup n'est pas jugé faux, l'élève le rejoue.
+                    it.copy(
+                        judging = false, tentative = null, anim = undoAnim(pos, m), noteTone = Tone.GOLD,
+                        note = "L'Ordinateur n'a pas pu juger $san à temps : rejouez votre coup.",
+                    )
+                }
                 else -> {
                     pulse(false)
                     _state.update {
@@ -670,11 +677,11 @@ class AcademyViewModel(
                     _state.update { it.copy(judging = false, tentative = null, anim = undoAnim(pos, m)) }
                 }
                 Verdict.UNAVAILABLE -> {
-                    pulse(false)
+                    // L'Ordinateur n'a pas répondu à temps : ce n'est pas la faute de l'élève, aucune erreur n'est comptée.
                     _state.update {
                         it.copy(
-                            judging = false, tentative = null, anim = undoAnim(pos, m), errors = it.errors + 1, tone = Tone.BAD,
-                            message = "${pos.san(m)} n'est pas le coup de la leçon. Réfléchissez à l'idée du thème, ou demandez un indice.",
+                            judging = false, tentative = null, anim = undoAnim(pos, m), tone = Tone.GOLD,
+                            message = "L'Ordinateur n'a pas pu juger ${pos.san(m)} à temps : rejouez votre coup.",
                         )
                     }
                 }
@@ -696,8 +703,17 @@ class AcademyViewModel(
         showTentative(pos, m)
         judgeJob = viewModelScope.launch {
             val loss = judge.loss(pos, m, expected)
+            if (loss == null) {
+                // L'Ordinateur n'a pas répondu à temps : pas de 0 point injuste, le coup est simplement à rejouer.
+                _state.update {
+                    it.copy(
+                        judging = false, tentative = null, anim = undoAnim(pos, m), tone = Tone.GOLD,
+                        message = "L'Ordinateur n'a pas pu juger ${pos.san(m)} à temps : rejouez votre coup.",
+                    )
+                }
+                return@launch
+            }
             val pts = when {
-                loss == null -> 0
                 loss <= MoveJudge.MAX_LOSS -> 2
                 loss <= 15.0 -> 1
                 else -> 0
