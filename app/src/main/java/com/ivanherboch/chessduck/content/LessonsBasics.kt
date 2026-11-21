@@ -212,10 +212,10 @@ internal val BASICS_LESSONS: List<LessonData> = listOf(
         title = "L'échec et mat",
         summary = "Le mat, c'est un échec auquel on ne peut pas répondre : le roi est attaqué et n'a ni case de fuite, ni parade. La partie est alors terminée.",
         heroWhite = true,
-        fen = "7k/8/8/6K1/8/8/8/Q7 w - - 0 1",
-        uci = "g5g6 h8g8 a1a8",
+        fen = "7k/8/8/6K1/8/8/8/1Q6 w - - 0 1",
+        uci = "g5g6 h8g8 b1b8",
         texts = listOf(
-            "Le roi blanc s'approche. Il contrôle maintenant les cases g7 et h7.",
+            "Le roi blanc s'approche. Avec la dame, qui surveille déjà h7, il contrôle maintenant les cases g7 et h7.",
             "Le roi noir n'a plus qu'une seule case.",
             "La dame donne échec sur la huitième rangée. Le roi ne peut ni fuir, ni s'abriter, ni prendre la dame : c'est échec et mat. À retenir : pour mater, il faut attaquer le roi et contrôler toutes les cases autour de lui. Le roi qui attaque aide souvent la dame.",
         ),

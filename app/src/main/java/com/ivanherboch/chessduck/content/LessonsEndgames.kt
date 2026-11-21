@@ -12,8 +12,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         title = "Le mat avec la dame",
         summary = "Pour mater avec une dame, on enferme le roi adverse dans une boîte de plus en plus petite, on approche son propre roi, puis la dame mate au contact.",
         heroWhite = true,
-        fen = "8/8/8/3k4/8/8/8/3QK3 w - - 0 1",
-        uci = "e1e2 d5c6 d1d8 c6b5 d8d6 b5c4 e2d2 c4b3 d6c5 b3a4 c5b6 a4a3 d2c3 a3a4 b6b4",
+        fen = "8/8/8/2k5/8/8/8/3QK3 w - - 0 1",
+        uci = "e1e2 c5c6 d1d8 c6b5 d8d6 b5c4 e2d2 c4b3 d6c5 b3a4 c5b6 a4a3 d2c3 a3a4 b6b4",
         texts = listOf(
             "Le roi noir est au centre. Première idée : le roi blanc vient aider sa dame, car une dame seule ne peut pas mater.",
             "Le roi noir reste au milieu, le plus loin possible des bords.",
@@ -1123,8 +1123,8 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         title = "Le pion passé protégé",
         summary = "Un pion passé protégé par un autre pion n'a pas besoin du roi : le roi est libre d'aller gagner les pions adverses.",
         heroWhite = true,
-        fen = "8/8/2k5/2pP4/2P5/8/4K3/8 w - - 0 1",
-        uci = "e2e3 c6d7 e3f4 d7d6 f4f5 d6d7 f5e5 d7c7 d5d6 c7d7 e5d5 d7d8 d5c5",
+        fen = "8/8/3k4/2pP4/2P5/8/4K3/8 w - - 0 1",
+        uci = "e2e3 d6d7 e3f4 d7d6 f4f5 d6d7 f5e5 d7c7 d5d6 c7d7 e5d5 d7d8 d5c5",
         texts = listOf(
             "Le pion d5 est protégé par le pion c4 : le roi noir ne peut pas le prendre. Le roi blanc part à l'attaque.",
             "Le roi noir reste devant le pion.",

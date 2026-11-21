@@ -1,3 +1,13 @@
+## ChessDuck 3.2.4 — positions de départ corrigées
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Trois leçons partaient d'une position impossible : le roi du camp qui n'avait pas le trait était déjà en échec.
+  - « L'échec et mat » : la dame a1 attaquait déjà le roi h8 par la grande diagonale (d'où un « Kg6+ » incompréhensible). La dame part maintenant de b1 : 1. Kg6 Kg8 2. Qb8#.
+  - « Le mat avec la dame » : la dame d1 et le roi d5 étaient sur la même colonne. Le roi noir part maintenant de c5.
+  - « Le pion passé protégé » : le pion d5 attaquait le roi c6. Le roi noir part maintenant de d6.
+- Un nouveau test vérifie toutes les positions de toutes les leçons (lignes principales et variantes) : aucun camp sans le trait ne peut être en échec.
+
 ## ChessDuck 3.2.3 — une fiche pour chaque leçon
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

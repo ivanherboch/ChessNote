@@ -1,7 +1,7 @@
 # Le mat avec la dame | Pour mater avec une dame, on enferme le roi adverse dans une boîte de plus en plus petite, on approche son propre roi, puis la dame mate au contact. | w | id=76 drill=KQK level=2 order=2076
-FEN: 8/8/8/3k4/8/8/8/3QK3 w - - 0 1
+FEN: 8/8/8/2k5/8/8/8/3QK3 w - - 0 1
 e1e2 : Le roi noir est au centre. Première idée : le roi blanc vient aider sa dame, car une dame seule ne peut pas mater.
-d5c6 : Le roi noir reste au milieu, le plus loin possible des bords.
+c5c6 : Le roi noir reste au milieu, le plus loin possible des bords.
 ?d1d8 : La dame se place à un saut de cavalier du roi noir. C'est la méthode la plus simple : elle l'enferme dans une boîte.
 c6b5 : Le roi noir cherche de l'air vers l'aile dame.
 d8d6 : La dame suit le roi, toujours à un saut de cavalier. La boîte rétrécit.
@@ -526,7 +526,7 @@ Ke4 : Le roi noir s'approche.
 ?f4 : Le pion se met à l'abri. Le pion a ira bientôt à dame. À retenir : un pion passé éloigné détourne le roi adverse. Pendant que le roi le poursuit, l'autre aile est sans défense.
 
 # Le pion passé protégé | Un pion passé protégé par un autre pion n'a pas besoin du roi : le roi est libre d'aller gagner les pions adverses. | w | id=182 level=3 order=3182
-FEN: 8/8/2k5/2pP4/2P5/8/4K3/8 w - - 0 1
+FEN: 8/8/3k4/2pP4/2P5/8/4K3/8 w - - 0 1
 SHOW 0: marks=d5,c4
 ?Ke3 : Le pion d5 est protégé par le pion c4 : le roi noir ne peut pas le prendre. Le roi blanc part à l'attaque.
 Kd7 : Le roi noir reste devant le pion.

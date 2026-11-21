@@ -11,6 +11,22 @@ import org.junit.Test
 
 class LessonsTest {
     @Test
+    fun lessonStartPositionsAreLegal() {
+        // Le camp qui n'a pas le trait ne doit jamais être en échec (position impossible : « Kg6+ » alors que la dame
+        // attaquait déjà le roi). Chaque position de la leçon (ligne principale et variantes) est vérifiée.
+        fun opponentInCheck(p: com.ivanherboch.chessduck.chess.Position): Boolean {
+            val f = p.toFen().split(' ').toMutableList()
+            f[1] = if (f[1] == "w") "b" else "w"
+            f[3] = "-"
+            return com.ivanherboch.chessduck.chess.Position.fromFen(f.joinToString(" ")).inCheck
+        }
+        val bad = Lessons.all.flatMap { l ->
+            (0..l.variants.size).flatMap { v -> l.lineFor(v).positions.withIndex().filter { opponentInCheck(it.value) }.map { "${l.title} (ligne $v, position ${it.index})" } }
+        }
+        assertTrue(bad.joinToString("\n"), bad.isEmpty())
+    }
+
+    @Test
     fun lessonsAreNumberedInCatalogOrder() {
         // Le numéro affiché suit la liste : 1 = la première leçon, sans trou ni doublon.
         assertEquals("L'échiquier et la notation", Lessons.all[0].title)
