@@ -107,6 +107,7 @@ fun AcademyScreen(
     val mastered by vm.mastered.collectAsStateWithLifecycle()
     val progress by vm.progress.collectAsStateWithLifecycle()
     val home by vm.home.collectAsStateWithLifecycle()
+    val variantsDone by vm.variantsDone.collectAsStateWithLifecycle()
     val eg by vm.endgame.state.collectAsStateWithLifecycle()
     val rx by vm.reflex.state.collectAsStateWithLifecycle()
     val narration by vm.narration.collectAsStateWithLifecycle()
@@ -223,8 +224,9 @@ fun AcademyScreen(
                 )
             }
             val tools: @Composable () -> Unit = {
-                // Les variantes d'une ouverture se choisissent ici (mode Guidé), sans rangée de plus sous l'échiquier.
-                if (!s.challenge && l.variants.isNotEmpty()) VariantMenu(l, s.variant, vm::setVariant)
+                // Les variantes d'une ouverture se choisissent ici (Guidé comme Défi), sans rangée de plus sous l'échiquier.
+                // Hors répertoire et révision, qui imposent leur ligne.
+                if (l.variants.isNotEmpty() && s.repertoire == null && s.review == null) VariantMenu(l, s.variant, vm::setVariant, variantsDone)
                 // Fiche de la leçon (pour toutes les leçons) et, pour une partie modèle, « Jouer cette position » à chaque
                 // coup : des icônes ici, pour que l'échiquier garde toute sa taille.
                 DuckIconButton(Icons.Rounded.Info, "Fiche de la leçon", { brief = true }, accent = c.blue)

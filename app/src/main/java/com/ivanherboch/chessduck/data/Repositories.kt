@@ -20,6 +20,7 @@ interface SettingsRepository {
     suspend fun pushRecentPuzzle(id: String)
     /** Mémorise que le thème de ce problème récent était visible quand il a été joué (anti-spoiler levé). */
     suspend fun markThemeKnown(id: String)
+    suspend fun markVariantDone(key: String)
 
     // Réglages globaux (tiroir Paramètres, mode enfant, style des images partagées).
     /** 0 = suivre le système, 1 = Jour, 2 = Nuit. */

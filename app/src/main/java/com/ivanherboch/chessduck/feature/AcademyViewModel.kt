@@ -252,6 +252,9 @@ class AcademyViewModel(
     fun texts(s: AcademyState = state.value): List<String> = Lessons.byId(s.lessonId).textsFor(s.variant)
 
     /** Lecture à voix haute des commentaires du mode Guidé (réglage), et phrase en cours de lecture. */
+    /** Variantes d'ouverture réussies en Défi (« leçon:variante ») : badge ✓ du menu Variantes. */
+    val variantsDone: StateFlow<Set<String>> = prefs.settings.map { it.variantsDone }.distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
     val narration: StateFlow<Boolean> = prefs.settings.map { it.narration }.distinctUntilChanged()
         .onEach { if (!it) narrator.stop() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
@@ -405,10 +408,18 @@ class AcademyViewModel(
         } else narrate()
     }
 
-    /** Choisit la ligne affichée en mode Guidé : 0 = principale, puis les variantes (départ : leur premier coup). */
+    /**
+     * Choisit la ligne : 0 = principale, puis les variantes. En Guidé, on part du premier coup de la variante ;
+     * en Défi, la variante se rejoue depuis le début.
+     */
     fun setVariant(v: Int) {
         val l = lesson
         if (v !in 0..l.variants.size || v == state.value.variant) return
+        if (state.value.challenge) {
+            cancelAll()
+            _state.update { it.copy(variant = v) }
+            return startChallenge()
+        }
         pause()
         val start = if (v == 0) state.value.cursor.coerceAtMost(l.line.size) else l.variants[v - 1].from
         _state.update { it.copy(variant = v, cursor = start, anim = null, note = null, quiz = null) }
@@ -655,6 +666,19 @@ class AcademyViewModel(
         // Séances : révision du jour ou répertoire.
         state.value.repertoire?.let { return repertoireResult(stars >= 2) }
         if (state.value.review != null) return reviewChallengeDone(stars >= 2)
+        if (s.variant > 0) {
+            // Variante d'ouverture : badge de réussite, sans toucher à la maîtrise (qui suit la ligne principale).
+            if (stars >= 2) prefs.markVariantDone("${l.id}:${s.variant}")
+            val left = (1..l.variants.size).count { v -> v != s.variant && "${l.id}:$v" !in variantsDone.value }
+            _state.update {
+                it.copy(
+                    message = it.message + if (stars < 2) "\n\nRejouez cette variante avec au plus une erreur pour la valider."
+                    else if (left > 0) "\n\nVariante validée ! Encore $left variante${if (left > 1) "s" else ""} à travailler dans le menu Variantes."
+                    else "\n\nVariante validée : toutes les variantes de cette ouverture sont réussies !",
+                )
+            }
+            return
+        }
         val v = validation(l)
         val old = lessons.progress(l.id)
         val needed = if (v == Validation.ENDGAME) EndgameTrainer.PASS else PRACTICE_PASS
@@ -705,10 +729,11 @@ class AcademyViewModel(
                     pulse(true)
                     _state.update { it.copy(tone = Tone.GOOD, message = "${pos.san(m)} : bon coup aussi !") }
                     delay(tentativeHold)
+                    // Le Défi teste la mémoire : le coup de la leçon n'est pas montré (flèche réservée à l'indice).
                     _state.update {
                         it.copy(
-                            judging = false, tentative = null, anim = undoAnim(pos, m), suggest = expected, tone = Tone.GOOD,
-                            message = "${pos.san(m)} est aussi bon ! Cette leçon suit une autre ligne : jouez ${ln.sans[s.cursor]}, indiqué par la flèche verte.",
+                            judging = false, tentative = null, anim = undoAnim(pos, m), tone = Tone.GOOD,
+                            message = "${pos.san(m)} est aussi bon ! Mais cette leçon suit une autre ligne : retrouvez son coup, ou demandez un indice.",
                         )
                     }
                 }

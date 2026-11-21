@@ -44,8 +44,8 @@ enum class EndgameGoal { WIN, DRAW }
  * pour gagner (WIN) ou à tenir (DRAW). Le joueur a les Blancs pour gagner, les Noirs pour défendre.
  */
 enum class EndgameFamily(val label: String, val goal: EndgameGoal, val maxMoves: Int, val task: String) {
-    KQK("Roi et dame contre roi", EndgameGoal.WIN, 12, "matez le roi noir"),
-    KRRK("Deux tours contre roi", EndgameGoal.WIN, 8, "matez le roi noir"),
+    KQK("Roi et dame contre roi", EndgameGoal.WIN, 16, "matez le roi noir"),
+    KRRK("Deux tours contre roi", EndgameGoal.WIN, 12, "matez le roi noir"),
     KRK("Roi et tour contre roi", EndgameGoal.WIN, 25, "matez le roi noir"),
     KBBK("Les deux fous", EndgameGoal.WIN, 30, "matez le roi noir"),
     KPK_WIN("Roi et pion contre roi", EndgameGoal.WIN, 20, "menez votre pion à dame"),
@@ -268,6 +268,8 @@ data class EndgameSession(
     /** Position juste avant le coup perdant, et coups déjà joués : « Reprendre le coup » y revient. */
     val before: Position? = null,
     val beforeMoves: Int = 0,
+    /** Positions déjà vues depuis le départ (pièces, trait, roques, prise en passant) : détection de la triple répétition. */
+    val history: List<String> = emptyList(),
 ) {
     val score: Int get() = results.count { it }
     val heroToMove: Boolean get() = position != null && !over && !thinking && position.whiteToMove == family.heroWhite
@@ -339,7 +341,7 @@ class EndgameTrainer(
         _state.value = s.copy(
             index = index, position = p, start = p, last = null, anim = null, moves = 0, thinking = false, hint = null, hintStage = 0, hinting = false,
             over = false, evalWhite = null, punish = null, replay = false, replayOk = null,
-            better = null, before = null, beforeMoves = 0,
+            better = null, before = null, beforeMoves = 0, history = listOf(p.key()),
             tone = Tone.INFO, message = "Position ${index + 1} sur ${s.total} : ${s.family.instruction}\n\nMéthode : ${s.family.method}",
         )
         prepare(p.takeIf { it.whiteToMove == s.family.heroWhite })
@@ -359,6 +361,8 @@ class EndgameTrainer(
             position = back ?: s.start, last = null, anim = null, moves = if (back != null) s.beforeMoves else 0, thinking = false,
             hint = null, hintStage = 0, hinting = false, over = false, evalWhite = null, punish = null, replay = true, tone = Tone.INFO,
             before = null,
+            // Chaque coup de l'élève ajoute deux positions (le sien, puis la réponse) à l'historique.
+            history = if (back != null) s.history.take(1 + 2 * s.beforeMoves) else listOf(s.start.key()),
             message = if (back != null && s.better != null) "Entraînement (hors score) : rejouez ce coup. La flèche verte montre le bon coup. ${s.family.method}"
             else "Entraînement (hors score) : rejouez la position. ${s.family.method}",
         )
@@ -418,7 +422,10 @@ class EndgameTrainer(
         hintJob?.cancel()
         val after = pos.play(m)
         val moves = s.moves + 1
-        _state.value = s.copy(position = after, last = m, anim = moveAnim(pos, m), moves = moves, thinking = true, hint = null, hintStage = 0, hinting = false, better = null)
+        _state.value = s.copy(
+            position = after, last = m, anim = moveAnim(pos, m), moves = moves, thinking = true, hint = null, hintStage = 0, hinting = false, better = null,
+            history = s.history + after.key(),
+        )
         job = scope.launch {
             val f = s.family
             val promoted = m.promo != 0
@@ -426,6 +433,7 @@ class EndgameTrainer(
                 after.isCheckmate -> return@launch end(true, "Échec et mat ! Position gagnée en $moves coup${if (moves > 1) "s" else ""}.")
                 after.legalMoves.isEmpty() -> return@launch if (f.goal == EndgameGoal.WIN) end(false, "Pat ! La partie est nulle : laissez toujours une case au roi adverse.")
                 else end(true, "Pat : la nulle est acquise.")
+                drawRule(after, s.history) != null -> return@launch drawn(drawRule(after, s.history)!!)
                 f.goal == EndgameGoal.DRAW && after.noPawns() -> return@launch pawnGone(after)
                 f == EndgameFamily.KQKP && after.noPawns() -> return@launch end(true, "Le pion est tombé : avec la dame contre le roi seul, le gain est assuré.")
                 f.goal == EndgameGoal.WIN && after.noPawns() && f in PAWN_FAMILIES && !promoted ->
@@ -442,7 +450,7 @@ class EndgameTrainer(
                 // Le coup est annulé et la position reste jouable, sans compter d'échec.
                 _state.update {
                     it?.copy(
-                        position = pos, last = null, anim = undoAnim(pos, m), moves = s.moves, thinking = false, tone = Tone.GOLD,
+                        position = pos, last = null, anim = undoAnim(pos, m), moves = s.moves, thinking = false, tone = Tone.GOLD, history = s.history,
                         message = "L'Ordinateur n'a pas répondu à temps : rejouez votre coup.",
                     )
                 }
@@ -453,12 +461,14 @@ class EndgameTrainer(
             val mine = -res.score!!
             val below = when (f.goal) {
                 EndgameGoal.WIN -> !(isMateScore(mine) && mine > 0) && mine < WIN_CP
-                EndgameGoal.DRAW -> mine < -WIN_CP
+                EndgameGoal.DRAW -> mine < -DRAW_CP
             }
             // Un coup n'est perdant que s'il fait nettement baisser l'évaluation de la position d'avant : si le moteur
-            // sous-estime toute la position (recherche courte sur téléphone), les bons coups ne sont pas refusés.
+            // sous-estime toute la position (recherche courte sur téléphone, ou nulle théorique qu'il croit perdue,
+            // comme la défense Vancura), les bons coups ne sont pas refusés.
             val before = ref?.score
-            val lost = below && (before == null || before - mine >= DROP_CP)
+            val drop = if (f.goal == EndgameGoal.DRAW) DRAW_DROP_CP else DROP_CP
+            val lost = below && (if (before == null) f !in MISJUDGED else before - mine >= drop)
             val ev = if (f.heroWhite) mine else -mine
             if (lost) {
                 // L'Ordinateur montre comment il punit l'erreur (sa réponse, flèche rouge) et quel coup il fallait jouer.
@@ -479,11 +489,13 @@ class EndgameTrainer(
             if (f.goal == EndgameGoal.WIN && promoted) return@launch end(true, "Le pion devient dame et le gain est assuré !", ev)
             delay(450)
             val next = after.play(reply)
-            _state.update { it?.copy(position = next, last = reply, anim = moveAnim(after, reply), thinking = false) }
+            val seen = s.history + after.key()
+            _state.update { it?.copy(position = next, last = reply, anim = moveAnim(after, reply), thinking = false, history = seen + next.key()) }
             when {
                 next.isCheckmate -> end(false, "Échec et mat : l'Ordinateur a gagné.")
                 next.legalMoves.isEmpty() -> end(f.goal == EndgameGoal.DRAW, if (f.goal == EndgameGoal.DRAW) "Pat : la nulle est acquise." else "Pat : la partie est nulle.")
                 f.goal == EndgameGoal.DRAW && next.noPawns() -> pawnGone(next)
+                drawRule(next, seen) != null -> drawn(drawRule(next, seen)!!, ev)
                 f.goal == EndgameGoal.DRAW && moves >= f.maxMoves -> end(true, "Vous avez tenu $moves coups : la nulle est acquise.", ev)
                 f.goal == EndgameGoal.WIN && moves >= f.maxMoves -> end(false, "Trop lent : il fallait conclure en ${f.maxMoves} coups.\n\nMéthode : ${f.method}", ev)
                 else -> {
@@ -518,6 +530,21 @@ class EndgameTrainer(
 
     private var pulses = 0L
 
+    /** Nulle par la règle : triple répétition (échec perpétuel compris) ou 50 coups sans prise ni coup de pion. */
+    private fun drawRule(p: Position, seen: List<String>): String? = when {
+        seen.count { it == p.key() } >= 2 -> "Triple répétition"
+        p.halfmove >= 100 -> "Règle des 50 coups"
+        else -> null
+    }
+
+    private fun drawn(rule: String, evalWhite: Int? = null) {
+        val f = _state.value?.family ?: return
+        if (f.goal == EndgameGoal.DRAW) end(true, "$rule : la nulle est acquise.", 0)
+        else end(false, "$rule : la partie est nulle, le gain s'est envolé.\n\nMéthode : ${f.method}", evalWhite ?: 0)
+    }
+
+    private fun Position.key(): String = toFen().split(' ').take(4).joinToString(" ")
+
     private fun Position.noPawns(): Boolean = (0 until 64).none { pieceType(this[it]) == PAWN }
     private fun Position.onlyKing(white: Boolean): Boolean = (0 until 64).none { this[it] != 0 && isWhite(this[it]) == white && pieceType(this[it]) != KING }
     private fun Position.hasMajor(white: Boolean): Boolean =
@@ -541,6 +568,15 @@ class EndgameTrainer(
         const val WIN_CP = 250
         /** Baisse d'évaluation (centipions) au-delà de laquelle un coup est jugé fautif. */
         const val DROP_CP = 150
+        /** Nulle à tenir : en dessous de cet avantage adverse (centipions), la nulle est menacée… */
+        const val DRAW_CP = 150
+        /** … et la baisse d'évaluation qui rend un coup fautif. */
+        const val DRAW_DROP_CP = 120
+        /**
+         * Nulles théoriques que le moteur embarqué (sans tables de finales) croit perdues : sans évaluation de référence,
+         * le coup n'y est jamais refusé ; seule une nette baisse par rapport à la position d'avant le condamne.
+         */
+        private val MISJUDGED = setOf(EndgameFamily.VANCURA_DRAW, EndgameFamily.PHILIDOR_DRAW, EndgameFamily.QUEEN_BISHOP_PAWN_DRAW)
         /** Attente maximale d'une réponse du moteur (démarrage compris, sur un téléphone lent). */
         const val ENGINE_WAIT = 10_000L
         private val PAWN_FAMILIES = setOf(EndgameFamily.KPK_WIN, EndgameFamily.LUCENA)

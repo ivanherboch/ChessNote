@@ -1,3 +1,15 @@
+## ChessDuck 3.5.0 — audit de l'Académie, lot 2 : un Défi qui teste vraiment, des finales mieux arbitrées
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Défi : un coup aussi bon que celui de la leçon est toujours félicité, sans erreur comptée, mais la flèche verte ne montre plus le coup attendu. Il faut le retrouver de mémoire, ou demander un indice. Les étoiles reflètent ainsi ce que vous avez retenu.
+- Ouvertures : le menu « Variantes » marche aussi en Défi. Chaque variante se rejoue depuis le début, et une variante réussie (au plus une erreur) reçoit une coche verte dans le menu. La maîtrise de la leçon reste fondée sur la ligne principale.
+- Finales contre l'Ordinateur :
+  - La triple répétition et la règle des 50 coups sont reconnues. Un échec perpétuel tient donc la nulle tout de suite ; dans une finale à gagner, répéter la position fait échouer.
+  - Il y a plus de temps pour mater : 16 coups avec roi et dame contre roi (au lieu de 12), 12 coups avec les deux tours (au lieu de 8).
+  - Dans les nulles à tenir, une gaffe est reconnue plus tôt : à partir d'un avantage adverse de 1,5 pion, et d'une baisse de 1,2 pion.
+  - Défense Vancura, Philidor, et dame contre pion fou : l'Ordinateur embarqué croit parfois ces nulles perdues. Un coup n'y est plus refusé sur sa seule évaluation : seule une nette baisse par rapport à la position d'avant le condamne.
+
 ## ChessDuck 3.4.0 — audit de l'Académie, lot 1
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

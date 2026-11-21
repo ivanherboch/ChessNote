@@ -43,6 +43,7 @@ class FakeSettings(initial: Settings = Settings(lessonId = 1, academyLevel = 2))
         it.copy(recentPuzzles = recent, puzzleId = id, knownThemePuzzles = it.knownThemePuzzles.filter { k -> k in recent }.toSet())
     }
     override suspend fun markThemeKnown(id: String) = flow.update { it.copy(knownThemePuzzles = it.knownThemePuzzles + id) }
+    override suspend fun markVariantDone(key: String) = flow.update { it.copy(variantsDone = it.variantsDone + key) }
     override suspend fun setThemeMode(v: Int) = flow.update { it.copy(themeMode = v) }
     override suspend fun setPalette(v: Int) = flow.update { it.copy(palette = v) }
     override suspend fun setBoardTheme(v: Int) = flow.update { it.copy(boardTheme = v) }

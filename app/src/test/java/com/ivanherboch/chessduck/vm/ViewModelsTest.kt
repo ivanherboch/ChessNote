@@ -284,6 +284,14 @@ class ViewModelsTest {
         voice.spoken.clear()
         playChallenge(vm)
         assertTrue(voice.spoken.isEmpty()) // aucune lecture en Défi
+        // Variante réussie en Défi : badge, sans toucher à la maîtrise (qui suit la ligne principale).
+        assertEquals(1, vm.state.value.variant)
+        assertTrue("${italian.id}:1" in prefs.flow.value.variantsDone)
+        assertTrue(vm.state.value.message.contains("Variante validée"))
+        // Le menu Variantes reste actif en Défi : la variante 2 (ou la principale) se rejoue depuis le début.
+        vm.setVariant(if (italian.variants.size > 1) 2 else 0)
+        assertTrue(vm.state.value.challenge)
+        assertFalse(vm.state.value.done)
     }
 
     @Test
@@ -413,6 +421,34 @@ class ViewModelsTest {
         assertTrue(s1.heroToMove)
         assertTrue(s1.message, "rejouez votre coup" in s1.message)
         assertTrue(s1.results.isEmpty())
+        trainer.stop()
+    }
+
+    @Test
+    fun endgameTripleRepetitionEndsThePosition() = test {
+        val engine = FakeEngine()
+        val trainer = com.ivanherboch.chessduck.feature.EndgameTrainer(this, engine, Random(5))
+        trainer.start(com.ivanherboch.chessduck.feature.EndgameFamily.KQK, total = 1)
+        advanceUntilIdle()
+        val p0 = trainer.state.value!!.position!!
+        fun key(p: com.ivanherboch.chessduck.chess.Position) = p.toFen().split(' ').take(4).joinToString(" ")
+        fun quiet(p: com.ivanherboch.chessduck.chess.Position, m: Move) = p.play(m).let { !it.inCheck && it.legalMoves.isNotEmpty() }
+        // Un aller-retour de la dame, auquel le roi noir répond par un aller-retour : la position de départ revient 3 fois.
+        val (m, back, r) = p0.legalMoves.asSequence().filter { quiet(p0, it) }.mapNotNull { m ->
+            val a = p0.play(m)
+            a.legalMoves.firstOrNull { r -> val n = a.play(r); val b = Move(m.to, m.from); n.isLegal(b) && quiet(n, b) && n.play(b).isLegal(Move(r.to, r.from)) }
+                ?.let { r -> Triple(m, Move(m.to, m.from), r) }
+        }.first()
+        val a1 = p0.play(m); val n1 = a1.play(r); val a2 = n1.play(back)
+        engine.scripted[key(a1)] = SearchResult(r, listOf(PvLine(r, 0)))
+        engine.scripted[key(a2)] = SearchResult(Move(r.to, r.from), listOf(PvLine(Move(r.to, r.from), 0)))
+        repeat(2) {
+            trainer.move(m); advanceUntilIdle()
+            trainer.move(back); advanceUntilIdle()
+        }
+        val s = trainer.state.value!!
+        assertTrue(s.message, s.over && "Triple répétition" in s.message)
+        assertEquals(listOf(false), s.results) // il fallait gagner : la nulle est un échec
         trainer.stop()
     }
 
@@ -708,11 +744,11 @@ class ViewModelsTest {
         assertEquals(com.ivanherboch.chessduck.chess.PAWN, com.ivanherboch.chessduck.chess.pieceType(vm.state.value.tentative!!.position[com.ivanherboch.chessduck.chess.sqFromName("d4")]))
         advanceUntilIdle()
         assertNull(vm.state.value.tentative)
-        // … mais aussi bon : pas d'erreur, et rien n'est joué à la place de l'élève. La position revient et une flèche
-        // verte montre le coup de la leçon, que l'élève joue lui-même.
+        // … mais aussi bon : pas d'erreur, et rien n'est joué à la place de l'élève. La position revient, sans flèche :
+        // le Défi teste la mémoire, l'élève retrouve lui-même le coup de la leçon.
         assertEquals(0, vm.state.value.errors)
         assertEquals(0, vm.state.value.cursor)
-        assertEquals(l.line.moves[0], vm.state.value.suggest)
+        assertNull(vm.state.value.suggest)
         assertTrue(vm.state.value.message.contains("aussi bon"))
         assertTrue(vm.challengeMove(l.line.moves[0]))
         advanceUntilIdle()
@@ -739,7 +775,8 @@ class ViewModelsTest {
         advanceUntilIdle()
         assertEquals(0, vm.state.value.cursor) // la tour a1 n'a pas été jouée à la place de l'élève
         assertEquals(0, vm.state.value.errors)
-        assertEquals(l.line.moves[0], vm.state.value.suggest)
+        assertNull(vm.state.value.suggest)
+        assertTrue(vm.state.value.message.contains("retrouvez son coup"))
     }
 
     @Test

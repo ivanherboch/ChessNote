@@ -56,6 +56,8 @@ data class Settings(
     val recentPuzzles: List<String> = emptyList(),
     /** Problèmes récents dont le thème était visible quand ils ont été joués (filtre précis ou thème révélé). */
     val knownThemePuzzles: Set<String> = emptySet(),
+    /** Variantes d'ouverture réussies en Défi (« leçon:variante »). */
+    val variantsDone: Set<String> = emptySet(),
     val pseudo: String = "Joueur",
     /** Second joueur humain du mode 2 joueurs. */
     val pseudo2: String = "Joueur 2",
@@ -103,6 +105,7 @@ class Prefs(private val context: Context) : SettingsRepository {
         val kid = booleanPreferencesKey("kid_mode")
         val recent = stringPreferencesKey("recent_puzzles")
         val knownThemes = stringPreferencesKey("recent_known_themes")
+        val variantsDone = stringPreferencesKey("variants_done")
         val pseudo = stringPreferencesKey("pseudo")
         val pseudo2 = stringPreferencesKey("pseudo2")
         val elo = intPreferencesKey("elo")
@@ -133,6 +136,7 @@ class Prefs(private val context: Context) : SettingsRepository {
             kidMode = p[K.kid] ?: false,
             recentPuzzles = (p[K.recent] ?: "").split(',').filter { it.isNotBlank() },
             knownThemePuzzles = (p[K.knownThemes] ?: "").split(',').filter { it.isNotBlank() }.toSet(),
+            variantsDone = (p[K.variantsDone] ?: "").split(',').filter { it.isNotBlank() }.toSet(),
             pseudo = p[K.pseudo] ?: "Joueur",
             pseudo2 = p[K.pseudo2] ?: "Joueur 2",
             elo = p[K.elo] ?: DEFAULT_ELO,
@@ -182,6 +186,10 @@ class Prefs(private val context: Context) : SettingsRepository {
     override suspend fun markThemeKnown(id: String) { context.store.edit { p ->
         val known = (p[K.knownThemes] ?: "").split(',').filter { it.isNotBlank() }.toMutableSet()
         if (known.add(id)) p[K.knownThemes] = known.joinToString(",")
+    } }
+    override suspend fun markVariantDone(key: String) { context.store.edit { p ->
+        val done = (p[K.variantsDone] ?: "").split(',').filter { it.isNotBlank() }.toMutableSet()
+        if (done.add(key)) p[K.variantsDone] = done.joinToString(",")
     } }
     override suspend fun setPseudo(v: String) { context.store.edit { it[K.pseudo] = v } }
     override suspend fun setPseudo2(v: String) { context.store.edit { it[K.pseudo2] = v } }

@@ -293,7 +293,7 @@ internal fun variantLabel(l: Lesson, v: Int): String {
  * supplémentaire sous l'échiquier.
  */
 @Composable
-internal fun VariantMenu(l: Lesson, selected: Int, onSelect: (Int) -> Unit) {
+internal fun VariantMenu(l: Lesson, selected: Int, onSelect: (Int) -> Unit, done: Set<String> = emptySet()) {
     val c = LocalDuck.current
     var open by remember { mutableStateOf(false) }
     Box {
@@ -306,6 +306,9 @@ internal fun VariantMenu(l: Lesson, selected: Int, onSelect: (Int) -> Unit) {
             for (v in 0..l.variants.size) {
                 DropdownMenuItem(
                     text = { Text(variantLabel(l, v), style = MaterialTheme.typography.bodyMedium, color = c.text) },
+                    trailingIcon = if (v > 0 && "${l.id}:$v" in done) {
+                        { Icon(Icons.Rounded.CheckCircle, contentDescription = "réussie en Défi", tint = c.greenText) }
+                    } else null,
                     onClick = { open = false; onSelect(v) },
                     leadingIcon = { if (v == selected) Icon(Icons.Rounded.Check, contentDescription = "sélectionnée", tint = c.blueText) else Spacer(Modifier.size(24.dp)) },
                 )
