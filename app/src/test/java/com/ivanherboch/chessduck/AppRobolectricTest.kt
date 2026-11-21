@@ -31,7 +31,6 @@ import com.ivanherboch.chessduck.data.DuckDatabase
 import com.ivanherboch.chessduck.data.GameRecord
 import com.ivanherboch.chessduck.data.LessonProgress
 import com.ivanherboch.chessduck.data.PuzzleProgress
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -107,10 +106,19 @@ class AppRobolectricTest {
         shot("2q_pont_academie")
         rule.onNodeWithText("Méthode : le contrôle anti-gaffe", substring = true, useUnmergedTree = true).assertExists()
         rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1500)
-        // Le bilan relit les parties en tâche de fond : on attend qu'il soit publié.
-        rule.waitUntil(30_000) {
-            shadowOf(Looper.getMainLooper()).idle()
-            rule.onAllNodesWithText("Mat permis à l'adversaire", substring = true).fetchSemanticsNodes().isNotEmpty()
+        // Le bilan relit les parties en tâche de fond : on attend qu'il soit publié. S'il tarde (invalidation Room
+        // sous Robolectric), on referme le tiroir plus de 5 s pour que le bilan soit recalculé à la réouverture.
+        fun prioritiesShown(ms: Long) = runCatching {
+            rule.waitUntil(ms) {
+                shadowOf(Looper.getMainLooper()).idle()
+                rule.onAllNodesWithText("Mat permis à l'adversaire", substring = true).fetchSemanticsNodes().isNotEmpty()
+            }
+        }.isSuccess
+        if (!prioritiesShown(15_000)) {
+            shot("2r_priorites_echec")
+            rule.onNodeWithContentDescription("Fermer").performClick(); settle(6000)
+            rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1500)
+            check(prioritiesShown(30_000)) { "Bilan des priorités absent" }
         }
         settle(500); shot("2r_priorites")
         rule.onNodeWithText("Calcul à l'aveugle (palier 5)").performScrollTo().performClick(); settle(1500)
