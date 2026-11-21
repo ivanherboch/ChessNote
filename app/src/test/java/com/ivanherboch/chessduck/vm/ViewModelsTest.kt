@@ -308,6 +308,11 @@ class ViewModelsTest {
         val lost = vm.endgame.state.value!!
         assertTrue(lost.over)
         assertEquals(listOf(false), lost.results)
+        // Le retournement de l'échiquier vaut pour la séance, sans toucher à celui de la leçon.
+        val lessonFlip = vm.state.value.flipped
+        vm.flip()
+        assertTrue(vm.state.value.sessionFlipped)
+        assertEquals(lessonFlip, vm.state.value.flipped)
         // L'Ordinateur joue sa réponse (flèche rouge), la jauge reçoit l'évaluation finale, l'erreur vibre.
         assertNotNull(lost.punish)
         assertEquals(lost.punish, lost.last)
@@ -702,8 +707,30 @@ class ViewModelsTest {
             assertEquals(k, pr.index)
             val line = pr.line!!
             if (k == 0) {
-                vm.practiceMove(line.positions[1].legalMoves.first { it != line.moves[1] && !line.positions[1].play(it).isCheckmate }) // raté : la solution est montrée
+                // Mauvais coup : réfuté (comme dans les Problèmes), puis « Réessayer » ; résolu ensuite, il ne compte pas.
+                vm.practiceMove(line.positions[1].legalMoves.first { it != line.moves[1] && !line.positions[1].play(it).isCheckmate })
+                assertNotNull(vm.state.value.practice!!.refute)
+                assertTrue(vm.state.value.practice!!.hadError)
+                assertFalse(vm.state.value.practice!!.failed)
+                advanceTimeBy(1_000); runCurrent()
+                assertNotNull(vm.state.value.practice!!.refute?.arrow)
+                vm.retryPractice()
+                assertNull(vm.state.value.practice!!.refute)
+                vm.practiceMove(line.moves[1]); advanceUntilIdle()
+                // ‹ et › : revoir le coup joué, puis y revenir (l'échiquier n'accepte un coup qu'au bout de la ligne).
+                val reached = vm.state.value.practice!!.progress
+                vm.practiceBack(); assertEquals(reached - 1, vm.state.value.practice!!.cursor)
+                vm.practiceForward(); assertEquals(reached, vm.state.value.practice!!.cursor)
+                vm.practiceMove(line.moves[3]); advanceUntilIdle()
+                assertTrue(vm.state.value.practice!!.solved)
+                assertEquals(listOf(false), vm.state.value.practice!!.results)
+            } else if (k == 1) {
+                // « Solution » après une erreur : le problème est compté manqué, la flèche montre le coup.
+                vm.practiceMove(line.positions[1].legalMoves.first { it != line.moves[1] && !line.positions[1].play(it).isCheckmate })
+                vm.retryPractice()
+                vm.practiceSolution()
                 assertTrue(vm.state.value.practice!!.failed)
+                assertEquals(listOf(false, false), vm.state.value.practice!!.results)
             } else {
                 vm.practiceMove(line.moves[1]); advanceUntilIdle()
                 vm.practiceMove(line.moves[3]); advanceUntilIdle()
@@ -713,10 +740,10 @@ class ViewModelsTest {
         }
         val pr = vm.state.value.practice!!
         assertTrue(pr.finished)
-        assertEquals(4, pr.score)
-        assertEquals(listOf(l.id), lessons.masteredLessons().first())
-        assertEquals(4, lessons.progress(l.id)?.practicePassed)
-        assertEquals(4, puzzles.solved.value.size)
+        assertEquals(3, pr.score) // erreurs comptées : le seuil de 4 sur 5 reste exigeant
+        assertTrue(lessons.masteredLessons().first().isEmpty())
+        assertEquals(3, lessons.progress(l.id)?.practicePassed)
+        assertEquals(3, puzzles.solved.value.size)
         vm.closePractice()
         assertNull(vm.state.value.practice)
     }

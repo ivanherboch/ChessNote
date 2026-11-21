@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.ui
 
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyColumn
@@ -119,9 +121,9 @@ fun DuckSheet(title: String, onClose: () -> Unit, content: @Composable ColumnSco
  * visibles sont composées ; [content] décrit les éléments avec des clés stables.
  */
 @Composable
-fun DuckLazySheet(title: String, onClose: () -> Unit, content: LazyListScope.() -> Unit) =
+fun DuckLazySheet(title: String, onClose: () -> Unit, state: LazyListState? = null, content: LazyListScope.() -> Unit) =
     DuckSheetFrame(title, onClose) { bottom ->
-        LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(bottom = bottom), content = content)
+        LazyColumn(Modifier.fillMaxWidth(), state = state ?: rememberLazyListState(), contentPadding = PaddingValues(bottom = bottom), content = content)
     }
 
 /**

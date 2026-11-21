@@ -78,6 +78,14 @@ data class Practice(
     val finished: Boolean = false,
     /** Palier concerné (examen). */
     val level: Int = 2,
+    /** Réfutation d'un mauvais coup (comme dans les Problèmes) : position affichée, puis compte à rebours. */
+    val refute: Refutation? = null,
+    val refuteUntil: Long = 0L,
+    val refuteHold: Long = 0L,
+    /** Une erreur a été commise sur ce problème : même résolu ensuite, il ne compte pas. */
+    val hadError: Boolean = false,
+    /** Demi-coups déjà joués du problème (on peut revenir en arrière et avancer jusque-là). */
+    val progress: Int = 0,
 ) {
     val heroWhite: Boolean get() = line?.positions?.get(0)?.whiteToMove == false
     val score: Int get() = results.count { it }
@@ -393,8 +401,15 @@ class AcademyViewModel(
         val t = target.coerceIn(0, ln.size)
         if (t == s.cursor) return
         val anim = LinePlaybackController.transition(ln, s.cursor, t)
-        _state.update { it.copy(cursor = t, anim = anim, note = null, suggest = null) }
+        _state.update { it.copy(cursor = t, anim = anim, note = null, suggest = null, hintStage = if (it.challenge) it.hintStage else 0) }
         narrate()
+    }
+
+    /** Indice pendant un arrêt « À vous » du mode Guidé : la pièce à jouer est surlignée en vert. */
+    fun guideHint() {
+        val s = state.value
+        if (!asking(s) || s.judging) return
+        _state.update { it.copy(hintStage = 1, note = "Indice : la pièce à jouer est surlignée en vert.", noteTone = Tone.GOLD) }
     }
 
     /** Arrêt « À vous » : dévoile le coup de la leçon (bouton suivant ou Lecture) et le marque comme vu. */
@@ -699,8 +714,21 @@ class AcademyViewModel(
                 else -> 0
             }
             pulse(pts > 0)
-            _state.update { it.copy(tone = if (pts > 0) Tone.GOOD else Tone.GOLD, message = "${pos.san(m)} : $pts point${if (pts > 1) "s" else ""}. Le maître a joué ${ln.sans[cur]}.") }
-            delay(tentativeHold)
+            if (pts == 0) {
+                // Coup nettement plus faible : la réponse de l'Ordinateur montre brièvement pourquoi, avant le coup du maître.
+                val after = pos.play(m)
+                val r = RefutationLogic.reply(engine, pos, m, minShow = 0)
+                _state.update {
+                    it.copy(
+                        tentative = Refutation(r.position, r.reply ?: m, r.reply), anim = r.reply?.let { reply -> moveAnim(after, reply) } ?: it.anim,
+                        tone = Tone.GOLD, message = "${pos.san(m)} : 0 point. ${r.text} Le maître a joué ${ln.sans[cur]}.",
+                    )
+                }
+                delay(REFUTE_HOLD / 2)
+            } else {
+                _state.update { it.copy(tone = Tone.GOOD, message = "${pos.san(m)} : $pts point${if (pts > 1) "s" else ""}. Le maître a joué ${ln.sans[cur]}.") }
+                delay(tentativeHold)
+            }
             _state.update { it.copy(judging = false, tentative = null, anim = null, guessScore = it.guessScore + pts, guessMax = it.guessMax + 3) }
             accept(cur, "${pos.san(m)} : $pts point${if (pts > 1) "s" else ""}. Le maître a joué ${ln.sans[cur]} : ${texts()[cur]}")
         }
@@ -880,65 +908,161 @@ class AcademyViewModel(
         _state.update { s ->
             s.copy(
                 practice = s.practice?.copy(
-                    index = index, line = line, cursor = 0, hintStage = 0, failed = false, solved = false, anim = null, tone = Tone.INFO,
+                    index = index, line = line, cursor = 0, progress = 0, hintStage = 0, failed = false, solved = false, anim = null, tone = Tone.INFO,
+                    refute = null, refuteUntil = 0L, hadError = false,
                     message = "Problème ${index + 1} sur ${ids.size} : les $side $goal.",
                 ),
             )
         }
         delay(600)
-        _state.update { s -> s.copy(practice = s.practice?.copy(cursor = 1, anim = moveAnim(line.positions[0], line.moves[0]))) }
+        _state.update { s -> s.copy(practice = s.practice?.copy(cursor = 1, progress = 1, anim = moveAnim(line.positions[0], line.moves[0]))) }
     }
 
-    /** Coup de l'élève dans la série : la solution (ou tout mat immédiat) avance, une autre suite échoue le problème. */
+    /**
+     * Coup de l'élève dans la série, comme dans les Problèmes : la solution (ou tout mat immédiat) avance ; un autre
+     * coup est joué puis réfuté par l'Ordinateur (flèche rouge, compte à rebours) et l'élève réessaie. Un problème
+     * résolu après une erreur, ou avec la flèche de l'indice, ne compte pas : le seuil de validation reste exigeant.
+     */
     fun practiceMove(m: Move) {
         val pr = state.value.practice ?: return
         val line = pr.line ?: return
-        if (pr.failed || pr.solved || pr.cursor >= line.size || line.positions[pr.cursor].whiteToMove != pr.heroWhite) return
+        if (pr.failed || pr.solved || pr.refute != null || pr.cursor != pr.progress || pr.cursor >= line.size ||
+            line.positions[pr.cursor].whiteToMove != pr.heroWhite
+        ) return
         val pos = line.positions[pr.cursor]
         if (!pos.isLegal(m)) return
         val expected = line.moves[pr.cursor]
-        if (m != expected && !pos.play(m).isCheckmate) {
-            pulse(false)
-            _state.update { s ->
-                s.copy(
-                    practice = pr.copy(
-                        failed = true, results = pr.results + false, tone = Tone.BAD,
-                        message = "${pos.san(m)} n'est pas la solution. Le bon coup était ${line.sans[pr.cursor]} : regardez la flèche verte.",
-                    ),
-                )
-            }
-            return
-        }
+        if (m != expected && !pos.play(m).isCheckmate) return refutePractice(pr, pos, m)
         val cur = pr.cursor
         val finished = cur + 1 >= line.size || pos.play(m).isCheckmate
         pulse(true)
         if (finished) {
-            val ok = pr.hintStage < 2
+            val ok = pr.hintStage < 2 && !pr.hadError
             practiceJob = viewModelScope.launch { if (ok) runCatchingSuspend { puzzles.markSolved(pr.ids[pr.index]) } }
             _state.update { s ->
                 s.copy(
                     practice = pr.copy(
-                        cursor = cur + 1, anim = moveAnim(pos, m), solved = true, results = pr.results + ok, tone = if (ok) Tone.GOOD else Tone.GOLD,
+                        cursor = cur + 1, progress = cur + 1, anim = moveAnim(pos, m), solved = true, results = pr.results + ok,
+                        tone = if (ok) Tone.GOOD else Tone.GOLD,
                         line = if (m == expected) line else Line(line.startFen, line.moves.take(cur) + m),
-                        message = if (ok) "Résolu !" else "Résolu, mais avec l'indice qui montre le coup : ce problème ne compte pas.",
+                        message = when {
+                            ok -> "Résolu !"
+                            pr.hadError -> "Résolu, mais après une erreur : ce problème ne compte pas."
+                            else -> "Résolu, mais avec l'indice qui montre le coup : ce problème ne compte pas."
+                        },
                     ),
                 )
             }
             return
         }
-        _state.update { s -> s.copy(practice = pr.copy(cursor = cur + 1, anim = moveAnim(pos, m), hintStage = 0, tone = Tone.GOOD, message = "Bien vu. La suite arrive…")) }
+        _state.update { s -> s.copy(practice = pr.copy(cursor = cur + 1, progress = cur + 1, anim = moveAnim(pos, m), hintStage = 0, tone = Tone.GOOD, message = "Bien vu. La suite arrive…")) }
         practiceJob = viewModelScope.launch {
             delay(600)
             _state.update { s ->
                 val p2 = s.practice ?: return@update s
-                s.copy(practice = p2.copy(cursor = cur + 2, anim = moveAnim(line.positions[cur + 1], line.moves[cur + 1]), message = "L'adversaire répond ${line.sans[cur + 1]} : à vous de continuer."))
+                s.copy(
+                    practice = p2.copy(
+                        cursor = cur + 2, progress = cur + 2, anim = moveAnim(line.positions[cur + 1], line.moves[cur + 1]),
+                        message = "L'adversaire répond ${line.sans[cur + 1]} : à vous de continuer.",
+                    ),
+                )
             }
         }
     }
 
+    /** Mauvais coup pendant une série : joué, réfuté par l'Ordinateur, puis annulé (comme dans les Problèmes). */
+    private fun refutePractice(pr: Practice, pos: Position, m: Move) {
+        pulse(false)
+        val san = pos.san(m)
+        val after = pos.play(m)
+        val opp = if (pos.whiteToMove) "Noirs" else "Blancs"
+        practiceMissed = pos to m
+        _state.update { s ->
+            s.copy(
+                practice = pr.copy(
+                    hadError = true, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m), refute = Refutation(after, m), refuteUntil = 0L, refuteHold = 0L,
+                    message = "$san n'est pas la solution. Regardez la réponse des $opp…",
+                ),
+            )
+        }
+        practiceJob = viewModelScope.launch {
+            val r = RefutationLogic.reply(engine, pos, m)
+            _state.update { s ->
+                val p2 = s.practice?.takeIf { it.refute != null } ?: return@update s
+                s.copy(
+                    practice = p2.copy(
+                        anim = r.reply?.let { reply -> moveAnim(after, reply) } ?: p2.anim, refute = Refutation(r.position, r.reply ?: m, r.reply),
+                        refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD,
+                        message = r.text + " Ce problème ne comptera plus, mais trouvez la solution." + RefutationLogic.AUTO_UNDO,
+                    ),
+                )
+            }
+            delay(REFUTE_HOLD)
+            retryPractice()
+        }
+    }
+
+    /** Mauvais coup de la série en cours de réfutation (position d'avant, coup) : il glisse en arrière au retour. */
+    private var practiceMissed: Pair<Position, Move>? = null
+
+    /** « Réessayer » : annule tout de suite le mauvais coup et revient à la position du problème. */
+    fun retryPractice() {
+        val pr = state.value.practice ?: return
+        if (pr.refute == null) return
+        practiceJob?.cancel()
+        _state.update { s ->
+            s.copy(
+                practice = pr.copy(
+                    refute = null, refuteUntil = 0L, anim = practiceMissed?.let { (p, m) -> undoAnim(p, m) }, tone = Tone.INFO,
+                    message = "Position rétablie : à vous de rejouer. Besoin d'aide ? Indice, ou Solution.",
+                ),
+            )
+        }
+    }
+
+    /** Suspend l'annulation automatique : la réfutation reste affichée jusqu'à « Réessayer ». */
+    fun holdPracticeRefutation() {
+        val pr = state.value.practice ?: return
+        if (pr.refute == null || pr.refuteUntil == 0L) return
+        practiceJob?.cancel()
+        _state.update { s ->
+            s.copy(practice = pr.copy(refuteUntil = 0L, message = pr.message.removeSuffix(RefutationLogic.AUTO_UNDO) + " Prenez votre temps, puis touchez Réessayer."))
+        }
+    }
+
+    /** « Solution » : le problème est compté comme manqué et la flèche verte montre le bon coup. */
+    fun practiceSolution() {
+        val pr = state.value.practice ?: return
+        val line = pr.line ?: return
+        if (pr.failed || pr.solved || pr.refute != null || pr.progress >= line.size) return
+        practiceJob?.cancel()
+        _state.update { s ->
+            s.copy(
+                practice = pr.copy(
+                    failed = true, cursor = pr.progress, results = pr.results + false, tone = Tone.BAD,
+                    message = "Le bon coup était ${line.sans[pr.progress]} : regardez la flèche verte. Ce problème compte comme manqué.",
+                ),
+            )
+        }
+    }
+
+    /** Revient d'un demi-coup dans le problème (pour revoir la solution), ou avance jusqu'au dernier coup joué. */
+    fun practiceBack() = practiceStep(-1)
+    fun practiceForward() = practiceStep(1)
+
+    private fun practiceStep(d: Int) {
+        val pr = state.value.practice ?: return
+        val line = pr.line ?: return
+        if (pr.refute != null) return
+        val to = (pr.cursor + d).coerceIn(0, pr.progress)
+        if (to == pr.cursor) return
+        val anim = if (d > 0) moveAnim(line.positions[pr.cursor], line.moves[pr.cursor]) else undoAnim(line.positions[to], line.moves[to])
+        _state.update { s -> s.copy(practice = pr.copy(cursor = to, anim = anim)) }
+    }
+
     fun practiceHint() {
         val pr = state.value.practice ?: return
-        if (pr.failed || pr.solved || pr.line == null) return
+        if (pr.failed || pr.solved || pr.line == null || pr.refute != null) return
         val stage = (pr.hintStage + 1).coerceAtMost(2)
         _state.update { s ->
             s.copy(
@@ -1080,9 +1204,11 @@ class AcademyViewModel(
      * Suggestions « À faire maintenant » du tiroir (révisions du jour, leçon à reprendre, leçon conseillée autre que
      * celle ouverte) : leur nombre s'affiche sur le bouton « Entraînements » de l'en-tête.
      */
-    val suggestions: StateFlow<Int> = combine(home, state.map { it.lessonId }.distinctUntilChanged()) { h, current ->
+    val suggestions: StateFlow<Int> = combine(home, state.map { it.lessonId }.distinctUntilChanged(), priorities) { h, current, prio ->
         val rec = h.recommended?.takeIf { it != current && it != h.continueId }
-        (if (h.due.isNotEmpty()) 1 else 0) + (if (h.continueId != null) 1 else 0) + (if (rec != null) 1 else 0)
+        // Les priorités du bilan (points faibles à travailler) comptent aussi, sauf la leçon déjà ouverte.
+        (if (h.due.isNotEmpty()) 1 else 0) + (if (h.continueId != null) 1 else 0) + (if (rec != null) 1 else 0) +
+            prio.count { it.lessonId != current }
     }.distinctUntilChanged().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     /** Une séance lancée depuis le tiroir « Entraînements » (ou une révision) est en cours : le bouton est surligné. */

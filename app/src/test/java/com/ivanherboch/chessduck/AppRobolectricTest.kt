@@ -96,7 +96,7 @@ class AppRobolectricTest {
         rule.onNodeWithText("Niveau : Tous").performClick(); settle(500)
         rule.onNodeWithText("Vision des cases (exercice)").performClick(); settle(800); shot("1c_vision")
         rule.onNodeWithText("Vision des cases").assertExists()
-        rule.onNodeWithText("Revenir à la notation").performClick(); settle(800)
+        desc("Revenir à la notation").performClick(); settle(800)
         seedBlunder()
         rule.onNodeWithText("Jeu Libre").performClick(); settle(1500)
         rule.onNodeWithContentDescription("Historique des parties").performClick(); settle(1200)
@@ -547,18 +547,24 @@ class AppRobolectricTest {
         rule.onNodeWithText("Quelle est la menace ?").performClick(); settle(1000)
         rule.waitUntil(20_000) { rule.onAllNodesWithText("Question 1 sur", substring = true).fetchSemanticsNodes().isNotEmpty() }
         settle(500); shot("2h_menace")
-        rule.onNodeWithText("Arrêter").performClick(); settle(600)
+        desc("Revenir à la leçon").performClick(); settle(600)
         rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000)
         rule.onNodeWithText("Puis-je prendre ?").performClick(); settle(1000)
         rule.waitUntil(20_000) { rule.onAllNodesWithText("Oui, je prends").fetchSemanticsNodes().isNotEmpty() }
         settle(500); shot("2i_prise")
         rule.onNodeWithText("Oui, je prends").performClick(); settle(600); shot("2j_prise_reponse")
-        rule.onNodeWithText("Arrêter").performClick(); settle(600)
+        desc("Revenir à la leçon").performClick(); settle(600)
         rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000)
+        rule.onNodeWithText("Finales contre l'Ordinateur", substring = true).performScrollTo().performClick(); settle(500)
         rule.onNodeWithText("Gagnez : Roi et tour contre roi").performScrollTo().performClick(); settle(1500); shot("2k_finale")
-        rule.onNodeWithText("Arrêter").performClick(); settle(600)
+        desc("Retourner l'échiquier").assertExists() // le retournement reste offert pendant une séance
+        desc("Revenir à la leçon").performClick(); settle(600)
         rule.onNodeWithText("Guidé").performClick(); settle(800)
         desc("Leçon suivante").performClick(); settle(1200) // la partie italienne : variantes et QCM
+        // Position de départ : résumé seul ; la fiche complète (idées, pièges) s'ouvre dans un tiroir.
+        rule.onNodeWithText("Fiche complète", substring = true).performClick(); settle(800); shot("2u_fiche")
+        rule.onNodeWithText("Les pièges").performScrollTo().assertExists()
+        close(); settle(600)
         rule.onNodeWithText("Variantes").performClick(); settle(500)
         rule.onNodeWithText("Si 3… Nf6").performClick(); settle(1000); shot("2l_variante")
         desc("Aller à la fin").performClick(); settle(800)
@@ -573,6 +579,10 @@ class AppRobolectricTest {
         rule.onNodeWithText("Parties modèles 0/8").performScrollTo().performClick(); settle(1000)
         rule.onNodeWithText("La partie de l'Opéra : Morphy, Paris 1858").performScrollTo().performClick(); settle(1200)
         rule.onNodeWithText("Devinez le coup").performClick(); settle(1500); shot("2o_devinez")
+        // Partie modèle : « Jouer cette position » à chaque coup, avec le choix du camp.
+        rule.onNodeWithText("Jouer cette position").performClick(); settle(800)
+        rule.onNodeWithText("Jouer avec les Noirs").assertExists(); shot("2v_choix_camp")
+        close(); settle(600)
         rule.onNodeWithText("Guidé").performClick(); settle(800)
         rule.onNodeWithText("Problèmes").performClick(); settle(2500); shot("3_problemes")
         desc("Catalogue des problèmes").performClick(); settle(2000); shot("3b_catalogue")

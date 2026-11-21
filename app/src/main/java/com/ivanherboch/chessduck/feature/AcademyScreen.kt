@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.border
+import com.ivanherboch.chessduck.ui.HintIconButton
 import androidx.compose.foundation.layout.heightIn
 import com.ivanherboch.chessduck.ui.LocalIsTwoPane
 import com.ivanherboch.chessduck.ui.BoardRow
@@ -115,6 +117,7 @@ fun AcademyScreen(
     val line = vm.line(s)
     val texts = vm.texts(s)
     var catalog by remember { mutableStateOf(false) }
+    var brief by remember { mutableStateOf(false) }
     val total = Lessons.all.size
     val cur = s.cursor.coerceIn(0, line.size)
     val stars = progress[l.id]?.stars ?: 0
@@ -126,7 +129,12 @@ fun AcademyScreen(
     LaunchedEffect(eg?.pulse?.id) { eg?.pulse?.let { if (it.good) fb?.success() else fb?.error() } }
     LaunchedEffect(rx?.pulse?.id) { rx?.pulse?.let { if (it.good) fb?.success() else fb?.error() } }
     val endFen = line.positions[cur].takeIf { it.legalMoves.isNotEmpty() }?.toFen()
-    val bridges: @Composable () -> Unit = { LessonBridges(l, endFen, onTrainTheme, onPlayPosition) }
+    // Parties modèles : le camp se choisit avant d'ouvrir le Jeu Libre (Blancs ou Noirs).
+    var playChoice by remember { mutableStateOf<String?>(null) }
+    val play: (String, Boolean) -> Unit = if (model) { fen, _ -> playChoice = fen } else onPlayPosition
+    val bridges: @Composable () -> Unit = { LessonBridges(l, endFen, onTrainTheme, play) }
+    // Partie modèle : « Jouer cette position » à chaque coup (hors jugement et réfutation).
+    val modelPlay: (@Composable () -> Unit)? = if (model && endFen != null && !s.judging && s.refute == null) ({ PlayPositionButton { playChoice = endFen } }) else null
 
     // Explication brève quand on touche une pièce qui ne peut pas bouger ; effacée au coup suivant.
     var stuck by remember(
@@ -143,19 +151,22 @@ fun AcademyScreen(
         top = {
             val session = vm.sessionTitle(s, eg, rx)
             if (session != null) {
-                TrainingHeader(session, vm::closeTraining)
+                TrainingHeader(session, vm::closeTraining, vm::flip)
                 return@ModuleLayout
             }
+            // Défi réussi (2 étoiles ou plus) mais leçon pas encore validée sur problèmes ou contre l'Ordinateur.
+            val toValidate = l.id !in mastered && stars >= 2 && vm.validation(l) != Validation.NONE
             // Sélecteur de leçon : précédente / leçon courante (ouvre le catalogue) / suivante.
             Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Leçon précédente", vm::prevLesson)
                 Column(
-                    Modifier.weight(1f).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
+                    Modifier.weight(1f).heightIn(min = 48.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
+                        .border(1.dp, c.outline, RoundedCornerShape(DuckRadius.M))
                         .clickable(role = Role.Button, onClickLabel = "Ouvrir le catalogue des leçons") { catalog = true }
                         .clearAndSetSemantics {
                             role = Role.Button
                             contentDescription = "Leçon ${Lessons.number(l.id)} : ${l.title}, ${l.category.label}, palier ${levelSpoken(l.level)}" +
-                                (if (l.id in mastered) ", maîtrisée" else "") + (if (stars > 0) ", ${starsText(stars)}" else "") +
+                                (if (l.id in mastered) ", maîtrisée" else if (toValidate) ", Défi réussi, validation restante" else "") + (if (stars > 0) ", ${starsText(stars)}" else "") +
                                 ". ${mastered.size} leçons maîtrisées sur $total. Ouvrir le catalogue des leçons"
                             onClick { catalog = true; true }
                         }
@@ -173,6 +184,7 @@ fun AcademyScreen(
                             maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
                         )
                         if (l.id in mastered) Icon(Icons.Rounded.CheckCircle, "Maîtrisée", tint = c.greenText, modifier = Modifier.padding(start = 6.dp).size(16.dp))
+                        else if (toValidate) Text(" · À valider", color = c.goldText, style = MaterialTheme.typography.labelMedium, maxLines = 1)
                         if (stars > 0) StarRow(stars, Modifier.padding(start = 6.dp), size = 14.dp)
                         Spacer(Modifier.weight(0.01f))
                         Text("${mastered.size}/$total", color = c.goldText, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 8.dp))
@@ -254,17 +266,24 @@ fun AcademyScreen(
                 pr != null -> {
                     val pl = pr.line
                     val pc = pr.cursor.coerceIn(0, pl?.size ?: 0)
-                    val ppos = pl?.positions?.get(pc) ?: line.positions[0]
+                    val r = pr.refute
+                    val ppos = r?.position ?: pl?.positions?.get(pc) ?: line.positions[0]
                     val pnext = if (pl != null && pc < pl.size) pl.moves[pc] else null
-                    val pTurn = pl != null && !pr.failed && !pr.solved && !pr.finished && pc < pl.size && ppos.whiteToMove == pr.heroWhite
+                    val pTurn = pl != null && r == null && !pr.failed && !pr.solved && !pr.finished && pc == pr.progress && pc < pl.size &&
+                        ppos.whiteToMove == pr.heroWhite
+                    val refArrow = refuteArrow(r)
                     ChessBoard(
                         position = ppos,
                         modifier = Modifier.fillMaxSize(),
                         flipped = !pr.heroWhite != s.sessionFlipped,
                         interactive = pTurn,
-                        lastMove = if (pl != null && pc > 0) pl.moves[pc - 1] else null,
+                        lastMove = r?.last ?: if (pl != null && pc > 0) pl.moves[pc - 1] else null,
                         anim = pr.anim,
-                        arrows = if (pnext != null && (pr.failed || (pTurn && pr.hintStage >= 2))) listOf(Arrow(pnext.from, pnext.to, c.green)) else emptyList(),
+                        arrows = when {
+                            refArrow != null -> listOf(refArrow)
+                            pnext != null && (pr.failed || (pTurn && pr.hintStage >= 2)) -> listOf(Arrow(pnext.from, pnext.to, c.green))
+                            else -> emptyList()
+                        },
                         marks = if (pTurn && pr.hintStage >= 1 && pnext != null) listOf(pnext.from to c.green) else emptyList(),
                         onIllegalTouch = { stuck = GameLogic.whyStuck(ppos, it) },
                         onMove = vm::practiceMove,
@@ -296,7 +315,7 @@ fun AcademyScreen(
                             else -> emptyList()
                         },
                         marks = when {
-                            heroTurn && s.hintStage >= 1 && next != null -> listOf(next.from to c.green)
+                            (heroTurn || (asking && !s.judging)) && s.hintStage >= 1 && next != null -> listOf(next.from to c.green)
                             visuals != null -> visuals.marks.map { it to c.gold }
                             else -> emptyList()
                         },
@@ -330,8 +349,9 @@ fun AcademyScreen(
                         inVariant -> l.variants[s.variant - 1].title
                         else -> line.stepTitle(cur, first = 1)
                     }
+                    // Position de départ : le résumé et la règle seulement ; la fiche complète s'ouvre dans un tiroir.
                     val base = if (cur == 0) {
-                        objectiveText(l) + if (asking) "" else "\n\nTouchez Lecture pour dérouler la leçon coup par coup."
+                        l.summary + "\n\nÀ retenir : " + l.takeaway + if (asking) "" else "\n\nTouchez Lecture pour dérouler la leçon coup par coup."
                     } else texts[cur - 1]
                     val text = when {
                         voiceTip != null -> voiceTip!!
@@ -349,7 +369,11 @@ fun AcademyScreen(
                     }
                     FeedbackCard(
                         text, tone, Modifier.padding(top = 4.dp).then(if (wide) Modifier.heightIn(max = 220.dp) else Modifier.weight(1f)), title = title,
-                        action = if (cur == line.size) bridges else null,
+                        action = when {
+                            cur == line.size -> bridges
+                            cur == 0 && hasBrief(l) -> ({ LessonBriefButton(l) { brief = true } })
+                            else -> modelPlay
+                        },
                     )
                     if (wide) MoveTable(line, cur, emptyList(), vm::jump, Modifier.padding(top = 6.dp).weight(1f))
                     EqualRow(Modifier.padding(vertical = 6.dp)) {
@@ -386,7 +410,9 @@ fun AcademyScreen(
                             icon = if (s.playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                             contentDescription = if (asking && !s.playing) "Lecture : découvrir le coup de la leçon et continuer" else null,
                         )
-                        DuckIconButton(Icons.Rounded.SkipNext, "Aller à la fin", vm::last, enabled = cur < line.size)
+                        // Arrêt « À vous » : un indice (la pièce à jouer) avant de découvrir le coup avec Lecture.
+                        if (asking) HintIconButton(s.hintStage, vm::guideHint, enabled = !s.judging && s.hintStage == 0)
+                        else DuckIconButton(Icons.Rounded.SkipNext, "Aller à la fin", vm::last, enabled = cur < line.size)
                     }
                 }
                 else -> {
@@ -398,12 +424,17 @@ fun AcademyScreen(
                     val title = when {
                         s.done && model -> "Partie terminée · ${s.guessScore} points sur ${s.guessMax}"
                         s.done -> "Défi réussi · ${starsText(s.stars)}"
-                        model -> "Devinez le coup des $side · ${s.guessScore} points sur ${s.guessMax}"
-                        else -> "Défi : jouez les $side · coup $turn sur ${line.turnOf(line.size - 1, first = 1)}"
+                        model -> "Devinez le coup des $side · coup $turn sur ${line.turnOf(line.size - 1, first = 1)} · ${s.guessScore} points sur ${s.guessMax}"
+                        else -> "Défi : jouez les $side" + (if (s.variant > 0) " · ${variantLabel(l, s.variant)}" else "") +
+                            " · coup $turn sur ${line.turnOf(line.size - 1, first = 1)}"
                     }
                     FeedbackCard(
                         stuck ?: s.message, if (stuck != null) Tone.GOLD else s.tone, Modifier.padding(top = 4.dp).weight(1f), title = title,
-                        action = if (s.done && s.review == null && s.repertoire == null) bridges else null,
+                        action = when {
+                            s.done && s.review == null && s.repertoire == null -> bridges
+                            !s.done -> modelPlay
+                            else -> null
+                        },
                     )
                     if (s.refute != null && s.refuteUntil > 0) RefuteCountdown(s.refuteUntil, s.refuteHold, vm::holdRefutation)
                     EqualRow(Modifier.padding(vertical = 6.dp)) {
@@ -424,7 +455,12 @@ fun AcademyScreen(
                                 )
                             }
                             s.done -> {
-                                DuckButton("Recommencer", vm::restartChallenge, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt)
+                                DuckIconButton(Icons.Rounded.RestartAlt, "Recommencer le Défi", vm::restartChallenge)
+                                // Relire la leçon en mode Guidé, à la position atteinte (la fin).
+                                DuckButton(
+                                    "Revoir", { vm.setChallenge(false) }, Modifier.weight(1f), icon = Icons.Rounded.Visibility,
+                                    contentDescription = "Revoir les coups de la leçon en mode Guidé",
+                                )
                                 val v = vm.validation(l)
                                 when {
                                     l.id !in mastered && v == Validation.PUZZLES -> DuckButton(
@@ -455,5 +491,7 @@ fun AcademyScreen(
     )
 
     if (catalog) LessonCatalog(vm, s, mastered, catalogStatus, { catalogStatus = it }, catalogLevel, { catalogLevel = it }) { catalog = false }
+    if (brief) LessonBriefSheet(l) { brief = false }
+    playChoice?.let { fen -> ChooseColorSheet(fen, l, { white -> playChoice = null; onPlayPosition(fen, white) }) { playChoice = null } }
     if (trainingsOpen) TrainingsSheet(vm, home, s, eg, rx) { onTrainings(false) }
 }

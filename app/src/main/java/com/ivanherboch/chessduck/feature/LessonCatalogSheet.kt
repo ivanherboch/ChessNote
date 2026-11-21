@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.icons.School
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import com.ivanherboch.chessduck.ui.icons.Tune
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.semantics.heading
@@ -99,7 +103,10 @@ internal fun LessonCatalog(
     val perCategory = remember(mastered) {
         Lessons.categories.associateWith { k -> Lessons.all.count { it.category == k } to Lessons.all.count { it.category == k && it.id in mastered } }
     }
-    DuckLazySheet("Leçons — ${mastered.size} / $total maîtrisées", onClose) {
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val currentIndex = items.indexOfFirst { it.id == s.lessonId }
+    DuckLazySheet("Leçons — ${mastered.size} / $total maîtrisées", onClose, listState) {
         item(key = "filtres") {
             Column {
                 DuckTextField(
@@ -124,17 +131,27 @@ internal fun LessonCatalog(
                     Text(summary, color = c.muted, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     if (active > 0) DuckChip("Effacer", false, { onStatus(0); onLevel(0); vm.setFilter(null) }, icon = Icons.Rounded.Close)
                 }
+                // Raccourci vers la leçon en cours, sans perdre l'accès aux filtres en tête de liste.
+                if (currentIndex >= 0) DuckChip(
+                    "Aller à la leçon en cours (n° ${Lessons.number(s.lessonId)})", false, { scope.launch { listState.animateScrollToItem(currentIndex + 1) } },
+                    Modifier.padding(top = 4.dp), accent = c.gold, icon = Icons.Rounded.School,
+                )
                 if (showFilters) {
                     FilterRow("Statut") {
-                        listOf("Toutes", "À maîtriser", "Maîtrisées", "À revoir").forEachIndexed { i, label -> DuckChip(label, status == i, { onStatus(i) }, accent = c.blue) }
+                        val due = Lessons.all.count { l -> progress[l.id]?.let { vm.srs.isDue(it) } == true }
+                        val counts = listOf(total, total - mastered.size, mastered.size, due)
+                        listOf("Toutes", "À maîtriser", "Maîtrisées", "À revoir").forEachIndexed { i, label ->
+                            DuckChip("$label ${counts[i]}", status == i, { onStatus(i) }, Modifier.semantics { contentDescription = "$label : ${counts[i]} leçons" }, accent = c.blue)
+                        }
                     }
                     FilterRow("Palier") {
                         DuckChip("Tous", level == null, { onLevel(0) }, accent = c.blue)
                         for (lv in 1..5) {
                             val n = Lessons.all.count { it.level == lv }
+                            val m = Lessons.all.count { it.level == lv && it.id in mastered }
                             if (n > 0) DuckChip(
-                                levelName(lv), level == lv, { onLevel(lv) },
-                                Modifier.semantics { contentDescription = "Palier ${levelSpoken(lv)}" }, accent = c.blue,
+                                "${levelName(lv)} $m/$n", level == lv, { onLevel(lv) },
+                                Modifier.semantics { contentDescription = "Palier ${levelSpoken(lv)} : $m leçons maîtrisées sur $n" }, accent = c.blue,
                             )
                         }
                     }
@@ -160,6 +177,8 @@ internal fun LessonCatalog(
             val advised = item.id == home.recommended && !current
             val done = item.id in mastered
             val stars = progress[item.id]?.stars ?: 0
+            // Défi réussi mais leçon pas encore validée (problèmes ou finale contre l'Ordinateur).
+            val toValidate = !done && stars >= 2 && vm.validation(item) != Validation.NONE
             // Révision espacée : « À revoir » aujourd'hui, ou dans combien de jours.
             val days = vm.srs.daysUntil(progress[item.id])
             val srsText = when (days) {
@@ -175,6 +194,7 @@ internal fun LessonCatalog(
                         stateDescription = (if (done) "maîtrisée" else "à maîtriser") +
                             (if (stars > 0) ", $stars étoile${if (stars > 1) "s" else ""} sur 3" else "") + ", palier ${levelSpoken(item.level)}" +
                             (if (srsText != null) ", ${srsText.lowercase()}" else "") + (if (current) ", leçon en cours" else "") +
+                            (if (toValidate) ", validation restante" else "") +
                             if (advised) ", leçon conseillée" else ""
                     }
                     .padding(horizontal = 12.dp, vertical = 10.dp),
@@ -185,10 +205,11 @@ internal fun LessonCatalog(
                     else Text("${Lessons.number(item.id)}", color = c.goldText, style = MaterialTheme.typography.labelLarge)
                 }
                 Column(Modifier.padding(start = 8.dp).weight(1f)) {
-                    if (current || advised || stars > 0 || srsText != null) Row(Modifier.padding(bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (current || advised || stars > 0 || srsText != null || toValidate) Row(Modifier.padding(bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (current) InfoPill("En cours", accent = c.blue, modifier = Modifier.padding(end = 6.dp))
                         if (advised) InfoPill("Conseillée", accent = c.green, modifier = Modifier.padding(end = 6.dp))
                         if (stars > 0) StarRow(stars, size = 14.dp)
+                        if (toValidate) Text("  Validation restante", color = c.goldText, style = MaterialTheme.typography.labelSmall)
                         if (srsText != null) Text("  $srsText", color = if (days == 0) c.goldText else c.muted, style = MaterialTheme.typography.labelSmall)
                     }
                     Text(item.title, color = c.text, style = MaterialTheme.typography.titleSmall)

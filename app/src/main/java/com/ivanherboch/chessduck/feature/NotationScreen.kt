@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.SessionHeader
 import com.ivanherboch.chessduck.chess.BISHOP
 import com.ivanherboch.chessduck.ui.DuckRadius
 import com.ivanherboch.chessduck.chess.ROOK
@@ -274,14 +275,7 @@ private fun VisionLayout(vm: NotationViewModel, v: VisionSession) {
     ModuleLayout(
         bottomMin = 200.dp,
         top = {
-            Row(Modifier.fillMaxWidth().height(52.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.Visibility, contentDescription = null, tint = c.greenText, modifier = Modifier.padding(start = 8.dp))
-                Text(
-                    "Vision des cases", color = c.text, style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(start = 8.dp).weight(1f).semantics { heading() },
-                )
-                DuckButton("Revenir à la notation", vm::closeVision, icon = Icons.Rounded.Close, variant = ButtonVariant.OUTLINED)
-            }
+            SessionHeader("Vision des cases", vm::closeVision, backLabel = "Revenir à la notation")
         },
         board = {
             if (q.kind == VisionKind.COLOR && !v.answered) {
@@ -312,10 +306,7 @@ private fun VisionLayout(vm: NotationViewModel, v: VisionSession) {
             FeedbackCard(v.message, v.tone, Modifier.padding(top = 6.dp).weight(1f), title = "${q.kind.label} · ${v.score} sur ${v.total}")
             EqualRow(Modifier.padding(vertical = 6.dp)) {
                 when {
-                    v.answered -> {
-                        DuckButton("Arrêter", vm::closeVision, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
-                        DuckButton("Question suivante", vm::nextVision, Modifier.weight(1.4f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
-                    }
+                    v.answered -> DuckButton("Question suivante", vm::nextVision, Modifier.weight(1.4f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
                     q.kind == VisionKind.COLOR -> {
                         DuckButton("Claire", { vm.answerColor(true) }, Modifier.weight(1f), accent = c.gold, filled = true, contentDescription = "Case claire")
                         DuckButton("Foncée", { vm.answerColor(false) }, Modifier.weight(1f), accent = c.blue, filled = true, contentDescription = "Case foncée")
@@ -323,7 +314,8 @@ private fun VisionLayout(vm: NotationViewModel, v: VisionSession) {
                     q.kind == VisionKind.KNIGHT -> for (n in 1..4) {
                         DuckButton("$n", { vm.answerKnight(n) }, Modifier.weight(1f), accent = c.blue, contentDescription = "$n saut${if (n > 1) "s" else ""}")
                     }
-                    else -> DuckButton("Arrêter", vm::closeVision, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
+                    // Toucher la case : la réponse se donne sur l'échiquier ; la flèche de l'en-tête quitte l'exercice.
+                    else -> Unit
                 }
             }
         },

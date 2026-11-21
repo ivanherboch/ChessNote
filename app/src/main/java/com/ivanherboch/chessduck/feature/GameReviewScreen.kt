@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.SessionHeader
 import com.ivanherboch.chessduck.ui.WholeOrNothing
 import com.ivanherboch.chessduck.ui.DuckRadius
 import com.ivanherboch.chessduck.ui.chessMove
@@ -105,16 +106,10 @@ internal fun ReviewLayout(vm: GameReviewViewModel, r: Review, onTrainTopic: ((Re
     ModuleLayout(
         bottomMin = 170.dp,
         top = {
-            Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                DuckIconButton(Icons.AutoMirrored.Rounded.ArrowBack, "Quitter la revue", vm::close)
-                Column(Modifier.padding(start = 4.dp).weight(1f)) {
-                    Text(
-                        "Revue : " + if (g.whiteName.isEmpty()) g.opponent.replace("Stockfish", "Ordinateur") else "${g.whiteName} – ${g.blackName}",
-                        color = c.text, style = MaterialTheme.typography.titleSmall,
-                    )
-                    Text("${formatDate(g.date)} · ${g.result} (${g.reason})", color = c.muted, style = MaterialTheme.typography.labelMedium)
-                }
-                DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
+            SessionHeader(
+                "Revue : " + if (g.whiteName.isEmpty()) g.opponent.replace("Stockfish", "Ordinateur") else "${g.whiteName} – ${g.blackName}",
+                vm::close, backLabel = "Quitter la revue", subtitle = "${formatDate(g.date)} · ${g.result} (${g.reason})", onFlip = vm::flip,
+            ) {
                 DuckIconButton(Icons.Rounded.Insights, "Jauge d'évaluation", vm::toggleEval, accent = c.blue, selected = r.evalOn)
             }
         },
