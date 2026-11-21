@@ -1,4 +1,5 @@
 # Le centre de pions | Deux pions côte à côte au centre contrôlent beaucoup de cases. Il faut les soutenir avec ses pièces et ne les avancer qu'au bon moment. | w | id=154 level=4 order=4154
+SHOW 11: marks=d4,e4
 d4 : Les Blancs occupent le centre.
 Nf6 : Le cavalier contrôle la case e4.
 c4 : Les Blancs prennent de l'espace.
@@ -22,6 +23,7 @@ TRAP: Pour vous : un centre adverse avancé trop tôt laisse des cases faibles q
 TRAP: Contre vous : un centre attaqué par des pions et des pièces, sans soutien suffisant, peut s'effondrer.
 
 # Les chaînes de pions | Une chaîne de pions s'attaque à sa base, comme on abat un arbre par le pied. | b | id=155 level=4 order=4155
+SHOW 6: marks=d4,e5 arrows=c5d4
 e4 : Les Blancs occupent le centre.
 e6 : La défense française.
 d4 : Les Blancs prennent tout le centre.
@@ -44,6 +46,7 @@ TRAP: Pour vous : une poussée de pion contre la base d'une chaîne ouvre des li
 TRAP: Contre vous : la base de votre chaîne est sa faiblesse ; gardez assez de pièces pour la défendre.
 
 # Jouer contre le pion isolé | Un pion isolé n'a plus de voisin pour le protéger. Bloquez-le avec une pièce, échangez les pièces, et il deviendra une faiblesse en finale. | w | id=156 level=4 order=4156
+SHOW 19: marks=d5,d4
 d4 : Les Blancs occupent le centre.
 d5 : Les Noirs aussi.
 c4 : Le gambit dame.
@@ -71,6 +74,7 @@ TRAP: Pour vous : une pièce installée devant le pion isolé est à l'abri des 
 TRAP: Contre vous : avec un pion isolé, gardez les pièces et cherchez l'attaque ; en finale, il sera difficile à défendre.
 
 # Les pions pendants | Deux pions voisins sans voisin de chaque côté sont dits pendants. Ils sont forts s'ils peuvent avancer, faibles s'ils sont bloqués. | w | id=157 level=5 order=5157
+SHOW 24: marks=c5,d5
 d4 : Les Blancs occupent le centre.
 d5 : Les Noirs aussi.
 c4 : Le gambit dame.
@@ -106,6 +110,8 @@ TRAP: Pour vous : bloquez les pions pendants adverses et attaquez-les avec vos p
 TRAP: Contre vous : des pions pendants immobiles s'affaiblissent ; préparez leur avance au bon moment.
 
 # Les pions doublés | Deux pions sur la même colonne se protègent mal. En échange, ils ouvrent souvent une colonne et donnent la paire de fous. | w | id=158 level=2 order=2158
+SHOW 8: marks=c6,c5
+SHOW 15: arrows=e3c5
 e4 : Les Blancs occupent le centre.
 c5 : La défense sicilienne.
 Nf3 : Le cavalier se développe.
@@ -129,6 +135,8 @@ TRAP: Pour vous : en finale, des pions doublés adverses empêchent souvent de c
 TRAP: Contre vous : un échange qui double vos pions est acceptable s'il vous donne une colonne ou les deux fous.
 
 # Le pion arriéré et la case faible | Un pion resté en arrière, que ses voisins ne peuvent plus protéger, laisse devant lui une case faible. Une pièce adverse s'y installe pour toujours. | w | id=159 level=5 order=5159
+SHOW 12: marks=d6,d5
+SHOW 19: marks=d5
 e4 : Les Blancs occupent le centre.
 c5 : La défense sicilienne.
 Nf3 : Le cavalier se développe.
@@ -173,6 +181,8 @@ TRAP: Pour vous : un pion passé créé loin du roi adverse l'attire, et votre r
 TRAP: Contre vous : une majorité mal avancée (le mauvais pion en tête) peut se bloquer sans créer de pion passé.
 
 # L'avant-poste | Un avant-poste est une case que les pions adverses ne peuvent plus attaquer. Un cavalier qui s'y installe devient une pièce redoutable. | w | id=161 level=5 order=5161
+SHOW 10: marks=d5
+SHOW 19: marks=d5
 e4 : Les Blancs occupent le centre.
 c5 : La défense sicilienne.
 Nf3 : Le cavalier se développe.
@@ -200,6 +210,8 @@ TRAP: Pour vous : amenez un cavalier sur l'avant-poste, même s'il faut plusieur
 TRAP: Contre vous : échangez le cavalier adverse installé sur un avant-poste, ou évitez de laisser de telles cases.
 
 # Bon fou et mauvais fou | Un fou est mauvais quand ses propres pions bloquent ses diagonales. On cherche à l'activer, à l'échanger, ou à mettre ses pions sur l'autre couleur. | b | id=162 level=3 order=3162
+SHOW 4: marks=c8,d5,e6
+SHOW 16: marks=b7
 d4 : Les Blancs occupent le centre.
 d5 : Les Noirs aussi.
 c4 : Le gambit dame.
@@ -224,6 +236,7 @@ TRAP: Pour vous : échanger votre mauvais fou contre le bon fou adverse amélior
 TRAP: Contre vous : en finale, un mauvais fou contre un bon cavalier ou un bon fou peut perdre.
 
 # La paire de fous | Deux fous ensemble contrôlent des cases des deux couleurs. Ils deviennent très forts quand la position s'ouvre. | b | id=163 level=4 order=4163
+SHOW 8: marks=c8,f8
 e4 : Les Blancs occupent le centre.
 e5 : Les Noirs aussi.
 Nf3 : Le cavalier attaque le pion e5.
@@ -250,6 +263,8 @@ TRAP: Pour vous : en finale ouverte, la paire de fous vaut souvent plus qu'un fo
 TRAP: Contre vous : contre la paire de fous, échangez l'un des fous ou fermez le jeu.
 
 # La colonne ouverte | Une colonne sans pion est une autoroute pour les tours. Le premier qui l'occupe y fait entrer ses tours dans le camp adverse. | w | id=164 level=3 order=3164
+SHOW 6: arrows=c2c7
+SHOW 19: marks=c1
 d4 : Les Blancs occupent le centre.
 d5 : Les Noirs aussi.
 c4 : Le gambit dame.
@@ -278,6 +293,7 @@ TRAP: Contre vous : opposez une tour à la tour adverse sur la colonne, sinon el
 
 # La tour en septième rangée | Une tour sur la septième rangée attaque les pions restés chez eux et enferme le roi adverse. | w | id=165 level=3 order=3165
 FEN: r5k1/pp3ppp/8/8/8/8/PP3PPP/2R3K1 w - - 0 1
+SHOW 1: marks=c7 arrows=c7b7
 ?Rc7 : La tour entre sur la septième rangée. Elle attaque le pion b7.
 Rb8 : La tour noire doit protéger le pion b7 : elle devient passive.
 ?b4 : Le pion gagne de l'espace et empêche les Noirs de se libérer.
@@ -294,6 +310,7 @@ TRAP: Contre vous : chassez ou échangez la tour adverse installée sur votre de
 
 # Le doublement des tours | Deux tours sur la même colonne ou la même rangée se protègent et doublent leur force. | w | id=166 level=4 order=4166
 FEN: r5k1/pp3pp1/2p4p/8/8/6P1/PP3P1P/3R1RK1 w - - 0 1
+SHOW 3: marks=d7,d1 arrows=d1d7
 ?Rd7 : La première tour entre sur la septième rangée.
 b5 : Les Noirs gagnent de l'espace.
 ?Rfd1 : La seconde tour rejoint la colonne d. Les deux tours se protègent.
@@ -307,6 +324,8 @@ TRAP: Pour vous : deux tours doublées gagnent souvent la bataille de la colonne
 TRAP: Contre vous : face à des tours doublées, une seule tour ne peut pas tenir la colonne.
 
 # L'attaque de minorité | Avec deux pions contre trois à l'aile dame, on les avance quand même pour créer une faiblesse chez l'adversaire. | w | id=167 level=5 order=5167
+SHOW 8: marks=a2,b2,a7,b7,c7
+SHOW 23: arrows=b2b4
 d4 : Les Blancs occupent le centre.
 d5 : Les Noirs aussi.
 c4 : Le gambit dame.
@@ -338,6 +357,8 @@ TRAP: Pour vous : l'attaque de minorité donne des cibles durables, même sans g
 TRAP: Contre vous : contre l'attaque de minorité, préparez un contre-jeu ailleurs, souvent au centre ou sur l'autre aile.
 
 # La tempête de pions | Quand les roques sont opposés, on lance ses pions contre le roi adverse sans craindre d'affaiblir le sien. | w | id=168 level=5 order=5168
+SHOW 19: marks=c1,g8
+SHOW 23: arrows=h4h6
 e4 : Les Blancs occupent le centre.
 c5 : La défense sicilienne.
 Nf3 : Le cavalier se développe.
@@ -369,6 +390,8 @@ TRAP: Pour vous : chaque pion qui avance contre le roi adverse ouvre une colonne
 TRAP: Contre vous : un coup lent dans une course de roques opposés peut perdre la partie.
 
 # Le sacrifice de qualité positionnel | On donne une tour contre un fou ou un cavalier, non pour mater, mais pour détruire la structure adverse ou gagner une case. | b | id=169 level=5 order=5169
+SHOW 26: marks=c3
+SHOW 30: marks=a2,c2,c3
 e4 : Les Blancs occupent le centre.
 c5 : La défense sicilienne.
 Nf3 : Le cavalier se développe.
@@ -407,6 +430,7 @@ TRAP: Pour vous : une pièce mineure très active contre une tour sans colonne o
 TRAP: Contre vous : après un sacrifice de qualité adverse, ouvrez des colonnes pour vos tours.
 
 # La prophylaxie | Avant d'attaquer, empêchez le meilleur plan de l'adversaire. Un petit coup préventif peut valoir plus qu'une attaque. | w | id=170 level=4 order=4170
+SHOW 7: marks=b4
 d4 : Les Blancs occupent le centre.
 Nf6 : Le cavalier contrôle la case e4.
 c4 : Les Blancs prennent de l'espace.
@@ -428,6 +452,7 @@ TRAP: Pour vous : un adversaire privé de son plan joue souvent des coups sans b
 TRAP: Contre vous : se lancer à l'attaque sans regarder les menaces adverses peut coûter cher.
 
 # La pire pièce | Quand on ne sait pas quoi jouer, on améliore sa plus mauvaise pièce. Un cavalier mal placé fait parfois un long voyage pour trouver une bonne case. | w | id=171 level=2 order=2171
+SHOW 21: marks=d2 arrows=d2f1,f1g3
 e4 : Les Blancs occupent le centre.
 e5 : Les Noirs aussi.
 Nf3 : Le cavalier attaque le pion e5.

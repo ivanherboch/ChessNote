@@ -12,6 +12,8 @@ TRAP: Pour vous : noter vos parties permet de retrouver le coup où tout a bascu
 TRAP: Contre vous : on confond facilement les cases vues du côté des Noirs ; repérez toujours la case a1, sombre, en bas à gauche des Blancs.
 
 # Le pion | Le pion avance tout droit, d'une case, ou de deux cases lors de son premier coup. Il prend en diagonale, vers l'avant, et ne recule jamais. | w | id=116 level=1 order=1116
+SHOW 0: marks=e3,e4 arrows=e2e4
+SHOW 2: marks=d5 arrows=e4d5
 ?e4 : Lors de son premier coup, un pion peut avancer d'une ou de deux cases. Ce pion avance de deux cases vers le centre.
 d5 : Le pion noir avance lui aussi de deux cases. Il fait face au pion blanc, en diagonale.
 ?exd5 : Le pion prend en diagonale, d'une case vers l'avant : c'est la seule façon dont il capture.
@@ -27,6 +29,8 @@ TRAP: Contre vous : un pion ne recule jamais ; une poussée irréfléchie laisse
 
 # La tour | La tour se déplace en ligne droite, sur les colonnes et les rangées, aussi loin qu'elle le veut tant que le chemin est libre. | w | id=117 level=1 order=1117
 FEN: 6k1/5ppp/8/8/8/8/p4PPP/R5K1 w - - 0 1
+SHOW 0: arrows=a1a2
+SHOW 3: arrows=a8f8
 ?Rxa2 : La tour monte la colonne a et prend le pion a2. Elle prend comme elle se déplace, en ligne droite.
 Kf8 : Le roi noir se rapproche du centre.
 Ra8+ : La tour traverse tout l'échiquier d'un seul coup et donne échec le long de la huitième rangée.
@@ -41,6 +45,7 @@ TRAP: Pour vous : une tour qui entre sur la septième rangée gagne souvent un p
 TRAP: Contre vous : une tour enfermée dans un coin, derrière ses pions, ne participe pas au jeu ; sortez-la par le roque ou une colonne ouverte.
 
 # Le fou | Le fou se déplace en diagonale, aussi loin qu'il le veut. Il reste toute la partie sur des cases de la même couleur. | w | id=118 level=1 order=1118
+SHOW 1: arrows=f1a6
 e4 : Le pion avance et ouvre la diagonale du fou f1.
 e5 : Les Noirs font de même.
 Nf3 : Le cavalier sort et attaque le pion e5.
@@ -57,6 +62,7 @@ TRAP: Pour vous : un fou peut clouer une pièce devant le roi ou la dame adverse
 TRAP: Contre vous : si vos pions sont fixés sur la couleur de votre fou, il devient un « mauvais fou », qui ne fait que les défendre.
 
 # La dame | La dame se déplace comme une tour et comme un fou à la fois. C'est la pièce la plus forte, mais elle ne doit pas sortir trop tôt. | w | id=119 level=1 order=1119
+SHOW 1: arrows=d1h5
 e4 : Le pion ouvre la route à la dame et au fou.
 e5 : Les Noirs répondent au centre.
 Nf3 : Le cavalier sort et attaque le pion e5.
@@ -92,6 +98,7 @@ TRAP: Contre vous : un cavalier au bord de l'échiquier est souvent mal placé (
 
 # Le roi | Le roi se déplace d'une case dans toutes les directions. Il ne peut jamais se placer sur une case attaquée. En finale, il devient une pièce active. | w | id=121 level=1 order=1121
 FEN: 4k3/8/8/8/8/8/4P3/4K3 w - - 0 1
+SHOW 0: marks=d1,d2,f1,f2
 ?Kd2 : Le roi avance d'une case. En finale, il doit marcher devant son pion pour l'escorter.
 Kd7 : Le roi noir s'approche lui aussi.
 Kd3 : Le roi blanc continue. Les deux rois ne peuvent jamais se toucher : il reste toujours une case entre eux.
@@ -107,6 +114,7 @@ TRAP: Contre vous : un roi resté au centre en début de partie s'expose aux att
 
 # La valeur des pièces | Pion 1, cavalier 3, fou 3, tour 5, dame 9. Comptez avant d'échanger : on ne donne pas une pièce forte contre une pièce faible. | w | id=122 level=1 order=1122
 FEN: 6k1/5ppp/4p3/3n4/8/2N5/5PPP/3R2K1 w - - 0 1
+SHOW 0: marks=d5,c3,d1
 ?Nxd5 : Le cavalier prend le cavalier : trois points contre trois points. Prendre avec la tour aurait été une erreur : elle vaut cinq points et le pion e6 l'aurait prise.
 exd5 : Le pion reprend le cavalier. Le matériel est égal.
 Rxd5 : La tour prend le pion d5, qui n'est plus protégé. Les Blancs gagnent un point.
@@ -138,6 +146,7 @@ TRAP: Contre vous : en fuyant un échec sans réfléchir, le roi peut se placer 
 
 # L'échec et mat | Le mat, c'est un échec auquel on ne peut pas répondre : le roi est attaqué et n'a ni case de fuite, ni parade. La partie est alors terminée. | w | id=124 level=1 order=1124
 FEN: 7k/8/8/6K1/8/8/8/1Q6 w - - 0 1
+SHOW 1: marks=g7,h7
 ?Kg6 : Le roi blanc s'approche. Avec la dame, qui surveille déjà h7, il contrôle maintenant les cases g7 et h7.
 Kg8 : Le roi noir n'a plus qu'une seule case.
 ?Qb8# : La dame donne échec sur la huitième rangée. Le roi ne peut ni fuir, ni s'abriter, ni prendre la dame : c'est échec et mat. À retenir : pour mater, il faut attaquer le roi et contrôler toutes les cases autour de lui. Le roi qui attaque aide souvent la dame.
@@ -161,6 +170,7 @@ TRAP: Contre vous : avec une dame de plus, un coup trop pressé qui enferme le r
 
 # Les autres nulles | Une partie est nulle par pat, par accord, par triple répétition, par la règle des cinquante coups, ou quand il ne reste pas assez de matériel pour mater. | b | id=126 level=1 order=1126
 FEN: 8/8/8/4k3/4P3/8/8/N3K3 b - - 0 1
+SHOW 0: marks=e4
 ?Kxe4 : Le roi prend le dernier pion. Il ne reste aux Blancs qu'un roi et un cavalier : c'est trop peu pour mater. La partie est nulle par manque de matériel.
 Nb3 : Les Blancs peuvent encore jouer, mais ne pourront jamais gagner.
 Kd3 : Le roi noir se promène. Un roi seul, un roi et un fou, ou un roi et un cavalier ne peuvent pas mater. À retenir : il y a aussi nulle si la même position revient trois fois, ou après cinquante coups de chaque camp sans prise ni mouvement de pion.
@@ -188,6 +198,7 @@ TRAP: Pour vous : un échec qui force le roi adverse à bouger lui retire à jam
 TRAP: Contre vous : après le roque, pousser les pions devant votre roi ouvre des brèches pour l'attaque adverse.
 
 # La règle de la prise en passant | Un pion qui avance de deux cases et se retrouve à côté d'un pion adverse peut être pris en passant, comme s'il n'avait avancé que d'une case. | w | id=128 level=1 order=1128
+SHOW 4: marks=e6 arrows=d5e6
 d4 : Le pion blanc avance de deux cases.
 Nf6 : Le cavalier noir se développe.
 d5 : Le pion arrive en d5, sur la cinquième rangée.
@@ -203,6 +214,7 @@ TRAP: Contre vous : en avançant un pion de deux cases, vérifiez qu'il ne se fa
 
 # La promotion | Un pion qui atteint la dernière rangée se transforme en dame, en tour, en fou ou en cavalier, au choix. Presque toujours, on choisit la dame. | w | id=129 level=1 order=1129
 FEN: 8/8/4P3/8/8/8/k7/4K3 w - - 0 1
+SHOW 0: marks=e8 arrows=e6e8
 ?e7 : Le pion avance. Le roi noir est trop loin pour l'arrêter.
 Kb3 : Le roi noir tente de revenir.
 ?e8=Q : Le pion atteint la huitième rangée et devient une dame. Les Blancs ont maintenant une dame contre un roi seul.
@@ -216,6 +228,7 @@ TRAP: Contre vous : une dame promue sans réfléchir peut mettre le roi adverse 
 
 # La guerre des pions | Avec seulement des pions, le premier qui va à dame gagne. Ce petit jeu apprend à compter les coups et à créer un pion passé. | w | id=130 level=1 order=1130 drill=PAWN_WAR
 FEN: 4k3/ppp5/8/8/8/8/PPP5/4K3 w - - 0 1
+SHOW 0: marks=a2,b2,c2
 ?b4 : Le pion b avance de deux cases. Les Blancs avancent leurs pions ensemble pour qu'ils se protègent.
 Kd7 : Le roi noir se dirige vers les pions.
 a4 : Les pions a et b avancent côte à côte.

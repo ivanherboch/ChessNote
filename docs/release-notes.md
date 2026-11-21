@@ -1,3 +1,16 @@
+## ChessDuck 3.7.0 — audit de l'Académie, lot 4 : la partie accompagnée et des repères sur l'échiquier
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Partie accompagnée : dans « Jouer cette position », l'Ordinateur vérifie chacun de vos coups. Avant une grosse erreur (2 pions ou plus), il arrête le coup, deux fois au plus par partie.
+  - Il vous pose la question réflexe qui convient (quelle prise, quel échec, quel mat laissez-vous ?), sans dévoiler la réponse.
+  - Vous changez de coup, ou vous le jouez quand même.
+  - Le bouton à la toque (en haut) active ou coupe ce mode.
+- Repères sur l'échiquier en mode Guidé : 80 schémas au lieu de 20. Ils montrent les concepts d'un coup d'œil, sans alourdir le texte :
+  - les déplacements des pièces, la prise en passant et la promotion ;
+  - les cases clés, le carré du pion, les murs du mat, l'opposition, le coin de la mauvaise couleur ;
+  - les avant-postes, les cases faibles, les pions doublés, isolés ou pendants, les colonnes ouvertes et la septième rangée.
+
 ## ChessDuck 3.6.0 — audit de l'Académie, lot 3 : plus de pratique, un suivi plus juste
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

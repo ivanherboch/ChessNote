@@ -1,5 +1,6 @@
 # Le mat avec la dame | Pour mater avec une dame, on enferme le roi adverse dans une boîte de plus en plus petite, on approche son propre roi, puis la dame mate au contact. | w | id=76 drill=KQK level=2 order=2076
 FEN: 8/8/8/2k5/8/8/8/3QK3 w - - 0 1
+SHOW 3: marks=d8,c6
 e1e2 : Le roi noir est au centre. Première idée : le roi blanc vient aider sa dame, car une dame seule ne peut pas mater.
 c5c6 : Le roi noir reste au milieu, le plus loin possible des bords.
 ?d1d8 : La dame se place à un saut de cavalier du roi noir. C'est la méthode la plus simple : elle l'enferme dans une boîte.
@@ -23,6 +24,8 @@ TRAP: Contre vous : une dame qui enferme trop le roi sans échec donne le pat ; 
 
 # Le mat avec deux tours : l'escalier | Les deux tours avancent chacune à son tour, comme on monte un escalier, et repoussent le roi jusqu'au bord. | w | id=77 drill=KRRK level=2 order=2077
 FEN: 8/8/8/3k4/8/8/8/R3K2R w - - 0 1
+SHOW 1: arrows=a5h5
+SHOW 3: arrows=h6a6
 a1a5 : Le roi noir est au centre. Première marche : une tour donne échec sur la cinquième rangée, le roi doit monter.
 d5c6 : Le roi recule en sixième rangée.
 h1h6 : Deuxième marche : l'autre tour donne échec sur la sixième rangée.
@@ -40,6 +43,7 @@ TRAP: Contre vous : si le roi adverse s'approche d'une tour, éloignez-la sur l'
 
 # Le mat avec une tour | Avec une seule tour, il faut l'aide du roi : la tour construit une boîte de plus en plus petite, le roi pousse, et l'on mate sur le bord. | w | id=78 drill=KRK level=2 order=2078
 FEN: 8/8/3k4/8/3K4/8/8/4R3 w - - 0 1
+SHOW 3: arrows=d1d8
 d4c4 : Le roi noir est près du centre. Le roi blanc se place à côté de lui pour le pousser vers l'aile dame.
 d6c6 : Le roi noir reste en face du roi blanc.
 ?e1d1 : La tour coupe la colonne d : le roi noir ne peut plus aller vers l'aile roi. C'est la première paroi de la boîte.
@@ -65,6 +69,7 @@ TRAP: Contre vous : une tour trop près du roi adverse se fait attaquer ; gardez
 
 # Le mat avec les deux fous | Les deux fous, côte à côte, forment un mur. Avec l'aide de leur roi, ils poussent le roi adverse dans un coin. | w | id=79 drill=KBBK level=4 order=4079
 FEN: 8/8/3k4/8/4K3/4BB2/8/8 w - - 0 1
+SHOW 0: arrows=e3a7,f3a8
 e4f5 : Le roi noir est au centre. Les deux fous côte à côte forment une barrière, et le roi blanc avance pour les soutenir.
 d6e7 : Le roi noir s'éloigne.
 f5e5 : Le roi blanc s'installe au centre, en face du roi noir.
@@ -98,6 +103,7 @@ TRAP: Contre vous : le pat menace souvent dans le coin ; laissez une case au roi
 
 # Attention au pat ! | Quand on a beaucoup d'avance, le seul danger est le pat. Le roi adverse doit toujours garder au moins un coup légal. | w | id=80 level=2 order=2080
 FEN: 7k/8/5K2/8/8/8/8/6Q1 w - - 0 1
+SHOW 0: marks=g6
 ?Kf7 : Attention : si la dame allait en g6, le roi noir n'aurait plus aucun coup sans être en échec. Ce serait pat, et donc nulle. On approche plutôt le roi, en laissant la case h7.
 Kh7 : Le roi noir utilise la seule case qui lui reste.
 Qg7# : La dame mate, protégée par le roi. À retenir : avant chaque coup, demandez-vous si l'adversaire aura encore un coup légal.
@@ -125,6 +131,7 @@ TRAP: Contre vous : un pion sur sa case de départ peut avancer de deux cases ; 
 
 # La règle du carré : le roi rattrape le pion | Si le roi peut entrer dans le carré du pion, il arrivera à temps pour l'arrêter. | b | id=82 level=2 order=2082
 FEN: 8/8/8/8/P4k2/8/8/7K b - - 0 1
+SHOW 0: marks=a4,e4,a8,e8
 ?Ke5 : Le carré du pion a4 va de a4 jusqu'à e8. En allant en e5, le roi noir entre dans ce carré : il rattrapera le pion.
 a5 : Le pion avance, et le carré devient plus petit.
 Kd6 : Le roi reste dans le carré en avançant en diagonale.
@@ -143,6 +150,7 @@ TRAP: Contre vous : si une pièce bloque le chemin du roi, la règle du carré n
 # Le roi en 6e rangée devant son pion | Voici la position gagnante à connaître : le roi devant son pion, sur la sixième rangée. Elle gagne même si c'est à l'adversaire de jouer. | w | id=83 theme=pawnEndgame drill=KPK_WIN level=2 order=2083
 CONDITIONS: Le roi du camp fort est devant son pion, sur la sixième rangée, et le pion n'est pas sur une colonne de tour. La position gagne, même si c'est à l'adversaire de jouer.
 FEN: 4k3/8/4K3/4P3/8/8/8/8 w - - 0 1
+SHOW 0: marks=e6
 ?Kd6 : Le roi blanc est sur la sixième rangée, devant son pion : c'est gagné. Il s'écarte pour laisser avancer le pion.
 Kd8 : Le roi noir se place en face du roi blanc, mais ici cela ne suffit pas.
 e6 : Le pion avance, protégé par son roi.
@@ -160,6 +168,7 @@ TRAP: Contre vous : un pion tour fait exception ; le défenseur dans le coin fai
 
 # Le roi d'abord, le pion ensuite | Dans une finale roi et pion, on avance d'abord le roi devant son pion. Le pion n'avance que quand la route est sûre. | w | id=84 theme=pawnEndgame drill=KPK_WIN level=2 order=2084
 FEN: 4k3/8/8/8/8/8/4P3/4K3 w - - 0 1
+SHOW 0: marks=d4,e4,f4
 ?Kd2 : Ne poussez pas le pion tout de suite ! C'est le roi qui doit marcher devant pour lui ouvrir la route.
 Kd7 : Le roi noir vient à sa rencontre.
 Kd3 : Le roi blanc continue d'avancer, toujours devant son pion.
@@ -210,6 +219,7 @@ TRAP: Contre vous : un roi défenseur qui s'écarte trop tôt laisse passer le r
 # L'opposition pour annuler | Le défenseur recule toujours tout droit et se replace en face du roi adverse : c'est l'opposition. Le pion ne passe pas. | b | id=86 level=3 order=3086
 CONDITIONS: Le roi défenseur se tient devant le pion adverse, et le pion n'a pas encore atteint la sixième rangée avec son roi devant lui. En reculant tout droit et en reprenant l'opposition, il fait nulle.
 FEN: 8/8/4k3/8/3KP3/8/8/8 b - - 0 1
+SHOW 1: marks=d6,d4
 Kd6 : Le roi noir se place en face du roi blanc, avec une case entre eux. On appelle cela l'opposition : le roi blanc ne peut pas avancer.
 e5+ : Le pion avance et donne échec.
 Ke6 : Le roi noir se place devant le pion pour le bloquer.
@@ -235,6 +245,7 @@ TRAP: Contre vous : un pas de côté du roi défenseur au mauvais moment laisse 
 # Le pion tour : nulle dans le coin | Avec un pion sur la colonne a ou h, il suffit au défenseur de mettre son roi dans le coin : on ne peut plus l'en chasser. | w | id=87 drill=ROOK_PAWN_DRAW level=3 order=3087
 CONDITIONS: Le pion est sur la colonne a ou h, et le roi défenseur peut atteindre le coin de promotion. On ne peut plus l'en chasser : c'est nulle.
 FEN: 8/8/8/8/8/pk6/8/K7 w - - 0 1
+SHOW 0: marks=a1,b1
 ?Kb1 : Le roi blanc reste collé au coin de promotion. Il fait l'aller-retour entre a1 et b1.
 a2+ : Le pion avance et donne échec.
 Ka1 : Le roi se blottit sur la case de promotion.
@@ -247,6 +258,7 @@ TRAP: Contre vous : avec un pion tour, empêchez le roi adverse d'atteindre le c
 
 # Le trébuchet | Deux pions bloqués et deux rois : dans cette position, celui qui doit jouer perd. Il faut donc compter qui jouera au bon moment. | w | id=88 theme=zugzwang level=4 order=4088
 FEN: 8/8/5K2/3p4/3P4/1k6/8/8 w - - 0 1
+SHOW 0: marks=d4,d5
 ?Ke6 : Le bon chemin : attaquer le pion d5 par l'arrière. Aller tout de suite en e5 serait une faute, car ce serait ensuite aux Blancs de jouer au mauvais moment.
 Kc4 : Le roi noir attaque le pion d4.
 Ke5 : Le roi blanc défend d4 et attaque d5. Et c'est aux Noirs de jouer : c'est le trébuchet.
@@ -260,6 +272,7 @@ TRAP: Contre vous : une marche directe du roi peut tomber dans le mauvais trait 
 
 # La percée de pions | Trois pions contre trois : en sacrifiant deux pions, on en fait passer un troisième jusqu'à la promotion. | w | id=89 theme=pawnEndgame level=4 order=4089
 FEN: 6k1/ppp5/8/PPP5/8/8/8/6K1 w - - 0 1
+SHOW 0: marks=b5 arrows=b5b6
 ?b6 : Le pion du milieu se sacrifie !
 axb6 : Les Noirs prennent avec le pion a. Si le pion c avait pris, les Blancs joueraient a6 avec la même idée.
 c6 : Deuxième sacrifice : il faut déloger le pion b7.
@@ -277,6 +290,7 @@ TRAP: Contre vous : face à une majorité avancée, gardez votre roi assez près
 
 # L'étude de Réti | Un roi qui avance en diagonale peut poursuivre deux objectifs à la fois. Pour lui, la diagonale est aussi courte que la ligne droite. | w | id=90 level=5 order=5090
 FEN: 7K/8/k1P5/7p/8/8/8/8 w - - 0 1
+SHOW 0: marks=c6,h5 arrows=h8e5
 ?Kg7 : Le roi blanc semble trop loin de tout. Il part en diagonale : sur ce trajet, il se rapproche à la fois du pion noir et de son propre pion.
 h4 : Le pion noir file vers la promotion.
 Kf6 : Toujours en diagonale, le roi se rapproche des deux pions en même temps.
@@ -366,6 +380,7 @@ TRAP: Contre vous : sans le pont, les échecs de la tour adverse ne finissent ja
 # La défense de Philidor | La méthode de nulle à connaître : la tour garde la sixième rangée, puis donne des échecs par derrière dès que le pion avance. | b | id=95 drill=PHILIDOR_DRAW level=3 order=3095
 FEN: 4k3/7R/r7/3KP3/8/8/8/8 w - - 0 1
 CONDITIONS: Le roi défenseur est sur la case de promotion du pion, et sa tour peut garder la sixième rangée tant que le pion n'y est pas arrivé.
+SHOW 0: arrows=a6h6
 Rb7 : Les Blancs attendent. Ils voudraient amener leur roi sur la sixième rangée.
 ?Rg6 : La tour noire reste sur la sixième rangée et l'interdit au roi blanc.
 e6 : Le pion avance. Désormais, le roi blanc ne pourra plus s'abriter derrière lui.
@@ -384,6 +399,7 @@ TRAP: Contre vous : une tour passive sur la dernière rangée laisse le roi adve
 
 # Finale de tours : l'enfilade du pion a7 | Quand une tour est devant son pion en septième rangée, une ruse permet de gagner la tour adverse. | w | id=96 theme=skewer level=3 order=3096
 FEN: R7/P4k2/8/8/8/8/r7/6K1 w - - 0 1
+SHOW 0: marks=a7,f7
 ?Rh8 : La tour libère la case de promotion. Le roi noir, en f7, est sur la même rangée que le pion : il est mal placé.
 Rxa7 : La tour noire prend le pion. Elle tombe dans le piège.
 Rh7+ : Enfilade : la tour donne échec sur la septième rangée, et la tour noire est derrière le roi.
@@ -454,6 +470,7 @@ TRAP: Contre vous : un pion adverse avancé près de votre roi peut transformer 
 
 # Le fou de la mauvaise couleur | Un pion tour et un fou qui ne contrôle pas la case de promotion ne gagnent pas : le roi défenseur dans le coin fait nulle. | b | id=102 level=4 order=4102
 FEN: 7k/8/6K1/7P/8/3B4/8/8 b - - 0 1
+SHOW 0: marks=h8
 ?Kg8 : Le fou blanc se déplace sur les cases blanches, mais la case de promotion h8 est noire. Le roi noir fait l'aller-retour près du coin.
 h6 : Le pion avance.
 Kh8 : Le roi noir rejoint le coin. Le fou ne peut pas l'en chasser, car il ne contrôle pas la case h8.
@@ -633,6 +650,7 @@ TRAP: Contre vous : une tour passive derrière le pion tour perd ; attaquez-le d
 
 # La défense du côté long | En finale de tours, le défenseur place son roi du côté court et donne des échecs avec sa tour depuis le côté long, le plus loin possible du roi adverse. | b | id=174 level=4 order=4174
 FEN: 5k2/7R/4K3/4P3/8/8/8/r7 b - - 0 1
+SHOW 0: arrows=a1a6
 ?Ra6+ : La tour donne échec de loin, depuis la colonne a : le côté long.
 Kd5 : Le roi blanc s'approche de la tour pour échapper aux échecs.
 ?Ke8 : Le roi noir se place devant le pion.
@@ -672,6 +690,7 @@ TRAP: Contre vous : une tour placée devant le pion adverse perd sa liberté.
 # Dame contre pion central en septième | La dame gagne contre un pion central en septième rangée : elle force le roi adverse à se placer devant son pion, puis son propre roi s'approche. | w | id=176 level=4 order=4176 drill=KQKP
 FEN: 8/8/8/8/8/8/3pk3/K6Q w - - 0 1
 CONDITIONS: Pion central ou pion cavalier en septième rangée ; la dame peut donner des échecs. Contre un pion fou ou un pion tour, le défenseur trouve souvent un pat.
+SHOW 0: marks=d1,d2
 ?Qe4+ : La dame donne échec et se rapproche du pion.
 Kf2 : Le roi noir s'écarte.
 ?Qd3 : La dame attaque le pion et contrôle la case de promotion.
@@ -690,6 +709,7 @@ TRAP: Contre vous : contre un pion fou ou tour, cette méthode échoue si votre 
 # Dame contre pion fou en septième : le pat | Contre un pion fou en septième rangée, le défenseur se réfugie dans le coin : si la dame prend le pion, c'est pat. | b | id=177 level=4 order=4177 drill=QUEEN_BISHOP_PAWN_DRAW
 FEN: K7/8/8/8/1Q6/8/1kp5/8 b - - 0 1
 CONDITIONS: Pion fou en septième rangée soutenu par le roi ; le roi de l'attaquant est loin. La dame ne peut pas prendre le pion sans pat.
+SHOW 0: marks=a1,c2
 ?Ka1 : Le roi se réfugie dans le coin. Si la dame prenait le pion c2, le roi noir n'aurait plus aucun coup : pat.
 Qa3+ : La dame donne échec.
 ?Kb1 : Le roi revient protéger le pion.
@@ -789,6 +809,7 @@ TRAP: Contre vous : bloquer un pion passé protégé ne suffit pas ; vos pions d
 
 # Pions liés contre pion isolé | Deux pions voisins se protègent l'un l'autre. Le roi peut les laisser seuls pour aller prendre le pion isolé adverse. | w | id=183 level=4 order=4183
 FEN: 8/p7/8/4k3/8/8/5PP1/4K3 w - - 0 1
+SHOW 0: marks=a7,f2,g2
 ?Kd2 : Le roi blanc part vers le pion a7. Ses pions f2 et g2 se défendront seuls.
 Kd4 : Le roi noir se place au centre.
 ?Kc2 : Le roi blanc continue.
@@ -827,6 +848,7 @@ TRAP: Contre vous : en défense, prenez l'opposition au bon moment pour annuler.
 # Tour contre fou : le bon coin | Avec un fou contre une tour, le défenseur réfugie son roi dans le coin de la couleur que son fou ne contrôle pas. La partie est alors nulle. | b | id=185 level=5 order=5185
 FEN: 7k/8/5K2/8/8/8/4b3/6R1 b - - 0 1
 CONDITIONS: Le roi du défenseur est dans le coin de la couleur opposée à celle de son fou. Dans le mauvais coin, l'attaquant gagne souvent.
+SHOW 0: marks=h8
 ?Bf3 : Le fou se place sur la grande diagonale. Le roi noir est en h8, une case noire, alors que le fou est de cases blanches : c'est le bon coin.
 Kf7 : Le roi blanc s'approche.
 ?Bd5+ : Le fou donne échec et chasse le roi.

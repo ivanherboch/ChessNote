@@ -51,6 +51,10 @@ internal val BASICS_LESSONS: List<LessonData> = listOf(
         order = 1116,
         pauseSteps = setOf(0, 2),
         takeaway = "Le pion avance tout droit mais prend en diagonale. Il ne recule jamais : chaque poussée de pion est définitive.",
+        stepVisuals = mapOf(
+            0 to StepVisuals(marks = listOf(20, 28), arrows = listOf(12 to 28)),
+            2 to StepVisuals(marks = listOf(35), arrows = listOf(28 to 35)),
+        ),
         ideas = listOf("Le pion avance tout droit mais prend en diagonale : un pion bloqué de face peut encore prendre.", "Au premier coup, il peut avancer de deux cases : c'est ainsi qu'on occupe vite le centre.", "Des pions côte à côte se soutiennent ; des pions en chaîne, en diagonale, se protègent l'un l'autre."),
         traps = listOf("Pour vous : un pion qui attaque deux pièces à la fois (une fourchette de pion) gagne souvent du matériel.", "Contre vous : un pion ne recule jamais ; une poussée irréfléchie laisse des cases faibles derrière lui."),
     ),
@@ -74,6 +78,10 @@ internal val BASICS_LESSONS: List<LessonData> = listOf(
         order = 1117,
         pauseSteps = setOf(0),
         takeaway = "La tour est forte sur les lignes ouvertes, surtout sur la septième rangée. Elle vaut cinq pions.",
+        stepVisuals = mapOf(
+            0 to StepVisuals(marks = listOf(), arrows = listOf(0 to 8)),
+            3 to StepVisuals(marks = listOf(), arrows = listOf(56 to 61)),
+        ),
         ideas = listOf("La tour aime les colonnes ouvertes, sans pion : elle y agit d'un bout à l'autre de l'échiquier.", "Sur la septième rangée, une tour attaque les pions adverses restés sur leur case de départ.", "Deux tours reliées sur la même ligne se protègent et doublent leur force."),
         traps = listOf("Pour vous : une tour qui entre sur la septième rangée gagne souvent un pion, parfois plus.", "Contre vous : une tour enfermée dans un coin, derrière ses pions, ne participe pas au jeu ; sortez-la par le roque ou une colonne ouverte."),
     ),
@@ -99,6 +107,9 @@ internal val BASICS_LESSONS: List<LessonData> = listOf(
         order = 1118,
         pauseSteps = setOf(4),
         takeaway = "Un fou ne change jamais de couleur de case. Les fous aiment les longues diagonales ouvertes et valent environ trois pions.",
+        stepVisuals = mapOf(
+            1 to StepVisuals(marks = listOf(), arrows = listOf(5 to 40)),
+        ),
         ideas = listOf("Le fou reste toute la partie sur les cases de sa couleur : deux fous se complètent et couvrent toutes les cases.", "Un fou est fort sur une longue diagonale ouverte, faible derrière ses propres pions bloqués sur sa couleur.", "Le fou agit de loin : il peut attaquer une pièce depuis l'autre bout de l'échiquier."),
         traps = listOf("Pour vous : un fou peut clouer une pièce devant le roi ou la dame adverse, qui n'ose plus bouger.", "Contre vous : si vos pions sont fixés sur la couleur de votre fou, il devient un « mauvais fou », qui ne fait que les défendre."),
     ),
@@ -128,6 +139,9 @@ internal val BASICS_LESSONS: List<LessonData> = listOf(
         order = 1119,
         pauseSteps = setOf(6),
         takeaway = "La dame combine la tour et le fou et vaut neuf pions. Ne la sortez pas trop tôt, car l'adversaire gagne du temps en l'attaquant.",
+        stepVisuals = mapOf(
+            1 to StepVisuals(marks = listOf(), arrows = listOf(3 to 39)),
+        ),
         ideas = listOf("La dame combine la tour et le fou : elle attaque dans huit directions à la fois.", "C'est la pièce idéale pour les attaques doubles : elle vise souvent deux cibles d'un seul coup.", "Elle vaut neuf pions : on ne l'échange que contre la dame adverse, ou contre beaucoup de matériel."),
         traps = listOf("Pour vous : une dame adverse sortie trop tôt vous permet de développer vos pièces en l'attaquant, avec gain de temps.", "Contre vous : sortie trop tôt, votre dame se fait chasser par les pièces adverses et vous perdez du temps."),
     ),
@@ -175,6 +189,9 @@ internal val BASICS_LESSONS: List<LessonData> = listOf(
         order = 1121,
         pauseSteps = setOf(0),
         takeaway = "Le roi se déplace d'une case à la fois, ne s'approche jamais du roi adverse et ne va jamais sur une case attaquée. En finale, sortez-le !",
+        stepVisuals = mapOf(
+            0 to StepVisuals(marks = listOf(3, 11, 5, 13), arrows = listOf()),
+        ),
         ideas = listOf("Le roi se déplace d'une case dans toutes les directions et ne va jamais sur une case attaquée.", "Les deux rois ne peuvent jamais être côte à côte : une case les sépare toujours.", "En début de partie, le roi se met à l'abri ; en finale, il devient une pièce active qui attaque et défend."),
         traps = listOf("Pour vous : en finale, un roi actif au centre vaut souvent un pion de plus.", "Contre vous : un roi resté au centre en début de partie s'expose aux attaques dès que les colonnes s'ouvrent."),
     ),
@@ -196,6 +213,9 @@ internal val BASICS_LESSONS: List<LessonData> = listOf(
         order = 1122,
         pauseSteps = setOf(0),
         takeaway = "Avant chaque prise, comptez la valeur de ce que vous prenez et de ce que vous risquez de perdre.",
+        stepVisuals = mapOf(
+            0 to StepVisuals(marks = listOf(35, 18, 3), arrows = listOf()),
+        ),
         ideas = listOf("Les valeurs approximatives : pion 1, cavalier 3, fou 3, tour 5, dame 9 ; le roi est sans prix.", "Avant d'échanger, comptez ce que vous prenez et ce que vous risquez de perdre.", "Ces valeurs sont des repères : une pièce active vaut souvent plus qu'une pièce passive de même valeur."),
         traps = listOf("Pour vous : prendre une pièce non protégée, c'est gagner du matériel gratuitement ; vérifiez chaque pièce adverse.", "Contre vous : prendre un pion protégé avec votre dame, c'est la perdre contre un pion."),
     ),
@@ -242,6 +262,9 @@ internal val BASICS_LESSONS: List<LessonData> = listOf(
         order = 1124,
         pauseSteps = setOf(0, 2),
         takeaway = "Pour mater, il faut attaquer le roi et contrôler toutes les cases autour de lui. Le roi qui attaque aide souvent la dame.",
+        stepVisuals = mapOf(
+            1 to StepVisuals(marks = listOf(54, 55), arrows = listOf()),
+        ),
         ideas = listOf("Le mat : le roi est en échec et n'a aucune parade ; la partie est finie.", "Pour mater, il faut attaquer le roi et contrôler toutes les cases autour de lui.", "Le roi qui attaque aide souvent la dame ou la tour à couvrir les cases de fuite."),
         traps = listOf("Pour vous : un roi coincé au bord de l'échiquier, derrière ses pions, est souvent maté sur sa rangée.", "Contre vous : laissez toujours une case de fuite à votre roi, par exemple en poussant un pion devant lui."),
     ),
@@ -283,6 +306,9 @@ internal val BASICS_LESSONS: List<LessonData> = listOf(
         order = 1126,
         pauseSteps = setOf(0),
         takeaway = "Il y a aussi nulle si la même position revient trois fois, ou après cinquante coups de chaque camp sans prise ni mouvement de pion.",
+        stepVisuals = mapOf(
+            0 to StepVisuals(marks = listOf(28), arrows = listOf()),
+        ),
         ideas = listOf("Nulle par répétition : la même position revient trois fois.", "Nulle par la règle des cinquante coups : cinquante coups de chaque camp sans prise ni mouvement de pion.", "Nulle par matériel insuffisant : un roi seul, ou un roi avec un fou ou un cavalier, ne peut pas mater."),
         traps = listOf("Pour vous : en position difficile, un échec perpétuel (des échecs répétés) force la répétition et la nulle.", "Contre vous : en position gagnante, évitez de répéter les coups ; changez de plan avant la troisième répétition."),
     ),
@@ -332,6 +358,9 @@ internal val BASICS_LESSONS: List<LessonData> = listOf(
         order = 1128,
         pauseSteps = setOf(4),
         takeaway = "La prise en passant n'est possible qu'au coup qui suit immédiatement l'avance de deux cases. Après, c'est trop tard.",
+        stepVisuals = mapOf(
+            4 to StepVisuals(marks = listOf(44), arrows = listOf(35 to 44)),
+        ),
         ideas = listOf("Un pion qui avance de deux cases à côté d'un pion adverse peut être pris comme s'il n'avait avancé que d'une case.", "Seul un pion peut prendre en passant, et seulement un pion.", "C'est maintenant ou jamais : la prise n'est possible qu'au coup qui suit immédiatement."),
         traps = listOf("Pour vous : la prise en passant empêche un pion adverse de passer en douce à côté du vôtre.", "Contre vous : en avançant un pion de deux cases, vérifiez qu'il ne se fait pas prendre en passant."),
     ),
@@ -353,6 +382,9 @@ internal val BASICS_LESSONS: List<LessonData> = listOf(
         order = 1129,
         pauseSteps = setOf(0, 2),
         takeaway = "Un pion promu peut devenir n'importe quelle pièce sauf un roi. On peut avoir deux dames sur l'échiquier.",
+        stepVisuals = mapOf(
+            0 to StepVisuals(marks = listOf(60), arrows = listOf(44 to 60)),
+        ),
         ideas = listOf("Un pion qui atteint la dernière rangée devient la pièce de votre choix, sauf un roi.", "On choisit presque toujours la dame, la pièce la plus forte.", "Parfois, une autre pièce est meilleure : un cavalier qui donne échec, ou une tour pour éviter le pat."),
         traps = listOf("Pour vous : un pion passé proche de la promotion oblige l'adversaire à immobiliser une pièce pour l'arrêter.", "Contre vous : une dame promue sans réfléchir peut mettre le roi adverse pat ; vérifiez avant de choisir."),
     ),
@@ -376,6 +408,9 @@ internal val BASICS_LESSONS: List<LessonData> = listOf(
         order = 1130,
         pauseSteps = setOf(0),
         takeaway = "Des pions côte à côte se protègent. Un pion passé, qu'aucun pion adverse ne peut arrêter, vaut souvent la victoire. Comptez toujours les coups jusqu'à la promotion.",
+        stepVisuals = mapOf(
+            0 to StepVisuals(marks = listOf(8, 9, 10), arrows = listOf()),
+        ),
         drill = "PAWN_WAR",
         ideas = listOf("Avec seulement des pions, le premier qui va à dame gagne : comptez les coups jusqu'à la promotion.", "Un pion passé, qu'aucun pion adverse ne peut arrêter, est souvent décisif.", "Des pions côte à côte se protègent et avancent ensemble."),
         traps = listOf("Pour vous : une percée (sacrifier un pion pour en libérer un autre) crée parfois un pion passé imparable.", "Contre vous : un pion isolé, sans voisin pour le protéger, est une cible facile."),
