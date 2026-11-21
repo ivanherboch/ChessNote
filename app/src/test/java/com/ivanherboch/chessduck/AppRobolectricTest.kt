@@ -106,8 +106,13 @@ class AppRobolectricTest {
         rule.onNodeWithText("Travailler ce point dans l'Académie").performClick(); settle(3000)
         shot("2q_pont_academie")
         rule.onNodeWithText("Méthode : le contrôle anti-gaffe", substring = true, useUnmergedTree = true).assertExists()
-        rule.onNodeWithText("Entraînements").performClick(); settle(1500); shot("2r_priorites")
-        rule.onNodeWithText("Mat permis à l'adversaire", substring = true).assertExists()
+        rule.onNodeWithText("Entraînements").performClick(); settle(1500)
+        // Le bilan relit les parties en tâche de fond : on attend qu'il soit publié.
+        rule.waitUntil(30_000) {
+            shadowOf(Looper.getMainLooper()).idle()
+            rule.onAllNodesWithText("Mat permis à l'adversaire", substring = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        settle(500); shot("2r_priorites")
         rule.onNodeWithText("Calcul à l'aveugle (palier 5)").performScrollTo().performClick(); settle(1500)
         rule.waitUntil(30_000) {
             shadowOf(Looper.getMainLooper()).idle()
