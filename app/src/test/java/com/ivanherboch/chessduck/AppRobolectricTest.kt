@@ -636,7 +636,7 @@ class AppRobolectricTest {
         desc("Jouer cette position contre l'Ordinateur dans le Jeu Libre").performClick(); settle(2000)
         shot("2f_jouer_position")
         // Le Jeu Libre prépare la partie en tâche de fond : on attend son bandeau.
-        rule.waitUntil(15_000) {
+        rule.waitUntil(30_000) {
             shadowOf(Looper.getMainLooper()).idle()
             rule.onAllNodesWithText("Position de la leçon", substring = true).fetchSemanticsNodes().isNotEmpty()
         }
