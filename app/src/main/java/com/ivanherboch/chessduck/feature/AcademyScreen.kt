@@ -1,7 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
 import androidx.compose.foundation.border
-import com.ivanherboch.chessduck.ui.HintIconButton
 import androidx.compose.foundation.layout.heightIn
 import com.ivanherboch.chessduck.ui.LocalIsTwoPane
 import com.ivanherboch.chessduck.ui.BoardRow
@@ -372,6 +371,10 @@ fun AcademyScreen(
                         action = when {
                             cur == line.size -> bridges
                             cur == 0 && hasBrief(l) -> ({ LessonBriefButton(l) { brief = true } })
+                            // Arrêt « À vous » : un indice (la pièce à jouer) avant de découvrir le coup avec Lecture.
+                            asking -> ({
+                                HintButton(s.hintStage, vm::guideHint, Modifier.fillMaxWidth().padding(top = 6.dp), enabled = !s.judging && s.hintStage == 0)
+                            })
                             else -> modelPlay
                         },
                     )
@@ -410,9 +413,7 @@ fun AcademyScreen(
                             icon = if (s.playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                             contentDescription = if (asking && !s.playing) "Lecture : découvrir le coup de la leçon et continuer" else null,
                         )
-                        // Arrêt « À vous » : un indice (la pièce à jouer) avant de découvrir le coup avec Lecture.
-                        if (asking) HintIconButton(s.hintStage, vm::guideHint, enabled = !s.judging && s.hintStage == 0)
-                        else DuckIconButton(Icons.Rounded.SkipNext, "Aller à la fin", vm::last, enabled = cur < line.size)
+                        DuckIconButton(Icons.Rounded.SkipNext, "Aller à la fin", vm::last, enabled = cur < line.size)
                     }
                 }
                 else -> {
