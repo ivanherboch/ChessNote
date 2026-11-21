@@ -675,13 +675,17 @@ class AppRobolectricTest {
         repeat(16) {
             // Un problème déjà révélé plus tôt (tirage au hasard) affiche directement son thème : rien à révéler.
             rule.waitUntil(20_000) {
+                shadowOf(Looper.getMainLooper()).idle()
                 rule.onAllNodesWithText("Révéler le thème").fetchSemanticsNodes().isNotEmpty() ||
                     rule.onAllNodesWithText("Type de problème : ", substring = true).fetchSemanticsNodes().isNotEmpty()
             }
             if (rule.onAllNodesWithText("Révéler le thème").fetchSemanticsNodes().isNotEmpty()) {
                 rule.onNodeWithText("Révéler le thème").performClick(); settle(600)
             }
-            rule.waitUntil(20_000) { rule.onAllNodesWithText("Type de problème : ", substring = true).fetchSemanticsNodes().isNotEmpty() }
+            rule.waitUntil(20_000) {
+                shadowOf(Looper.getMainLooper()).idle()
+                rule.onAllNodesWithText("Type de problème : ", substring = true).fetchSemanticsNodes().isNotEmpty()
+            }
             val shown = mates.filter { name -> rule.onAllNodesWithText("Type de problème : $name").fetchSemanticsNodes().isNotEmpty() }
             assertEquals(1, shown.size)
             seen.addAll(shown)
