@@ -14,7 +14,7 @@ IDEA: Le développement : sortez cavaliers et fous avant de rejouer la même pi�
 IDEA: La sécurité du roi : roquez tôt, en général avant le dixième coup.
 TRAP: Pour vous : un adversaire qui sort sa dame trop tôt vous laisse développer vos pièces en l'attaquant.
 TRAP: Contre vous : si vous tardez à roquer, une colonne centrale qui s'ouvre expose votre roi à une attaque rapide.
-QUIZ: Après l'ouverture des pions roi, quel est le meilleur deuxième coup des Blancs ? | Sortir le cavalier en f3 | Sortir la dame en h5 | Pousser le pion h de deux cases | Le cavalier f3 se développe vers le centre et attaque le pion e5 : il respecte deux principes à la fois.
+QUIZ: Après l'ouverture des pions roi, quel est le meilleur deuxième coup des Blancs ? | Sortir le cavalier en f3 | Sortir la dame en h5 pour viser f7 | Pousser le pion d de deux cases | Le cavalier f3 se développe vers le centre et attaque le pion e5 : il respecte deux principes à la fois.
 VARIANT 5 | Si les Noirs sortent d'abord le second cavalier
 > Nf6 : Le cavalier noir se développe et attaque le pion e4.
 > d3 : Un coup calme : le pion protège le pion e4 et ouvre la route du fou c1.
@@ -48,7 +48,7 @@ IDEA: Le pion c3 prépare l'avance d4 pour bâtir un centre de deux pions côte 
 IDEA: Les Noirs doivent attaquer ce centre au bon moment, le plus souvent par l'avance d5.
 TRAP: Pour vous : si les Noirs oublient la case f7, le fou c4 et le cavalier peuvent l'attaquer ensemble et gagner du matériel, parfois même mater.
 TRAP: Contre vous : si vous poussez le pion e trop tôt en e5, les Noirs frappent le centre par d5 et votre centre s'effondre.
-QUIZ: Quel est le plan des Blancs dans la partie italienne ? | Jouer c3 puis d4 pour construire un centre de deux pions | Échanger les dames au plus vite | Pousser le pion h jusqu'en h6 | Le pion c3 prépare d4 : avec deux pions en e4 et d4, les Blancs dominent le centre et gênent le fou c5.
+QUIZ: Quel est le plan des Blancs dans la partie italienne ? | Jouer c3 puis d4 pour construire un centre de deux pions | Attaquer tout de suite f7 avec le cavalier g5 | Faire le grand roque et pousser les pions de l'aile roi | Le pion c3 prépare d4 : avec deux pions en e4 et d4, les Blancs dominent le centre et gênent le fou c5.
 VARIANT 5 | Si les Noirs jouent Nf6 : la défense des deux cavaliers
 > Nf6 : Les Noirs attaquent tout de suite le pion e4 au lieu de sortir leur fou.
 > Ng5 : Le cavalier saute en g5 : avec le fou c4, il attaque la case f7.
@@ -79,7 +79,7 @@ IDEA: Les Blancs construisent un centre de pions et ouvrent les lignes vers le r
 IDEA: La dame en b3 et le fou c4 visent ensemble la case f7.
 TRAP: Pour vous : si les Noirs gardent tous les pions gagnés sans se développer, l'attaque sur f7 et sur la colonne e devient décisive.
 TRAP: Contre vous : sans jeu énergique, les Noirs rendent un pion au bon moment et gardent un pion de plus en finale.
-QUIZ: Pourquoi les Blancs donnent-ils le pion b4 ? | Pour gagner du temps et bâtir un centre avec c3 et d4 | Pour ouvrir la colonne b à leur tour | Pour échanger les dames | Le fou attiré en b4 est chassé par c3 avec gain de temps, puis le pion d4 construit le centre.
+QUIZ: Pourquoi les Blancs donnent-ils le pion b4 ? | Pour gagner du temps et bâtir un centre avec c3 et d4 | Pour ouvrir la colonne b à leur tour et y placer une tour | Pour attirer le cavalier c6 loin du centre | Le fou attiré en b4 est chassé par c3 avec gain de temps, puis le pion d4 construit le centre.
 VARIANT 7 | Si les Noirs refusent le gambit
 > Bb6 : Le fou recule en gardant sa belle diagonale vers f2.
 > a4 : Le pion menace d'avancer en a5 pour enfermer le fou.
@@ -115,7 +115,7 @@ IDEA: Contre le cavalier en g5, l'avance d5 coupe la diagonale du fou c4 vers f7
 IDEA: Les Noirs donnent un pion pour gagner du temps et chasser les pièces blanches.
 TRAP: Pour vous : si les Blancs gardent leur pion de plus sans se développer, votre avance de développement devient dangereuse.
 TRAP: Contre vous : reprendre en d5 avec le cavalier permet le sacrifice en f7, l'attaque du « foie frit ».
-QUIZ: Pourquoi les Noirs jouent-ils le cavalier en a5 au cinquième coup ? | Pour chasser le fou c4 sans reprendre en d5 avec le cavalier | Pour protéger le pion b7 | Pour préparer le petit roque | Reprendre avec le cavalier expose la case f7 ; le cavalier a5 chasse le fou en gagnant du temps.
+QUIZ: Pourquoi les Noirs jouent-ils le cavalier en a5 au cinquième coup ? | Pour chasser le fou c4 sans reprendre en d5 avec le cavalier | Pour protéger le pion b7 attaqué par le fou | Pour préparer le petit roque et protéger f7 | Reprendre avec le cavalier expose la case f7 ; le cavalier a5 chasse le fou en gagnant du temps.
 VARIANT 6 | Si les Blancs jouent calmement le pion d3
 > d3 : Les Blancs protègent le pion e4 et visent un jeu de manœuvre.
 > Be7 : Le fou se développe et prépare le roque.
@@ -150,7 +150,7 @@ IDEA: Le sacrifice en f7 attire le roi noir au centre de l'échiquier.
 IDEA: Les Blancs attaquent le cavalier d5, cloué devant le roi, avec toutes leurs pièces.
 TRAP: Pour vous : si les Noirs reprennent en d5 avec le cavalier, le sacrifice en f7 donne une attaque très dangereuse.
 TRAP: Contre vous : si les Noirs jouent le cavalier en a5, votre attaque sur f7 disparaît et vos pièces se font chasser.
-QUIZ: Pourquoi le sacrifice en f7 fonctionne-t-il ? | Le roi noir est attiré au centre et le cavalier d5 est cloué | Il gagne tout de suite une tour | Il permet aux Blancs de roquer | Après le sacrifice, le roi noir doit défendre le cavalier d5 au milieu de l'échiquier, face à toutes les pièces blanches.
+QUIZ: Pourquoi le sacrifice en f7 fonctionne-t-il ? | Le roi noir est attiré au centre et le cavalier d5 est cloué | Il gagne tout de suite une tour par une fourchette | Il permet aux Blancs de roquer sans perte de temps | Après le sacrifice, le roi noir doit défendre le cavalier d5 au milieu de l'échiquier, face à toutes les pièces blanches.
 VARIANT 10 | L'attaque Lolli : ouvrir d'abord le centre
 > d4 : Au lieu de sacrifier tout de suite, les Blancs ouvrent le centre.
 > exd4 : Les Noirs prennent le pion.
@@ -183,7 +183,7 @@ IDEA: Les Blancs préparent c3 puis d4 pour construire un centre solide.
 IDEA: Le cavalier b1 voyage souvent par d2 et f1 jusqu'en g3 pour soutenir l'attaque à l'aile roi.
 TRAP: Pour vous : si les Noirs jouent trop vite sur l'aile dame, le centre s'ouvre en faveur de vos pièces mieux placées.
 TRAP: Contre vous : prendre trop tôt en e5 avec le fou en c6 puis le cavalier en e5 peut perdre le cavalier après la dame en d4.
-QUIZ: Quel est le plan typique des Blancs dans l'espagnole fermée ? | Jouer c3 puis d4 et manœuvrer le cavalier vers g3 | Échanger toutes les pièces au plus vite | Attaquer avec le pion a jusqu'en a6 | Le pion c3 prépare d4 ; le cavalier b1 rejoint l'aile roi par d2 et f1.
+QUIZ: Quel est le plan typique des Blancs dans l'espagnole fermée ? | Jouer c3 puis d4 et manœuvrer le cavalier vers g3 | Échanger toutes les pièces pour une finale égale | Pousser le pion a jusqu'en a6 pour ouvrir la colonne a | Le pion c3 prépare d4 ; le cavalier b1 rejoint l'aile roi par d2 et f1.
 VARIANT 9 | Si les Noirs prennent le pion e4 : la défense ouverte
 > Nxe4 : Les Noirs prennent le pion. C'est la variante ouverte.
 > d4 : Les Blancs ouvrent le centre en attaquant le pion e5.
@@ -219,7 +219,7 @@ IDEA: Le roi noir reste au centre, mais sans dames il n'est pas en danger.
 IDEA: Les Blancs ont une majorité de pions à l'aile roi ; les Noirs jouent avec leurs fous et leur solidité.
 TRAP: Pour vous : si les Blancs jouent sans plan dans la finale, vos deux fous prennent le dessus.
 TRAP: Contre vous : si vous laissez avancer la majorité blanche à l'aile roi, elle peut créer un pion passé dangereux.
-QUIZ: Quel est l'atout des Noirs dans la finale berlinoise ? | La paire de fous et une structure solide | Un pion de plus | Une attaque immédiate sur le roi blanc | Les Noirs ont des pions doublés, mais leurs deux fous et leur structure sans faiblesse compensent.
+QUIZ: Quel est l'atout des Noirs dans la finale berlinoise ? | La paire de fous et une structure solide | Un pion de plus, gagné dès l'ouverture | Une attaque immédiate sur le roi blanc | Les Noirs ont des pions doublés, mais leurs deux fous et leur structure sans faiblesse compensent.
 VARIANT 6 | Si les Blancs protègent le pion avec le pion d3
 > d3 : Un coup calme qui évite la finale sans dames.
 > Bc5 : Le fou se développe et vise f2.
@@ -254,7 +254,7 @@ IDEA: En finale, la majorité blanche à l'aile roi peut créer un pion passé, 
 IDEA: Les Noirs ont la paire de fous et un développement facile en compensation.
 TRAP: Pour vous : si les Noirs échangent trop de pièces, la finale de pions vous est favorable.
 TRAP: Contre vous : prendre le pion e5 avec le cavalier juste après l'échange perd le pion, car la dame noire le récupère en d4.
-QUIZ: Pourquoi les Blancs donnent-ils leur fou contre le cavalier c6 ? | Pour doubler les pions noirs et viser une finale favorable | Pour gagner tout de suite le pion e5 | Pour ouvrir la colonne f | Après l'échange, les pions noirs sont doublés : en finale, la majorité blanche à l'aile roi est plus forte.
+QUIZ: Pourquoi les Blancs donnent-ils leur fou contre le cavalier c6 ? | Pour doubler les pions noirs et viser une finale favorable | Pour gagner tout de suite le pion e5 sans compensation | Pour ouvrir la colonne f et attaquer le roque | Après l'échange, les pions noirs sont doublés : en finale, la majorité blanche à l'aile roi est plus forte.
 VARIANT 9 | Si les Noirs protègent le pion avec la dame
 > Qd6 : La dame protège le pion e5 et prépare le grand roque.
 > d3 : Les Blancs protègent le pion e4.
@@ -287,7 +287,7 @@ IDEA: Le cavalier d4 est très actif, mais il peut devenir une cible.
 IDEA: Les Blancs visent le pion e5 et l'espace, les Noirs un développement rapide.
 TRAP: Pour vous : si les Noirs laissent leur cavalier f6 se faire chasser, votre pion e5 gagne beaucoup d'espace.
 TRAP: Contre vous : après l'échange en c6 et le pion e5, la dame noire en e7 cloue votre pion ; ne laissez pas la colonne e s'ouvrir devant votre roi.
-QUIZ: Quelle est l'idée de la partie écossaise ? | Ouvrir le centre tout de suite pour développer ses pièces | Bloquer le centre avec des pions | Sortir la dame en premier | Le pion d4 ouvre le centre dès le troisième coup : les pièces blanches sortent librement.
+QUIZ: Quelle est l'idée de la partie écossaise ? | Ouvrir le centre tout de suite pour développer ses pièces | Bloquer le centre avec des pions pour jouer sur les ailes | Sortir la dame en premier pour attaquer f7 | Le pion d4 ouvre le centre dès le troisième coup : les pièces blanches sortent librement.
 VARIANT 7 | Si les Noirs sortent leur fou en c5
 > Bc5 : Le fou attaque le cavalier d4.
 > Be3 : Le fou blanc protège le cavalier.
@@ -320,7 +320,7 @@ IDEA: Le fou b5 vise le cavalier c6 pour gêner la défense du pion e5.
 IDEA: La partie est symétrique : le premier qui crée un déséquilibre utile prend l'initiative.
 TRAP: Pour vous : si les Noirs prennent votre pion e4 trop tôt, le centre s'ouvre en faveur de votre développement.
 TRAP: Contre vous : après la prise en c3 qui double vos pions, ne laissez pas le cavalier noir s'installer en d4.
-QUIZ: Que se passe-t-il quand les Noirs prennent en c3 avec le fou ? | Les pions blancs sont doublés, mais les Blancs gagnent la paire de fous | Les Blancs perdent une pièce | Les Noirs gagnent un pion | Les pions c sont doublés ; en échange, les Blancs gardent leurs deux fous et la colonne b ouverte.
+QUIZ: Que se passe-t-il quand les Noirs prennent en c3 avec le fou ? | Les pions blancs sont doublés, mais les Blancs gagnent la paire de fous | Les Blancs perdent une pièce, faute de pouvoir reprendre | Les Noirs gagnent un pion et une meilleure structure | Les pions c sont doublés ; en échange, les Blancs gardent leurs deux fous et la colonne b ouverte.
 VARIANT 7 | Si les Noirs jouent le cavalier en d4 : la variante Rubinstein
 > Nd4 : Un coup actif qui défie le fou b5.
 > Ba4 : Le fou recule en gardant le cavalier en vue.
@@ -352,7 +352,7 @@ IDEA: Avant de reprendre le pion, les Noirs chassent le cavalier e5 avec le pion
 IDEA: La position est solide et symétrique : les Noirs visent l'égalité, puis la finale.
 TRAP: Pour vous : si les Blancs attaquent sans préparation, votre position sans faiblesse résiste facilement et vos pièces se développent sans souci.
 TRAP: Contre vous : prendre tout de suite le pion e4 au troisième coup est une erreur : la dame blanche en e2 attaque le cavalier, et s'il recule, un échec à la découverte gagne la dame.
-QUIZ: Pourquoi les Noirs jouent-ils d6 avant de prendre le pion e4 ? | Pour chasser le cavalier e5 et éviter un piège sur la colonne e | Pour préparer le grand roque | Pour ouvrir la diagonale de la dame | Le pion d6 chasse le cavalier blanc ; prendre trop tôt le pion e4 expose les Noirs au clouage sur la colonne e.
+QUIZ: Pourquoi les Noirs jouent-ils d6 avant de prendre le pion e4 ? | Pour chasser le cavalier e5 et éviter un piège sur la colonne e | Pour préparer le grand roque et la poussée des pions | Pour ouvrir la diagonale de la dame vers h4 | Le pion d6 chasse le cavalier blanc ; prendre trop tôt le pion e4 expose les Noirs au clouage sur la colonne e.
 VARIANT 4 | Si les Blancs jouent d'abord le pion d4
 > d4 : Les Blancs ouvrent le centre au lieu de prendre le pion e5.
 > Nxe4 : Les Noirs prennent tout de suite le pion e4.
@@ -386,7 +386,7 @@ IDEA: Le fou f8 se développe en e7, derrière ses pions, et les Noirs roquent s
 IDEA: Les Noirs attendent le bon moment pour contre-attaquer, avec c6 et b5 ou en prenant en d4.
 TRAP: Pour vous : si les Blancs ouvrent le centre trop tôt, vos pièces bien groupées reprennent tout le matériel.
 TRAP: Contre vous : si vous jouez le fou en e7 alors que les Blancs peuvent prendre en e5, le sacrifice du fou en f7 suivi du cavalier en g5 puis e6 peut enfermer votre dame.
-QUIZ: Quel est le défaut principal de la défense Philidor ? | Le fou f8 est enfermé derrière le pion d6 | Le roi noir ne peut jamais roquer | Le pion e5 est perdu | Le pion d6 tient le centre mais bouche la diagonale du fou f8, qui se contente de la case e7.
+QUIZ: Quel est le défaut principal de la défense Philidor ? | Le fou f8 est enfermé derrière le pion d6 | Le roi noir ne peut plus roquer d'aucun côté | Le pion e5 est perdu dès le quatrième coup | Le pion d6 tient le centre mais bouche la diagonale du fou f8, qui se contente de la case e7.
 VARIANT 5 | Si les Noirs cèdent le centre
 > exd4 : Les Noirs prennent le pion d4 et renoncent au point e5.
 > Nxd4 : Le cavalier reprend au centre.
@@ -418,7 +418,7 @@ IDEA: Le roi blanc reste parfois au centre : il faut développer vite et attaque
 IDEA: Les Noirs gardent souvent le pion de plus avec g5 ; les Blancs le minent avec h4.
 TRAP: Pour vous : si les Noirs avancent tous leurs pions de l'aile roi, leur roi s'expose et la colonne f s'ouvre contre lui.
 TRAP: Contre vous : sans cavalier en f3, la dame noire peut donner échec en h4 et déranger votre roi.
-QUIZ: Pourquoi les Blancs jouent-ils h4 contre le pion g5 ? | Pour casser la chaîne de pions noirs qui protège le pion f4 | Pour préparer le petit roque | Pour protéger le pion e4 | Le pion h4 attaque le pion g5 : la chaîne qui protège le pion f4 se défait et les Blancs récupèrent leur pion.
+QUIZ: Pourquoi les Blancs jouent-ils h4 contre le pion g5 ? | Pour casser la chaîne de pions noirs qui protège le pion f4 | Pour préparer le petit roque en libérant la case h1 | Pour protéger le pion e4 attaqué par le cavalier | Le pion h4 attaque le pion g5 : la chaîne qui protège le pion f4 se défait et les Blancs récupèrent leur pion.
 VARIANT 3 | Si les Noirs refusent le gambit
 > Bc5 : Le fou se développe et empêche le petit roque blanc en visant g1.
 > Nf3 : Le cavalier se développe et protège la case h4.
@@ -455,7 +455,7 @@ IDEA: L'avance f4 est un gambit du roi mieux préparé.
 IDEA: Les Blancs gagnent de l'espace à l'aile roi avec le pion e5.
 TRAP: Pour vous : si les Noirs prennent en f4 trop facilement, votre pion e5 chasse leur cavalier et vous gagnez beaucoup d'espace.
 TRAP: Contre vous : si vous sortez le fou en c4 trop tôt, les Noirs peuvent prendre en e4 grâce à une petite fourchette de pion.
-QUIZ: Quel rôle joue le cavalier c3 dans la partie viennoise ? | Il protège le pion e4 pour préparer l'avance f4 | Il prépare le grand roque | Il attaque tout de suite le pion e5 | Avec le cavalier c3, le pion f peut avancer sans laisser le pion e4 sans défense.
+QUIZ: Quel rôle joue le cavalier c3 dans la partie viennoise ? | Il protège le pion e4 pour préparer l'avance f4 | Il prépare le grand roque en libérant la première rangée | Il attaque tout de suite le pion e5 pour le gagner | Avec le cavalier c3, le pion f peut avancer sans laisser le pion e4 sans défense.
 VARIANT 3 | Si les Noirs sortent le cavalier en c6
 > Nc6 : Le cavalier noir se développe.
 > Bc4 : Le fou vise la case f7.
@@ -483,7 +483,7 @@ IDEA: La colonne c à demi ouverte sert aux tours noires.
 IDEA: Les Blancs ont de l'avance de développement, les Noirs une structure saine pour plus tard.
 TRAP: Pour vous : si les Blancs négligent le pion e4, votre cavalier f6 et votre dame peuvent l'attaquer.
 TRAP: Contre vous : si vous laissez la case d5 sans contrôle, un cavalier blanc peut s'y installer définitivement.
-QUIZ: Pourquoi les Noirs échangent-ils leur pion c contre le pion d ? | Pour garder deux pions centraux et ouvrir la colonne c | Pour gagner un pion | Pour faire roquer les Blancs | Les Noirs échangent un pion de côté contre un pion central : ils gardent les pions d et e et profitent de la colonne c.
+QUIZ: Pourquoi les Noirs échangent-ils leur pion c contre le pion d ? | Pour garder deux pions centraux et ouvrir la colonne c | Pour gagner un pion central et le garder | Pour forcer les Blancs à roquer du côté de la dame | Les Noirs échangent un pion de côté contre un pion central : ils gardent les pions d et e et profitent de la colonne c.
 VARIANT 4 | Si les Blancs donnent échec avec le fou en b5
 > Bb5+ : Le fou donne échec et évite les grandes théories.
 > Bd7 : Le fou noir s'interpose.
@@ -523,7 +523,7 @@ IDEA: Les Noirs choisissent ensuite entre e5 et e6 selon le plan des Blancs.
 IDEA: La case d5 est le point clé : les Noirs doivent toujours la contrôler.
 TRAP: Pour vous : si les Blancs attaquent sans précaution, votre pion b5 et la colonne c contre-attaquent très vite.
 TRAP: Contre vous : après le pion e5, laisser un cavalier blanc s'installer en d5 vous laisse un pion d6 faible pour toute la partie.
-QUIZ: À quoi sert le petit coup a6 dans la Najdorf ? | À contrôler la case b5 et préparer l'avance b5 | À préparer le petit roque | À attaquer le cavalier c3 | Le pion a6 interdit la case b5 aux cavaliers et au fou blancs et prépare l'expansion à l'aile dame.
+QUIZ: À quoi sert le petit coup a6 dans la Najdorf ? | À contrôler la case b5 et préparer l'avance b5 | À préparer le petit roque en libérant une case | À attaquer le cavalier c3 avec le pion b ensuite | Le pion a6 interdit la case b5 aux cavaliers et au fou blancs et prépare l'expansion à l'aile dame.
 VARIANT 10 | Si les Blancs jouent le fou en g5
 > Bg5 : Le fou cloue le cavalier f6.
 > e6 : Les Noirs protègent la case d5 et ouvrent la diagonale du fou f8.
@@ -561,7 +561,7 @@ IDEA: Les Noirs acceptent un déséquilibre : roques opposés et course d'attaqu
 IDEA: Les tours noires utilisent la colonne c ; le sacrifice de qualité en c3 est une ressource typique.
 TRAP: Pour vous : si les Blancs roquent du grand côté sans protéger b2, votre fou g7 et la colonne c frappent vite.
 TRAP: Contre vous : si les Blancs échangent votre fou g7 par le fou en h6 et ouvrent la colonne h, votre roi devient très vulnérable.
-QUIZ: Pourquoi les Noirs jouent-ils la Dragon malgré l'attaque blanche ? | Leur fou g7 et la colonne c donnent un contre-jeu rapide | Elle garantit l'échange des dames | Elle empêche les Blancs de roquer | Les Noirs acceptent une course d'attaques : leur fou g7 et la colonne c contre l'avance des pions blancs à l'aile roi.
+QUIZ: Pourquoi les Noirs jouent-ils la Dragon malgré l'attaque blanche ? | Leur fou g7 et la colonne c donnent un contre-jeu rapide | Elle force l'échange des dames et une finale tranquille | Elle empêche les Blancs de roquer d'un côté comme de l'autre | Les Noirs acceptent une course d'attaques : leur fou g7 et la colonne c contre l'avance des pions blancs à l'aile roi.
 VARIANT 14 | Si les Blancs placent leur fou en c4 : l'attaque yougoslave
 > Bc4 : Le fou vise la case f7 et contrôle la diagonale.
 > Nc6 : Le cavalier se développe.
@@ -599,7 +599,7 @@ IDEA: Le pion b5 chasse le cavalier a3 et gagne de l'espace à l'aile dame.
 IDEA: Le pion f5 est souvent la contre-attaque des Noirs contre le centre blanc.
 TRAP: Pour vous : un cavalier blanc égaré en a3 met longtemps à revenir au centre ; profitez-en.
 TRAP: Contre vous : si vous laissez un cavalier blanc s'installer en d5 sans pouvoir l'échanger, votre pion d6 devient une cible permanente.
-QUIZ: Quel compromis acceptent les Noirs dans la Sveshnikov ? | Une case d5 affaiblie contre l'activité et la paire de fous | Un pion de moins sans compensation | Un roi bloqué au centre pour toujours | Le pion e5 laisse un trou en d5, mais gagne du temps contre le cavalier d4 et active les pièces noires.
+QUIZ: Quel compromis acceptent les Noirs dans la Sveshnikov ? | Une case d5 affaiblie contre l'activité et la paire de fous | Un pion de moins, sans compensation, pour simplifier | Un roi bloqué au centre en échange d'une case d5 forte | Le pion e5 laisse un trou en d5, mais gagne du temps contre le cavalier d4 et active les pièces noires.
 VARIANT 12 | Si le cavalier s'installe tout de suite en d5
 > Nd5 : Le cavalier occupe la case d5.
 > Nxd5 : Les Noirs l'échangent aussitôt.
@@ -632,7 +632,7 @@ IDEA: Contre le cavalier noir en f6, le pion e5 gagne de l'espace avec gain de t
 IDEA: Les Blancs obtiennent souvent un pion isolé en d4 et beaucoup d'activité.
 TRAP: Pour vous : si les Noirs laissent leur cavalier d5 sans protection, le fou c4 et la dame en b3 peuvent l'attaquer.
 TRAP: Contre vous : si vous laissez le pion d4 isolé sans pièces actives, il devient une cible en finale.
-QUIZ: Quel est le rôle du pion c3 dans l'Alapine ? | Préparer d4 pour reprendre avec un pion | Préparer le grand roque | Attaquer tout de suite le pion c5 | Avec c3, les Blancs peuvent jouer d4 et reprendre en d4 avec un pion, en gardant un centre solide.
+QUIZ: Quel est le rôle du pion c3 dans l'Alapine ? | Préparer d4 pour reprendre avec un pion | Préparer le grand roque en ouvrant la diagonale | Attaquer tout de suite le pion c5 avec la dame | Avec c3, les Blancs peuvent jouer d4 et reprendre en d4 avec un pion, en gardant un centre solide.
 VARIANT 3 | Si les Noirs jouent tout de suite le pion d5
 > d5 : Les Noirs frappent le centre.
 > exd5 : Les Blancs prennent.
@@ -668,7 +668,7 @@ IDEA: Le fou g2 surveille la grande diagonale et freine le jeu noir à l'aile da
 IDEA: Les Noirs contre-attaquent à l'aile dame avec b5 et la colonne b.
 TRAP: Pour vous : si les Noirs roquent sans contre-jeu, votre avance f5 ouvre des lignes vers leur roi.
 TRAP: Contre vous : si vous ouvrez le centre sans préparation, le fou noir en g7 devient très actif.
-QUIZ: Quel est le plan des Blancs dans la sicilienne fermée ? | Pousser les pions f vers f5 pour attaquer à l'aile roi | Ouvrir tout de suite la colonne c | Échanger les fous de cases noires | Le centre reste fermé : les Blancs attaquent avec leurs pions de l'aile roi, les Noirs à l'aile dame.
+QUIZ: Quel est le plan des Blancs dans la sicilienne fermée ? | Pousser les pions f vers f5 pour attaquer à l'aile roi | Ouvrir tout de suite la colonne c pour les tours | Échanger les fous de cases noires et jouer au centre | Le centre reste fermé : les Blancs attaquent avec leurs pions de l'aile roi, les Noirs à l'aile dame.
 VARIANT 11 | Si les Noirs bloquent avec le pion e5
 > e5 : Les Noirs bloquent l'avance f5 en contrôlant les cases noires.
 > Nh3 : Le cavalier vise la case f2 ou g5 sans gêner le pion f.
@@ -700,7 +700,7 @@ IDEA: La dame en b6 et le cavalier c6 font pression sur le pion d4.
 IDEA: Le fou c8 reste souvent enfermé derrière le pion e6 : les Noirs cherchent à l'échanger ou à le sortir par d7.
 TRAP: Pour vous : si les Blancs défendent mal le pion d4, la pression de la dame, du cavalier et parfois du fou en b4 le fait tomber.
 TRAP: Contre vous : prendre le pion d4 deux fois quand le fou blanc est en d3 est dangereux : le fou donne échec en b5 et la dame d1 gagne votre dame d4.
-QUIZ: Quelle est la cible principale des Noirs dans la variante d'avance ? | Le pion d4, à la base de la chaîne blanche | Le pion e5, en tête de la chaîne | Le roi blanc | On attaque une chaîne de pions à sa base : le pion d4 est attaqué par le pion c5, la dame b6 et le cavalier c6.
+QUIZ: Quelle est la cible principale des Noirs dans la variante d'avance ? | Le pion d4, à la base de la chaîne blanche | Le pion e5, en tête de la chaîne blanche | Le roi blanc, resté au centre derrière ses pions | On attaque une chaîne de pions à sa base : le pion d4 est attaqué par le pion c5, la dame b6 et le cavalier c6.
 VARIANT 10 | Si le fou blanc se développe en d3
 > Bd3 : Le fou vise l'aile roi, mais laisse le pion d4 sans défense.
 > cxd4 : Les Noirs échangent au centre.
@@ -738,7 +738,7 @@ IDEA: Les Noirs donnent leur fou des cases noires pour doubler les pions blancs.
 IDEA: Les Noirs jouent à l'aile dame, souvent avec la dame en a5 et le cavalier en c6.
 TRAP: Pour vous : si les Blancs ne trouvent pas de plan à l'aile roi, leurs pions doublés en c deviennent une cible.
 TRAP: Contre vous : sans votre fou de cases noires, la case g7 est faible ; la dame blanche en g4 peut l'attaquer très vite.
-QUIZ: Quel est le compromis de la variante Winawer ? | Les Noirs cèdent la paire de fous pour doubler les pions blancs | Les Noirs perdent un pion pour attaquer | Les Blancs ne peuvent plus roquer | Le fou b4 prend le cavalier c3 : les Blancs ont deux fous, mais leurs pions c sont doublés.
+QUIZ: Quel est le compromis de la variante Winawer ? | Les Noirs cèdent la paire de fous pour doubler les pions blancs | Les Noirs donnent un pion pour une attaque rapide sur le roi | Les Blancs renoncent au roque pour garder leurs deux fous | Le fou b4 prend le cavalier c3 : les Blancs ont deux fous, mais leurs pions c sont doublés.
 VARIANT 6 | Si les Blancs échangent en d5
 > exd5 : Les Blancs simplifient le centre.
 > exd5 : Le pion reprend : la structure devient symétrique.
@@ -769,7 +769,7 @@ IDEA: Les Blancs gagnent de l'espace avec e5 et visent l'aile roi avec le fou d3
 IDEA: Les Noirs attaquent le pion d4 avec c5, le cavalier c6 et la dame b6.
 TRAP: Pour vous : si les Noirs roquent trop tôt, le fou d3 et la dame visent la case h7.
 TRAP: Contre vous : le cavalier d2 bouche la diagonale du fou c1 ; ne tardez pas à le développer.
-QUIZ: Pourquoi les Blancs jouent-ils le cavalier en d2 plutôt qu'en c3 ? | Pour éviter le clouage du fou en b4 et garder le pion c libre | Pour préparer le grand roque | Pour attaquer tout de suite le pion d5 | En d2, le cavalier ne peut pas être cloué par le fou b4 et le pion c3 reste possible.
+QUIZ: Pourquoi les Blancs jouent-ils le cavalier en d2 plutôt qu'en c3 ? | Pour éviter le clouage du fou en b4 et garder le pion c libre | Pour préparer le grand roque et l'avance des pions | Pour attaquer tout de suite le pion d5 avec ses pièces | En d2, le cavalier ne peut pas être cloué par le fou b4 et le pion c3 reste possible.
 VARIANT 5 | Si les Noirs jouent tout de suite le pion c5
 > c5 : Les Noirs frappent le centre.
 > exd5 : Les Blancs échangent.
@@ -809,7 +809,7 @@ IDEA: La structure noire est solide : les Noirs visent une finale saine.
 IDEA: Les Noirs jouent souvent e6, le cavalier en d7 et le grand ou le petit roque.
 TRAP: Pour vous : si les Blancs attaquent sans plan, votre structure sans faiblesse résiste facilement.
 TRAP: Contre vous : sortir le cavalier en d7 trop tôt contre la dame blanche en e2 peut permettre un mat à l'étouffée en d6.
-QUIZ: Quel est l'avantage de la défense Caro-Kann sur la défense française ? | Le fou c8 peut sortir avant que le pion e6 ne l'enferme | Les Noirs gagnent un pion | Elle évite toute théorie | Le pion c6 prépare d5 sans bloquer le fou c8, qui sort en f5 ou en g4.
+QUIZ: Quel est l'avantage de la défense Caro-Kann sur la défense française ? | Le fou c8 peut sortir avant que le pion e6 ne l'enferme | Les Noirs gagnent un pion central dès l'ouverture | Elle évite toute théorie et toute préparation | Le pion c6 prépare d5 sans bloquer le fou c8, qui sort en f5 ou en g4.
 VARIANT 4 | Si les Blancs avancent le pion en e5
 > e5 : La variante d'avance : les Blancs gagnent de l'espace.
 > Bf5 : Le fou sort avant que le pion e ne lui bloque la route.
@@ -877,7 +877,7 @@ IDEA: Les Noirs acceptent de perdre un temps avec leur dame contre une structure
 IDEA: La dame en a5 cloue parfois le cavalier c3 et surveille la diagonale e1-a5.
 TRAP: Pour vous : si les Blancs avancent leurs pions sans se développer, votre dame et vos fous trouvent facilement de belles cases.
 TRAP: Contre vous : si vous oubliez votre dame en a5, les Blancs peuvent la menacer avec le fou en d2 et le cavalier en d5 ou b5.
-QUIZ: Pourquoi les Noirs acceptent-ils de perdre du temps avec leur dame ? | Ils obtiennent une structure saine et sortent vite le fou c8 | La dame ne peut jamais être attaquée | Ils gagnent un pion | Le cavalier c3 chasse la dame, mais les Noirs gardent une structure sans faiblesse et un développement facile.
+QUIZ: Pourquoi les Noirs acceptent-ils de perdre du temps avec leur dame ? | Ils obtiennent une structure saine et sortent vite le fou c8 | La dame ne peut pas être attaquée par les pièces blanches | Ils gagnent un pion et l'avance de développement | Le cavalier c3 chasse la dame, mais les Noirs gardent une structure sans faiblesse et un développement facile.
 VARIANT 3 | Si les Noirs reprennent avec le cavalier
 > Nf6 : Les Noirs veulent reprendre le pion avec le cavalier.
 > d4 : Les Blancs occupent le centre.
@@ -909,7 +909,7 @@ IDEA: Les Noirs acceptent un déséquilibre : ils laissent les Blancs bâtir un 
 IDEA: Les Noirs attaquent la tête du centre avec le pion d6 et le cavalier c6.
 TRAP: Pour vous : si les Blancs avancent trop de pions sans se développer, leur centre s'effondre sous vos attaques.
 TRAP: Contre vous : si votre cavalier reste trop longtemps au centre, les pions blancs le chassent avec gain de temps.
-QUIZ: Quelle est l'idée de la défense Alekhine ? | Provoquer l'avance des pions blancs pour les attaquer ensuite | Bloquer le centre avec des pions | Échanger les dames tout de suite | Le cavalier attire les pions blancs vers l'avant : un centre trop étendu devient une cible.
+QUIZ: Quelle est l'idée de la défense Alekhine ? | Provoquer l'avance des pions blancs pour les attaquer ensuite | Bloquer le centre avec des pions pour gagner de l'espace | Échanger les dames tout de suite pour éviter la théorie | Le cavalier attire les pions blancs vers l'avant : un centre trop étendu devient une cible.
 VARIANT 6 | Si les Blancs jouent l'attaque des quatre pions
 > c4 : Les Blancs chassent encore le cavalier.
 > Nb6 : Le cavalier recule.
@@ -943,7 +943,7 @@ IDEA: Les Noirs acceptent un déséquilibre : ils laissent le centre aux Blancs 
 IDEA: Les Noirs jouent souvent c6 et b5 pour contre-attaquer à l'aile dame.
 TRAP: Pour vous : si les Blancs poussent leurs pions centraux trop vite, votre fou g7 et le pion c5 attaquent leur base.
 TRAP: Contre vous : contre l'attaque autrichienne avec le pion f4, rester passif laisse les Blancs écraser votre aile roi avec e5.
-QUIZ: Que font les Noirs face au grand centre blanc dans la Pirc ? | Ils le sapent plus tard avec c5 ou e5 | Ils ne le touchent jamais | Ils échangent les dames | Les Noirs laissent les Blancs occuper le centre, puis l'attaquent avec leurs pions et leur fou g7.
+QUIZ: Que font les Noirs face au grand centre blanc dans la Pirc ? | Ils le sapent plus tard avec c5 ou e5 | Ils le laissent intact et jouent uniquement sur l'aile dame | Ils échangent les dames pour éteindre l'attaque blanche | Les Noirs laissent les Blancs occuper le centre, puis l'attaquent avec leurs pions et leur fou g7.
 VARIANT 6 | Si les Blancs jouent l'attaque autrichienne
 > f4 : Les Blancs construisent un centre de trois pions.
 > Bg7 : Le fou s'installe sur la grande diagonale.
@@ -978,7 +978,7 @@ IDEA: Les Noirs tiennent le pion d5 avec e6 et se développent solidement.
 IDEA: Les Blancs jouent souvent sur la colonne c à demi ouverte et préparent l'attaque de minorité avec b4 et b5.
 TRAP: Pour vous : si les Noirs se libèrent mal, l'attaque de minorité crée une faiblesse durable dans leur camp.
 TRAP: Contre vous : prendre le pion d5 avec le cavalier quand le cavalier noir est en d7 perd une pièce : la reprise et l'échec du fou en b4 gagnent votre dame.
-QUIZ: Pourquoi le gambit dame n'est-il pas un vrai gambit ? | Le pion c4 peut presque toujours être récupéré | Les Blancs donnent une pièce | Les Noirs doivent rendre leur dame | Si les Noirs prennent en c4, les Blancs récupèrent le pion sans difficulté, par exemple avec le pion e3 et le fou.
+QUIZ: Pourquoi le gambit dame n'est-il pas un vrai gambit ? | Le pion c4 peut presque toujours être récupéré | Les Blancs donnent une pièce pour l'initiative | Les Noirs doivent rendre le pion avec un retard de jeu | Si les Noirs prennent en c4, les Blancs récupèrent le pion sans difficulté, par exemple avec le pion e3 et le fou.
 VARIANT 5 | Si les Noirs jouent la défense Tarrasch
 > c5 : Les Noirs ouvrent le centre et acceptent un pion isolé.
 > cxd5 : Les Blancs échangent.
@@ -1010,7 +1010,7 @@ IDEA: Les Blancs récupèrent le pion avec le fou et occupent le centre.
 IDEA: Les Noirs contre-attaquent le centre avec c5 et jouent souvent a6 puis b5.
 TRAP: Pour vous : si les Noirs tentent de garder le pion avec b5, le coup a4 puis b3 casse leur aile dame.
 TRAP: Contre vous : si vous laissez le pion d4 isolé sans pièces actives, il devient faible.
-QUIZ: Que doivent éviter les Noirs dans le gambit dame accepté ? | Garder à tout prix le pion c4 avec b5 | Prendre le pion c4 | Roquer | Le pion c4 est difficile à garder : les Blancs attaquent la chaîne avec a4 et b3 et gagnent du terrain.
+QUIZ: Que doivent éviter les Noirs dans le gambit dame accepté ? | Garder à tout prix le pion c4 avec b5 | Prendre le pion c4, qui est empoisonné | Roquer avant d'avoir développé le fou c8 | Le pion c4 est difficile à garder : les Blancs attaquent la chaîne avec a4 et b3 et gagnent du terrain.
 VARIANT 4 | Si les Blancs prennent tout le centre
 > e4 : Les Blancs occupent tout le centre.
 > e5 : Les Noirs frappent tout de suite le pion d4.
@@ -1046,7 +1046,7 @@ IDEA: Les Noirs prennent parfois le pion c4 et sortent le fou en f5 avant de jou
 IDEA: La position noire est très solide : les Noirs visent l'égalité puis jouent pour gagner.
 TRAP: Pour vous : si les Blancs tardent à récupérer le pion c4, l'avance b5 vous permet parfois de le garder.
 TRAP: Contre vous : après le fou en f5, laisser la case b7 sans défense contre la dame blanche en b3 peut coûter un pion.
-QUIZ: Quel avantage le pion c6 donne-t-il aux Noirs ? | Il soutient le pion d5 sans enfermer le fou c8 | Il prépare le petit roque | Il attaque tout de suite le pion c4 | Contrairement au pion e6, le pion c6 laisse la diagonale du fou c8 libre.
+QUIZ: Quel avantage le pion c6 donne-t-il aux Noirs ? | Il soutient le pion d5 sans enfermer le fou c8 | Il prépare le petit roque en libérant la case c6 | Il attaque tout de suite le pion c4 pour le gagner | Contrairement au pion e6, le pion c6 laisse la diagonale du fou c8 libre.
 VARIANT 4 | Si les Blancs échangent tout de suite
 > cxd5 : La variante d'échange : une structure symétrique.
 > cxd5 : Les Noirs reprennent avec le pion c.
@@ -1083,7 +1083,7 @@ IDEA: Les Blancs bâtissent une pyramide solide avec c3, d4 et e3, quoi que joue
 IDEA: Les Blancs visent souvent l'aile roi avec le fou d3, le cavalier en e5 et parfois l'avance du pion h.
 TRAP: Pour vous : si les Noirs roquent sans précaution, le fou d3 et la dame visent la case h7.
 TRAP: Contre vous : la dame noire en b6 attaque le pion b2 ; ne l'oubliez pas en sortant votre fou f4.
-QUIZ: Pourquoi le fou sort-il en f4 dès le deuxième coup ? | Pour ne pas être enfermé par le pion e3 | Pour attaquer tout de suite le roi noir | Pour préparer le grand roque | Si le pion e3 était joué d'abord, le fou c1 serait enfermé ; en f4, il est actif.
+QUIZ: Pourquoi le fou sort-il en f4 dès le deuxième coup ? | Pour ne pas être enfermé par le pion e3 | Pour attaquer tout de suite le roi noir sur la diagonale | Pour préparer le grand roque en libérant la première rangée | Si le pion e3 était joué d'abord, le fou c1 serait enfermé ; en f4, il est actif.
 VARIANT 3 | Si les Noirs attaquent tout de suite avec le pion c5
 > c5 : Les Noirs frappent le centre.
 > e3 : Les Blancs consolident leur pion d4.
@@ -1116,7 +1116,7 @@ IDEA: Les Noirs sont prêts à donner leur fou pour doubler les pions blancs.
 IDEA: Les Noirs frappent le centre avec c5 et d5 au bon moment.
 TRAP: Pour vous : si les Blancs ont des pions doublés en c, bloquez-les et attaquez le pion c4.
 TRAP: Contre vous : avec la paire de fous, les Blancs deviennent dangereux si la position s'ouvre ; ne lâchez pas le centre trop tôt.
-QUIZ: Pourquoi les Noirs clouent-ils le cavalier c3 avec le fou ? | Pour contrôler la case e4 et empêcher le pion e4 | Pour gagner le cavalier | Pour préparer le grand roque | Le cavalier cloué ne protège plus la case e4 : les Blancs ont du mal à pousser leur pion e.
+QUIZ: Pourquoi les Noirs clouent-ils le cavalier c3 avec le fou ? | Pour contrôler la case e4 et empêcher le pion e4 | Pour gagner le cavalier c3, qui ne peut plus reculer | Pour préparer le grand roque en libérant la case f8 | Le cavalier cloué ne protège plus la case e4 : les Blancs ont du mal à pousser leur pion e.
 VARIANT 6 | Si la dame blanche protège le cavalier
 > Qc2 : La variante classique : les Blancs évitent les pions doublés.
 > O-O : Les Noirs roquent.
@@ -1190,7 +1190,7 @@ IDEA: L'échange en c3 renforce le centre blanc, mais lui donne aussi une cible.
 IDEA: La pression sur le pion d4 est le thème principal : fou g7, pion c5, cavalier c6 et dame.
 TRAP: Pour vous : si les Blancs défendent mal le pion d4, il tombe sous l'attaque de toutes vos pièces.
 TRAP: Contre vous : si vous laissez les Blancs pousser le pion d5 avec gain de temps, votre position se retrouve à l'étroit.
-QUIZ: Quel pion blanc les Noirs visent-ils dans la Grünfeld ? | Le pion d4 | Le pion a2 | Le pion h2 | Le fou g7, le pion c5 et le cavalier c6 attaquent tous le pion d4, cœur du centre blanc.
+QUIZ: Quel pion blanc les Noirs visent-ils dans la Grünfeld ? | Le pion d4 | Le pion c4 | Le pion e4 | Le fou g7, le pion c5 et le cavalier c6 attaquent tous le pion d4, cœur du centre blanc.
 VARIANT 6 | Si les Blancs jouent la variante russe
 > Nf3 : Les Blancs se développent avant de prendre en d5.
 > Bg7 : Le fou s'installe sur la grande diagonale.
@@ -1226,7 +1226,7 @@ IDEA: Le fou g2 contrôle la grande diagonale et vise la case d5.
 IDEA: Les Blancs attaquent souvent à l'aile dame avec les pions a et b.
 TRAP: Pour vous : si les Noirs occupent le centre trop vite, leurs pions deviennent des cibles pour votre fou g2.
 TRAP: Contre vous : si vous jouez trop lentement, les Noirs prennent le centre avec les pions e5 et d5.
-QUIZ: À quoi ressemble l'ouverture anglaise ? | À une défense sicilienne jouée par les Blancs, avec un temps de plus | Au gambit du roi | Au mat du berger | Le pion c4 contrôle la case d5 comme le pion c5 dans la sicilienne, avec un coup de plus pour les Blancs.
+QUIZ: À quoi ressemble l'ouverture anglaise ? | À une défense sicilienne jouée par les Blancs, avec un temps de plus | Au gambit du roi joué de l'autre côté, avec un pion offert | À la défense française jouée par les Blancs | Le pion c4 contrôle la case d5 comme le pion c5 dans la sicilienne, avec un coup de plus pour les Blancs.
 VARIANT 1 | Si les Noirs jouent le pion c5 : l'anglaise symétrique
 > c5 : Les Noirs copient le coup des Blancs.
 > Nc3 : Le cavalier se développe.
@@ -1256,7 +1256,7 @@ IDEA: Les Noirs se défendent en développant des pièces qui attaquent la dame.
 IDEA: Une dame sortie trop tôt fait perdre du temps à son propre camp.
 TRAP: Pour vous : si les Blancs insistent avec la dame, chassez-la en développant vos pièces : chaque attaque vous fait gagner un temps.
 TRAP: Contre vous : si vous jouez le cavalier en f6 alors que la dame en h5 et le fou c4 visent f7, la dame prend en f7 et fait mat.
-QUIZ: Comment se défendre contre la menace sur la case f7 ? | Protéger f7 ou couper la diagonale tout en développant ses pièces | Avancer le pion h | Sortir la dame en h4 | Un coup comme le pion g6 ou la dame en e7 pare la menace ; ensuite le cavalier f6 chasse la dame en se développant.
+QUIZ: Comment se défendre contre la menace sur la case f7 ? | Protéger f7 ou couper la diagonale tout en développant ses pièces | Avancer le pion h pour chasser la dame qui arrive en g4 | Sortir sa propre dame en h4 pour attaquer à son tour | Un coup comme le pion g6 ou la dame en e7 pare la menace ; ensuite le cavalier f6 chasse la dame en se développant.
 VARIANT 2 | Si les Blancs sortent d'abord le fou
 > Bc4 : Le fou vise la case f7.
 > Nf6 : Le cavalier se développe et contrôle la case h5.
@@ -1293,7 +1293,7 @@ IDEA: Les Blancs donnent parfois le pion c4 et le récupèrent avec la dame.
 IDEA: Les Noirs doivent libérer leur fou c8, souvent par b6 ou b5 puis Bb7.
 TRAP: Pour vous : si les Noirs gardent le pion c4 à tout prix, la grande diagonale s'ouvre contre leur tour a8.
 TRAP: Contre vous : si vous récupérez le pion trop lentement, les Noirs consolident et gardent un pion de plus.
-QUIZ: Quelle pièce fait la force de la catalane ? | Le fou g2 sur la grande diagonale | Le cavalier b1 | La tour h1 | Le fou g2 frappe l'aile dame noire et rend difficile le développement du fou c8.
+QUIZ: Quelle pièce fait la force de la catalane ? | Le fou g2 sur la grande diagonale | Le cavalier f3 au centre | La tour h1 sur la colonne h | Le fou g2 frappe l'aile dame noire et rend difficile le développement du fou c8.
 VARIANT 5 | Si les Noirs donnent échec avec le fou
 > Bb4+ : Le fou donne échec.
 > Bd2 : Le fou s'interpose.
@@ -1330,7 +1330,7 @@ IDEA: Le pion c4 attaque le centre noir de côté.
 IDEA: Les Blancs choisissent le moment d'ouvrir le centre avec d4 ou e4.
 TRAP: Pour vous : si les Noirs avancent leurs pions centraux sans les soutenir, vos fous en fianchetto les attaquent.
 TRAP: Contre vous : si vous jouez trop passivement, les Noirs prennent tout le centre et vos fous se heurtent à leurs pions.
-QUIZ: Comment les Blancs contrôlent-ils le centre dans la Réti ? | Avec leurs pièces à distance et le pion c4 | En plaçant tous leurs pions au centre | En sortant la dame tout de suite | La Réti contrôle le centre de loin, avec les fous en fianchetto et le cavalier, puis l'attaque avec le pion c4.
+QUIZ: Comment les Blancs contrôlent-ils le centre dans la Réti ? | Avec leurs pièces à distance et le pion c4 | En plaçant tous leurs pions au centre dès l'ouverture | En sortant la dame tôt pour viser les pions noirs | La Réti contrôle le centre de loin, avec les fous en fianchetto et le cavalier, puis l'attaque avec le pion c4.
 VARIANT 3 | Si le pion noir avance en d4
 > d4 : Les Noirs gagnent de l'espace.
 > e3 : Les Blancs attaquent le pion d4.
@@ -1370,7 +1370,7 @@ IDEA: Le pion a6 enlève la case b5 aux cavaliers blancs.
 IDEA: Le fou f8 choisit entre b4, pour clouer, et e7, plus solide.
 TRAP: Pour vous : si les Blancs négligent le pion e4, le clouage du fou b4 le fait tomber.
 TRAP: Contre vous : si vous oubliez la case d6, un cavalier blanc en b5 puis d6 devient très gênant.
-QUIZ: À quoi sert le pion a6 dans la Taimanov ? | À enlever la case b5 aux cavaliers blancs | À préparer le petit roque | À attaquer le pion e4 | Sans le pion a6, un cavalier blanc pourrait sauter en b5 puis en d6.
+QUIZ: À quoi sert le pion a6 dans la Taimanov ? | À enlever la case b5 aux cavaliers blancs | À préparer le petit roque en libérant la case | À attaquer le pion e4 avec le pion b ensuite | Sans le pion a6, un cavalier blanc pourrait sauter en b5 puis en d6.
 VARIANT 8 | Si le cavalier saute en b5
 > Nb5 : Le cavalier vise la case d6.
 > d6 : Le pion protège la case d6.
@@ -1410,7 +1410,7 @@ IDEA: Les Noirs retardent la sortie des cavaliers pour garder de la souplesse.
 IDEA: La dame en c7 surveille la colonne c et la case e5.
 TRAP: Pour vous : si les Blancs jouent mécaniquement, votre pion b5 et votre fou en b7 attaquent le pion e4.
 TRAP: Contre vous : si vous tardez trop à vous développer, les Blancs ouvrent le centre et votre roi reste au milieu.
-QUIZ: Quel est le caractère de la sicilienne Kan ? | Souple : les Noirs retardent leurs décisions | Très forcée, avec beaucoup de théorie | Elle sacrifie une pièce | La Kan joue e6 et a6 et attend de voir le plan des Blancs pour placer ses pièces.
+QUIZ: Quel est le caractère de la sicilienne Kan ? | Souple : les Noirs retardent leurs décisions | Très forcée, avec beaucoup de théorie précise | Agressive : elle sacrifie une pièce tout de suite | La Kan joue e6 et a6 et attend de voir le plan des Blancs pour placer ses pièces.
 VARIANT 8 | Si les Blancs développent leur cavalier en c3
 > Nc3 : Les Blancs se développent.
 > Qc7 : La dame contrôle la case e5.
@@ -1450,7 +1450,7 @@ IDEA: Les Blancs préparent c3 puis d4 pour construire un centre.
 IDEA: Échanger le fou en c6 double parfois les pions noirs.
 TRAP: Pour vous : si les Noirs tardent à roquer, la tour e1 et le pion e5 gênent leur développement.
 TRAP: Contre vous : si vous échangez en c6 sans raison, les Noirs gagnent la paire de fous.
-QUIZ: Quel est le plan des Blancs dans la Rossolimo ? | Préparer c3 puis d4 pour bâtir un centre | Ouvrir tout de suite la colonne c | Faire le grand roque | Le fou b5 gêne le cavalier c6 ; les pions c3 et d4 construisent ensuite un centre solide.
+QUIZ: Quel est le plan des Blancs dans la Rossolimo ? | Préparer c3 puis d4 pour bâtir un centre | Ouvrir tout de suite la colonne c pour les tours | Faire le grand roque et attaquer à l'aile roi | Le fou b5 gêne le cavalier c6 ; les pions c3 et d4 construisent ensuite un centre solide.
 VARIANT 5 | Si les Noirs jouent le pion e6
 > e6 : Les Noirs préparent d5.
 > O-O : Les Blancs roquent.
@@ -1485,7 +1485,7 @@ IDEA: Les Blancs roquent vite et amènent la dame en e1 puis h4.
 IDEA: Le centre reste fermé : l'attaque se joue sur l'aile roi.
 TRAP: Pour vous : si les Noirs roquent sans contre-jeu, l'avance f5 ouvre la colonne f contre leur roi.
 TRAP: Contre vous : si vous oubliez la case d4, le cavalier noir s'y installe et gêne toute votre position.
-QUIZ: Quel est le plan des Blancs dans le Grand Prix ? | Attaquer à l'aile roi avec les pions f et g | Ouvrir le centre avec d4 | Attaquer à l'aile dame | Le pion f4 annonce l'attaque à l'aile roi : f5, la dame en h4 et les pièces suivent.
+QUIZ: Quel est le plan des Blancs dans le Grand Prix ? | Attaquer à l'aile roi avec les pions f et g | Ouvrir le centre tout de suite avec le pion d4 | Attaquer à l'aile dame avec les pions a et b | Le pion f4 annonce l'attaque à l'aile roi : f5, la dame en h4 et les pièces suivent.
 VARIANT 3 | Si les Noirs jouent d'abord le pion d6
 > d6 : Les Noirs contrôlent la case e5.
 > f4 : Les Blancs avancent le pion f.
@@ -1522,7 +1522,7 @@ IDEA: Le fou c4 et la dame en e2 préparent la tour en d1.
 IDEA: Le pion e5 est souvent la percée qui ouvre le jeu.
 TRAP: Pour vous : si les Noirs se développent mal, le sacrifice en e6 ou en f7, ou un cavalier en d5, donne une attaque décisive.
 TRAP: Contre vous : si vous jouez lentement, les Noirs gardent le pion de plus et gagnent la finale.
-QUIZ: Que gagnent les Blancs contre le pion donné ? | Du temps et des colonnes ouvertes | Une pièce | La paire de fous à coup sûr | Le pion c3 rapporte une avance de développement et les colonnes c et d ouvertes pour les tours.
+QUIZ: Que gagnent les Blancs contre le pion donné ? | Du temps et des colonnes ouvertes | Une pièce entière grâce à un piège | La paire de fous à coup sûr | Le pion c3 rapporte une avance de développement et les colonnes c et d ouvertes pour les tours.
 VARIANT 5 | Si les Noirs refusent le gambit
 > d3 : Les Noirs rendent le pion et gardent la colonne d fermée.
 > Bxd3 : Le fou reprend.
@@ -1558,7 +1558,7 @@ IDEA: Le pion c5 attaque la base de la chaîne blanche, le pion d4.
 IDEA: Les Blancs gagnent de l'espace et cherchent l'attaque à l'aile roi.
 TRAP: Pour vous : si les Blancs jouent trop lentement, votre pression sur le pion d4 le fait tomber.
 TRAP: Contre vous : contre l'avance des pions g et h, votre fou f5 peut se retrouver enfermé ; gardez-lui une retraite.
-QUIZ: Pourquoi le fou sort-il en f5 avant le pion e6 ? | Pour ne pas être enfermé derrière la chaîne de pions | Pour attaquer le roi blanc | Pour préparer le grand roque | Après le pion e6, le fou c8 n'aurait plus de bonne diagonale : il sort d'abord.
+QUIZ: Pourquoi le fou sort-il en f5 avant le pion e6 ? | Pour ne pas être enfermé derrière la chaîne de pions | Pour attaquer le roi blanc sur la diagonale | Pour préparer le grand roque et la poussée c5 | Après le pion e6, le fou c8 n'aurait plus de bonne diagonale : il sort d'abord.
 VARIANT 6 | Si les Blancs jouent l'attaque avec le cavalier en c3
 > Nc3 : Les Blancs préparent l'avance des pions de l'aile roi.
 > e6 : Le pion ferme la chaîne.
@@ -1599,7 +1599,7 @@ IDEA: Les Blancs obtiennent souvent un pion isolé en d4 et beaucoup d'activité
 IDEA: Un cavalier en e5 et le fou d3 visent l'aile roi noire.
 TRAP: Pour vous : si les Noirs se développent lentement, l'avance d5 du pion isolé ouvre le jeu en votre faveur.
 TRAP: Contre vous : si vous échangez trop de pièces, le pion isolé devient une faiblesse en finale.
-QUIZ: Comment jouer avec un pion isolé en d4 ? | Activement, avec des pièces tournées vers l'aile roi | En échangeant toutes les pièces | En attendant sans rien faire | Le pion isolé donne de l'espace et des cases pour les pièces : il faut attaquer avant qu'il ne devienne faible.
+QUIZ: Comment jouer avec un pion isolé en d4 ? | Activement, avec des pièces tournées vers l'aile roi | En échangeant toutes les pièces au plus vite | En attendant, sans rien faire, que l'adversaire se trompe | Le pion isolé donne de l'espace et des cases pour les pièces : il faut attaquer avant qu'il ne devienne faible.
 VARIANT 9 | Si les Noirs sortent le cavalier en c6
 > Nc6 : Le cavalier attaque le pion d4.
 > Nf3 : Le cavalier protège le pion.
@@ -1637,7 +1637,7 @@ IDEA: La structure est symétrique : les pièces actives font la différence.
 IDEA: Les Noirs peuvent roquer d'un côté ou de l'autre selon les besoins.
 TRAP: Pour vous : si les Blancs jouent passivement, votre développement facile vous donne l'initiative.
 TRAP: Contre vous : dans une structure symétrique, une tour laissée hors de la colonne e ouverte cède le contrôle à l'adversaire.
-QUIZ: Quel avantage la variante d'échange donne-t-elle aux Noirs ? | Le fou c8 n'est plus enfermé | Un pion de plus | Une attaque immédiate sur le roi | Après l'échange en d5, la diagonale du fou c8 est libre : le problème principal de la française disparaît.
+QUIZ: Quel avantage la variante d'échange donne-t-elle aux Noirs ? | Le fou c8 n'est plus enfermé | Un pion de plus, gagné au centre | Une attaque immédiate contre le roi blanc | Après l'échange en d5, la diagonale du fou c8 est libre : le problème principal de la française disparaît.
 VARIANT 6 | Si les Blancs jouent le pion c4
 > c4 : Les Blancs attaquent le pion d5.
 > Nf6 : Le cavalier protège le pion.
@@ -1675,7 +1675,7 @@ IDEA: Le cavalier d7 permet de reprendre en f6 avec une pièce, sans pions doubl
 IDEA: Le pion c5 libère le jeu des Noirs.
 TRAP: Pour vous : si les Blancs ne font rien du centre, votre pion c5 et vos pièces actives égalisent facilement.
 TRAP: Contre vous : si vous oubliez le développement du fou c8, il reste enfermé derrière le pion e6.
-QUIZ: Pourquoi les Noirs jouent-ils le cavalier en d7 avant le cavalier en f6 ? | Pour reprendre en f6 avec un cavalier, sans pions doublés | Pour attaquer le pion e4 | Pour préparer le petit roque | Si le cavalier f6 était pris par le cavalier blanc, le cavalier d7 reprend sans abîmer la structure.
+QUIZ: Pourquoi les Noirs jouent-ils le cavalier en d7 avant le cavalier en f6 ? | Pour reprendre en f6 avec un cavalier, sans pions doublés | Pour attaquer le pion e4 avec deux pièces | Pour préparer le petit roque plus rapidement | Si le cavalier f6 était pris par le cavalier blanc, le cavalier d7 reprend sans abîmer la structure.
 VARIANT 12 | Si les Blancs placent leur fou en g5
 > Bg5 : Le fou cloue le cavalier f6.
 > h6 : Le pion questionne le fou.
@@ -1714,7 +1714,7 @@ IDEA: Les Blancs préparent l'avance d4 au bon moment.
 IDEA: Le cavalier b1 passe souvent par d2 et f1 vers g3.
 TRAP: Pour vous : si les Noirs jouent trop vite le pion d5, le centre s'ouvre en faveur de vos pièces mieux placées.
 TRAP: Contre vous : sans le coup h3, le fou noir en g4 cloue votre cavalier f3 et gêne votre jeu.
-QUIZ: Quel est l'esprit de l'italienne lente ? | Un centre solide, puis une longue manœuvre | Une attaque immédiate sur f7 | Un gambit de pion | Avec c3 et d3, les Blancs gardent un centre solide et préparent d4 sans se presser.
+QUIZ: Quel est l'esprit de l'italienne lente ? | Un centre solide, puis une longue manœuvre | Une attaque immédiate sur la case f7 | Un gambit de pion pour ouvrir les lignes | Avec c3 et d3, les Blancs gardent un centre solide et préparent d4 sans se presser.
 VARIANT 9 | Si les Noirs roquent tout de suite
 > O-O : Les Noirs roquent.
 > O-O : Les Blancs roquent aussi.
@@ -1764,7 +1764,7 @@ IDEA: Le fou d6, la dame en h3 et le fou c8 en g4 forment l'attaque.
 IDEA: Les Blancs ont un pion de plus mais doivent défendre avec précision.
 TRAP: Pour vous : si les Blancs défendent mal, la dame en h3 et le fou d6 menacent vite le mat.
 TRAP: Contre vous : si l'attaque échoue, les Blancs gardent le pion de plus en finale.
-QUIZ: Que gagnent les Noirs contre le pion sacrifié ? | Une attaque rapide contre le roi blanc | Une finale gagnante | La paire de fous à coup sûr | Le pion d5 ouvre les lignes : le fou d6 et la dame en h3 attaquent le roi blanc pendant que l'aile dame blanche dort.
+QUIZ: Que gagnent les Noirs contre le pion sacrifié ? | Une attaque rapide contre le roi blanc | Une finale gagnante, avec un pion de plus | La paire de fous et une meilleure structure | Le pion d5 ouvre les lignes : le fou d6 et la dame en h3 attaquent le roi blanc pendant que l'aile dame blanche dort.
 VARIANT 14 | Si les Blancs évitent la Marshall avec le pion a4
 > a4 : Les Blancs attaquent le pion b5 et évitent le sacrifice en d5.
 > b4 : Le pion avance.
@@ -1802,7 +1802,7 @@ IDEA: Le fou b4 donne échec pour gêner le développement blanc.
 IDEA: Les Noirs récupèrent généralement le pion avec un jeu actif.
 TRAP: Pour vous : si les Blancs défendent le pion avec des coups maladroits, vos pièces actives prennent l'initiative.
 TRAP: Contre vous : si vous ne récupérez pas le pion, les Blancs consolident et gardent un pion de plus.
-QUIZ: Comment les Noirs récupèrent-ils le pion dans le Budapest ? | En attaquant le pion e5 avec plusieurs pièces | En échangeant les dames | En roquant tout de suite | Les cavaliers et la dame visent le pion e5 : les Blancs ne peuvent pas le garder longtemps.
+QUIZ: Comment les Noirs récupèrent-ils le pion dans le Budapest ? | En attaquant le pion e5 avec plusieurs pièces | En échangeant les dames pour simplifier le jeu | En roquant tout de suite pour menacer la colonne e | Les cavaliers et la dame visent le pion e5 : les Blancs ne peuvent pas le garder longtemps.
 VARIANT 6 | Si les Blancs développent le cavalier en f3
 > Nf3 : Les Blancs protègent le pion e5.
 > Bc5 : Le fou vise la case f2.
@@ -1844,7 +1844,7 @@ IDEA: Le fou g7 vise l'aile dame blanche par la grande diagonale.
 IDEA: Les Noirs jouent souvent sur une compensation durable, même en finale.
 TRAP: Pour vous : si les Blancs gardent passivement le pion de plus, la pression sur les pions a2 et b2 devient insupportable.
 TRAP: Contre vous : si les Blancs réussissent l'avance e5, votre roi peut devenir une cible.
-QUIZ: Que gagnent les Noirs dans le gambit Benko ? | Des colonnes ouvertes et une pression durable à l'aile dame | Une attaque de mat immédiate | La paire de fous | Le pion donné ouvre les colonnes a et b : les tours noires et le fou g7 y pressent longtemps.
+QUIZ: Que gagnent les Noirs dans le gambit Benko ? | Des colonnes ouvertes et une pression durable à l'aile dame | Une attaque de mat immédiate contre le roi blanc | La paire de fous et un pion passé au centre | Le pion donné ouvre les colonnes a et b : les tours noires et le fou g7 y pressent longtemps.
 VARIANT 6 | Si les Blancs refusent le gambit
 > Nf3 : Les Blancs se développent au lieu de prendre.
 > Bb7 : Le fou vise le pion d5.
@@ -1879,7 +1879,7 @@ IDEA: Le fou des cases noires sort avant le pion e3.
 IDEA: Les Blancs gardent une structure solide avec c3, d4 et e3.
 TRAP: Pour vous : si les Noirs laissent le cavalier e4 sans soutien, il peut être chassé ou échangé avec gain de temps.
 TRAP: Contre vous : la dame noire en b6 attaque le pion b2 quand votre fou a quitté c1.
-QUIZ: Pourquoi le fou sort-il en g5 dès le deuxième coup ? | Pour gêner le cavalier f6 avant le pion e3 | Pour attaquer le roi noir | Pour préparer le petit roque | En g5, le fou sort avant que le pion e3 ne l'enferme et gêne tout de suite le développement noir.
+QUIZ: Pourquoi le fou sort-il en g5 dès le deuxième coup ? | Pour gêner le cavalier f6 avant le pion e3 | Pour attaquer le roi noir sur la diagonale | Pour préparer le petit roque en libérant la case | En g5, le fou sort avant que le pion e3 ne l'enferme et gêne tout de suite le développement noir.
 VARIANT 3 | Si les Noirs jouent le pion e6
 > e6 : Les Noirs protègent leur structure.
 > e4 : Les Blancs prennent le centre.

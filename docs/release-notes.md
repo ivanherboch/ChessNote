@@ -1,3 +1,20 @@
+## ChessDuck 3.4.0 — audit de l'Académie, lot 1
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Accueil : l'application s'ouvre sur l'Académie. Un nouvel élève commence à la première leçon (« L'échiquier et la notation ») et au palier 1 ; le palier se choisit à la main dans le tiroir « Entraînements ».
+- Cursus réordonné : au palier 2, les initiations (pièce gratuite, mat en un coup, fourchette de dame) et les méthodes (échecs, prises, menaces ; contrôle anti-gaffe ; compter attaquants et défenseurs) viennent avant les tactiques combinées ; « Le mat du berger » suit « Les trois principes ».
+- Mode Guidé : les coups des questions « À vous » encore à résoudre, et la suite, sont masqués dans la bande des coups (et le tableau sur tablette) : plus de réponse en clair.
+- Questions de fin de leçon : les 74 QCM ont de nouvelles mauvaises réponses, plausibles et de longueur comparable (la bonne n'était plus devinable à sa longueur). Une mauvaise réponse ne dévoile plus la bonne : on réessaie.
+- Exercices au niveau débutant : les paliers 1 et 2 puisent dans les problèmes 400 à 1199 (et non plus 400 à 1100, presque vide pour certains thèmes comme le roque). L'examen proposé est celui de votre palier.
+- Révisions : passer à la révision suivante ne rouvre plus le tiroir en pleine séance ; une finale révisée (une position) affiche « Position réussie » et la date de la prochaine révision.
+- Bouton Retour d'Android : pendant une séance (finale, réflexes, série, question, révision, répertoire), il quitte la séance au lieu de quitter l'Académie.
+- Leçons : « Le roque au bon moment » demande aussi le roque ; « Méthode : le contrôle anti-gaffe » se valide sur des problèmes de défense ; « Travailler ce point » ouvre la leçon en mode Guidé.
+- « Quelle est la menace ? » n'est plus posée quand votre roi est en échec.
+- Finales : « vous jouez les Blancs / Noirs » est indiqué ; « Reprendre le coup » disparaît après un rejeu réussi.
+- En-tête : le titre « ChessDuck » se réduit au lieu de toucher le bouton « Entraînements » ; en très grande police, les onglets se réduisent au lieu d'être coupés (« Académi »).
+- Vibrations : en revenant sur l'onglet Académie, la dernière vibration de réussite ou d'erreur n'est plus rejouée (d'où une vibration plus forte que sur les autres onglets).
+
 ## ChessDuck 3.3.5 — un échiquier qui ne se bloque plus
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

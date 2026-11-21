@@ -1006,7 +1006,7 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         drill = "VANCURA_DRAW",
         ideas = listOf("Contre un pion tour soutenu par une tour devant lui, la tour du défenseur attaque le pion de côté.", "Elle donne des échecs dès que le roi adverse s'approche du pion.", "Le roi défenseur reste près de la case de promotion : la partie est nulle."),
         traps = listOf("Pour vous : en défense, la tour de côté immobilise la tour adverse devant son pion.", "Contre vous : une tour passive derrière le pion tour perd ; attaquez-le de côté."),
-        quiz = LessonQuiz("Où se place la tour du défenseur dans la défense Vancura ?", "Sur la même rangée que le pion, pour l'attaquer de côté", listOf("Devant le pion", "Derrière son propre roi"), "Attaqué de côté, le pion tour cloue la tour adverse devant lui ; le roi ne peut pas l'aider sans subir des échecs."),
+        quiz = LessonQuiz("Où se place la tour du défenseur dans la défense Vancura ?", "Sur la même rangée que le pion, pour l'attaquer de côté", listOf("Devant le pion, sur sa case de promotion", "Derrière son propre roi, pour l'abriter des échecs"), "Attaqué de côté, le pion tour cloue la tour adverse devant lui ; le roi ne peut pas l'aider sans subir des échecs."),
     ),
     LessonData(
         id = 174,
@@ -1062,7 +1062,7 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         ),
         ideas = listOf("Les tours se placent derrière les pions passés.", "Derrière le sien, la tour le pousse ; derrière celui de l'adversaire, elle le freine.", "Une tour devant un pion devient passive."),
         traps = listOf("Pour vous : une tour derrière votre pion passé devient plus active à chaque avance du pion.", "Contre vous : une tour placée devant le pion adverse perd sa liberté."),
-        quiz = LessonQuiz("Où placer une tour avec un pion passé ?", "Derrière le pion passé", listOf("Devant le pion passé", "Sur la première rangée, loin du pion"), "Derrière le pion, la tour gagne en activité à chaque avance ; devant, elle perd de la place à chaque pas du pion."),
+        quiz = LessonQuiz("Où placer une tour avec un pion passé ?", "Derrière le pion passé", listOf("Devant le pion passé, pour bloquer sa case", "Sur la première rangée, loin du pion passé"), "Derrière le pion, la tour gagne en activité à chaque avance ; devant, elle perd de la place à chaque pas du pion."),
     ),
     LessonData(
         id = 176,
@@ -1299,7 +1299,7 @@ internal val ENDGAME_LESSONS: List<LessonData> = listOf(
         ),
         ideas = listOf("Dans certaines positions, le camp qui a le trait perd : c'est le zugzwang mutuel.", "Il faut savoir s'y placer quand c'est à l'adversaire de jouer.", "Un coup d'attente ou une triangulation du roi change le trait."),
         traps = listOf("Pour vous : la triangulation du roi perd un temps et place l'adversaire en zugzwang.", "Contre vous : en défense, prenez l'opposition au bon moment pour annuler."),
-        quiz = LessonQuiz("Que se passe-t-il si les Blancs ont le trait dans la position de départ ?", "La partie est nulle", listOf("Les Blancs gagnent quand même", "Les Noirs gagnent"), "Avec les Blancs au trait, le roi noir garde l'opposition devant le pion : c'est un zugzwang mutuel, celui qui joue perd."),
+        quiz = LessonQuiz("Que se passe-t-il si les Blancs ont le trait dans la position de départ ?", "La partie est nulle", listOf("Les Blancs gagnent, grâce à l'opposition", "Les Noirs gagnent, car les Blancs sont en zugzwang"), "Avec les Blancs au trait, le roi noir garde l'opposition devant le pion : c'est un zugzwang mutuel, celui qui joue perd."),
     ),
     LessonData(
         id = 185,

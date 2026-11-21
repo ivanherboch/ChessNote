@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `3.3.5` (`versionCode = 66`), publiée en release GitHub `v3.3.5`.
+- **Version actuelle** : `3.4.0` (`versionCode = 67`), publiée en release GitHub `v3.4.0`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -172,6 +172,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
   mode enfant et paramètres). Interface adulte et commentaires de revue au vouvoiement ; mode enfant au tutoiement.
 - **2.7.0** : refonte de l'Académie, étape 2 sur 3 : finales jouables, réflexes, révisions espacées, paliers,
   placement et examens, variantes, QCM, répertoire, partie modèle et « Devinez le coup ».
+- **3.4.0** (audit, lot 1) : `MoveStrip`/`MoveTable(hiddenFrom)` ; `levelRange(1,2) = 400..1199` ; `nextReview` sans `backToDrawer`, `EndgameTrainer.note`, seuil `min(PASS, total)` ; `BackHandler` de séance ; titre et onglets en `TextAutoSize` ; ordres P2 réécrits (initiations et méthodes d'abord), mat du berger après les trois principes ; onglet de départ Académie, défauts `lessonId = 115`, `academyLevel = 1` (FakeSettings garde 1/2 ; tests d'écran : `openLesson`) ; `setLevel` + puces de palier ; examen du palier en cours ; QCM : `retryQuiz`, 74 distracteurs réécrits ; `threatFrom` écarte l'échec ; `replayOk` ; vibrations non rejouées (`seenPulses`).
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.

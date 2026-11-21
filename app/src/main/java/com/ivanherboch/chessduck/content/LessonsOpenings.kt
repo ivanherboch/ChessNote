@@ -31,7 +31,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Le centre, le développement et le roque. Si vous suivez ces trois principes, votre ouverture sera saine.",
         ideas = listOf("Le centre : les pions e et d occupent ou contrôlent les cases centrales, là où les pièces sont les plus actives.", "Le développement : sortez cavaliers et fous avant de rejouer la même pièce ou de sortir la dame.", "La sécurité du roi : roquez tôt, en général avant le dixième coup."),
         traps = listOf("Pour vous : un adversaire qui sort sa dame trop tôt vous laisse développer vos pièces en l'attaquant.", "Contre vous : si vous tardez à roquer, une colonne centrale qui s'ouvre expose votre roi à une attaque rapide."),
-        quiz = LessonQuiz("Après l'ouverture des pions roi, quel est le meilleur deuxième coup des Blancs ?", "Sortir le cavalier en f3", listOf("Sortir la dame en h5", "Pousser le pion h de deux cases"), "Le cavalier f3 se développe vers le centre et attaque le pion e5 : il respecte deux principes à la fois."),
+        quiz = LessonQuiz("Après l'ouverture des pions roi, quel est le meilleur deuxième coup des Blancs ?", "Sortir le cavalier en f3", listOf("Sortir la dame en h5 pour viser f7", "Pousser le pion d de deux cases"), "Le cavalier f3 se développe vers le centre et attaque le pion e5 : il respecte deux principes à la fois."),
         variants = listOf(
             LessonVariant(
                 5, "Si les Noirs sortent d'abord le second cavalier", "g8f6 d2d3 f8e7 e1g1",
@@ -73,7 +73,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Un centre de pions est puissant, mais l'adversaire cherchera toujours à le casser.",
         ideas = listOf("Le fou c4 vise la case f7, le point faible des Noirs, que seul leur roi protège.", "Le pion c3 prépare l'avance d4 pour bâtir un centre de deux pions côte à côte.", "Les Noirs doivent attaquer ce centre au bon moment, le plus souvent par l'avance d5."),
         traps = listOf("Pour vous : si les Noirs oublient la case f7, le fou c4 et le cavalier peuvent l'attaquer ensemble et gagner du matériel, parfois même mater.", "Contre vous : si vous poussez le pion e trop tôt en e5, les Noirs frappent le centre par d5 et votre centre s'effondre."),
-        quiz = LessonQuiz("Quel est le plan des Blancs dans la partie italienne ?", "Jouer c3 puis d4 pour construire un centre de deux pions", listOf("Échanger les dames au plus vite", "Pousser le pion h jusqu'en h6"), "Le pion c3 prépare d4 : avec deux pions en e4 et d4, les Blancs dominent le centre et gênent le fou c5."),
+        quiz = LessonQuiz("Quel est le plan des Blancs dans la partie italienne ?", "Jouer c3 puis d4 pour construire un centre de deux pions", listOf("Attaquer tout de suite f7 avec le cavalier g5", "Faire le grand roque et pousser les pions de l'aile roi"), "Le pion c3 prépare d4 : avec deux pions en e4 et d4, les Blancs dominent le centre et gênent le fou c5."),
         variants = listOf(
             LessonVariant(
                 5, "Si les Noirs jouent Nf6 : la défense des deux cavaliers", "g8f6 f3g5 d7d5 e4d5 c6a5",
@@ -113,7 +113,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans un gambit, on donne du matériel pour gagner du temps.",
         ideas = listOf("Le pion b4 attire le fou c5 pour gagner du temps avec c3 puis d4.", "Les Blancs construisent un centre de pions et ouvrent les lignes vers le roi noir resté au centre.", "La dame en b3 et le fou c4 visent ensemble la case f7."),
         traps = listOf("Pour vous : si les Noirs gardent tous les pions gagnés sans se développer, l'attaque sur f7 et sur la colonne e devient décisive.", "Contre vous : sans jeu énergique, les Noirs rendent un pion au bon moment et gardent un pion de plus en finale."),
-        quiz = LessonQuiz("Pourquoi les Blancs donnent-ils le pion b4 ?", "Pour gagner du temps et bâtir un centre avec c3 et d4", listOf("Pour ouvrir la colonne b à leur tour", "Pour échanger les dames"), "Le fou attiré en b4 est chassé par c3 avec gain de temps, puis le pion d4 construit le centre."),
+        quiz = LessonQuiz("Pourquoi les Blancs donnent-ils le pion b4 ?", "Pour gagner du temps et bâtir un centre avec c3 et d4", listOf("Pour ouvrir la colonne b à leur tour et y placer une tour", "Pour attirer le cavalier c6 loin du centre"), "Le fou attiré en b4 est chassé par c3 avec gain de temps, puis le pion d4 construit le centre."),
         variants = listOf(
             LessonVariant(
                 7, "Si les Noirs refusent le gambit", "c5b6 a2a4 a7a6 b1c3",
@@ -157,7 +157,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Des pièces actives peuvent compenser un pion de moins.",
         ideas = listOf("Les Noirs contre-attaquent le pion e4 au lieu de protéger tranquillement leur position.", "Contre le cavalier en g5, l'avance d5 coupe la diagonale du fou c4 vers f7.", "Les Noirs donnent un pion pour gagner du temps et chasser les pièces blanches."),
         traps = listOf("Pour vous : si les Blancs gardent leur pion de plus sans se développer, votre avance de développement devient dangereuse.", "Contre vous : reprendre en d5 avec le cavalier permet le sacrifice en f7, l'attaque du « foie frit »."),
-        quiz = LessonQuiz("Pourquoi les Noirs jouent-ils le cavalier en a5 au cinquième coup ?", "Pour chasser le fou c4 sans reprendre en d5 avec le cavalier", listOf("Pour protéger le pion b7", "Pour préparer le petit roque"), "Reprendre avec le cavalier expose la case f7 ; le cavalier a5 chasse le fou en gagnant du temps."),
+        quiz = LessonQuiz("Pourquoi les Noirs jouent-ils le cavalier en a5 au cinquième coup ?", "Pour chasser le fou c4 sans reprendre en d5 avec le cavalier", listOf("Pour protéger le pion b7 attaqué par le fou", "Pour préparer le petit roque et protéger f7"), "Reprendre avec le cavalier expose la case f7 ; le cavalier a5 chasse le fou en gagnant du temps."),
         variants = listOf(
             LessonVariant(
                 6, "Si les Blancs jouent calmement le pion d3", "d2d3 f8e7 e1g1 e8g8",
@@ -199,7 +199,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Un roi resté au centre devient une cible.",
         ideas = listOf("Le cavalier g5 et le fou c4 attaquent ensemble la case f7.", "Le sacrifice en f7 attire le roi noir au centre de l'échiquier.", "Les Blancs attaquent le cavalier d5, cloué devant le roi, avec toutes leurs pièces."),
         traps = listOf("Pour vous : si les Noirs reprennent en d5 avec le cavalier, le sacrifice en f7 donne une attaque très dangereuse.", "Contre vous : si les Noirs jouent le cavalier en a5, votre attaque sur f7 disparaît et vos pièces se font chasser."),
-        quiz = LessonQuiz("Pourquoi le sacrifice en f7 fonctionne-t-il ?", "Le roi noir est attiré au centre et le cavalier d5 est cloué", listOf("Il gagne tout de suite une tour", "Il permet aux Blancs de roquer"), "Après le sacrifice, le roi noir doit défendre le cavalier d5 au milieu de l'échiquier, face à toutes les pièces blanches."),
+        quiz = LessonQuiz("Pourquoi le sacrifice en f7 fonctionne-t-il ?", "Le roi noir est attiré au centre et le cavalier d5 est cloué", listOf("Il gagne tout de suite une tour par une fourchette", "Il permet aux Blancs de roquer sans perte de temps"), "Après le sacrifice, le roi noir doit défendre le cavalier d5 au milieu de l'échiquier, face à toutes les pièces blanches."),
         variants = listOf(
             LessonVariant(
                 10, "L'attaque Lolli : ouvrir d'abord le centre", "d2d4 e5d4 e1g1 f8e7 g5f7 e8f7 d1f3",
@@ -239,7 +239,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "En ouverture, on prépare ses avances de pions.",
         ideas = listOf("Le fou b5 attaque le cavalier c6, défenseur du pion e5 : c'est une pression lente mais durable.", "Les Blancs préparent c3 puis d4 pour construire un centre solide.", "Le cavalier b1 voyage souvent par d2 et f1 jusqu'en g3 pour soutenir l'attaque à l'aile roi."),
         traps = listOf("Pour vous : si les Noirs jouent trop vite sur l'aile dame, le centre s'ouvre en faveur de vos pièces mieux placées.", "Contre vous : prendre trop tôt en e5 avec le fou en c6 puis le cavalier en e5 peut perdre le cavalier après la dame en d4."),
-        quiz = LessonQuiz("Quel est le plan typique des Blancs dans l'espagnole fermée ?", "Jouer c3 puis d4 et manœuvrer le cavalier vers g3", listOf("Échanger toutes les pièces au plus vite", "Attaquer avec le pion a jusqu'en a6"), "Le pion c3 prépare d4 ; le cavalier b1 rejoint l'aile roi par d2 et f1."),
+        quiz = LessonQuiz("Quel est le plan typique des Blancs dans l'espagnole fermée ?", "Jouer c3 puis d4 et manœuvrer le cavalier vers g3", listOf("Échanger toutes les pièces pour une finale égale", "Pousser le pion a jusqu'en a6 pour ouvrir la colonne a"), "Le pion c3 prépare d4 ; le cavalier b1 rejoint l'aile roi par d2 et f1."),
         variants = listOf(
             LessonVariant(
                 9, "Si les Noirs prennent le pion e4 : la défense ouverte", "f6e4 d2d4 b7b5 a4b3 d7d5 d4e5",
@@ -282,7 +282,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Échanger les dames réduit les dangers pour un roi resté au centre.",
         ideas = listOf("Les Noirs acceptent une finale sans dames où ils ont la paire de fous.", "Le roi noir reste au centre, mais sans dames il n'est pas en danger.", "Les Blancs ont une majorité de pions à l'aile roi ; les Noirs jouent avec leurs fous et leur solidité."),
         traps = listOf("Pour vous : si les Blancs jouent sans plan dans la finale, vos deux fous prennent le dessus.", "Contre vous : si vous laissez avancer la majorité blanche à l'aile roi, elle peut créer un pion passé dangereux."),
-        quiz = LessonQuiz("Quel est l'atout des Noirs dans la finale berlinoise ?", "La paire de fous et une structure solide", listOf("Un pion de plus", "Une attaque immédiate sur le roi blanc"), "Les Noirs ont des pions doublés, mais leurs deux fous et leur structure sans faiblesse compensent."),
+        quiz = LessonQuiz("Quel est l'atout des Noirs dans la finale berlinoise ?", "La paire de fous et une structure solide", listOf("Un pion de plus, gagné dès l'ouverture", "Une attaque immédiate sur le roi blanc"), "Les Noirs ont des pions doublés, mais leurs deux fous et leur structure sans faiblesse compensent."),
         variants = listOf(
             LessonVariant(
                 6, "Si les Blancs protègent le pion avec le pion d3", "d2d3 f8c5 c2c3 e8g8",
@@ -326,7 +326,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "En finale, la structure des pions compte beaucoup.",
         ideas = listOf("Les Blancs échangent le fou contre le cavalier pour abîmer la structure noire.", "En finale, la majorité blanche à l'aile roi peut créer un pion passé, pas la majorité noire doublée.", "Les Noirs ont la paire de fous et un développement facile en compensation."),
         traps = listOf("Pour vous : si les Noirs échangent trop de pièces, la finale de pions vous est favorable.", "Contre vous : prendre le pion e5 avec le cavalier juste après l'échange perd le pion, car la dame noire le récupère en d4."),
-        quiz = LessonQuiz("Pourquoi les Blancs donnent-ils leur fou contre le cavalier c6 ?", "Pour doubler les pions noirs et viser une finale favorable", listOf("Pour gagner tout de suite le pion e5", "Pour ouvrir la colonne f"), "Après l'échange, les pions noirs sont doublés : en finale, la majorité blanche à l'aile roi est plus forte."),
+        quiz = LessonQuiz("Pourquoi les Blancs donnent-ils leur fou contre le cavalier c6 ?", "Pour doubler les pions noirs et viser une finale favorable", listOf("Pour gagner tout de suite le pion e5 sans compensation", "Pour ouvrir la colonne f et attaquer le roque"), "Après l'échange, les pions noirs sont doublés : en finale, la majorité blanche à l'aile roi est plus forte."),
         variants = listOf(
             LessonVariant(
                 9, "Si les Noirs protègent le pion avec la dame", "d8d6 d2d3 f7f6 c1e3",
@@ -367,7 +367,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Ouvrir le centre tôt donne un jeu actif aux deux camps.",
         ideas = listOf("Les Blancs ouvrent le centre dès le troisième coup pour libérer leurs pièces.", "Le cavalier d4 est très actif, mais il peut devenir une cible.", "Les Blancs visent le pion e5 et l'espace, les Noirs un développement rapide."),
         traps = listOf("Pour vous : si les Noirs laissent leur cavalier f6 se faire chasser, votre pion e5 gagne beaucoup d'espace.", "Contre vous : après l'échange en c6 et le pion e5, la dame noire en e7 cloue votre pion ; ne laissez pas la colonne e s'ouvrir devant votre roi."),
-        quiz = LessonQuiz("Quelle est l'idée de la partie écossaise ?", "Ouvrir le centre tout de suite pour développer ses pièces", listOf("Bloquer le centre avec des pions", "Sortir la dame en premier"), "Le pion d4 ouvre le centre dès le troisième coup : les pièces blanches sortent librement."),
+        quiz = LessonQuiz("Quelle est l'idée de la partie écossaise ?", "Ouvrir le centre tout de suite pour développer ses pièces", listOf("Bloquer le centre avec des pions pour jouer sur les ailes", "Sortir la dame en premier pour attaquer f7"), "Le pion d4 ouvre le centre dès le troisième coup : les pièces blanches sortent librement."),
         variants = listOf(
             LessonVariant(
                 7, "Si les Noirs sortent leur fou en c5", "f8c5 c1e3 d8f6 c2c3",
@@ -408,7 +408,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "La paire de fous est un petit avantage durable.",
         ideas = listOf("Les deux camps développent leurs cavaliers vers le centre avant tout.", "Le fou b5 vise le cavalier c6 pour gêner la défense du pion e5.", "La partie est symétrique : le premier qui crée un déséquilibre utile prend l'initiative."),
         traps = listOf("Pour vous : si les Noirs prennent votre pion e4 trop tôt, le centre s'ouvre en faveur de votre développement.", "Contre vous : après la prise en c3 qui double vos pions, ne laissez pas le cavalier noir s'installer en d4."),
-        quiz = LessonQuiz("Que se passe-t-il quand les Noirs prennent en c3 avec le fou ?", "Les pions blancs sont doublés, mais les Blancs gagnent la paire de fous", listOf("Les Blancs perdent une pièce", "Les Noirs gagnent un pion"), "Les pions c sont doublés ; en échange, les Blancs gardent leurs deux fous et la colonne b ouverte."),
+        quiz = LessonQuiz("Que se passe-t-il quand les Noirs prennent en c3 avec le fou ?", "Les pions blancs sont doublés, mais les Blancs gagnent la paire de fous", listOf("Les Blancs perdent une pièce, faute de pouvoir reprendre", "Les Noirs gagnent un pion et une meilleure structure"), "Les pions c sont doublés ; en échange, les Blancs gardent leurs deux fous et la colonne b ouverte."),
         variants = listOf(
             LessonVariant(
                 7, "Si les Noirs jouent le cavalier en d4 : la variante Rubinstein", "c6d4 b5a4 f8c5 f3e5",
@@ -449,7 +449,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans la Petrov, on chasse le cavalier avant de reprendre le pion.",
         ideas = listOf("Les Noirs répondent à l'attaque du pion e5 par une contre-attaque symétrique sur le pion e4.", "Avant de reprendre le pion, les Noirs chassent le cavalier e5 avec le pion d6.", "La position est solide et symétrique : les Noirs visent l'égalité, puis la finale."),
         traps = listOf("Pour vous : si les Blancs attaquent sans préparation, votre position sans faiblesse résiste facilement et vos pièces se développent sans souci.", "Contre vous : prendre tout de suite le pion e4 au troisième coup est une erreur : la dame blanche en e2 attaque le cavalier, et s'il recule, un échec à la découverte gagne la dame."),
-        quiz = LessonQuiz("Pourquoi les Noirs jouent-ils d6 avant de prendre le pion e4 ?", "Pour chasser le cavalier e5 et éviter un piège sur la colonne e", listOf("Pour préparer le grand roque", "Pour ouvrir la diagonale de la dame"), "Le pion d6 chasse le cavalier blanc ; prendre trop tôt le pion e4 expose les Noirs au clouage sur la colonne e."),
+        quiz = LessonQuiz("Pourquoi les Noirs jouent-ils d6 avant de prendre le pion e4 ?", "Pour chasser le cavalier e5 et éviter un piège sur la colonne e", listOf("Pour préparer le grand roque et la poussée des pions", "Pour ouvrir la diagonale de la dame vers h4"), "Le pion d6 chasse le cavalier blanc ; prendre trop tôt le pion e4 expose les Noirs au clouage sur la colonne e."),
         variants = listOf(
             LessonVariant(
                 4, "Si les Blancs jouent d'abord le pion d4", "d2d4 f6e4 f1d3 d7d5 f3e5 b8d7",
@@ -488,7 +488,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Une défense solide n'a pas besoin d'être active tout de suite.",
         ideas = listOf("Le pion d6 tient solidement le point e5, au prix d'un fou f8 un peu enfermé.", "Le fou f8 se développe en e7, derrière ses pions, et les Noirs roquent sans se presser.", "Les Noirs attendent le bon moment pour contre-attaquer, avec c6 et b5 ou en prenant en d4."),
         traps = listOf("Pour vous : si les Blancs ouvrent le centre trop tôt, vos pièces bien groupées reprennent tout le matériel.", "Contre vous : si vous jouez le fou en e7 alors que les Blancs peuvent prendre en e5, le sacrifice du fou en f7 suivi du cavalier en g5 puis e6 peut enfermer votre dame."),
-        quiz = LessonQuiz("Quel est le défaut principal de la défense Philidor ?", "Le fou f8 est enfermé derrière le pion d6", listOf("Le roi noir ne peut jamais roquer", "Le pion e5 est perdu"), "Le pion d6 tient le centre mais bouche la diagonale du fou f8, qui se contente de la case e7."),
+        quiz = LessonQuiz("Quel est le défaut principal de la défense Philidor ?", "Le fou f8 est enfermé derrière le pion d6", listOf("Le roi noir ne peut plus roquer d'aucun côté", "Le pion e5 est perdu dès le quatrième coup"), "Le pion d6 tient le centre mais bouche la diagonale du fou f8, qui se contente de la case e7."),
         variants = listOf(
             LessonVariant(
                 5, "Si les Noirs cèdent le centre", "e5d4 f3d4 g8f6 b1c3 f8e7",
@@ -526,7 +526,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans un gambit, on donne un pion pour un centre fort et un développement rapide.",
         ideas = listOf("Les Blancs donnent le pion f4 pour ouvrir la colonne f et prendre le centre avec le pion d4.", "Le roi blanc reste parfois au centre : il faut développer vite et attaquer.", "Les Noirs gardent souvent le pion de plus avec g5 ; les Blancs le minent avec h4."),
         traps = listOf("Pour vous : si les Noirs avancent tous leurs pions de l'aile roi, leur roi s'expose et la colonne f s'ouvre contre lui.", "Contre vous : sans cavalier en f3, la dame noire peut donner échec en h4 et déranger votre roi."),
-        quiz = LessonQuiz("Pourquoi les Blancs jouent-ils h4 contre le pion g5 ?", "Pour casser la chaîne de pions noirs qui protège le pion f4", listOf("Pour préparer le petit roque", "Pour protéger le pion e4"), "Le pion h4 attaque le pion g5 : la chaîne qui protège le pion f4 se défait et les Blancs récupèrent leur pion."),
+        quiz = LessonQuiz("Pourquoi les Blancs jouent-ils h4 contre le pion g5 ?", "Pour casser la chaîne de pions noirs qui protège le pion f4", listOf("Pour préparer le petit roque en libérant la case h1", "Pour protéger le pion e4 attaqué par le cavalier"), "Le pion h4 attaque le pion g5 : la chaîne qui protège le pion f4 se défait et les Blancs récupèrent leur pion."),
         variants = listOf(
             LessonVariant(
                 3, "Si les Noirs refusent le gambit", "f8c5 g1f3 d7d6 c2c3 g8f6 d2d4",
@@ -566,7 +566,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Préparez vos avances de pions avec vos pièces.",
         ideas = listOf("Le cavalier c3 protège le pion e4 et laisse le pion f libre d'avancer.", "L'avance f4 est un gambit du roi mieux préparé.", "Les Blancs gagnent de l'espace à l'aile roi avec le pion e5."),
         traps = listOf("Pour vous : si les Noirs prennent en f4 trop facilement, votre pion e5 chasse leur cavalier et vous gagnez beaucoup d'espace.", "Contre vous : si vous sortez le fou en c4 trop tôt, les Noirs peuvent prendre en e4 grâce à une petite fourchette de pion."),
-        quiz = LessonQuiz("Quel rôle joue le cavalier c3 dans la partie viennoise ?", "Il protège le pion e4 pour préparer l'avance f4", listOf("Il prépare le grand roque", "Il attaque tout de suite le pion e5"), "Avec le cavalier c3, le pion f peut avancer sans laisser le pion e4 sans défense."),
+        quiz = LessonQuiz("Quel rôle joue le cavalier c3 dans la partie viennoise ?", "Il protège le pion e4 pour préparer l'avance f4", listOf("Il prépare le grand roque en libérant la première rangée", "Il attaque tout de suite le pion e5 pour le gagner"), "Avec le cavalier c3, le pion f peut avancer sans laisser le pion e4 sans défense."),
         variants = listOf(
             LessonVariant(
                 3, "Si les Noirs sortent le cavalier en c6", "b8c6 f1c4 g8f6 d2d3",
@@ -603,7 +603,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Un échange déséquilibré donne à chaque camp ses propres atouts.",
         ideas = listOf("Le pion c5 échange un pion de côté contre un pion central : les Noirs gagnent une majorité au centre.", "La colonne c à demi ouverte sert aux tours noires.", "Les Blancs ont de l'avance de développement, les Noirs une structure saine pour plus tard."),
         traps = listOf("Pour vous : si les Blancs négligent le pion e4, votre cavalier f6 et votre dame peuvent l'attaquer.", "Contre vous : si vous laissez la case d5 sans contrôle, un cavalier blanc peut s'y installer définitivement."),
-        quiz = LessonQuiz("Pourquoi les Noirs échangent-ils leur pion c contre le pion d ?", "Pour garder deux pions centraux et ouvrir la colonne c", listOf("Pour gagner un pion", "Pour faire roquer les Blancs"), "Les Noirs échangent un pion de côté contre un pion central : ils gardent les pions d et e et profitent de la colonne c."),
+        quiz = LessonQuiz("Pourquoi les Noirs échangent-ils leur pion c contre le pion d ?", "Pour garder deux pions centraux et ouvrir la colonne c", listOf("Pour gagner un pion central et le garder", "Pour forcer les Blancs à roquer du côté de la dame"), "Les Noirs échangent un pion de côté contre un pion central : ils gardent les pions d et e et profitent de la colonne c."),
         variants = listOf(
             LessonVariant(
                 4, "Si les Blancs donnent échec avec le fou en b5", "f1b5 c8d7 b5d7 d8d7 e1g1 b8c6",
@@ -648,7 +648,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Avec des roques opposés, la vitesse de l'attaque décide de tout.",
         ideas = listOf("Le pion a6 enlève la case b5 aux pièces blanches et prépare l'avance b5.", "Les Noirs choisissent ensuite entre e5 et e6 selon le plan des Blancs.", "La case d5 est le point clé : les Noirs doivent toujours la contrôler."),
         traps = listOf("Pour vous : si les Blancs attaquent sans précaution, votre pion b5 et la colonne c contre-attaquent très vite.", "Contre vous : après le pion e5, laisser un cavalier blanc s'installer en d5 vous laisse un pion d6 faible pour toute la partie."),
-        quiz = LessonQuiz("À quoi sert le petit coup a6 dans la Najdorf ?", "À contrôler la case b5 et préparer l'avance b5", listOf("À préparer le petit roque", "À attaquer le cavalier c3"), "Le pion a6 interdit la case b5 aux cavaliers et au fou blancs et prépare l'expansion à l'aile dame."),
+        quiz = LessonQuiz("À quoi sert le petit coup a6 dans la Najdorf ?", "À contrôler la case b5 et préparer l'avance b5", listOf("À préparer le petit roque en libérant une case", "À attaquer le cavalier c3 avec le pion b ensuite"), "Le pion a6 interdit la case b5 aux cavaliers et au fou blancs et prépare l'expansion à l'aile dame."),
         variants = listOf(
             LessonVariant(
                 10, "Si les Blancs jouent le fou en g5", "c1g5 e7e6 f2f4 f8e7 d1f3 d8c7",
@@ -691,7 +691,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Un fou en fianchetto attaque et protège le roi en même temps.",
         ideas = listOf("Le fou en g7 vise la longue diagonale jusqu'à b2 : c'est l'arme principale des Noirs.", "Les Noirs acceptent un déséquilibre : roques opposés et course d'attaques, car leur fou g7 et la colonne c valent l'attaque blanche par h4 et h5.", "Les tours noires utilisent la colonne c ; le sacrifice de qualité en c3 est une ressource typique."),
         traps = listOf("Pour vous : si les Blancs roquent du grand côté sans protéger b2, votre fou g7 et la colonne c frappent vite.", "Contre vous : si les Blancs échangent votre fou g7 par le fou en h6 et ouvrent la colonne h, votre roi devient très vulnérable."),
-        quiz = LessonQuiz("Pourquoi les Noirs jouent-ils la Dragon malgré l'attaque blanche ?", "Leur fou g7 et la colonne c donnent un contre-jeu rapide", listOf("Elle garantit l'échange des dames", "Elle empêche les Blancs de roquer"), "Les Noirs acceptent une course d'attaques : leur fou g7 et la colonne c contre l'avance des pions blancs à l'aile roi."),
+        quiz = LessonQuiz("Pourquoi les Noirs jouent-ils la Dragon malgré l'attaque blanche ?", "Leur fou g7 et la colonne c donnent un contre-jeu rapide", listOf("Elle force l'échange des dames et une finale tranquille", "Elle empêche les Blancs de roquer d'un côté comme de l'autre"), "Les Noirs acceptent une course d'attaques : leur fou g7 et la colonne c contre l'avance des pions blancs à l'aile roi."),
         variants = listOf(
             LessonVariant(
                 14, "Si les Blancs placent leur fou en c4 : l'attaque yougoslave", "f1c4 b8c6 d1d2 c8d7 e1c1 a8c8",
@@ -734,7 +734,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Une faiblesse est acceptable si l'on obtient beaucoup d'activité en échange.",
         ideas = listOf("Les Noirs acceptent un trou en d5 et un pion d6 en retard contre de l'activité et la paire de fous.", "Le pion b5 chasse le cavalier a3 et gagne de l'espace à l'aile dame.", "Le pion f5 est souvent la contre-attaque des Noirs contre le centre blanc."),
         traps = listOf("Pour vous : un cavalier blanc égaré en a3 met longtemps à revenir au centre ; profitez-en.", "Contre vous : si vous laissez un cavalier blanc s'installer en d5 sans pouvoir l'échanger, votre pion d6 devient une cible permanente."),
-        quiz = LessonQuiz("Quel compromis acceptent les Noirs dans la Sveshnikov ?", "Une case d5 affaiblie contre l'activité et la paire de fous", listOf("Un pion de moins sans compensation", "Un roi bloqué au centre pour toujours"), "Le pion e5 laisse un trou en d5, mais gagne du temps contre le cavalier d4 et active les pièces noires."),
+        quiz = LessonQuiz("Quel compromis acceptent les Noirs dans la Sveshnikov ?", "Une case d5 affaiblie contre l'activité et la paire de fous", listOf("Un pion de moins, sans compensation, pour simplifier", "Un roi bloqué au centre en échange d'une case d5 forte"), "Le pion e5 laisse un trou en d5, mais gagne du temps contre le cavalier d4 et active les pièces noires."),
         variants = listOf(
             LessonVariant(
                 12, "Si le cavalier s'installe tout de suite en d5", "c3d5 f6d5 e4d5 c6b8 c2c4 f8e7",
@@ -774,7 +774,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Un centre de pions doit être soutenu par les pièces.",
         ideas = listOf("Le pion c3 prépare d4 pour bâtir un centre de deux pions sans permettre les grandes théories ouvertes.", "Contre le cavalier noir en f6, le pion e5 gagne de l'espace avec gain de temps.", "Les Blancs obtiennent souvent un pion isolé en d4 et beaucoup d'activité."),
         traps = listOf("Pour vous : si les Noirs laissent leur cavalier d5 sans protection, le fou c4 et la dame en b3 peuvent l'attaquer.", "Contre vous : si vous laissez le pion d4 isolé sans pièces actives, il devient une cible en finale."),
-        quiz = LessonQuiz("Quel est le rôle du pion c3 dans l'Alapine ?", "Préparer d4 pour reprendre avec un pion", listOf("Préparer le grand roque", "Attaquer tout de suite le pion c5"), "Avec c3, les Blancs peuvent jouer d4 et reprendre en d4 avec un pion, en gardant un centre solide."),
+        quiz = LessonQuiz("Quel est le rôle du pion c3 dans l'Alapine ?", "Préparer d4 pour reprendre avec un pion", listOf("Préparer le grand roque en ouvrant la diagonale", "Attaquer tout de suite le pion c5 avec la dame"), "Avec c3, les Blancs peuvent jouer d4 et reprendre en d4 avec un pion, en gardant un centre solide."),
         variants = listOf(
             LessonVariant(
                 3, "Si les Noirs jouent tout de suite le pion d5", "d7d5 e4d5 d8d5 d2d4 g8f6 g1f3",
@@ -817,7 +817,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Chaque camp attaque du côté où il a le plus d'espace.",
         ideas = listOf("Les Blancs gardent le centre fermé et préparent une attaque à l'aile roi avec f4 et f5.", "Le fou g2 surveille la grande diagonale et freine le jeu noir à l'aile dame.", "Les Noirs contre-attaquent à l'aile dame avec b5 et la colonne b."),
         traps = listOf("Pour vous : si les Noirs roquent sans contre-jeu, votre avance f5 ouvre des lignes vers leur roi.", "Contre vous : si vous ouvrez le centre sans préparation, le fou noir en g7 devient très actif."),
-        quiz = LessonQuiz("Quel est le plan des Blancs dans la sicilienne fermée ?", "Pousser les pions f vers f5 pour attaquer à l'aile roi", listOf("Ouvrir tout de suite la colonne c", "Échanger les fous de cases noires"), "Le centre reste fermé : les Blancs attaquent avec leurs pions de l'aile roi, les Noirs à l'aile dame."),
+        quiz = LessonQuiz("Quel est le plan des Blancs dans la sicilienne fermée ?", "Pousser les pions f vers f5 pour attaquer à l'aile roi", listOf("Ouvrir tout de suite la colonne c pour les tours", "Échanger les fous de cases noires et jouer au centre"), "Le centre reste fermé : les Blancs attaquent avec leurs pions de l'aile roi, les Noirs à l'aile dame."),
         variants = listOf(
             LessonVariant(
                 11, "Si les Noirs bloquent avec le pion e5", "e7e5 g1h3 g8e7 e1g1",
@@ -858,7 +858,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Pour affaiblir une chaîne de pions, attaquez sa base.",
         ideas = listOf("La chaîne de pions blancs d4 et e5 donne de l'espace ; les Noirs l'attaquent à sa base, le pion d4.", "La dame en b6 et le cavalier c6 font pression sur le pion d4.", "Le fou c8 reste souvent enfermé derrière le pion e6 : les Noirs cherchent à l'échanger ou à le sortir par d7."),
         traps = listOf("Pour vous : si les Blancs défendent mal le pion d4, la pression de la dame, du cavalier et parfois du fou en b4 le fait tomber.", "Contre vous : prendre le pion d4 deux fois quand le fou blanc est en d3 est dangereux : le fou donne échec en b5 et la dame d1 gagne votre dame d4."),
-        quiz = LessonQuiz("Quelle est la cible principale des Noirs dans la variante d'avance ?", "Le pion d4, à la base de la chaîne blanche", listOf("Le pion e5, en tête de la chaîne", "Le roi blanc"), "On attaque une chaîne de pions à sa base : le pion d4 est attaqué par le pion c5, la dame b6 et le cavalier c6."),
+        quiz = LessonQuiz("Quelle est la cible principale des Noirs dans la variante d'avance ?", "Le pion d4, à la base de la chaîne blanche", listOf("Le pion e5, en tête de la chaîne blanche", "Le roi blanc, resté au centre derrière ses pions"), "On attaque une chaîne de pions à sa base : le pion d4 est attaqué par le pion c5, la dame b6 et le cavalier c6."),
         variants = listOf(
             LessonVariant(
                 10, "Si le fou blanc se développe en d3", "f1d3 c5d4 c3d4 c8d7 e1g1 c6d4 f3d4 b6d4 b1c3 a7a6",
@@ -897,7 +897,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "On peut échanger une bonne structure de pions contre des pièces plus actives, ou l'inverse.",
         ideas = listOf("Le fou b4 cloue le cavalier c3 et met la pression sur le pion e4.", "Les Noirs donnent leur fou des cases noires pour doubler les pions blancs.", "Les Noirs jouent à l'aile dame, souvent avec la dame en a5 et le cavalier en c6."),
         traps = listOf("Pour vous : si les Blancs ne trouvent pas de plan à l'aile roi, leurs pions doublés en c deviennent une cible.", "Contre vous : sans votre fou de cases noires, la case g7 est faible ; la dame blanche en g4 peut l'attaquer très vite."),
-        quiz = LessonQuiz("Quel est le compromis de la variante Winawer ?", "Les Noirs cèdent la paire de fous pour doubler les pions blancs", listOf("Les Noirs perdent un pion pour attaquer", "Les Blancs ne peuvent plus roquer"), "Le fou b4 prend le cavalier c3 : les Blancs ont deux fous, mais leurs pions c sont doublés."),
+        quiz = LessonQuiz("Quel est le compromis de la variante Winawer ?", "Les Noirs cèdent la paire de fous pour doubler les pions blancs", listOf("Les Noirs donnent un pion pour une attaque rapide sur le roi", "Les Blancs renoncent au roque pour garder leurs deux fous"), "Le fou b4 prend le cavalier c3 : les Blancs ont deux fous, mais leurs pions c sont doublés."),
         variants = listOf(
             LessonVariant(
                 6, "Si les Blancs échangent en d5", "e4d5 e6d5 f1d3 g8e7",
@@ -937,7 +937,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Choisissez la case de chaque pièce pour qu'elle ne gêne pas les autres.",
         ideas = listOf("Le cavalier d2 évite le clouage du fou b4 qu'on voit dans la Winawer.", "Les Blancs gagnent de l'espace avec e5 et visent l'aile roi avec le fou d3.", "Les Noirs attaquent le pion d4 avec c5, le cavalier c6 et la dame b6."),
         traps = listOf("Pour vous : si les Noirs roquent trop tôt, le fou d3 et la dame visent la case h7.", "Contre vous : le cavalier d2 bouche la diagonale du fou c1 ; ne tardez pas à le développer."),
-        quiz = LessonQuiz("Pourquoi les Blancs jouent-ils le cavalier en d2 plutôt qu'en c3 ?", "Pour éviter le clouage du fou en b4 et garder le pion c libre", listOf("Pour préparer le grand roque", "Pour attaquer tout de suite le pion d5"), "En d2, le cavalier ne peut pas être cloué par le fou b4 et le pion c3 reste possible."),
+        quiz = LessonQuiz("Pourquoi les Blancs jouent-ils le cavalier en d2 plutôt qu'en c3 ?", "Pour éviter le clouage du fou en b4 et garder le pion c libre", listOf("Pour préparer le grand roque et l'avance des pions", "Pour attaquer tout de suite le pion d5 avec ses pièces"), "En d2, le cavalier ne peut pas être cloué par le fou b4 et le pion c3 reste possible."),
         variants = listOf(
             LessonVariant(
                 5, "Si les Noirs jouent tout de suite le pion c5", "c7c5 e4d5 e6d5 g1f3 b8c6 f1b5 f8d6 d4c5 d6c5 e1g1",
@@ -978,7 +978,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Sortez votre fou avant de l'enfermer derrière vos pions.",
         ideas = listOf("Le pion c6 prépare d5 sans enfermer le fou c8, qui sortira en f5.", "La structure noire est solide : les Noirs visent une finale saine.", "Les Noirs jouent souvent e6, le cavalier en d7 et le grand ou le petit roque."),
         traps = listOf("Pour vous : si les Blancs attaquent sans plan, votre structure sans faiblesse résiste facilement.", "Contre vous : sortir le cavalier en d7 trop tôt contre la dame blanche en e2 peut permettre un mat à l'étouffée en d6."),
-        quiz = LessonQuiz("Quel est l'avantage de la défense Caro-Kann sur la défense française ?", "Le fou c8 peut sortir avant que le pion e6 ne l'enferme", listOf("Les Noirs gagnent un pion", "Elle évite toute théorie"), "Le pion c6 prépare d5 sans bloquer le fou c8, qui sort en f5 ou en g4."),
+        quiz = LessonQuiz("Quel est l'avantage de la défense Caro-Kann sur la défense française ?", "Le fou c8 peut sortir avant que le pion e6 ne l'enferme", listOf("Les Noirs gagnent un pion central dès l'ouverture", "Elle évite toute théorie et toute préparation"), "Le pion c6 prépare d5 sans bloquer le fou c8, qui sort en f5 ou en g4."),
         variants = listOf(
             LessonVariant(
                 4, "Si les Blancs avancent le pion en e5", "e4e5 c8f5 g1f3 e7e6 f1e2 c6c5",
@@ -1056,7 +1056,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Quand la dame sort tôt, trouvez-lui une case où elle ne se fera pas chasser.",
         ideas = listOf("Les Noirs ouvrent le jeu tout de suite et récupèrent le pion avec la dame.", "Les Noirs acceptent de perdre un temps avec leur dame contre une structure saine et un développement simple ; le fou c8 sort avant le pion e6.", "La dame en a5 cloue parfois le cavalier c3 et surveille la diagonale e1-a5."),
         traps = listOf("Pour vous : si les Blancs avancent leurs pions sans se développer, votre dame et vos fous trouvent facilement de belles cases.", "Contre vous : si vous oubliez votre dame en a5, les Blancs peuvent la menacer avec le fou en d2 et le cavalier en d5 ou b5."),
-        quiz = LessonQuiz("Pourquoi les Noirs acceptent-ils de perdre du temps avec leur dame ?", "Ils obtiennent une structure saine et sortent vite le fou c8", listOf("La dame ne peut jamais être attaquée", "Ils gagnent un pion"), "Le cavalier c3 chasse la dame, mais les Noirs gardent une structure sans faiblesse et un développement facile."),
+        quiz = LessonQuiz("Pourquoi les Noirs acceptent-ils de perdre du temps avec leur dame ?", "Ils obtiennent une structure saine et sortent vite le fou c8", listOf("La dame ne peut pas être attaquée par les pièces blanches", "Ils gagnent un pion et l'avance de développement"), "Le cavalier c3 chasse la dame, mais les Noirs gardent une structure sans faiblesse et un développement facile."),
         variants = listOf(
             LessonVariant(
                 3, "Si les Noirs reprennent avec le cavalier", "g8f6 d2d4 f6d5 g1f3 g7g6",
@@ -1095,7 +1095,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Des pions trop avancés peuvent devenir des cibles.",
         ideas = listOf("Le cavalier f6 provoque l'avance des pions blancs pour les attaquer ensuite.", "Les Noirs acceptent un déséquilibre : ils laissent les Blancs bâtir un grand centre et parient qu'il deviendra une cible.", "Les Noirs attaquent la tête du centre avec le pion d6 et le cavalier c6."),
         traps = listOf("Pour vous : si les Blancs avancent trop de pions sans se développer, leur centre s'effondre sous vos attaques.", "Contre vous : si votre cavalier reste trop longtemps au centre, les pions blancs le chassent avec gain de temps."),
-        quiz = LessonQuiz("Quelle est l'idée de la défense Alekhine ?", "Provoquer l'avance des pions blancs pour les attaquer ensuite", listOf("Bloquer le centre avec des pions", "Échanger les dames tout de suite"), "Le cavalier attire les pions blancs vers l'avant : un centre trop étendu devient une cible."),
+        quiz = LessonQuiz("Quelle est l'idée de la défense Alekhine ?", "Provoquer l'avance des pions blancs pour les attaquer ensuite", listOf("Bloquer le centre avec des pions pour gagner de l'espace", "Échanger les dames tout de suite pour éviter la théorie"), "Le cavalier attire les pions blancs vers l'avant : un centre trop étendu devient une cible."),
         variants = listOf(
             LessonVariant(
                 6, "Si les Blancs jouent l'attaque des quatre pions", "c2c4 d5b6 f2f4 d6e5 f4e5 b8c6",
@@ -1134,7 +1134,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "On peut laisser le centre à l'adversaire, à condition de l'attaquer ensuite.",
         ideas = listOf("Le fou g7 vise le centre blanc par la grande diagonale.", "Les Noirs acceptent un déséquilibre : ils laissent le centre aux Blancs pour le saper plus tard avec c5 ou e5.", "Les Noirs jouent souvent c6 et b5 pour contre-attaquer à l'aile dame."),
         traps = listOf("Pour vous : si les Blancs poussent leurs pions centraux trop vite, votre fou g7 et le pion c5 attaquent leur base.", "Contre vous : contre l'attaque autrichienne avec le pion f4, rester passif laisse les Blancs écraser votre aile roi avec e5."),
-        quiz = LessonQuiz("Que font les Noirs face au grand centre blanc dans la Pirc ?", "Ils le sapent plus tard avec c5 ou e5", listOf("Ils ne le touchent jamais", "Ils échangent les dames"), "Les Noirs laissent les Blancs occuper le centre, puis l'attaquent avec leurs pions et leur fou g7."),
+        quiz = LessonQuiz("Que font les Noirs face au grand centre blanc dans la Pirc ?", "Ils le sapent plus tard avec c5 ou e5", listOf("Ils le laissent intact et jouent uniquement sur l'aile dame", "Ils échangent les dames pour éteindre l'attaque blanche"), "Les Noirs laissent les Blancs occuper le centre, puis l'attaquent avec leurs pions et leur fou g7."),
         variants = listOf(
             LessonVariant(
                 6, "Si les Blancs jouent l'attaque autrichienne", "f2f4 f8g7 g1f3 c7c5 d4c5 d8a5",
@@ -1174,7 +1174,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Placez vos tours sur les colonnes qui vont s'ouvrir.",
         ideas = listOf("Le pion c4 attaque le pion d5 pour détruire le centre noir.", "Les Noirs tiennent le pion d5 avec e6 et se développent solidement.", "Les Blancs jouent souvent sur la colonne c à demi ouverte et préparent l'attaque de minorité avec b4 et b5."),
         traps = listOf("Pour vous : si les Noirs se libèrent mal, l'attaque de minorité crée une faiblesse durable dans leur camp.", "Contre vous : prendre le pion d5 avec le cavalier quand le cavalier noir est en d7 perd une pièce : la reprise et l'échec du fou en b4 gagnent votre dame."),
-        quiz = LessonQuiz("Pourquoi le gambit dame n'est-il pas un vrai gambit ?", "Le pion c4 peut presque toujours être récupéré", listOf("Les Blancs donnent une pièce", "Les Noirs doivent rendre leur dame"), "Si les Noirs prennent en c4, les Blancs récupèrent le pion sans difficulté, par exemple avec le pion e3 et le fou."),
+        quiz = LessonQuiz("Pourquoi le gambit dame n'est-il pas un vrai gambit ?", "Le pion c4 peut presque toujours être récupéré", listOf("Les Blancs donnent une pièce pour l'initiative", "Les Noirs doivent rendre le pion avec un retard de jeu"), "Si les Noirs prennent en c4, les Blancs récupèrent le pion sans difficulté, par exemple avec le pion e3 et le fou."),
         variants = listOf(
             LessonVariant(
                 5, "Si les Noirs jouent la défense Tarrasch", "c7c5 c4d5 e6d5 g1f3 b8c6 g2g3",
@@ -1213,7 +1213,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Il vaut mieux se développer que s'accrocher à un pion qu'on ne peut pas garder.",
         ideas = listOf("Les Noirs prennent le pion c4 pour libérer leur jeu, sans chercher à le garder.", "Les Blancs récupèrent le pion avec le fou et occupent le centre.", "Les Noirs contre-attaquent le centre avec c5 et jouent souvent a6 puis b5."),
         traps = listOf("Pour vous : si les Noirs tentent de garder le pion avec b5, le coup a4 puis b3 casse leur aile dame.", "Contre vous : si vous laissez le pion d4 isolé sans pièces actives, il devient faible."),
-        quiz = LessonQuiz("Que doivent éviter les Noirs dans le gambit dame accepté ?", "Garder à tout prix le pion c4 avec b5", listOf("Prendre le pion c4", "Roquer"), "Le pion c4 est difficile à garder : les Blancs attaquent la chaîne avec a4 et b3 et gagnent du terrain."),
+        quiz = LessonQuiz("Que doivent éviter les Noirs dans le gambit dame accepté ?", "Garder à tout prix le pion c4 avec b5", listOf("Prendre le pion c4, qui est empoisonné", "Roquer avant d'avoir développé le fou c8"), "Le pion c4 est difficile à garder : les Blancs attaquent la chaîne avec a4 et b3 et gagnent du terrain."),
         variants = listOf(
             LessonVariant(
                 4, "Si les Blancs prennent tout le centre", "e2e4 e7e5 g1f3 e5d4 f1c4 b8c6",
@@ -1254,7 +1254,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Sortez le fou avant de fermer sa diagonale avec vos pions.",
         ideas = listOf("Le pion c6 soutient le pion d5 sans enfermer le fou c8.", "Les Noirs prennent parfois le pion c4 et sortent le fou en f5 avant de jouer le pion e6.", "La position noire est très solide : les Noirs visent l'égalité puis jouent pour gagner."),
         traps = listOf("Pour vous : si les Blancs tardent à récupérer le pion c4, l'avance b5 vous permet parfois de le garder.", "Contre vous : après le fou en f5, laisser la case b7 sans défense contre la dame blanche en b3 peut coûter un pion."),
-        quiz = LessonQuiz("Quel avantage le pion c6 donne-t-il aux Noirs ?", "Il soutient le pion d5 sans enfermer le fou c8", listOf("Il prépare le petit roque", "Il attaque tout de suite le pion c4"), "Contrairement au pion e6, le pion c6 laisse la diagonale du fou c8 libre."),
+        quiz = LessonQuiz("Quel avantage le pion c6 donne-t-il aux Noirs ?", "Il soutient le pion d5 sans enfermer le fou c8", listOf("Il prépare le petit roque en libérant la case c6", "Il attaque tout de suite le pion c4 pour le gagner"), "Contrairement au pion e6, le pion c6 laisse la diagonale du fou c8 libre."),
         variants = listOf(
             LessonVariant(
                 4, "Si les Blancs échangent tout de suite", "c4d5 c6d5 b1c3 g8f6 c1f4 b8c6",
@@ -1296,7 +1296,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Un plan simple et répété permet de bien jouer sans tout mémoriser.",
         ideas = listOf("Le fou sort en f4 avant le pion e3 : il ne sera pas enfermé.", "Les Blancs bâtissent une pyramide solide avec c3, d4 et e3, quoi que jouent les Noirs.", "Les Blancs visent souvent l'aile roi avec le fou d3, le cavalier en e5 et parfois l'avance du pion h."),
         traps = listOf("Pour vous : si les Noirs roquent sans précaution, le fou d3 et la dame visent la case h7.", "Contre vous : la dame noire en b6 attaque le pion b2 ; ne l'oubliez pas en sortant votre fou f4."),
-        quiz = LessonQuiz("Pourquoi le fou sort-il en f4 dès le deuxième coup ?", "Pour ne pas être enfermé par le pion e3", listOf("Pour attaquer tout de suite le roi noir", "Pour préparer le grand roque"), "Si le pion e3 était joué d'abord, le fou c1 serait enfermé ; en f4, il est actif."),
+        quiz = LessonQuiz("Pourquoi le fou sort-il en f4 dès le deuxième coup ?", "Pour ne pas être enfermé par le pion e3", listOf("Pour attaquer tout de suite le roi noir sur la diagonale", "Pour préparer le grand roque en libérant la première rangée"), "Si le pion e3 était joué d'abord, le fou c1 serait enfermé ; en f4, il est actif."),
         variants = listOf(
             LessonVariant(
                 3, "Si les Noirs attaquent tout de suite avec le pion c5", "c7c5 e2e3 b8c6 c2c3 d8b6 d1b3",
@@ -1336,7 +1336,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Un clouage peut servir à contrôler une case importante.",
         ideas = listOf("Le fou b4 cloue le cavalier c3 et contrôle la case e4.", "Les Noirs sont prêts à donner leur fou pour doubler les pions blancs.", "Les Noirs frappent le centre avec c5 et d5 au bon moment."),
         traps = listOf("Pour vous : si les Blancs ont des pions doublés en c, bloquez-les et attaquez le pion c4.", "Contre vous : avec la paire de fous, les Blancs deviennent dangereux si la position s'ouvre ; ne lâchez pas le centre trop tôt."),
-        quiz = LessonQuiz("Pourquoi les Noirs clouent-ils le cavalier c3 avec le fou ?", "Pour contrôler la case e4 et empêcher le pion e4", listOf("Pour gagner le cavalier", "Pour préparer le grand roque"), "Le cavalier cloué ne protège plus la case e4 : les Blancs ont du mal à pousser leur pion e."),
+        quiz = LessonQuiz("Pourquoi les Noirs clouent-ils le cavalier c3 avec le fou ?", "Pour contrôler la case e4 et empêcher le pion e4", listOf("Pour gagner le cavalier c3, qui ne peut plus reculer", "Pour préparer le grand roque en libérant la case f8"), "Le cavalier cloué ne protège plus la case e4 : les Blancs ont du mal à pousser leur pion e."),
         variants = listOf(
             LessonVariant(
                 6, "Si la dame blanche protège le cavalier", "d1c2 e8g8 a2a3 b4c3 c2c3 b7b6",
@@ -1420,7 +1420,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Un grand centre de pions peut devenir une cible.",
         ideas = listOf("Les Noirs laissent les Blancs construire un grand centre pour l'attaquer avec le fou g7 et le pion c5.", "L'échange en c3 renforce le centre blanc, mais lui donne aussi une cible.", "La pression sur le pion d4 est le thème principal : fou g7, pion c5, cavalier c6 et dame."),
         traps = listOf("Pour vous : si les Blancs défendent mal le pion d4, il tombe sous l'attaque de toutes vos pièces.", "Contre vous : si vous laissez les Blancs pousser le pion d5 avec gain de temps, votre position se retrouve à l'étroit."),
-        quiz = LessonQuiz("Quel pion blanc les Noirs visent-ils dans la Grünfeld ?", "Le pion d4", listOf("Le pion a2", "Le pion h2"), "Le fou g7, le pion c5 et le cavalier c6 attaquent tous le pion d4, cœur du centre blanc."),
+        quiz = LessonQuiz("Quel pion blanc les Noirs visent-ils dans la Grünfeld ?", "Le pion d4", listOf("Le pion c4", "Le pion e4"), "Le fou g7, le pion c5 et le cavalier c6 attaquent tous le pion d4, cœur du centre blanc."),
         variants = listOf(
             LessonVariant(
                 6, "Si les Blancs jouent la variante russe", "g1f3 f8g7 d1b3 d5c4 b3c4 e8g8",
@@ -1461,7 +1461,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Un coup d'avance rend une ouverture connue encore plus forte.",
         ideas = listOf("Les Blancs jouent une défense sicilienne avec un temps de plus.", "Le fou g2 contrôle la grande diagonale et vise la case d5.", "Les Blancs attaquent souvent à l'aile dame avec les pions a et b."),
         traps = listOf("Pour vous : si les Noirs occupent le centre trop vite, leurs pions deviennent des cibles pour votre fou g2.", "Contre vous : si vous jouez trop lentement, les Noirs prennent le centre avec les pions e5 et d5."),
-        quiz = LessonQuiz("À quoi ressemble l'ouverture anglaise ?", "À une défense sicilienne jouée par les Blancs, avec un temps de plus", listOf("Au gambit du roi", "Au mat du berger"), "Le pion c4 contrôle la case d5 comme le pion c5 dans la sicilienne, avec un coup de plus pour les Blancs."),
+        quiz = LessonQuiz("À quoi ressemble l'ouverture anglaise ?", "À une défense sicilienne jouée par les Blancs, avec un temps de plus", listOf("Au gambit du roi joué de l'autre côté, avec un pion offert", "À la défense française jouée par les Blancs"), "Le pion c4 contrôle la case d5 comme le pion c5 dans la sicilienne, avec un coup de plus pour les Blancs."),
         variants = listOf(
             LessonVariant(
                 1, "Si les Noirs jouent le pion c5 : l'anglaise symétrique", "c7c5 b1c3 b8c6 g2g3 g7g6 f1g2",
@@ -1497,7 +1497,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Face à une dame sortie trop tôt, développez vos pièces en la chassant.",
         ideas = listOf("La dame en h5 et le fou c4 visent ensemble la case f7, défendue par le seul roi.", "Les Noirs se défendent en développant des pièces qui attaquent la dame.", "Une dame sortie trop tôt fait perdre du temps à son propre camp."),
         traps = listOf("Pour vous : si les Blancs insistent avec la dame, chassez-la en développant vos pièces : chaque attaque vous fait gagner un temps.", "Contre vous : si vous jouez le cavalier en f6 alors que la dame en h5 et le fou c4 visent f7, la dame prend en f7 et fait mat."),
-        quiz = LessonQuiz("Comment se défendre contre la menace sur la case f7 ?", "Protéger f7 ou couper la diagonale tout en développant ses pièces", listOf("Avancer le pion h", "Sortir la dame en h4"), "Un coup comme le pion g6 ou la dame en e7 pare la menace ; ensuite le cavalier f6 chasse la dame en se développant."),
+        quiz = LessonQuiz("Comment se défendre contre la menace sur la case f7 ?", "Protéger f7 ou couper la diagonale tout en développant ses pièces", listOf("Avancer le pion h pour chasser la dame qui arrive en g4", "Sortir sa propre dame en h4 pour attaquer à son tour"), "Un coup comme le pion g6 ou la dame en e7 pare la menace ; ensuite le cavalier f6 chasse la dame en se développant."),
         variants = listOf(
             LessonVariant(
                 2, "Si les Blancs sortent d'abord le fou", "f1c4 g8f6 d2d3 f8c5",
@@ -1543,7 +1543,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans la catalane, le fou g2 pèse sur l'aile dame. Les Blancs récupèrent souvent le pion donné et gardent une pression durable.",
         ideas = listOf("Le fou g2 vise l'aile dame noire par la grande diagonale.", "Les Blancs donnent parfois le pion c4 et le récupèrent avec la dame.", "Les Noirs doivent libérer leur fou c8, souvent par b6 ou b5 puis Bb7."),
         traps = listOf("Pour vous : si les Noirs gardent le pion c4 à tout prix, la grande diagonale s'ouvre contre leur tour a8.", "Contre vous : si vous récupérez le pion trop lentement, les Noirs consolident et gardent un pion de plus."),
-        quiz = LessonQuiz("Quelle pièce fait la force de la catalane ?", "Le fou g2 sur la grande diagonale", listOf("Le cavalier b1", "La tour h1"), "Le fou g2 frappe l'aile dame noire et rend difficile le développement du fou c8."),
+        quiz = LessonQuiz("Quelle pièce fait la force de la catalane ?", "Le fou g2 sur la grande diagonale", listOf("Le cavalier f3 au centre", "La tour h1 sur la colonne h"), "Le fou g2 frappe l'aile dame noire et rend difficile le développement du fou c8."),
         variants = listOf(
             LessonVariant(
                 5, "Si les Noirs donnent échec avec le fou", "f8b4 c1d2 b4e7 f1g2 d7d5 g1f3",
@@ -1585,7 +1585,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans la Réti, les Blancs contrôlent le centre avec leurs pièces et frappent ensuite les pions noirs avec c4, d4 ou e4.",
         ideas = listOf("Les deux fous en fianchetto contrôlent le centre à distance.", "Le pion c4 attaque le centre noir de côté.", "Les Blancs choisissent le moment d'ouvrir le centre avec d4 ou e4."),
         traps = listOf("Pour vous : si les Noirs avancent leurs pions centraux sans les soutenir, vos fous en fianchetto les attaquent.", "Contre vous : si vous jouez trop passivement, les Noirs prennent tout le centre et vos fous se heurtent à leurs pions."),
-        quiz = LessonQuiz("Comment les Blancs contrôlent-ils le centre dans la Réti ?", "Avec leurs pièces à distance et le pion c4", listOf("En plaçant tous leurs pions au centre", "En sortant la dame tout de suite"), "La Réti contrôle le centre de loin, avec les fous en fianchetto et le cavalier, puis l'attaque avec le pion c4."),
+        quiz = LessonQuiz("Comment les Blancs contrôlent-ils le centre dans la Réti ?", "Avec leurs pièces à distance et le pion c4", listOf("En plaçant tous leurs pions au centre dès l'ouverture", "En sortant la dame tôt pour viser les pions noirs"), "La Réti contrôle le centre de loin, avec les fous en fianchetto et le cavalier, puis l'attaque avec le pion c4."),
         variants = listOf(
             LessonVariant(
                 3, "Si le pion noir avance en d4", "d5d4 e2e3 b8c6 e3d4 c6d4 f3d4 d8d4 b1c3",
@@ -1628,7 +1628,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "La Taimanov est souple : la dame en c7, le pion a6 et le fou en b4 ou en e7 s'adaptent au plan des Blancs.",
         ideas = listOf("La dame en c7 contrôle la case e5 et la colonne c.", "Le pion a6 enlève la case b5 aux cavaliers blancs.", "Le fou f8 choisit entre b4, pour clouer, et e7, plus solide."),
         traps = listOf("Pour vous : si les Blancs négligent le pion e4, le clouage du fou b4 le fait tomber.", "Contre vous : si vous oubliez la case d6, un cavalier blanc en b5 puis d6 devient très gênant."),
-        quiz = LessonQuiz("À quoi sert le pion a6 dans la Taimanov ?", "À enlever la case b5 aux cavaliers blancs", listOf("À préparer le petit roque", "À attaquer le pion e4"), "Sans le pion a6, un cavalier blanc pourrait sauter en b5 puis en d6."),
+        quiz = LessonQuiz("À quoi sert le pion a6 dans la Taimanov ?", "À enlever la case b5 aux cavaliers blancs", listOf("À préparer le petit roque en libérant la case", "À attaquer le pion e4 avec le pion b ensuite"), "Sans le pion a6, un cavalier blanc pourrait sauter en b5 puis en d6."),
         variants = listOf(
             LessonVariant(
                 8, "Si le cavalier saute en b5", "d4b5 d7d6 c2c4 g8f6 b1c3 a7a6 b5a3 f8e7",
@@ -1671,7 +1671,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "La Kan garde toutes les options : selon le placement des Blancs, les Noirs choisissent le développement de leurs pièces.",
         ideas = listOf("Le pion a6 contrôle la case b5 et prépare l'avance b5.", "Les Noirs retardent la sortie des cavaliers pour garder de la souplesse.", "La dame en c7 surveille la colonne c et la case e5."),
         traps = listOf("Pour vous : si les Blancs jouent mécaniquement, votre pion b5 et votre fou en b7 attaquent le pion e4.", "Contre vous : si vous tardez trop à vous développer, les Blancs ouvrent le centre et votre roi reste au milieu."),
-        quiz = LessonQuiz("Quel est le caractère de la sicilienne Kan ?", "Souple : les Noirs retardent leurs décisions", listOf("Très forcée, avec beaucoup de théorie", "Elle sacrifie une pièce"), "La Kan joue e6 et a6 et attend de voir le plan des Blancs pour placer ses pièces."),
+        quiz = LessonQuiz("Quel est le caractère de la sicilienne Kan ?", "Souple : les Noirs retardent leurs décisions", listOf("Très forcée, avec beaucoup de théorie précise", "Agressive : elle sacrifie une pièce tout de suite"), "La Kan joue e6 et a6 et attend de voir le plan des Blancs pour placer ses pièces."),
         variants = listOf(
             LessonVariant(
                 8, "Si les Blancs développent leur cavalier en c3", "b1c3 d8c7 f1d3 b8c6 c1e3 g8f6",
@@ -1716,7 +1716,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans la Rossolimo, les Blancs ne cherchent pas la théorie ouverte. Ils bâtissent un centre avec c3 et d4 et jouent sur l'espace.",
         ideas = listOf("Le fou b5 attaque le cavalier c6, qui contrôle la case d4.", "Les Blancs préparent c3 puis d4 pour construire un centre.", "Échanger le fou en c6 double parfois les pions noirs."),
         traps = listOf("Pour vous : si les Noirs tardent à roquer, la tour e1 et le pion e5 gênent leur développement.", "Contre vous : si vous échangez en c6 sans raison, les Noirs gagnent la paire de fous."),
-        quiz = LessonQuiz("Quel est le plan des Blancs dans la Rossolimo ?", "Préparer c3 puis d4 pour bâtir un centre", listOf("Ouvrir tout de suite la colonne c", "Faire le grand roque"), "Le fou b5 gêne le cavalier c6 ; les pions c3 et d4 construisent ensuite un centre solide."),
+        quiz = LessonQuiz("Quel est le plan des Blancs dans la Rossolimo ?", "Préparer c3 puis d4 pour bâtir un centre", listOf("Ouvrir tout de suite la colonne c pour les tours", "Faire le grand roque et attaquer à l'aile roi"), "Le fou b5 gêne le cavalier c6 ; les pions c3 et d4 construisent ensuite un centre solide."),
         variants = listOf(
             LessonVariant(
                 5, "Si les Noirs jouent le pion e6", "e7e6 e1g1 g8e7 f1e1 a7a6 b5f1",
@@ -1756,7 +1756,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans le Grand Prix, les Blancs jouent f4, roquent vite, puis lancent les pions f et g contre le roi noir.",
         ideas = listOf("Le pion f4 prépare l'avance f5 contre l'aile roi.", "Les Blancs roquent vite et amènent la dame en e1 puis h4.", "Le centre reste fermé : l'attaque se joue sur l'aile roi."),
         traps = listOf("Pour vous : si les Noirs roquent sans contre-jeu, l'avance f5 ouvre la colonne f contre leur roi.", "Contre vous : si vous oubliez la case d4, le cavalier noir s'y installe et gêne toute votre position."),
-        quiz = LessonQuiz("Quel est le plan des Blancs dans le Grand Prix ?", "Attaquer à l'aile roi avec les pions f et g", listOf("Ouvrir le centre avec d4", "Attaquer à l'aile dame"), "Le pion f4 annonce l'attaque à l'aile roi : f5, la dame en h4 et les pièces suivent."),
+        quiz = LessonQuiz("Quel est le plan des Blancs dans le Grand Prix ?", "Attaquer à l'aile roi avec les pions f et g", listOf("Ouvrir le centre tout de suite avec le pion d4", "Attaquer à l'aile dame avec les pions a et b"), "Le pion f4 annonce l'attaque à l'aile roi : f5, la dame en h4 et les pièces suivent."),
         variants = listOf(
             LessonVariant(
                 3, "Si les Noirs jouent d'abord le pion d6", "d7d6 f2f4 b8c6 g1f3 g7g6 f1b5",
@@ -1800,7 +1800,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans le Smith-Morra, le pion donné rapporte du temps et des colonnes ouvertes. Les Blancs doivent jouer vite et activement.",
         ideas = listOf("Le pion donné ouvre les colonnes c et d pour les tours blanches.", "Le fou c4 et la dame en e2 préparent la tour en d1.", "Le pion e5 est souvent la percée qui ouvre le jeu."),
         traps = listOf("Pour vous : si les Noirs se développent mal, le sacrifice en e6 ou en f7, ou un cavalier en d5, donne une attaque décisive.", "Contre vous : si vous jouez lentement, les Noirs gardent le pion de plus et gagnent la finale."),
-        quiz = LessonQuiz("Que gagnent les Blancs contre le pion donné ?", "Du temps et des colonnes ouvertes", listOf("Une pièce", "La paire de fous à coup sûr"), "Le pion c3 rapporte une avance de développement et les colonnes c et d ouvertes pour les tours."),
+        quiz = LessonQuiz("Que gagnent les Blancs contre le pion donné ?", "Du temps et des colonnes ouvertes", listOf("Une pièce entière grâce à un piège", "La paire de fous à coup sûr"), "Le pion c3 rapporte une avance de développement et les colonnes c et d ouvertes pour les tours."),
         variants = listOf(
             LessonVariant(
                 5, "Si les Noirs refusent le gambit", "d4d3 f1d3 b8c6 g1f3 d7d6 e1g1",
@@ -1841,7 +1841,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans la Caro-Kann d'avance, sortez le fou en f5 avant de jouer le pion e6, puis attaquez la base de la chaîne avec le pion c5.",
         ideas = listOf("Le fou c8 sort en f5 avant de fermer la chaîne avec e6.", "Le pion c5 attaque la base de la chaîne blanche, le pion d4.", "Les Blancs gagnent de l'espace et cherchent l'attaque à l'aile roi."),
         traps = listOf("Pour vous : si les Blancs jouent trop lentement, votre pression sur le pion d4 le fait tomber.", "Contre vous : contre l'avance des pions g et h, votre fou f5 peut se retrouver enfermé ; gardez-lui une retraite."),
-        quiz = LessonQuiz("Pourquoi le fou sort-il en f5 avant le pion e6 ?", "Pour ne pas être enfermé derrière la chaîne de pions", listOf("Pour attaquer le roi blanc", "Pour préparer le grand roque"), "Après le pion e6, le fou c8 n'aurait plus de bonne diagonale : il sort d'abord."),
+        quiz = LessonQuiz("Pourquoi le fou sort-il en f5 avant le pion e6 ?", "Pour ne pas être enfermé derrière la chaîne de pions", listOf("Pour attaquer le roi blanc sur la diagonale", "Pour préparer le grand roque et la poussée c5"), "Après le pion e6, le fou c8 n'aurait plus de bonne diagonale : il sort d'abord."),
         variants = listOf(
             LessonVariant(
                 6, "Si les Blancs jouent l'attaque avec le cavalier en c3", "b1c3 e7e6 g2g4 f5g6 g1e2 c6c5",
@@ -1887,7 +1887,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Avec un pion isolé, jouez activement : les pièces visent l'aile roi et le pion d4 soutient un cavalier installé sur la case e5.",
         ideas = listOf("Le pion c4 attaque le pion d5 et ouvre le jeu.", "Les Blancs obtiennent souvent un pion isolé en d4 et beaucoup d'activité.", "Un cavalier en e5 et le fou d3 visent l'aile roi noire."),
         traps = listOf("Pour vous : si les Noirs se développent lentement, l'avance d5 du pion isolé ouvre le jeu en votre faveur.", "Contre vous : si vous échangez trop de pièces, le pion isolé devient une faiblesse en finale."),
-        quiz = LessonQuiz("Comment jouer avec un pion isolé en d4 ?", "Activement, avec des pièces tournées vers l'aile roi", listOf("En échangeant toutes les pièces", "En attendant sans rien faire"), "Le pion isolé donne de l'espace et des cases pour les pièces : il faut attaquer avant qu'il ne devienne faible."),
+        quiz = LessonQuiz("Comment jouer avec un pion isolé en d4 ?", "Activement, avec des pièces tournées vers l'aile roi", listOf("En échangeant toutes les pièces au plus vite", "En attendant, sans rien faire, que l'adversaire se trompe"), "Le pion isolé donne de l'espace et des cases pour les pièces : il faut attaquer avant qu'il ne devienne faible."),
         variants = listOf(
             LessonVariant(
                 9, "Si les Noirs sortent le cavalier en c6", "b8c6 g1f3 c8g4 c4d5 f6d5 d1b3",
@@ -1930,7 +1930,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans la française d'échange, le fou de cases blanches n'est plus enfermé. Développez vos pièces activement et la position est équilibrée.",
         ideas = listOf("L'échange en d5 libère le fou c8 des Noirs.", "La structure est symétrique : les pièces actives font la différence.", "Les Noirs peuvent roquer d'un côté ou de l'autre selon les besoins."),
         traps = listOf("Pour vous : si les Blancs jouent passivement, votre développement facile vous donne l'initiative.", "Contre vous : dans une structure symétrique, une tour laissée hors de la colonne e ouverte cède le contrôle à l'adversaire."),
-        quiz = LessonQuiz("Quel avantage la variante d'échange donne-t-elle aux Noirs ?", "Le fou c8 n'est plus enfermé", listOf("Un pion de plus", "Une attaque immédiate sur le roi"), "Après l'échange en d5, la diagonale du fou c8 est libre : le problème principal de la française disparaît."),
+        quiz = LessonQuiz("Quel avantage la variante d'échange donne-t-elle aux Noirs ?", "Le fou c8 n'est plus enfermé", listOf("Un pion de plus, gagné au centre", "Une attaque immédiate contre le roi blanc"), "Après l'échange en d5, la diagonale du fou c8 est libre : le problème principal de la française disparaît."),
         variants = listOf(
             LessonVariant(
                 6, "Si les Blancs jouent le pion c4", "c2c4 g8f6 b1c3 f8b4 g1f3 e8g8",
@@ -1973,7 +1973,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "La Rubinstein donne une position solide. Les Noirs cèdent un peu d'espace mais n'ont aucune faiblesse.",
         ideas = listOf("L'échange en e4 simplifie le centre et évite les grandes théories.", "Le cavalier d7 permet de reprendre en f6 avec une pièce, sans pions doublés.", "Le pion c5 libère le jeu des Noirs."),
         traps = listOf("Pour vous : si les Blancs ne font rien du centre, votre pion c5 et vos pièces actives égalisent facilement.", "Contre vous : si vous oubliez le développement du fou c8, il reste enfermé derrière le pion e6."),
-        quiz = LessonQuiz("Pourquoi les Noirs jouent-ils le cavalier en d7 avant le cavalier en f6 ?", "Pour reprendre en f6 avec un cavalier, sans pions doublés", listOf("Pour attaquer le pion e4", "Pour préparer le petit roque"), "Si le cavalier f6 était pris par le cavalier blanc, le cavalier d7 reprend sans abîmer la structure."),
+        quiz = LessonQuiz("Pourquoi les Noirs jouent-ils le cavalier en d7 avant le cavalier en f6 ?", "Pour reprendre en f6 avec un cavalier, sans pions doublés", listOf("Pour attaquer le pion e4 avec deux pièces", "Pour préparer le petit roque plus rapidement"), "Si le cavalier f6 était pris par le cavalier blanc, le cavalier d7 reprend sans abîmer la structure."),
         variants = listOf(
             LessonVariant(
                 12, "Si les Blancs placent leur fou en g5", "c1g5 h7h6 g5f6 d8f6 c2c3 f8d6",
@@ -2017,7 +2017,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans l'italienne lente, les Blancs construisent un centre solide, empêchent les coups gênants de l'adversaire et manœuvrent avant d'agir.",
         ideas = listOf("Les pions c3 et d3 forment un centre solide et souple.", "Les Blancs préparent l'avance d4 au bon moment.", "Le cavalier b1 passe souvent par d2 et f1 vers g3."),
         traps = listOf("Pour vous : si les Noirs jouent trop vite le pion d5, le centre s'ouvre en faveur de vos pièces mieux placées.", "Contre vous : sans le coup h3, le fou noir en g4 cloue votre cavalier f3 et gêne votre jeu."),
-        quiz = LessonQuiz("Quel est l'esprit de l'italienne lente ?", "Un centre solide, puis une longue manœuvre", listOf("Une attaque immédiate sur f7", "Un gambit de pion"), "Avec c3 et d3, les Blancs gardent un centre solide et préparent d4 sans se presser."),
+        quiz = LessonQuiz("Quel est l'esprit de l'italienne lente ?", "Un centre solide, puis une longue manœuvre", listOf("Une attaque immédiate sur la case f7", "Un gambit de pion pour ouvrir les lignes"), "Avec c3 et d3, les Blancs gardent un centre solide et préparent d4 sans se presser."),
         variants = listOf(
             LessonVariant(
                 9, "Si les Noirs roquent tout de suite", "e8g8 e1g1 d7d5 e4d5 f6d5 a2a4",
@@ -2072,7 +2072,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans la Marshall, les Noirs donnent un pion pour gagner du temps et attaquer le roi. Toutes leurs pièces se tournent vers l'aile roi.",
         ideas = listOf("Le pion d5 est sacrifié pour ouvrir les lignes vers le roi blanc.", "Le fou d6, la dame en h3 et le fou c8 en g4 forment l'attaque.", "Les Blancs ont un pion de plus mais doivent défendre avec précision."),
         traps = listOf("Pour vous : si les Blancs défendent mal, la dame en h3 et le fou d6 menacent vite le mat.", "Contre vous : si l'attaque échoue, les Blancs gardent le pion de plus en finale."),
-        quiz = LessonQuiz("Que gagnent les Noirs contre le pion sacrifié ?", "Une attaque rapide contre le roi blanc", listOf("Une finale gagnante", "La paire de fous à coup sûr"), "Le pion d5 ouvre les lignes : le fou d6 et la dame en h3 attaquent le roi blanc pendant que l'aile dame blanche dort."),
+        quiz = LessonQuiz("Que gagnent les Noirs contre le pion sacrifié ?", "Une attaque rapide contre le roi blanc", listOf("Une finale gagnante, avec un pion de plus", "La paire de fous et une meilleure structure"), "Le pion d5 ouvre les lignes : le fou d6 et la dame en h3 attaquent le roi blanc pendant que l'aile dame blanche dort."),
         variants = listOf(
             LessonVariant(
                 14, "Si les Blancs évitent la Marshall avec le pion a4", "a2a4 b5b4 d2d3 d7d6 a4a5 c8e6",
@@ -2115,7 +2115,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans le Budapest, les pièces noires attaquent le pion avancé de toutes parts et le récupèrent presque toujours.",
         ideas = listOf("Le cavalier g4, le cavalier c6 et la dame en e7 attaquent le pion e5.", "Le fou b4 donne échec pour gêner le développement blanc.", "Les Noirs récupèrent généralement le pion avec un jeu actif."),
         traps = listOf("Pour vous : si les Blancs défendent le pion avec des coups maladroits, vos pièces actives prennent l'initiative.", "Contre vous : si vous ne récupérez pas le pion, les Blancs consolident et gardent un pion de plus."),
-        quiz = LessonQuiz("Comment les Noirs récupèrent-ils le pion dans le Budapest ?", "En attaquant le pion e5 avec plusieurs pièces", listOf("En échangeant les dames", "En roquant tout de suite"), "Les cavaliers et la dame visent le pion e5 : les Blancs ne peuvent pas le garder longtemps."),
+        quiz = LessonQuiz("Comment les Noirs récupèrent-ils le pion dans le Budapest ?", "En attaquant le pion e5 avec plusieurs pièces", listOf("En échangeant les dames pour simplifier le jeu", "En roquant tout de suite pour menacer la colonne e"), "Les cavaliers et la dame visent le pion e5 : les Blancs ne peuvent pas le garder longtemps."),
         variants = listOf(
             LessonVariant(
                 6, "Si les Blancs développent le cavalier en f3", "g1f3 f8c5 e2e3 b8c6 f1e2 g4e5",
@@ -2162,7 +2162,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans le Benko, le pion donné rapporte des colonnes ouvertes à l'aile dame. Les tours en a8 et b8 et le fou g7 y exercent une pression durable.",
         ideas = listOf("Les colonnes a et b ouvertes servent aux tours noires.", "Le fou g7 vise l'aile dame blanche par la grande diagonale.", "Les Noirs jouent souvent sur une compensation durable, même en finale."),
         traps = listOf("Pour vous : si les Blancs gardent passivement le pion de plus, la pression sur les pions a2 et b2 devient insupportable.", "Contre vous : si les Blancs réussissent l'avance e5, votre roi peut devenir une cible."),
-        quiz = LessonQuiz("Que gagnent les Noirs dans le gambit Benko ?", "Des colonnes ouvertes et une pression durable à l'aile dame", listOf("Une attaque de mat immédiate", "La paire de fous"), "Le pion donné ouvre les colonnes a et b : les tours noires et le fou g7 y pressent longtemps."),
+        quiz = LessonQuiz("Que gagnent les Noirs dans le gambit Benko ?", "Des colonnes ouvertes et une pression durable à l'aile dame", listOf("Une attaque de mat immédiate contre le roi blanc", "La paire de fous et un pion passé au centre"), "Le pion donné ouvre les colonnes a et b : les tours noires et le fou g7 y pressent longtemps."),
         variants = listOf(
             LessonVariant(
                 6, "Si les Blancs refusent le gambit", "g1f3 c8b7 a2a4 b5b4 b1d2 g7g6",
@@ -2202,7 +2202,7 @@ internal val OPENING_LESSONS: List<LessonData> = listOf(
         takeaway = "Dans la Trompowsky, le fou sort avant le pion e3 pour ne pas être enfermé et gêner tout de suite le cavalier f6.",
         ideas = listOf("Le fou g5 menace d'échanger le cavalier f6 et d'abîmer les pions noirs.", "Le fou des cases noires sort avant le pion e3.", "Les Blancs gardent une structure solide avec c3, d4 et e3."),
         traps = listOf("Pour vous : si les Noirs laissent le cavalier e4 sans soutien, il peut être chassé ou échangé avec gain de temps.", "Contre vous : la dame noire en b6 attaque le pion b2 quand votre fou a quitté c1."),
-        quiz = LessonQuiz("Pourquoi le fou sort-il en g5 dès le deuxième coup ?", "Pour gêner le cavalier f6 avant le pion e3", listOf("Pour attaquer le roi noir", "Pour préparer le petit roque"), "En g5, le fou sort avant que le pion e3 ne l'enferme et gêne tout de suite le développement noir."),
+        quiz = LessonQuiz("Pourquoi le fou sort-il en g5 dès le deuxième coup ?", "Pour gêner le cavalier f6 avant le pion e3", listOf("Pour attaquer le roi noir sur la diagonale", "Pour préparer le petit roque en libérant la case"), "En g5, le fou sort avant que le pion e3 ne l'enferme et gêne tout de suite le développement noir."),
         variants = listOf(
             LessonVariant(
                 3, "Si les Noirs jouent le pion e6", "e7e6 e2e4 h7h6 g5f6 d8f6 b1c3",

@@ -37,7 +37,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Un centre de pions est fort tant qu'il est soutenu et mobile. Avancez-le seulement quand l'avance gagne de l'espace sans laisser de cases faibles.",
         ideas = listOf("Deux pions côte à côte au centre contrôlent beaucoup de cases et privent les pièces adverses de bonnes positions.", "Soutenez-les avec vos pièces avant de les avancer.", "Avancez-les seulement quand l'avance gagne de l'espace sans laisser de cases faibles derrière eux."),
         traps = listOf("Pour vous : un centre adverse avancé trop tôt laisse des cases faibles que vos pièces peuvent occuper.", "Contre vous : un centre attaqué par des pions et des pièces, sans soutien suffisant, peut s'effondrer."),
-        quiz = LessonQuiz("Quel est le plan des Blancs avec leur centre en d4 et e4 ?", "Le soutenir avec leurs pièces et l'avancer au bon moment", listOf("L'échanger au plus vite", "Laisser le pion d4 sans défense"), "Un centre de pions est une force tant qu'il est protégé : les Blancs le soutiennent, puis poussent d5 ou e5 au moment favorable."),
+        quiz = LessonQuiz("Quel est le plan des Blancs avec leur centre en d4 et e4 ?", "Le soutenir avec leurs pièces et l'avancer au bon moment", listOf("L'échanger au plus vite pour simplifier la position", "Pousser tout de suite les deux pions jusqu'en cinquième rangée"), "Un centre de pions est une force tant qu'il est protégé : les Blancs le soutiennent, puis poussent d5 ou e5 au moment favorable."),
     ),
     LessonData(
         id = 155,
@@ -68,7 +68,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Attaquez une chaîne de pions à sa base. Ici, toutes les pièces noires visent le pion d4.",
         ideas = listOf("Une chaîne de pions s'attaque à sa base, le pion le plus en arrière.", "La chaîne indique aussi l'aile où attaquer : on joue en général du côté vers lequel pointent ses pions.", "Amenez vos pièces contre la base : elle ne peut être défendue que par des pièces."),
         traps = listOf("Pour vous : une poussée de pion contre la base d'une chaîne ouvre des lignes pour vos pièces.", "Contre vous : la base de votre chaîne est sa faiblesse ; gardez assez de pièces pour la défendre."),
-        quiz = LessonQuiz("Où faut-il attaquer une chaîne de pions ?", "À sa base, le pion le plus en arrière", listOf("À sa tête, le pion le plus avancé", "Nulle part, elle est imprenable"), "La base d'une chaîne n'est protégée par aucun pion : c'est son point faible. Ici, la base est le pion d4."),
+        quiz = LessonQuiz("Où faut-il attaquer une chaîne de pions ?", "À sa base, le pion le plus en arrière", listOf("À sa tête, le pion le plus avancé", "Sur le côté, en contournant tous ses pions"), "La base d'une chaîne n'est protégée par aucun pion : c'est son point faible. Ici, la base est le pion d4."),
     ),
     LessonData(
         id = 156,
@@ -104,7 +104,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Contre un pion isolé, bloquez la case devant lui avec une pièce, attaquez-le, et échangez les pièces : en finale, il sera faible.",
         ideas = listOf("Un pion isolé n'a plus de voisin pour le protéger : seules des pièces peuvent le défendre.", "Bloquez la case devant lui avec une pièce, de préférence un cavalier.", "Échangez les pièces : en finale, le pion isolé devient une faiblesse."),
         traps = listOf("Pour vous : une pièce installée devant le pion isolé est à l'abri des pions adverses.", "Contre vous : avec un pion isolé, gardez les pièces et cherchez l'attaque ; en finale, il sera difficile à défendre."),
-        quiz = LessonQuiz("Quelle case les Blancs veulent-ils occuper contre le pion isolé d5 ?", "La case d4, juste devant lui", listOf("La case h4", "La case a8"), "Une pièce en d4 bloque le pion isolé : il ne peut plus avancer, et la pièce y est à l'abri des pions."),
+        quiz = LessonQuiz("Quelle case les Blancs veulent-ils occuper contre le pion isolé d5 ?", "La case d4, juste devant lui", listOf("La case d6, juste derrière lui", "La case e5, à côté de lui"), "Une pièce en d4 bloque le pion isolé : il ne peut plus avancer, et la pièce y est à l'abri des pions."),
     ),
     LessonData(
         id = 157,
@@ -148,7 +148,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Les pions pendants sont dynamiques s'ils peuvent avancer, mais si l'adversaire les fixe et les attaque, ils deviennent deux cibles.",
         ideas = listOf("Deux pions voisins, sans pion sur les colonnes de chaque côté, sont des pions pendants.", "Ils sont forts tant qu'ils peuvent avancer et ouvrir le jeu.", "Fixés et attaqués, ils deviennent deux cibles."),
         traps = listOf("Pour vous : bloquez les pions pendants adverses et attaquez-les avec vos pièces.", "Contre vous : des pions pendants immobiles s'affaiblissent ; préparez leur avance au bon moment."),
-        quiz = LessonQuiz("Que faire contre des pions pendants ?", "Les fixer et les attaquer avec ses pièces", listOf("Les laisser avancer librement", "Échanger sa dame contre l'un d'eux"), "Les pions pendants deviennent faibles quand ils ne peuvent plus avancer : on les bloque, puis on les attaque."),
+        quiz = LessonQuiz("Que faire contre des pions pendants ?", "Les fixer et les attaquer avec ses pièces", listOf("Les laisser avancer pour les échanger", "Les échanger tout de suite contre une pièce"), "Les pions pendants deviennent faibles quand ils ne peuvent plus avancer : on les bloque, puis on les attaque."),
     ),
     LessonData(
         id = 158,
@@ -180,7 +180,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Les pions doublés sont lents et difficiles à défendre. Mais avant d'en créer chez l'adversaire, comparez avec ce qu'il obtient en échange.",
         ideas = listOf("Deux pions sur la même colonne se protègent mal et avancent lentement.", "En échange, ils ouvrent souvent une colonne pour les tours.", "Ils viennent parfois avec la paire de fous : comparez avant d'en créer chez l'adversaire."),
         traps = listOf("Pour vous : en finale, des pions doublés adverses empêchent souvent de créer un pion passé.", "Contre vous : un échange qui double vos pions est acceptable s'il vous donne une colonne ou les deux fous."),
-        quiz = LessonQuiz("Qui est mieux après l'échange en c6 ?", "La position est équilibrée : pions doublés contre paire de fous", listOf("Les Blancs gagnent facilement", "Les Noirs gagnent facilement"), "Les Noirs ont des pions doublés, mais ils ont la paire de fous et une colonne ouverte : chaque camp a ses atouts."),
+        quiz = LessonQuiz("Qui est mieux après l'échange en c6 ?", "La position est équilibrée : pions doublés contre paire de fous", listOf("Les Blancs, grâce à leur meilleure structure de pions", "Les Noirs, grâce à leurs deux fous sans aucune faiblesse"), "Les Noirs ont des pions doublés, mais ils ont la paire de fous et une colonne ouverte : chaque camp a ses atouts."),
     ),
     LessonData(
         id = 159,
@@ -216,7 +216,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Un pion arriéré laisse une case faible devant lui. Installez une pièce sur cette case : elle y sera à l'abri et gênera tout le camp adverse.",
         ideas = listOf("Un pion resté en arrière, que ses voisins ne peuvent plus protéger, est un pion arriéré.", "La case devant lui est faible : aucun pion ne peut plus la contrôler.", "Installez une pièce sur cette case : elle y sera à l'abri et gênera tout le camp adverse."),
         traps = listOf("Pour vous : un cavalier sur la case faible devant un pion arriéré est souvent la meilleure pièce de l'échiquier.", "Contre vous : évitez les poussées de pions qui laissent un de vos pions en arrière."),
-        quiz = LessonQuiz("Pourquoi la case d5 est-elle faible pour les Noirs ?", "Aucun pion noir ne peut plus la contrôler", listOf("Elle est attaquée par le roi blanc", "Elle est trop loin du centre"), "Le pion e5 est passé devant le pion d6 : plus aucun pion noir ne peut chasser une pièce installée en d5."),
+        quiz = LessonQuiz("Pourquoi la case d5 est-elle faible pour les Noirs ?", "Aucun pion noir ne peut plus la contrôler", listOf("Le roi blanc peut l'attaquer dès maintenant", "Elle est trop loin du centre pour compter"), "Le pion e5 est passé devant le pion d6 : plus aucun pion noir ne peut chasser une pièce installée en d5."),
     ),
     LessonData(
         id = 160,
@@ -243,7 +243,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         ),
         ideas = listOf("Le camp qui a plus de pions sur une aile peut y créer un pion passé.", "En finale de pions, activez d'abord le roi, puis avancez la majorité.", "Avancez d'abord le pion qui n'a pas de vis-à-vis : il deviendra le pion passé."),
         traps = listOf("Pour vous : un pion passé créé loin du roi adverse l'attire, et votre roi gagne les autres pions.", "Contre vous : une majorité mal avancée (le mauvais pion en tête) peut se bloquer sans créer de pion passé."),
-        quiz = LessonQuiz("Que faut-il faire en premier dans une finale de pions ?", "Activer son roi vers le centre", listOf("Avancer tous ses pions", "Attendre sans bouger"), "En finale, le roi devient une pièce forte : il se place au centre avant que les pions ne se mettent en route."),
+        quiz = LessonQuiz("Que faut-il faire en premier dans une finale de pions ?", "Activer son roi vers le centre", listOf("Avancer tous ses pions le plus vite possible", "Échanger tous les pions pour simplifier"), "En finale, le roi devient une pièce forte : il se place au centre avant que les pions ne se mettent en route."),
     ),
     LessonData(
         id = 161,
@@ -279,7 +279,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Cherchez les cases que les pions adverses ne contrôlent plus et installez-y un cavalier, si possible soutenu par un de vos pions.",
         ideas = listOf("Un avant-poste est une case que les pions adverses ne peuvent plus attaquer.", "Un cavalier qui s'y installe, soutenu par un pion, devient une pièce redoutable.", "Les avant-postes se trouvent souvent devant des pions isolés ou arriérés."),
         traps = listOf("Pour vous : amenez un cavalier sur l'avant-poste, même s'il faut plusieurs coups.", "Contre vous : échangez le cavalier adverse installé sur un avant-poste, ou évitez de laisser de telles cases."),
-        quiz = LessonQuiz("Qu'est-ce qu'un avant-poste ?", "Une case que les pions adverses ne peuvent plus attaquer", listOf("Une case où le roi se cache", "Une case de promotion"), "Sur un avant-poste, une pièce ne peut être chassée par aucun pion : seule une pièce peut l'échanger."),
+        quiz = LessonQuiz("Qu'est-ce qu'un avant-poste ?", "Une case que les pions adverses ne peuvent plus attaquer", listOf("Une case où le roi s'abrite derrière ses pions", "Une case de promotion pour un pion passé"), "Sur un avant-poste, une pièce ne peut être chassée par aucun pion : seule une pièce peut l'échanger."),
     ),
     LessonData(
         id = 162,
@@ -312,7 +312,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Si vos pions centraux sont sur des cases blanches, votre fou de cases blanches est mauvais. Donnez-lui une autre diagonale, ou échangez-le.",
         ideas = listOf("Un fou est mauvais quand ses propres pions bloquent ses diagonales.", "Placez vos pions sur la couleur opposée à celle de votre fou.", "Un mauvais fou peut être activé hors de la chaîne de pions, ou échangé."),
         traps = listOf("Pour vous : échanger votre mauvais fou contre le bon fou adverse améliore souvent votre position.", "Contre vous : en finale, un mauvais fou contre un bon cavalier ou un bon fou peut perdre."),
-        quiz = LessonQuiz("Pourquoi le fou c8 est-il mauvais dans le gambit dame refusé ?", "Le pion e6 bloque sa diagonale", listOf("Il est attaqué par le roi blanc", "Il ne peut jamais bouger"), "Les pions noirs d5 et e6 sont sur des cases blanches, comme le fou c8 : ils bouchent ses diagonales. Le pion b6 lui en ouvre une nouvelle."),
+        quiz = LessonQuiz("Pourquoi le fou c8 est-il mauvais dans le gambit dame refusé ?", "Le pion e6 bloque sa diagonale", listOf("Il est attaqué par le cavalier blanc", "Il ne peut pas bouger avant le roque"), "Les pions noirs d5 et e6 sont sur des cases blanches, comme le fou c8 : ils bouchent ses diagonales. Le pion b6 lui en ouvre une nouvelle."),
     ),
     LessonData(
         id = 163,
@@ -347,7 +347,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Avec la paire de fous, ouvrez la position. Sans elle, gardez la position fermée.",
         ideas = listOf("Deux fous contrôlent des cases des deux couleurs.", "Ils sont très forts quand la position s'ouvre.", "Avec la paire de fous, ouvrez la position ; sans elle, gardez-la fermée."),
         traps = listOf("Pour vous : en finale ouverte, la paire de fous vaut souvent plus qu'un fou et un cavalier.", "Contre vous : contre la paire de fous, échangez l'un des fous ou fermez le jeu."),
-        quiz = LessonQuiz("Quel type de position favorise la paire de fous ?", "Une position ouverte, avec des diagonales libres", listOf("Une position bloquée par les pions", "Une position sans aucune pièce"), "Les fous ont besoin de longues diagonales : plus la position est ouverte, plus ils sont forts."),
+        quiz = LessonQuiz("Quel type de position favorise la paire de fous ?", "Une position ouverte, avec des diagonales libres", listOf("Une position bloquée, avec des chaînes de pions", "Une position où toutes les pièces ont été échangées"), "Les fous ont besoin de longues diagonales : plus la position est ouverte, plus ils sont forts."),
     ),
     LessonData(
         id = 164,
@@ -383,7 +383,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Placez vos tours sur les colonnes ouvertes. Celui qui contrôle la colonne y fait entrer ses tours dans le camp adverse.",
         ideas = listOf("Une colonne sans pion est une autoroute pour les tours.", "Le premier qui l'occupe y fait entrer ses tours dans le camp adverse.", "Une fois la colonne prise, cherchez une case d'entrée sur la septième rangée."),
         traps = listOf("Pour vous : doublez vos tours sur la colonne ouverte pour la contrôler.", "Contre vous : opposez une tour à la tour adverse sur la colonne, sinon elle entrera chez vous."),
-        quiz = LessonQuiz("Pourquoi la tour va-t-elle en c1 ?", "Pour occuper la colonne c, ouverte", listOf("Pour protéger le roi", "Pour préparer le grand roque"), "Sur la colonne ouverte, la tour agit jusqu'à la septième rangée adverse."),
+        quiz = LessonQuiz("Pourquoi la tour va-t-elle en c1 ?", "Pour occuper la colonne c, ouverte", listOf("Pour protéger le roi blanc", "Pour préparer le grand roque"), "Sur la colonne ouverte, la tour agit jusqu'à la septième rangée adverse."),
     ),
     LessonData(
         id = 165,
@@ -407,7 +407,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Une tour en septième rangée paralyse l'adversaire. Ses pièces doivent défendre et ne peuvent plus attaquer.",
         ideas = listOf("Une tour sur la septième rangée attaque les pions restés chez eux et enferme le roi adverse.", "Elle oblige les pièces adverses à défendre au lieu d'attaquer.", "Deux tours sur la septième rangée menacent souvent le mat."),
         traps = listOf("Pour vous : entrez sur la septième rangée dès qu'une colonne s'ouvre.", "Contre vous : chassez ou échangez la tour adverse installée sur votre deuxième rangée."),
-        quiz = LessonQuiz("Qui est mieux dans cette finale de tours ?", "Les Blancs, grâce à leur tour active en septième rangée", listOf("Les Noirs, grâce à leur tour en b8", "La position est totalement morte"), "Le matériel est égal, mais la tour blanche est active et la tour noire passive : c'est un avantage durable."),
+        quiz = LessonQuiz("Qui est mieux dans cette finale de tours ?", "Les Blancs, grâce à leur tour active en septième rangée", listOf("Les Noirs, grâce à leur tour active sur la colonne b", "Personne : la position est totalement égale"), "Le matériel est égal, mais la tour blanche est active et la tour noire passive : c'est un avantage durable."),
     ),
     LessonData(
         id = 166,
@@ -429,7 +429,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Doublez vos tours sur la colonne ouverte ou sur la septième rangée. Ensemble, elles sont bien plus fortes que séparément.",
         ideas = listOf("Deux tours sur la même colonne ou la même rangée se protègent et doublent leur force.", "Doublez-les sur la colonne ouverte ou sur la septième rangée.", "Ensemble, elles sont bien plus fortes que séparément."),
         traps = listOf("Pour vous : deux tours doublées gagnent souvent la bataille de la colonne ouverte.", "Contre vous : face à des tours doublées, une seule tour ne peut pas tenir la colonne."),
-        quiz = LessonQuiz("Pourquoi doubler les tours ?", "Elles se protègent et attaquent ensemble", listOf("Pour libérer la première rangée", "Pour protéger le pion h2"), "Deux tours sur la même ligne se défendent mutuellement et concentrent leur force sur un même objectif."),
+        quiz = LessonQuiz("Pourquoi doubler les tours ?", "Elles se protègent et attaquent ensemble", listOf("Pour libérer la première rangée du roi", "Pour protéger les pions de l'aile roi"), "Deux tours sur la même ligne se défendent mutuellement et concentrent leur force sur un même objectif."),
     ),
     LessonData(
         id = 167,
@@ -469,7 +469,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "L'attaque de minorité pousse les pions a et b pour échanger le pion c6 et laisser aux Noirs un pion faible. Les deux pions blancs suffisent à créer cette faiblesse.",
         ideas = listOf("Avec deux pions contre trois sur une aile, on les avance quand même pour créer une faiblesse.", "Le but est d'échanger le pion c6 et de laisser aux Noirs un pion faible.", "Les pièces attaquent ensuite cette faiblesse."),
         traps = listOf("Pour vous : l'attaque de minorité donne des cibles durables, même sans gain de matériel immédiat.", "Contre vous : contre l'attaque de minorité, préparez un contre-jeu ailleurs, souvent au centre ou sur l'autre aile."),
-        quiz = LessonQuiz("Quel est le but de l'attaque de minorité ?", "Créer un pion faible dans le camp adverse", listOf("Gagner tout de suite une pièce", "Faire roquer l'adversaire"), "En poussant b4 puis b5, les Blancs forcent un échange qui laisse aux Noirs un pion c isolé ou arriéré."),
+        quiz = LessonQuiz("Quel est le but de l'attaque de minorité ?", "Créer un pion faible dans le camp adverse", listOf("Gagner tout de suite une pièce adverse", "Ouvrir des lignes vers le roi adverse"), "En poussant b4 puis b5, les Blancs forcent un échange qui laisse aux Noirs un pion c isolé ou arriéré."),
     ),
     LessonData(
         id = 168,
@@ -509,7 +509,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Avec des roques opposés, les pions peuvent attaquer sans affaiblir son propre roi. Le plus rapide gagne la course.",
         ideas = listOf("Quand les roques sont opposés, on lance ses pions contre le roi adverse.", "Ces pions n'affaiblissent pas son propre roi, placé de l'autre côté.", "C'est une course : le plus rapide gagne."),
         traps = listOf("Pour vous : chaque pion qui avance contre le roi adverse ouvre une colonne pour vos tours.", "Contre vous : un coup lent dans une course de roques opposés peut perdre la partie."),
-        quiz = LessonQuiz("Pourquoi les Blancs avancent-ils leur pion h ?", "Pour ouvrir la colonne h vers le roi noir", listOf("Pour protéger leur propre roi", "Pour préparer le petit roque"), "Le roi blanc est à l'aile dame : avancer les pions de l'aile roi ne l'affaiblit pas et ouvre des lignes vers le roi noir."),
+        quiz = LessonQuiz("Pourquoi les Blancs avancent-ils leur pion h ?", "Pour ouvrir la colonne h vers le roi noir", listOf("Pour protéger son propre roi des échecs", "Pour libérer une case de fuite au roi blanc"), "Le roi blanc est à l'aile dame : avancer les pions de l'aile roi ne l'affaiblit pas et ouvre des lignes vers le roi noir."),
     ),
     LessonData(
         id = 169,
@@ -556,7 +556,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Une tour contre une pièce mineure n'est pas toujours une perte. Si elle détruit la structure adverse et élimine un défenseur clé, le sacrifice est souvent excellent.",
         ideas = listOf("On donne une tour contre un fou ou un cavalier, non pour mater, mais pour un avantage durable.", "Le sacrifice peut détruire la structure adverse ou éliminer un défenseur clé.", "Les pièces mineures actives valent alors souvent la tour."),
         traps = listOf("Pour vous : une pièce mineure très active contre une tour sans colonne ouverte peut dominer.", "Contre vous : après un sacrifice de qualité adverse, ouvrez des colonnes pour vos tours."),
-        quiz = LessonQuiz("Pourquoi les Noirs donnent-ils leur tour en c3 ?", "Pour éliminer un défenseur et abîmer la structure blanche", listOf("Pour gagner tout de suite la dame", "Pour mater en un coup"), "La prise en c3 élimine le cavalier qui protégeait le roi blanc et laisse aux Blancs des pions doublés et isolés."),
+        quiz = LessonQuiz("Pourquoi les Noirs donnent-ils leur tour en c3 ?", "Pour éliminer un défenseur et abîmer la structure blanche", listOf("Pour gagner tout de suite la dame blanche", "Pour forcer un mat sur la dernière rangée"), "La prise en c3 élimine le cavalier qui protégeait le roi blanc et laisse aux Blancs des pions doublés et isolés."),
     ),
     LessonData(
         id = 170,
@@ -586,7 +586,7 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Demandez-vous ce que l'adversaire veut faire. S'il est bon marché de l'en empêcher, faites-le.",
         ideas = listOf("Avant d'attaquer, empêchez le meilleur plan de l'adversaire.", "Demandez-vous ce que l'adversaire veut faire, et s'il est bon marché de l'en empêcher.", "Un petit coup préventif peut valoir plus qu'une attaque."),
         traps = listOf("Pour vous : un adversaire privé de son plan joue souvent des coups sans but.", "Contre vous : se lancer à l'attaque sans regarder les menaces adverses peut coûter cher."),
-        quiz = LessonQuiz("À quoi sert le coup a3 des Blancs ?", "Empêcher le fou noir de venir en b4", listOf("Préparer le petit roque", "Attaquer le roi noir"), "Le pion a3 contrôle la case b4 : le fou noir ne peut plus clouer le cavalier c3."),
+        quiz = LessonQuiz("À quoi sert le coup a3 des Blancs ?", "Empêcher le fou noir de venir en b4", listOf("Préparer l'avance du pion b vers b4", "Libérer une case de fuite au roi blanc"), "Le pion a3 contrôle la case b4 : le fou noir ne peut plus clouer le cavalier c3."),
     ),
     LessonData(
         id = 171,
@@ -630,6 +630,6 @@ internal val STRATEGY_LESSONS: List<LessonData> = listOf(
         takeaway = "Quand aucun plan n'est évident, trouvez votre pire pièce et améliorez-la.",
         ideas = listOf("Quand aucun plan n'est évident, trouvez votre pire pièce et améliorez-la.", "Un cavalier mal placé fait parfois un long voyage pour trouver une bonne case.", "Une position où toutes les pièces sont actives se joue presque toute seule."),
         traps = listOf("Pour vous : améliorer sa pire pièce prépare souvent l'attaque décisive.", "Contre vous : une seule pièce inactive peut suffire à perdre une finale."),
-        quiz = LessonQuiz("Que faire quand on ne voit pas de plan ?", "Améliorer sa plus mauvaise pièce", listOf("Jouer un coup au hasard", "Échanger toutes les pièces"), "Une position s'améliore souvent pièce par pièce : en commençant par la pire, on renforce tout son jeu."),
+        quiz = LessonQuiz("Que faire quand on ne voit pas de plan ?", "Améliorer sa plus mauvaise pièce", listOf("Échanger toutes les pièces au plus vite", "Lancer une attaque contre le roi adverse"), "Une position s'améliore souvent pièce par pièce : en commençant par la pire, on renforce tout son jeu."),
     ),
 )

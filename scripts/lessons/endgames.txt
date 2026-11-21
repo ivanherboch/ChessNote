@@ -624,7 +624,7 @@ Kf5 : La position se répète.
 ?Rf6+ : La tour continue ses échecs.
 Ke4 : Le roi blanc change de chemin.
 ?Re6+ : La tour suit le roi, toujours sur la sixième rangée. À retenir : dans la défense Vancura, la tour attaque le pion tour par le côté et donne des échecs dès que le roi adverse s'approche. La partie est nulle.
-QUIZ: Où se place la tour du défenseur dans la défense Vancura ? | Sur la même rangée que le pion, pour l'attaquer de côté | Devant le pion | Derrière son propre roi | Attaqué de côté, le pion tour cloue la tour adverse devant lui ; le roi ne peut pas l'aider sans subir des échecs.
+QUIZ: Où se place la tour du défenseur dans la défense Vancura ? | Sur la même rangée que le pion, pour l'attaquer de côté | Devant le pion, sur sa case de promotion | Derrière son propre roi, pour l'abriter des échecs | Attaqué de côté, le pion tour cloue la tour adverse devant lui ; le roi ne peut pas l'aider sans subir des échecs.
 IDEA: Contre un pion tour soutenu par une tour devant lui, la tour du défenseur attaque le pion de côté.
 IDEA: Elle donne des échecs dès que le roi adverse s'approche du pion.
 IDEA: Le roi défenseur reste près de la case de promotion : la partie est nulle.
@@ -662,7 +662,7 @@ Ke7 : Le roi noir s'approche du pion a6.
 ?Kh2 : Le roi blanc se rapproche de l'aile roi.
 Kd6 : Le roi noir arrive.
 ?Kg3 : Le roi blanc avance. À retenir : placez votre tour derrière votre pion passé. Elle est active et pousse le pion, alors que la tour adverse, devant lui, devient passive.
-QUIZ: Où placer une tour avec un pion passé ? | Derrière le pion passé | Devant le pion passé | Sur la première rangée, loin du pion | Derrière le pion, la tour gagne en activité à chaque avance ; devant, elle perd de la place à chaque pas du pion.
+QUIZ: Où placer une tour avec un pion passé ? | Derrière le pion passé | Devant le pion passé, pour bloquer sa case | Sur la première rangée, loin du pion passé | Derrière le pion, la tour gagne en activité à chaque avance ; devant, elle perd de la place à chaque pas du pion.
 IDEA: Les tours se placent derrière les pions passés.
 IDEA: Derrière le sien, la tour le pousse ; derrière celui de l'adversaire, elle le freine.
 IDEA: Une tour devant un pion devient passive.
@@ -817,7 +817,7 @@ Kb6 : Le roi noir ne peut plus rien faire.
 ?e7 : Le pion arrive en septième rangée.
 Kb5 : Le roi noir est trop loin.
 ?e8=Q+ : Le pion devient dame. À retenir : dans cette position, le camp au trait perd. Avec les Blancs au trait, les Noirs prennent l'opposition et annulent ; avec les Noirs au trait, les Blancs gagnent.
-QUIZ: Que se passe-t-il si les Blancs ont le trait dans la position de départ ? | La partie est nulle | Les Blancs gagnent quand même | Les Noirs gagnent | Avec les Blancs au trait, le roi noir garde l'opposition devant le pion : c'est un zugzwang mutuel, celui qui joue perd.
+QUIZ: Que se passe-t-il si les Blancs ont le trait dans la position de départ ? | La partie est nulle | Les Blancs gagnent, grâce à l'opposition | Les Noirs gagnent, car les Blancs sont en zugzwang | Avec les Blancs au trait, le roi noir garde l'opposition devant le pion : c'est un zugzwang mutuel, celui qui joue perd.
 IDEA: Dans certaines positions, le camp qui a le trait perd : c'est le zugzwang mutuel.
 IDEA: Il faut savoir s'y placer quand c'est à l'adversaire de jouer.
 IDEA: Un coup d'attente ou une triangulation du roi change le trait.
