@@ -307,6 +307,12 @@ class Position(
         adjacent && legalMoves.any { isEnPassant(it) }
     }
 
+    /**
+     * Même position, l'autre camp ayant le trait (« et s'il rejouait ? ») : sans prise en passant possible, compteurs
+     * inchangés. Construite directement, sans aller-retour par la FEN.
+     */
+    fun passTurn(): Position = Position(board, !whiteToMove, castling, -1, halfmove, fullmove)
+
     /** Clé de répétition : placement, trait, roques, prise en passant (calculée une fois, sans passer par toFen). */
     val key: String by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val sb = StringBuilder(72)

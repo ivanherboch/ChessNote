@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.withTimeoutOrNull
 import com.ivanherboch.chessduck.content.PuzzleThemes
 import androidx.compose.runtime.Immutable
@@ -251,9 +252,11 @@ class AcademyViewModel(
     private var endgameReview = false
 
     /** Finales jouables contre l'Ordinateur. */
-    val endgame = EndgameTrainer(viewModelScope, engine, random, onFinished = ::endgameFinished)
+    val endgame = EndgameTrainer(viewModelScope, engine, random, onFinished = ::endgameFinished, work = work ?: EmptyCoroutineContext)
     /** Exercices de réflexes (menace, prise). */
-    val reflex = ReflexTrainer(viewModelScope, puzzles, engine, random, speak = { if (narration.value) narrator.speak(it) })
+    val reflex = ReflexTrainer(
+        viewModelScope, puzzles, engine, random, speak = { if (narration.value) narrator.speak(it) }, work = work ?: EmptyCoroutineContext,
+    )
 
     val lesson: Lesson get() = Lessons.byId(state.value.lessonId)
     /** Ligne affichée (principale ou variante) et ses commentaires. */
@@ -889,26 +892,17 @@ class AcademyViewModel(
      */
     private suspend fun refute(pos: Position, m: Move) {
         pulse(false)
-        val san = pos.san(m)
         val after = pos.play(m)
-        val opp = if (pos.whiteToMove) "Noirs" else "Blancs"
         missed = pos to m
         _state.update {
             it.copy(
                 judging = false, errors = it.errors + 1, tone = Tone.BAD, tentative = null, anim = null,
-                refute = Refutation(after, m, null), message = "$san n'est pas le bon coup. Regardez la réponse des $opp…",
+                refute = Refutation(after, m, null), message = RefutationLogic.intro(pos, m, "le bon coup"),
             )
         }
-        val r = RefutationLogic.reply(engine, pos, m)
-        _state.update {
-            it.copy(
-                anim = r.reply?.let { reply -> moveAnim(after, reply) } ?: it.anim,
-                refute = Refutation(r.position, r.reply ?: m, r.reply),
-                refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD,
-                message = r.text + RefutationLogic.AUTO_UNDO,
-            )
+        RefutationLogic.play(engine, pos, m) { refute, anim, message, until ->
+            _state.update { it.copy(anim = anim ?: it.anim, refute = refute, refuteUntil = until, refuteHold = REFUTE_HOLD, message = message) }
         }
-        delay(REFUTE_HOLD)
         resumeAtMiss()
     }
 
@@ -934,7 +928,7 @@ class AcademyViewModel(
         _state.update {
             it.copy(
                 refuteUntil = 0L,
-                message = it.message.removeSuffix(RefutationLogic.AUTO_UNDO) + " Prenez votre temps, puis touchez « Reprendre au coup manqué ».",
+                message = RefutationLogic.held(it.message, "« Reprendre au coup manqué »"),
             )
         }
     }
@@ -1119,31 +1113,23 @@ class AcademyViewModel(
     /** Mauvais coup pendant une série : joué, réfuté par l'Ordinateur, puis annulé (comme dans les Problèmes). */
     private fun refutePractice(pr: Practice, pos: Position, m: Move) {
         pulse(false)
-        val san = pos.san(m)
         val after = pos.play(m)
-        val opp = if (pos.whiteToMove) "Noirs" else "Blancs"
         practiceMissed = pos to m
         _state.update { s ->
             s.copy(
                 practice = pr.copy(
                     hadError = true, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m), refute = Refutation(after, m), refuteUntil = 0L, refuteHold = 0L,
-                    message = "$san n'est pas la solution. Regardez la réponse des $opp…",
+                    message = RefutationLogic.intro(pos, m),
                 ),
             )
         }
         practiceJob = viewModelScope.launch {
-            val r = RefutationLogic.reply(engine, pos, m)
-            _state.update { s ->
-                val p2 = s.practice?.takeIf { it.refute != null } ?: return@update s
-                s.copy(
-                    practice = p2.copy(
-                        anim = r.reply?.let { reply -> moveAnim(after, reply) } ?: p2.anim, refute = Refutation(r.position, r.reply ?: m, r.reply),
-                        refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD,
-                        message = r.text + " Ce problème ne comptera plus, mais trouvez la solution." + RefutationLogic.AUTO_UNDO,
-                    ),
-                )
+            RefutationLogic.play(engine, pos, m, extra = " Ce problème ne comptera plus, mais trouvez la solution.") { refute, anim, message, until ->
+                _state.update { s ->
+                    val p2 = s.practice?.takeIf { it.refute != null } ?: return@update s
+                    s.copy(practice = p2.copy(anim = anim ?: p2.anim, refute = refute, refuteUntil = until, refuteHold = REFUTE_HOLD, message = message))
+                }
             }
-            delay(REFUTE_HOLD)
             retryPractice()
         }
     }
@@ -1172,7 +1158,7 @@ class AcademyViewModel(
         if (pr.refute == null || pr.refuteUntil == 0L) return
         practiceJob?.cancel()
         _state.update { s ->
-            s.copy(practice = pr.copy(refuteUntil = 0L, message = pr.message.removeSuffix(RefutationLogic.AUTO_UNDO) + " Prenez votre temps, puis touchez Réessayer."))
+            s.copy(practice = pr.copy(refuteUntil = 0L, message = RefutationLogic.held(pr.message, "Réessayer")))
         }
     }
 

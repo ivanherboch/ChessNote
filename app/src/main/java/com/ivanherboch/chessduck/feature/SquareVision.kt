@@ -36,13 +36,22 @@ data class VisionSession(
     val message: String = "",
     val tone: Tone = Tone.INFO,
 ) {
-    /** Échiquier affiché : vide, avec le cavalier sur sa case de départ pour le chemin du cavalier. */
+    /** Échiquier affiché : vide, avec le cavalier sur sa case de départ pour le chemin du cavalier (position mise en cache). */
     val position: Position
-        get() = Position.fromFen(if (question.kind == VisionKind.KNIGHT) SquareVision.withKnight(question.square) else SquareVision.EMPTY)
+        get() = SquareVision.positionFor(question)
 }
 
 object SquareVision {
     const val EMPTY = "8/8/8/8/8/8/8/8 w - - 0 1"
+
+    private val emptyPosition: Position by lazy { Position.fromFen(EMPTY) }
+    /** Échiquiers « cavalier seul », un par case de départ, construits une seule fois (lus à chaque recomposition). */
+    private val knightPositions = arrayOfNulls<Position>(64)
+
+    /** Échiquier d'une question, sans réanalyser la FEN à chaque lecture. */
+    fun positionFor(q: VisionQuestion): Position =
+        if (q.kind != VisionKind.KNIGHT) emptyPosition
+        else synchronized(knightPositions) { knightPositions[q.square] ?: Position.fromFen(withKnight(q.square)).also { knightPositions[q.square] = it } }
     /** Case claire ? (a1 est une case foncée.) */
     fun isLight(square: Int): Boolean = (fileOf(square) + rankOf(square)) % 2 == 1
 

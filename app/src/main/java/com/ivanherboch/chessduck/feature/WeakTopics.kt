@@ -45,10 +45,26 @@ object WeakTopics {
         return out
     }
 
+    /**
+     * Points faibles déjà calculés, par partie : clé = identifiant, valeur = (analyse lue, résultat). Une nouvelle émission
+     * de l'historique (partie ajoutée, analyse enregistrée, progression de l'Académie) ne rejoue que les parties nouvelles
+     * ou réanalysées, au lieu des 20 parties. Taille bornée (les plus anciennes sont oubliées).
+     */
+    private val cache = object : LinkedHashMap<Long, Pair<String, Map<ReviewTopic, Int>>>(32, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, Pair<String, Map<ReviewTopic, Int>>>?) = size > GAMES * 3
+    }
+
+    private fun fromGameCached(g: GameRecord): Map<ReviewTopic, Int> {
+        synchronized(cache) { cache[g.id]?.takeIf { it.first == g.analysis }?.let { return it.second } }
+        val topics = fromGame(g)
+        synchronized(cache) { cache[g.id] = g.analysis to topics }
+        return topics
+    }
+
     fun compute(games: List<GameRecord>, progress: List<LessonProgress>): List<Priority> {
         val counts = HashMap<ReviewTopic, Int>()
         for (g in games.sortedByDescending { it.date }.take(GAMES)) {
-            for ((t, n) in fromGame(g)) counts[t] = (counts[t] ?: 0) + n
+            for ((t, n) in fromGameCached(g)) counts[t] = (counts[t] ?: 0) + n
         }
         val fromGames = counts.map { (t, n) ->
             Priority(t.label, "Repéré $n fois dans vos parties analysées.", t.lessonId, t.theme, n * 3)

@@ -268,6 +268,8 @@ fun AcademyScreen(
                         actionLabel = backLabel, onAction = vm::closeTraining,
                     )
                 }
+                // Position de finale en cours de génération (hors du fil principal) : un instant de chargement.
+                egs != null && egs.position == null && !egs.finished -> LoadingState("Préparation de la position…")
                 egs?.position != null -> {
                     val pos = egs.position
                     val flip = !egs.family.heroWhite != s.sessionFlipped

@@ -24,6 +24,9 @@ import com.ivanherboch.chessduck.ui.moveAnim
 import com.ivanherboch.chessduck.ui.undoAnim
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -74,8 +77,6 @@ data class Suggestion(val id: String, val type: String, val rating: Int)
 /** [more] : nombre de résultats au-delà de ceux affichés. */
 data class Suggestions(val query: String = "", val items: List<Suggestion> = emptyList(), val more: Int = 0)
 
-private const val AUTO_UNDO = RefutationLogic.AUTO_UNDO
-
 class PuzzlesViewModel(
     private val prefs: SettingsRepository,
     private val dao: PuzzleRepository,
@@ -86,7 +87,13 @@ class PuzzlesViewModel(
     private val rnd = kotlin.random.Random(System.nanoTime())
     private val _state = MutableStateFlow(PuzzleState())
     val state: StateFlow<PuzzleState> = _state.asStateFlow()
-    val solvedIds = dao.solvedIds().map { it.toHashSet() as Set<String> }
+    /** Nombre de problèmes résolus, compté par la base (aucun identifiant chargé en mémoire). */
+    val solvedCount = dao.solvedCount().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+    /** Parmi les problèmes récents (au plus 6), ceux déjà résolus : coche et thème visible dans « Derniers problèmes ». */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val recentSolved = prefs.settings.map { it.recentPuzzles }.distinctUntilChanged()
+        .flatMapLatest { ids -> if (ids.isEmpty()) flowOf(emptyList()) else dao.solvedAmong(ids) }
+        .map { it.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
     private val _counts = MutableStateFlow<Map<String, ThemeCount>>(emptyMap())
     val counts: StateFlow<Map<String, ThemeCount>> = _counts.asStateFlow()
@@ -343,27 +350,18 @@ class PuzzlesViewModel(
      * « Réessayer » annule immédiatement.
      */
     private fun refute(pos: Position, m: Move, after: Position, cur: Int) {
-        val san = pos.san(m)
-        val oppName = if (pos.whiteToMove) "Noirs" else "Blancs"
         _state.update {
             it.copy(
                 progress = minOf(it.progress, cur).coerceAtLeast(cur), cursor = cur, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m),
                 refute = Refutation(after, m, null), refuteUntil = 0L, refuteHold = 0L,
-                message = "$san n'est pas la solution. Regardez la réponse des $oppName…",
+                message = RefutationLogic.intro(pos, m),
             )
         }
         missed = pos to m
         job = viewModelScope.launch {
-            val r = RefutationLogic.reply(engine, pos, m)
-            _state.update {
-                it.copy(
-                    anim = r.reply?.let { reply -> moveAnim(after, reply) } ?: it.anim,
-                    refute = Refutation(r.position, r.reply ?: m, r.reply),
-                    refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD,
-                    message = r.text + AUTO_UNDO,
-                )
+            RefutationLogic.play(engine, pos, m) { refute, anim, message, until ->
+                _state.update { it.copy(anim = anim ?: it.anim, refute = refute, refuteUntil = until, refuteHold = REFUTE_HOLD, message = message) }
             }
-            delay(REFUTE_HOLD)
             retry()
         }
     }
@@ -375,7 +373,7 @@ class PuzzlesViewModel(
     fun holdRefutation() {
         if (state.value.refute == null || state.value.refuteUntil == 0L) return
         job?.cancel()
-        _state.update { it.copy(refuteUntil = 0L, message = it.message.removeSuffix(AUTO_UNDO) + " Prenez votre temps, puis touchez Réessayer.") }
+        _state.update { it.copy(refuteUntil = 0L, message = RefutationLogic.held(it.message, "Réessayer")) }
     }
 
     /** Annule immédiatement le mauvais coup (bouton ↩️ Réessayer ou fin de la temporisation). */

@@ -74,7 +74,9 @@ class GameAnalysisService(
             try {
                 for (i in 0..line.size) {
                     val existing = list[i]
-                    if (existing != null && (existing.second != null || existing.best.isEmpty())) continue
+                    // Déjà analysée : une seconde variante connue, une position finale (pas de coup), ou un seul coup
+                    // légal (aucune seconde variante possible). Seules les analyses d'avant le multiPV sont refaites.
+                    if (existing != null && (existing.second != null || existing.best.isEmpty() || line.positions[i].legalMoves.size <= 1)) continue
                     val a = analyse(line.positions[i], 110) ?: continue
                     list[i] = a
                     changed = true

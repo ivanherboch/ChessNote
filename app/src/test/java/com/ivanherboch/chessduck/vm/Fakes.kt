@@ -70,6 +70,8 @@ class FakePuzzles(private val puzzles: List<Puzzle>) : PuzzleRepository {
     override suspend fun sliceCastling(start: Int, n: Int) = emptyList<Puzzle>()
     override suspend fun markSolved(id: String, at: Long) = solved.update { it + id }
     override fun solvedIds(): Flow<List<String>> = solved.map { it.toList() }
+    override fun solvedCount(): Flow<Int> = solved.map { it.size }
+    override fun solvedAmong(ids: List<String>): Flow<List<String>> = solved.map { s -> ids.filter { it in s } }
     override suspend fun syncCatalogue() = false
     override suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random): String? {
         val pool = puzzles.filter { (themes == null || it.primaryTheme in themes) && it.rating in range && it.id != exclude }

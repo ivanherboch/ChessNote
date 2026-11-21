@@ -8,6 +8,10 @@ import com.ivanherboch.chessduck.chess.pieceType
 import com.ivanherboch.chessduck.engine.ChessEngine
 import com.ivanherboch.chessduck.engine.isMateScore
 import com.ivanherboch.chessduck.engine.mateIn
+import com.ivanherboch.chessduck.ui.BoardAnim
+import com.ivanherboch.chessduck.ui.REFUTE_HOLD
+import com.ivanherboch.chessduck.ui.Refutation
+import com.ivanherboch.chessduck.ui.moveAnim
 import com.ivanherboch.chessduck.util.runCatchingSuspend
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
@@ -25,6 +29,34 @@ class RefutationReply(val reply: Move?, val position: Position, val text: String
  */
 object RefutationLogic {
     const val AUTO_UNDO = " Touchez l'échiquier pour rejouer tout de suite (sinon, le coup s'annule seul)."
+
+    /** Camp qui réfute le coup joué en [pos] (l'adversaire de celui qui a le trait). */
+    fun opponentName(pos: Position): String = if (pos.whiteToMove) "Noirs" else "Blancs"
+
+    /** Message affiché dès le mauvais coup [m], avant la réponse : « Fxe5 n'est pas la solution. Regardez… ». */
+    fun intro(pos: Position, m: Move, what: String = "la solution"): String =
+        "${pos.san(m)} n'est pas $what. Regardez la réponse des ${opponentName(pos)}…"
+
+    /** Message une fois le retour automatique suspendu : la consigne finale nomme le bouton qui rend la main. */
+    fun held(message: String, button: String): String = message.removeSuffix(AUTO_UNDO) + " Prenez votre temps, puis touchez $button."
+
+    /**
+     * Déroulé commun d'une réfutation (Problèmes, Défi, séries de l'Académie), une fois le mauvais coup [m] montré :
+     * la réponse adverse est calculée, puis publiée par [show] (réfutation, glissement de la réponse, texte suivi de
+     * [extra] et de [AUTO_UNDO], échéance du retour automatique) ; après [REFUTE_HOLD] ms, l'appelant rétablit la position.
+     */
+    suspend fun play(
+        engine: ChessEngine, pos: Position, m: Move, extra: String = "",
+        show: (refute: Refutation, anim: BoardAnim?, message: String, until: Long) -> Unit,
+    ) {
+        val after = pos.play(m)
+        val r = reply(engine, pos, m)
+        show(
+            Refutation(r.position, r.reply ?: m, r.reply), r.reply?.let { reply -> moveAnim(after, reply) },
+            r.text + extra + AUTO_UNDO, System.currentTimeMillis() + REFUTE_HOLD,
+        )
+        delay(REFUTE_HOLD)
+    }
 
     suspend fun reply(engine: ChessEngine, pos: Position, m: Move, minShow: Long = 650): RefutationReply {
         val t0 = System.currentTimeMillis()

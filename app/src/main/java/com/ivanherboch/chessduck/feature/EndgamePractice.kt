@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.CoroutineContext
 import com.ivanherboch.chessduck.chess.ROOK
 import com.ivanherboch.chessduck.ui.undoAnim
 import com.ivanherboch.chessduck.engine.SearchResult
@@ -121,7 +124,7 @@ object EndgamePositions {
         val wk = p.kingSquare(true); val bk = p.kingSquare(false)
         if (wk < 0 || bk < 0 || dist(wk, bk) < 2) return null
         // Le camp qui n'a pas le trait ne doit pas être en échec ; le camp au trait ne l'est pas non plus.
-        if (p.inCheck || Position.fromFen(fen.replace(if (p.whiteToMove) " w " else " b ", if (p.whiteToMove) " b " else " w ")).inCheck) return null
+        if (p.inCheck || p.passTurn().inCheck) return null
         if (p.legalMoves.isEmpty()) return null
         // Le joueur ne doit pas perdre une pièce tout de suite : aucune pièce blanche prise sans protection.
         return p.takeIf { f.heroWhite == p.whiteToMove }
@@ -305,6 +308,8 @@ class EndgameTrainer(
     private val movetimeMs: Int = 400,
     /** Fin de série : famille, positions réussies, positions jouées. */
     private val onFinished: suspend (EndgameFamily, Int, Int) -> Unit = { _, _, _ -> },
+    /** Contexte de la génération des positions (Dispatchers.Default dans l'application ; celui des tests sinon). */
+    private val work: CoroutineContext = EmptyCoroutineContext,
 ) {
     private val _state = MutableStateFlow<EndgameSession?>(null)
     val state: StateFlow<EndgameSession?> = _state.asStateFlow()
@@ -343,6 +348,7 @@ class EndgameTrainer(
 
     fun stop() {
         job?.cancel()
+        showJob?.cancel()
         hintJob?.cancel()
         prep?.cancel()
         prep = null
@@ -350,14 +356,31 @@ class EndgameTrainer(
         _state.value = null
     }
 
+    private var showJob: Job? = null
+
+    /**
+     * Prépare la position [index]. Avec un contexte de calcul ([work], l'application), elle est générée hors du fil
+     * principal ; en attendant, la séance n'a pas de position (l'écran affiche le chargement) et aucun coup ne peut être
+     * joué. Sans contexte (tests), elle est générée tout de suite, de façon déterministe.
+     */
     private fun show(index: Int) {
-        val s = _state.value ?: return
-        val p = EndgamePositions.generate(s.family, random)
+        val s0 = _state.value ?: return
         hintJob?.cancel()
+        showJob?.cancel()
+        if (work == EmptyCoroutineContext) return present(index, EndgamePositions.generate(s0.family, random))
+        _state.value = s0.copy(index = index, position = null, over = false, thinking = false, hint = null, hintStage = 0, hinting = false)
+        showJob = scope.launch {
+            val p = withContext(work) { EndgamePositions.generate(s0.family, random) }
+            present(index, p)
+        }
+    }
+
+    private fun present(index: Int, p: Position) {
+        val s = _state.value ?: return
         _state.value = s.copy(
             index = index, position = p, start = p, last = null, anim = null, moves = 0, thinking = false, hint = null, hintStage = 0, hinting = false,
             over = false, evalWhite = null, punish = null, replay = false, replayOk = null,
-            better = null, before = null, beforeMoves = 0, history = listOf(p.key()),
+            better = null, before = null, beforeMoves = 0, history = listOf(p.key),
             tone = Tone.INFO, message = "Position ${index + 1} sur ${s.total} : ${s.family.instruction}\n\nMéthode : ${s.family.method}",
         )
         prepare(p.takeIf { it.whiteToMove == s.family.heroWhite })
@@ -378,7 +401,7 @@ class EndgameTrainer(
             hint = null, hintStage = 0, hinting = false, over = false, evalWhite = null, punish = null, replay = true, tone = Tone.INFO,
             before = null,
             // Chaque coup de l'élève ajoute deux positions (le sien, puis la réponse) à l'historique.
-            history = if (back != null) s.history.take(1 + 2 * s.beforeMoves) else listOf(s.start.key()),
+            history = if (back != null) s.history.take(1 + 2 * s.beforeMoves) else listOf(s.start.key),
             message = if (back != null && s.better != null) "Entraînement (hors score) : rejouez ce coup. La flèche verte montre le bon coup. ${s.family.method}"
             else "Entraînement (hors score) : rejouez la position. ${s.family.method}",
         )
@@ -440,7 +463,7 @@ class EndgameTrainer(
         val moves = s.moves + 1
         _state.value = s.copy(
             position = after, last = m, anim = moveAnim(pos, m), moves = moves, thinking = true, hint = null, hintStage = 0, hinting = false, better = null,
-            history = s.history + after.key(),
+            history = s.history + after.key,
         )
         job = scope.launch {
             val f = s.family
@@ -507,8 +530,8 @@ class EndgameTrainer(
             if (f.goal == EndgameGoal.WIN && promoted) return@launch end(true, "Le pion devient dame et le gain est assuré !", ev)
             delay(450)
             val next = after.play(reply)
-            val seen = s.history + after.key()
-            _state.update { it?.copy(position = next, last = reply, anim = moveAnim(after, reply), thinking = false, history = seen + next.key()) }
+            val seen = s.history + after.key
+            _state.update { it?.copy(position = next, last = reply, anim = moveAnim(after, reply), thinking = false, history = seen + next.key) }
             val ruleNext = drawRule(next, seen)
             when {
                 next.isCheckmate -> end(false, "Échec et mat : l'Ordinateur a gagné.")
@@ -551,7 +574,7 @@ class EndgameTrainer(
 
     /** Nulle par la règle : triple répétition (échec perpétuel compris) ou 50 coups sans prise ni coup de pion. */
     private fun drawRule(p: Position, seen: List<String>): String? = when {
-        seen.count { it == p.key() } >= 2 -> "Triple répétition"
+        seen.count { it == p.key } >= 2 -> "Triple répétition"
         p.halfmove >= 100 -> "Règle des 50 coups"
         else -> null
     }
@@ -561,8 +584,6 @@ class EndgameTrainer(
         if (f.goal == EndgameGoal.DRAW) end(true, "$rule : la nulle est acquise.", 0)
         else end(false, "$rule : la partie est nulle, le gain s'est envolé.\n\nMéthode : ${f.method}", evalWhite ?: 0)
     }
-
-    private fun Position.key(): String = toFen().split(' ').take(4).joinToString(" ")
 
     private fun Position.noPawns(): Boolean = (0 until 64).none { pieceType(this[it]) == PAWN }
     private fun Position.onlyKing(white: Boolean): Boolean = (0 until 64).none { this[it] != 0 && isWhite(this[it]) == white && pieceType(this[it]) != KING }

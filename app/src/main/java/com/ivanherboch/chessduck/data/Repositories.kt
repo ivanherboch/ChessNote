@@ -62,6 +62,10 @@ interface PuzzleRepository {
     suspend fun searchIds(query: String, limit: Int): Pair<List<PuzzleHit>, Int>
     suspend fun markSolved(id: String, at: Long = System.currentTimeMillis())
     fun solvedIds(): Flow<List<String>>
+    /** Nombre de problèmes résolus. */
+    fun solvedCount(): Flow<Int>
+    /** Parmi [ids], les problèmes déjà résolus. */
+    fun solvedAmong(ids: List<String>): Flow<List<String>>
     /** Importe les problèmes du catalogue livré absents de l'appareil ; vrai si un import a eu lieu. */
     suspend fun syncCatalogue(): Boolean
 }
@@ -115,6 +119,8 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
     override suspend fun sliceCastling(start: Int, n: Int) = dao.sliceCastling(start, n)
     override suspend fun markSolved(id: String, at: Long) = dao.markSolved(PuzzleProgress(id, at))
     override fun solvedIds() = dao.solvedIds()
+    override fun solvedCount() = dao.solvedCount()
+    override fun solvedAmong(ids: List<String>) = dao.solvedAmong(ids)
     override suspend fun syncCatalogue() = DuckDatabase.syncPuzzles(context, db)
 }
 

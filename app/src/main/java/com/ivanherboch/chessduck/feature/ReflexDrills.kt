@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.CoroutineContext
 import androidx.compose.runtime.Immutable
 import com.ivanherboch.chessduck.chess.KING
 import com.ivanherboch.chessduck.chess.Line
@@ -94,7 +97,7 @@ object ReflexDrills {
      */
     fun threatsIn(pos: Position): List<Pair<Int, Int>> {
         // Position où l'adversaire aurait le trait ; si son roi y est en échec, elle n'a pas de sens.
-        val q = opponentToMove(pos) ?: return emptyList()
+        val q = opponentToMove(pos)
         if (q.inCheck) return emptyList()
         return q.legalMoves.asSequence()
             .filter { m -> q[m.to] != 0 && isWhite(q[m.to]) == pos.whiteToMove && pieceType(q[m.to]) != KING && m.promo == 0 }
@@ -103,17 +106,12 @@ object ReflexDrills {
             .map { (t, ms) -> t to ms.minBy { value(pieceType(q[it.from])) }.from }
     }
 
-    /** Même position, l'adversaire ayant le trait (« et s'il rejouait ? ») ; null si elle ne se lit pas. */
-    fun opponentToMove(pos: Position): Position? {
-        val f = pos.toFen().split(' ').toMutableList()
-        f[1] = if (f[1] == "w") "b" else "w"
-        f[3] = "-"
-        return runCatching { Position.fromFen(f.joinToString(" ")) }.getOrNull()
-    }
+    /** Même position, l'adversaire ayant le trait (« et s'il rejouait ? ») : voir [Position.passTurn]. */
+    fun opponentToMove(pos: Position): Position = pos.passTurn()
 
     /** La pièce en [target] (camp au trait de [pos]) pourrait-elle être reprise après sa prise par la pièce en [from] ? */
     private fun defended(pos: Position, target: Int, from: Int): Boolean {
-        val q = opponentToMove(pos) ?: return true
+        val q = opponentToMove(pos)
         val m = q.legalMoves.firstOrNull { it.from == from && it.to == target } ?: return true
         return q.play(m).legalMoves.any { it.to == target }
     }
@@ -230,6 +228,8 @@ class ReflexTrainer(
     private val onFinished: suspend (ReflexKind, Int, Int) -> Unit = { _, _, _ -> },
     /** Lecture vocale des coups annoncés (calcul à l'aveugle) ; ne lit rien si la voix est coupée. */
     private val speak: (String) -> Unit = {},
+    /** Contexte de la préparation des questions (Dispatchers.Default dans l'application ; celui des tests sinon). */
+    private val work: CoroutineContext = EmptyCoroutineContext,
 ) {
     private val _state = MutableStateFlow<ReflexSession?>(null)
     val state: StateFlow<ReflexSession?> = _state.asStateFlow()
@@ -242,34 +242,40 @@ class ReflexTrainer(
         job?.cancel()
         _state.value = ReflexSession(kind, total = total, message = "Préparation des exercices…")
         job = scope.launch {
-            queue.clear()
-            engineOk = true
-            val range = AcademyAssessments.levelRange(level)
-            val themes = when (kind) {
-                ReflexKind.THREAT -> ReflexDrills.THREAT_THEMES
-                ReflexKind.CAPTURE -> ReflexDrills.CAPTURE_THEMES
-                ReflexKind.BLIND -> null
-            }
-            var exclude = ""
-            repeat(total * 8) {
-                if (queue.size >= total) return@repeat
-                val id = runCatchingSuspend { puzzles.randomId(themes, range, exclude, random) }.getOrNull() ?: return@repeat
-                exclude = id
-                val p = runCatchingSuspend { puzzles.byId(id) }.getOrNull() ?: return@repeat
-                val item: Any? = when (kind) {
-                    ReflexKind.THREAT -> ReflexDrills.threatFrom(p)?.takeIf { threatConfirmed(it) }
-                    ReflexKind.CAPTURE -> runCatching { Line.fromUci(p.fen, p.moves).positions[1] }.getOrNull()
-                        ?.let { ReflexDrills.captureFrom(it, random) }?.let { confirmed(it) }
-                    ReflexKind.BLIND -> ReflexDrills.blindFrom(p)
-                }
-                if (item != null && queue.none { it == item }) queue.add(item)
-            }
+            // Préparation (lecture des problèmes, analyse des positions) hors du fil principal.
+            withContext(work) { prepare(kind, level, total) }
             if (queue.isEmpty()) {
                 _state.value = ReflexSession(kind, total = 0, loading = false, finished = true, message = "Aucun exercice disponible pour ce palier.")
                 return@launch
             }
             _state.update { it?.copy(total = queue.size, loading = false) }
             show(0)
+        }
+    }
+
+    /** Remplit la file des questions : problèmes du palier, positions analysées et, si possible, confirmées par l'Ordinateur. */
+    private suspend fun prepare(kind: ReflexKind, level: Int, total: Int) {
+        queue.clear()
+        engineOk = true
+        val range = AcademyAssessments.levelRange(level)
+        val themes = when (kind) {
+            ReflexKind.THREAT -> ReflexDrills.THREAT_THEMES
+            ReflexKind.CAPTURE -> ReflexDrills.CAPTURE_THEMES
+            ReflexKind.BLIND -> null
+        }
+        var exclude = ""
+        repeat(total * 8) {
+            if (queue.size >= total) return@repeat
+            val id = runCatchingSuspend { puzzles.randomId(themes, range, exclude, random) }.getOrNull() ?: return@repeat
+            exclude = id
+            val p = runCatchingSuspend { puzzles.byId(id) }.getOrNull() ?: return@repeat
+            val item: Any? = when (kind) {
+                ReflexKind.THREAT -> ReflexDrills.threatFrom(p)?.takeIf { threatConfirmed(it) }
+                ReflexKind.CAPTURE -> runCatching { Line.fromUci(p.fen, p.moves).positions[1] }.getOrNull()
+                    ?.let { ReflexDrills.captureFrom(it, random) }?.let { confirmed(it) }
+                ReflexKind.BLIND -> ReflexDrills.blindFrom(p)
+            }
+            if (item != null && queue.none { it == item }) queue.add(item)
         }
     }
 
@@ -280,7 +286,7 @@ class ReflexTrainer(
      */
     private suspend fun threatConfirmed(t: ThreatItem): Boolean {
         if (!engineOk || t.position.inCheck) return true
-        val q = ReflexDrills.opponentToMove(t.position) ?: return false
+        val q = ReflexDrills.opponentToMove(t.position)
         val best = runCatchingSuspend { withTimeoutOrNull(2_000) { engine.search(q.toFen(), 200).best } }.getOrNull()
             ?: return true.also { engineOk = false }
         return best.to in t.targets

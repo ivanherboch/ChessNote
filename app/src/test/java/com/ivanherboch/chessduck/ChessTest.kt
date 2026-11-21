@@ -18,6 +18,23 @@ import org.junit.Test
 import java.io.File
 
 class ChessTest {
+    @Test
+    fun passTurnFlipsTheSideToMoveLikeTheFen() {
+        // Même résultat que l'ancien aller-retour par la FEN (trait inversé, prise en passant effacée).
+        for (fen in listOf(START_FEN, "rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3", "4k3/8/8/8/8/8/4q3/4K3 b - - 3 40")) {
+            val p = Position.fromFen(fen)
+            val f = fen.split(' ').toMutableList()
+            f[1] = if (f[1] == "w") "b" else "w"
+            f[3] = "-"
+            val expected = Position.fromFen(f.joinToString(" "))
+            val flipped = p.passTurn()
+            assertEquals(expected.toFen(), flipped.toFen())
+            assertEquals(expected.key, flipped.key)
+            assertEquals(expected.inCheck, flipped.inCheck)
+            assertEquals(expected.legalMoves.toSet(), flipped.legalMoves.toSet())
+        }
+    }
+
     private fun perft(p: Position, d: Int): Long {
         if (d == 0) return 1
         var n = 0L

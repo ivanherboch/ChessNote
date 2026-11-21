@@ -73,7 +73,8 @@ fun fr(n: Int): String = frNumber.get()!!.format(n).replace(' ', ' ').replace(
 @Composable
 fun PuzzlesScreen(vm: PuzzlesViewModel) {
     val s by vm.state.collectAsStateWithLifecycle()
-    val solved by vm.solvedIds.collectAsStateWithLifecycle()
+    val solvedCount by vm.solvedCount.collectAsStateWithLifecycle()
+    val solved by vm.recentSolved.collectAsStateWithLifecycle()
     val c = LocalDuck.current
     val fb = LocalFeedback.current
     val context = LocalContext.current
@@ -108,11 +109,11 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         top = {
             Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 // Le filtre actif plutôt qu'un compteur « 0 / 150 000 » décourageant.
-                val filter = filterLabel(s.band, s.theme, solved.size)
+                val filter = filterLabel(s.band, s.theme, solvedCount)
                 DuckButton(
                     filter, { catalog = true }, Modifier.weight(1f),
                     accent = c.blue, icon = Icons.Rounded.Extension,
-                    contentDescription = "Catalogue des problèmes : $filter, ${fr(solved.size)} résolus sur ${fr(DuckDatabase.PUZZLE_COUNT)}",
+                    contentDescription = "Catalogue des problèmes : $filter, ${fr(solvedCount)} résolus sur ${fr(DuckDatabase.PUZZLE_COUNT)}",
                 )
                 DuckIconButton(Icons.Rounded.Casino, "Problème aléatoire", vm::random, accent = c.gold, filled = s.solved)
                 DuckIconButton(Icons.Rounded.History, "Problèmes récents", { recentSheet = true }, enabled = recents.isNotEmpty())

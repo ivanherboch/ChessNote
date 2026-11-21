@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.ui
 
+import java.util.WeakHashMap
+import android.content.res.Resources
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.platform.LocalContext
@@ -150,11 +152,20 @@ val KID_PIECE_RES = PIECE_RES + mapOf(KNIGHT to R.drawable.p_wg, KNIGHT + BLACK 
 @Composable
 fun rememberPieceImages(kid: Boolean = false): Array<ImageBitmap?> {
     val resources = LocalContext.current.resources
-    // Chargées une seule fois par jeu de pièces (et non à chaque recomposition).
-    return remember(kid, resources) {
-        val arr = arrayOfNulls<ImageBitmap>(16)
+    // Décodées une seule fois par jeu de pièces et par Resources (densité de l'écran), puis partagées par tous les
+    // échiquiers et bandeaux de pièces prises d'un même écran (Jeu Libre, revue), et non à chaque recomposition.
+    return remember(kid, resources) { pieceImages(resources, kid) }
+}
+
+/** Images des pièces déjà décodées, par Resources (clés faibles : rien n'est retenu après l'activité). */
+private val PIECE_IMAGES = WeakHashMap<Resources, Array<Array<ImageBitmap?>?>>()
+
+private fun pieceImages(resources: Resources, kid: Boolean): Array<ImageBitmap?> = synchronized(PIECE_IMAGES) {
+    val sets = PIECE_IMAGES.getOrPut(resources) { arrayOfNulls(2) }
+    val i = if (kid) 1 else 0
+    sets[i] ?: arrayOfNulls<ImageBitmap>(16).also { arr ->
         for ((piece, res) in if (kid) KID_PIECE_RES else PIECE_RES) arr[piece] = ImageBitmap.imageResource(resources, res)
-        arr
+        sets[i] = arr
     }
 }
 
