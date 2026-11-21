@@ -329,7 +329,7 @@ internal fun ColumnScope.QuizPanel(vm: AcademyViewModel, l: Lesson, q: QuizState
     }
     if (picked != null) EqualRow(Modifier.padding(vertical = 6.dp)) {
         DuckButton("Revoir la leçon", vm::closeQuiz, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
-        DuckButton("Leçon suivante", { vm.closeQuiz(); vm.nextLesson() }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
+        DuckButton("Leçon suivante", { vm.closeQuiz(); vm.nextLesson(guided = true) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
     }
 }
 
@@ -371,7 +371,7 @@ internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, revie
             pr.finished && pr.kind == PracticeKind.REVIEW && review != null -> ReviewNextButton(vm, review, Modifier.weight(1f))
             pr.finished -> {
                 DuckButton("Revenir à la leçon", vm::closePractice, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
-                if (pr.kind == PracticeKind.LESSON && pr.score >= 4) DuckButton("Leçon suivante", { vm.closePractice(); vm.nextLesson() }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
+                if (pr.kind == PracticeKind.LESSON && pr.score >= 4) DuckButton("Leçon suivante", { vm.closePractice(); vm.nextLesson(guided = true) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
                 else if (pr.kind == PracticeKind.LESSON || pr.kind == PracticeKind.ONLY_MOVE) DuckButton(
                     "Retenter", if (pr.kind == PracticeKind.LESSON) vm::startPractice else vm::startOnlyMove, Modifier.weight(1f),
                     accent = c.green, filled = true, icon = Icons.Rounded.RestartAlt,

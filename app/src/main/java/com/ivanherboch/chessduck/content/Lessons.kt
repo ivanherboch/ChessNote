@@ -132,6 +132,14 @@ object Lessons {
 
     fun byId(id: Int): Lesson = index[id] ?: all.first()
 
+    private val numbers: Map<Int, Int> by lazy { all.withIndex().associate { (i, l) -> l.id to i + 1 } }
+
+    /**
+     * Numéro affiché d'une leçon : sa place dans le catalogue (1 = la première de la liste). Il diffère de [Lesson.id],
+     * l'identifiant fixe sous lequel la progression est enregistrée.
+     */
+    fun number(id: Int): Int = numbers[id] ?: 0
+
     /** Catégories qui ont au moins une leçon (les catégories encore vides restent masquées). */
     val categories: List<LessonCategory> by lazy { LessonCategory.entries.filter { c -> all.any { it.category == c } } }
 }

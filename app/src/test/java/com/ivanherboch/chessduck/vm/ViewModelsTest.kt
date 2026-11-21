@@ -202,6 +202,25 @@ class ViewModelsTest {
     private val puzzleSet = (1..12).map { PUZZLE_0000D.copy(id = "Q$it", rating = 500 + it * 150) }
 
     @Test
+    fun academyNextLessonAfterChallengeOpensGuided() = test {
+        val vm = academy()
+        advanceUntilIdle()
+        val first = Lessons.all[0]
+        vm.open(first.id)
+        vm.setChallenge(true)
+        playChallenge(vm)
+        // « Leçon suivante » à la fin du Défi : la suivante du catalogue, en mode Guidé.
+        vm.nextLesson(guided = true); advanceUntilIdle()
+        assertEquals(Lessons.all[1].id, vm.state.value.lessonId)
+        assertFalse(vm.state.value.challenge)
+        // La flèche de l'en-tête garde le mode en cours.
+        vm.setChallenge(true); advanceUntilIdle()
+        vm.nextLesson(); advanceUntilIdle()
+        assertEquals(Lessons.all[2].id, vm.state.value.lessonId)
+        assertTrue(vm.state.value.challenge)
+    }
+
+    @Test
     fun academyVariantsAreShownAndReadAloud() = test {
         val prefs = FakeSettings()
         val voice = FakeNarrator()

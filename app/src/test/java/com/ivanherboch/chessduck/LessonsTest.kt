@@ -11,6 +11,14 @@ import org.junit.Test
 
 class LessonsTest {
     @Test
+    fun lessonsAreNumberedInCatalogOrder() {
+        // Le numéro affiché suit la liste : 1 = la première leçon, sans trou ni doublon.
+        assertEquals("L'échiquier et la notation", Lessons.all[0].title)
+        assertEquals(1, Lessons.number(Lessons.all[0].id))
+        assertEquals((1..Lessons.all.size).toList(), Lessons.all.map { Lessons.number(it.id) })
+    }
+
+    @Test
     fun catalogueHasLegalDistinctLessons() {
         val all = Lessons.all
         val counts = mapOf(

@@ -1,3 +1,11 @@
+## ChessDuck 3.1.2 — leçons numérotées dans l'ordre
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Les leçons sont numérotées dans l'ordre du catalogue : la n° 1 est « L'échiquier et la notation », la première de la liste. La progression déjà enregistrée est conservée.
+- La recherche par numéro dans le catalogue suit cette nouvelle numérotation.
+- À la fin d'un Défi (ou d'une validation, ou de la question de fin de leçon), « Leçon suivante » ouvre la leçon suivante en mode Guidé. La flèche de l'en-tête garde le mode en cours.
+
 ## ChessDuck 3.1.1 — l'échiquier de l'Académie au plus grand
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

@@ -141,7 +141,7 @@ fun AcademyScreen(
                         .clickable(role = Role.Button, onClickLabel = "Ouvrir le catalogue des leçons") { catalog = true }
                         .clearAndSetSemantics {
                             role = Role.Button
-                            contentDescription = "Leçon ${l.id} : ${l.title}, ${l.category.label}, palier ${levelSpoken(l.level)}" +
+                            contentDescription = "Leçon ${Lessons.number(l.id)} : ${l.title}, ${l.category.label}, palier ${levelSpoken(l.level)}" +
                                 (if (l.id in mastered) ", maîtrisée" else "") + (if (stars > 0) ", ${starsText(stars)}" else "") +
                                 ". ${mastered.size} leçons maîtrisées sur $total. Ouvrir le catalogue des leçons"
                             onClick { catalog = true; true }
@@ -151,7 +151,7 @@ fun AcademyScreen(
                     // Deux lignes compactes pour laisser le maximum de hauteur à l'échiquier : le titre, puis la
                     // catégorie, le palier, la progression, la maîtrise et les étoiles en petit.
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("${l.id}. ${l.title}", color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+                        Text("${Lessons.number(l.id)}. ${l.title}", color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                         Icon(Icons.Rounded.ExpandMore, contentDescription = null, tint = c.muted, modifier = Modifier.size(20.dp))
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -395,7 +395,7 @@ fun AcademyScreen(
                                         accent = c.green, filled = true, icon = Icons.Rounded.SportsEsports,
                                         contentDescription = "Valider la leçon contre l'Ordinateur sur 5 positions",
                                     )
-                                    else -> DuckButton("Leçon suivante", vm::nextLesson, Modifier.weight(1.4f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
+                                    else -> DuckButton("Leçon suivante", { vm.nextLesson(guided = true) }, Modifier.weight(1.4f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
                                 }
                             }
                             model -> {

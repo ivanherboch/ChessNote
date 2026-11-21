@@ -93,7 +93,7 @@ internal fun LessonCatalog(
                     3 -> progress[l.id]?.let { vm.srs.isDue(it) } == true
                     else -> true
                 } &&
-                (q.isEmpty() || normalizeForSearch(l.title).contains(q) || normalizeForSearch(l.summary).contains(q) || l.id.toString() == q)
+                (q.isEmpty() || normalizeForSearch(l.title).contains(q) || normalizeForSearch(l.summary).contains(q) || Lessons.number(l.id).toString() == q)
         }
     }
     val perCategory = remember(mastered) {
@@ -182,7 +182,7 @@ internal fun LessonCatalog(
             ) {
                 Box(Modifier.size(32.dp), contentAlignment = Alignment.Center) {
                     if (done) Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = c.greenText)
-                    else Text("${item.id}", color = c.goldText, style = MaterialTheme.typography.labelLarge)
+                    else Text("${Lessons.number(item.id)}", color = c.goldText, style = MaterialTheme.typography.labelLarge)
                 }
                 Column(Modifier.padding(start = 8.dp).weight(1f)) {
                     if (current || advised || stars > 0 || srsText != null) Row(Modifier.padding(bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {

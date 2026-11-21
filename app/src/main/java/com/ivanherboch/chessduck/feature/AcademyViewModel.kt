@@ -1215,12 +1215,14 @@ class AcademyViewModel(
 
     // ---- Navigation ----
 
-    fun nextLesson() = shiftLesson(1)
+    /** Leçon suivante ; [guided] : elle s'ouvre en mode Guidé (fin de Défi, de validation ou de quiz). */
+    fun nextLesson(guided: Boolean = false) = shiftLesson(1, guided)
     fun prevLesson() = shiftLesson(-1)
 
     /** Leçon voisine dans l'ordre du catalogue (limité à la catégorie filtrée s'il y en a une). */
-    private fun shiftLesson(delta: Int) {
+    private fun shiftLesson(delta: Int, guided: Boolean = false) {
         val all = Lessons.all
+        if (guided) _state.update { it.copy(challenge = false) }
         val s = state.value
         val pool = if (s.filter != null) all.filter { it.category == s.filter } else all
         val idx = pool.indexOfFirst { it.id == s.lessonId }.coerceAtLeast(0)
