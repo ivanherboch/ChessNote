@@ -686,12 +686,17 @@ class ViewModelsTest {
         vm.guideMove(wrong); advanceUntilIdle()
         assertTrue(vm.asking())
         assertTrue(vm.state.value.note!!.contains("n'est pas le coup de la leçon"))
-        vm.guideMove(l.line.moves[p]); advanceUntilIdle()
+        vm.guideMove(l.line.moves[p]); runCurrent()
         assertEquals(p + 1, vm.state.value.cursor)
         assertFalse(vm.asking())
         assertTrue(vm.state.value.note!!.startsWith("Bravo"))
+        // La leçon reprend d'elle-même après la bonne réponse, jusqu'au prochain arrêt ou à la fin.
+        assertTrue(vm.state.value.playing)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.cursor > p + 1)
+        assertTrue(vm.asking() || vm.state.value.cursor == l.line.size)
         // Revenir sur l'arrêt déjà résolu ne redemande rien.
-        vm.goTo(p); assertFalse(vm.asking())
+        vm.pause(); vm.goTo(p); assertFalse(vm.asking())
     }
 
     @Test

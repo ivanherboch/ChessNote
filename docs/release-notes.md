@@ -1,3 +1,9 @@
+## ChessDuck 3.2.5 — la leçon reprend après « À vous »
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Mode Guidé : après le bon coup à un arrêt « À vous : que jouez-vous ici ? », la leçon reprend d'elle-même. Elle laisse le temps de lire (ou d'écouter) « Bravo » et le commentaire du coup, puis enchaîne la réponse adverse et la suite, jusqu'au prochain arrêt. Le bouton « Pause » l'arrête à tout moment.
+
 ## ChessDuck 3.2.4 — positions de départ corrigées
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

@@ -454,6 +454,8 @@ class AcademyViewModel(
                     _state.update { it.copy(judging = false, tentative = null, anim = null, answered = it.answered + c) }
                     goTo(c + 1)
                     _state.update { it.copy(note = "Bravo, c'est le coup de la leçon !", noteTone = Tone.GOOD) }
+                    // La leçon reprend d'elle-même (après le temps de lire ou d'écouter le commentaire du coup).
+                    if (state.value.cursor < line().size) startAutoplay()
                 }
                 Verdict.EQUIVALENT -> {
                     // Aussi bon, mais la leçon suit une autre ligne : le coup est montré, puis l'élève joue celui de la leçon.
@@ -546,6 +548,12 @@ class AcademyViewModel(
             asking() -> reveal()
             else -> narrator.resume()
         }
+        startAutoplay()
+    }
+
+    /** Déroule la leçon coup par coup (lecture automatique), jusqu'à la fin ou au prochain arrêt « À vous ». */
+    private fun startAutoplay() {
+        playback.cancel()
         _state.update { it.copy(playing = true) }
         playback.autoplay(
             cursor = { state.value.cursor }, size = { line().size },
