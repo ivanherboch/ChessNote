@@ -309,7 +309,7 @@ fun ChessBoard(
                     if (onSquareTap != null) {
                         awaitEachGesture {
                             val down = awaitFirstDown()
-                            if (waitForUpOrCancellation() != null) onSquareTap(at(down.position))
+                            if (waitForUpOrCancellation() != null) { fb?.key(); onSquareTap(at(down.position)) }
                         }
                         return@pointerInput
                     }
@@ -452,7 +452,10 @@ fun ChessBoard(
             }
         }
         // Grille sémantique : 64 cases explorables et activables par TalkBack (le dessin reste dans le Canvas).
-        BoardCells(position, flipped, lastMove, selected.takeIf { interactive }, targets, onSquareTap ?: if (interactive) ::tap else null)
+        BoardCells(
+            position, flipped, lastMove, selected.takeIf { interactive }, targets,
+            onSquareTap?.let { f -> { sq: Int -> fb?.key(); f(sq) } } ?: if (interactive) ::tap else null,
+        )
         promo?.let { (from, to) -> PromotionPicker(position.whiteToMove, to, flipped, kid, onCancel = { promo = null }) { type ->
             promo = null; selected = -1; onMove(Move(from, to, type))
         } }

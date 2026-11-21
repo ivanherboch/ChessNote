@@ -1,7 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,7 +19,9 @@ import com.ivanherboch.chessduck.data.LessonProgressRepository
 import com.ivanherboch.chessduck.data.PuzzleRepository
 import com.ivanherboch.chessduck.data.SettingsRepository
 import com.ivanherboch.chessduck.engine.ChessEngine
-import com.ivanherboch.chessduck.ui.Arrow
+import com.ivanherboch.chessduck.ui.REFUTE_HOLD
+import com.ivanherboch.chessduck.ui.Refutation
+import com.ivanherboch.chessduck.ui.undoAnim
 import com.ivanherboch.chessduck.ui.BoardAnim
 import com.ivanherboch.chessduck.ui.LinePlaybackController
 import com.ivanherboch.chessduck.ui.Narrator
@@ -44,7 +45,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.random.Random
 
 /** Signal ponctuel de retour haptique (réussite ou erreur), identifié pour n'être joué qu'une fois. */
@@ -123,6 +123,8 @@ data class AcademyState(
     val variant: Int = 0,
     val playing: Boolean = false,
     val flipped: Boolean = false,
+    /** Échiquier retourné par l'élève pendant une séance (finale, série, réflexes) : s'ajoute à l'orientation naturelle. */
+    val sessionFlipped: Boolean = false,
     val anim: BoardAnim? = null,
     val hintStage: Int = 0,
     val message: String = "",
@@ -272,7 +274,6 @@ class AcademyViewModel(
         const val PRACTICE_PASS = 4
         const val REVIEW_SIZE = 2
         const val REPERTOIRE_SIZE = 5
-        val RED = Color(0xFFEF4444)
     }
 
     private fun pulse(good: Boolean) = _state.update { it.copy(pulse = Pulse(++pulses, good)) }
@@ -342,7 +343,11 @@ class AcademyViewModel(
      */
     fun setFilter(cat: LessonCategory?) = _state.update { it.copy(filter = cat) }
 
-    fun flip() = _state.update { it.copy(flipped = !it.flipped) }
+    /** Retourne l'échiquier : celui de la séance en cours (finale, série, réflexes), sinon celui de la leçon. */
+    fun flip() = _state.update {
+        if (it.practice != null || endgame.state.value != null || reflex.state.value != null) it.copy(sessionFlipped = !it.sessionFlipped)
+        else it.copy(flipped = !it.flipped)
+    }
 
     fun setChallenge(on: Boolean) {
         if (state.value.challenge == on) return
@@ -427,7 +432,7 @@ class AcademyViewModel(
                     delay(tentativeHold)
                     _state.update {
                         it.copy(
-                            judging = false, tentative = null, anim = null, suggest = expected, noteTone = Tone.GOOD,
+                            judging = false, tentative = null, anim = undoAnim(pos, m), suggest = expected, noteTone = Tone.GOOD,
                             note = "$san est aussi bon ! Cette leçon suit une autre ligne : jouez $lessonSan, indiqué par la flèche verte.",
                         )
                     }
@@ -436,7 +441,7 @@ class AcademyViewModel(
                     pulse(false)
                     _state.update {
                         it.copy(
-                            judging = false, tentative = null, anim = null, noteTone = Tone.GOLD,
+                            judging = false, tentative = null, anim = undoAnim(pos, m), noteTone = Tone.GOLD,
                             note = if (v == Verdict.SLOWER) "$san garde le mat, mais plus lentement : la méthode de la leçon est plus directe. Cherchez encore, ou touchez Lecture pour la découvrir."
                             else "$san n'est pas le coup de la leçon. Cherchez encore, ou touchez Lecture pour le découvrir.",
                         )
@@ -642,7 +647,7 @@ class AcademyViewModel(
                     delay(tentativeHold)
                     _state.update {
                         it.copy(
-                            judging = false, tentative = null, anim = null, suggest = expected, tone = Tone.GOOD,
+                            judging = false, tentative = null, anim = undoAnim(pos, m), suggest = expected, tone = Tone.GOOD,
                             message = "${pos.san(m)} est aussi bon ! Cette leçon suit une autre ligne : jouez ${ln.sans[s.cursor]}, indiqué par la flèche verte.",
                         )
                     }
@@ -658,13 +663,13 @@ class AcademyViewModel(
                         )
                     }
                     delay(tentativeHold)
-                    _state.update { it.copy(judging = false, tentative = null, anim = null) }
+                    _state.update { it.copy(judging = false, tentative = null, anim = undoAnim(pos, m)) }
                 }
                 Verdict.UNAVAILABLE -> {
                     pulse(false)
                     _state.update {
                         it.copy(
-                            judging = false, tentative = null, anim = null, errors = it.errors + 1, tone = Tone.BAD,
+                            judging = false, tentative = null, anim = undoAnim(pos, m), errors = it.errors + 1, tone = Tone.BAD,
                             message = "${pos.san(m)} n'est pas le coup de la leçon. Réfléchissez à l'idée du thème, ou demandez un indice.",
                         )
                     }
@@ -725,40 +730,41 @@ class AcademyViewModel(
      */
     private suspend fun refute(pos: Position, m: Move) {
         pulse(false)
-        val l = lesson
         val san = pos.san(m)
         val after = pos.play(m)
-        val opp = if (l.heroWhite) "Noirs" else "Blancs"
+        val opp = if (pos.whiteToMove) "Noirs" else "Blancs"
+        missed = pos to m
         _state.update {
             it.copy(
                 judging = false, errors = it.errors + 1, tone = Tone.BAD, tentative = null, anim = null,
                 refute = Refutation(after, m, null), message = "$san n'est pas le bon coup. Regardez la réponse des $opp…",
             )
         }
-        val reply = if (after.legalMoves.isEmpty()) null
-        else runCatchingSuspend { withTimeoutOrNull(1800) { engine.search(after.toFen(), 380).best } }.getOrNull()?.takeIf { after.isLegal(it) }
-        delay(650)
-        val text = if (reply == null) {
-            if (after.legalMoves.isEmpty() && !after.inCheck) "$san met l'adversaire pat : la partie serait nulle."
-            else "$san n'est pas le coup de la leçon."
-        } else "Après $san, les $opp répondent ${after.san(reply)}. Cherchez mieux : pensez à l'idée de la leçon."
+        val r = RefutationLogic.reply(engine, pos, m)
         _state.update {
             it.copy(
-                anim = reply?.let { r -> moveAnim(after, r) } ?: it.anim,
-                refute = Refutation(reply?.let { r -> after.play(r) } ?: after, reply ?: m, reply?.let { r -> Arrow(r.from, r.to, RED) }),
-                refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD, message = text,
+                anim = r.reply?.let { reply -> moveAnim(after, reply) } ?: it.anim,
+                refute = Refutation(r.position, r.reply ?: m, r.reply),
+                refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD,
+                message = r.text + RefutationLogic.AUTO_UNDO,
             )
         }
         delay(REFUTE_HOLD)
         resumeAtMiss()
     }
 
+    /** Mauvais coup réfuté (position d'avant, coup) : il glisse en arrière quand la position revient. */
+    private var missed: Pair<Position, Move>? = null
+
     /** « Reprendre au coup manqué » : annule le mauvais coup et revient à la position d'avant l'erreur. */
     fun resumeAtMiss() {
         if (state.value.refute == null) return
         judgeJob?.cancel()
         _state.update {
-            it.copy(refute = null, refuteUntil = 0L, anim = null, tone = Tone.INFO, message = "Position rétablie : à vous de retrouver le bon coup.")
+            it.copy(
+                refute = null, refuteUntil = 0L, anim = missed?.let { (p, m) -> undoAnim(p, m) }, tone = Tone.INFO,
+                message = "Position rétablie : à vous de retrouver le bon coup.",
+            )
         }
     }
 
@@ -766,7 +772,12 @@ class AcademyViewModel(
     fun holdRefutation() {
         if (state.value.refute == null || state.value.refuteUntil == 0L) return
         judgeJob?.cancel()
-        _state.update { it.copy(refuteUntil = 0L) }
+        _state.update {
+            it.copy(
+                refuteUntil = 0L,
+                message = it.message.removeSuffix(RefutationLogic.AUTO_UNDO) + " Prenez votre temps, puis touchez « Reprendre au coup manqué ».",
+            )
+        }
     }
 
     fun hint() {
@@ -826,7 +837,7 @@ class AcademyViewModel(
     private fun startSeries(kind: PracticeKind, specs: List<PuzzleSpec>, level: Int = 2) {
         cancelAll()
         narrator.stop()
-        _state.update { it.copy(practice = Practice(kind = kind, level = level, message = "Préparation des problèmes…"), quiz = null) }
+        _state.update { it.copy(practice = Practice(kind = kind, level = level, message = "Préparation des problèmes…"), quiz = null, sessionFlipped = false) }
         practiceJob = viewModelScope.launch {
             val ids = ArrayList<String>()
             for (spec in specs) {
@@ -1010,7 +1021,7 @@ class AcademyViewModel(
         narrator.stop()
         endgameLesson = if (fromLesson) lesson.id else null
         endgameReview = false
-        _state.update { it.copy(quiz = null, practice = null) }
+        _state.update { it.copy(quiz = null, practice = null, sessionFlipped = false) }
         endgame.start(family, total)
     }
 
@@ -1094,7 +1105,7 @@ class AcademyViewModel(
     fun startReflex(kind: ReflexKind) {
         cancelAll()
         narrator.stop()
-        _state.update { it.copy(quiz = null, practice = null) }
+        _state.update { it.copy(quiz = null, practice = null, sessionFlipped = false) }
         // Le calcul à l'aveugle est un exercice du palier 5.
         viewModelScope.launch { reflex.start(kind, if (kind == ReflexKind.BLIND) 5 else prefs.settings.first().academyLevel) }
     }

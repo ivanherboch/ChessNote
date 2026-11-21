@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.layout.heightIn
+import com.ivanherboch.chessduck.ui.SideDot
+import com.ivanherboch.chessduck.ui.PlayerBar
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -351,7 +354,7 @@ private fun QuizChoice(text: String, right: Boolean, what: String) {
 
 /** Série de problèmes : problème en cours, bilan et commandes (aucune lecture vocale pendant les exercices). */
 @Composable
-internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, review: ReviewSession?) {
+internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, review: ReviewSession?, stuck: String? = null) {
     val c = LocalDuck.current
     val name = when (pr.kind) {
         PracticeKind.LESSON -> "Validation"
@@ -365,7 +368,7 @@ internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, revie
         pr.loading -> name
         else -> "$name · problème ${pr.index + 1} sur ${pr.ids.size} · ${pr.score} réussi${if (pr.score > 1) "s" else ""}"
     }
-    FeedbackCard(pr.message, pr.tone, Modifier.padding(top = 4.dp).weight(1f), title = title)
+    FeedbackCard(stuck ?: pr.message, if (stuck != null) Tone.GOLD else pr.tone, Modifier.padding(top = 4.dp).weight(1f), title = title)
     EqualRow(Modifier.padding(vertical = 6.dp)) {
         when {
             pr.finished && pr.kind == PracticeKind.REVIEW && review != null -> ReviewNextButton(vm, review, Modifier.weight(1f))
@@ -403,15 +406,49 @@ internal fun ReviewNextButton(vm: AcademyViewModel, r: ReviewSession, modifier: 
     )
 }
 
+/**
+ * Ligne d'information au-dessus de l'échiquier, comme dans les autres modes : bandeau de l'Ordinateur en finale
+ * (réflexion, pièces prises), sinon le camp que l'élève joue (et la variante en Défi). Rien en mode Guidé : l'échiquier
+ * y garde toute la hauteur disponible.
+ */
+@Composable
+internal fun AcademyBoardInfo(s: AcademyState, l: Lesson, eg: EndgameSession?, rx: ReflexSession?) {
+    val c = LocalDuck.current
+    val pr = s.practice
+    val egPos = eg?.position
+    if (egPos != null) {
+        val computerWhite = !eg.family.heroWhite
+        PlayerBar(
+            "🤖 Ordinateur", null, computerWhite, egPos, toMove = !eg.over && egPos.whiteToMove == computerWhite,
+            Modifier.padding(vertical = 2.dp), thinking = eg.thinking,
+        )
+        return
+    }
+    val (white, text) = when {
+        rx?.blind != null -> rx.blind.after.whiteToMove to "Après les coups annoncés, trait aux ${if (rx.blind.after.whiteToMove) "Blancs" else "Noirs"}"
+        rx?.position != null -> rx.position!!.whiteToMove to "Trait aux ${if (rx.position!!.whiteToMove) "Blancs" else "Noirs"}"
+        pr != null && pr.line != null && !pr.finished -> pr.heroWhite to "Vous jouez les ${if (pr.heroWhite) "Blancs" else "Noirs"}"
+        s.challenge && s.quiz == null && pr == null -> l.heroWhite to "Vous jouez les ${if (l.heroWhite) "Blancs" else "Noirs"}"
+        else -> return
+    }
+    Row(Modifier.fillMaxWidth().heightIn(min = 28.dp).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
+        SideDot(white)
+        Text(text, color = c.text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp).weight(1f, fill = false))
+        if (s.challenge && pr == null && rx == null && s.variant > 0) {
+            InfoPill(variantLabel(l, s.variant), Modifier.padding(start = 8.dp), accent = c.blue)
+        }
+    }
+}
+
 /** Finale jouée contre l'Ordinateur. */
 @Composable
-internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, review: ReviewSession?) {
+internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, review: ReviewSession?, stuck: String? = null) {
     val c = LocalDuck.current
     val title = when {
         eg.finished -> "${eg.family.label} · bilan : ${eg.score} sur ${eg.total}"
         else -> "${eg.family.label} · position ${eg.index + 1} sur ${eg.total} · coup ${eg.moves} sur ${eg.family.maxMoves}"
     }
-    FeedbackCard(eg.message, eg.tone, Modifier.padding(top = 4.dp).weight(1f), title = title)
+    FeedbackCard(stuck ?: eg.message, if (stuck != null) Tone.GOLD else eg.tone, Modifier.padding(top = 4.dp).weight(1f), title = title)
     EqualRow(Modifier.padding(vertical = 6.dp)) {
         when {
             eg.finished && review != null -> ReviewNextButton(vm, review, Modifier.weight(1f))
@@ -420,7 +457,12 @@ internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, 
                 DuckButton("Recommencer", { vm.startEndgame(eg.family) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.Rounded.RestartAlt)
             }
             eg.over -> {
-                DuckButton("Arrêter", vm::closeEndgame, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
+                // Position perdue : on peut la rejouer pour s'entraîner (le score de la série ne change pas).
+                if (eg.results.lastOrNull() == false) DuckButton(
+                    "Rejouer", vm.endgame::retry, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt,
+                    contentDescription = "Rejouer cette position pour s'entraîner, sans changer le score",
+                )
+                else DuckButton("Arrêter", vm::closeEndgame, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
                 DuckButton(
                     if (eg.index + 1 < eg.total) "Position suivante" else "Voir le bilan", vm.endgame::next, Modifier.weight(1.4f),
                     accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward,
@@ -428,11 +470,12 @@ internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, 
             }
             else -> {
                 DuckButton("Arrêter", vm::closeEndgame, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
-                DuckButton(
-                    if (eg.hinting) "Recherche…" else "Indice", vm.endgame::hint, Modifier.weight(1.4f),
-                    enabled = eg.heroToMove && !eg.hinting, accent = c.green, icon = Icons.Rounded.Lightbulb,
-                    contentDescription = if (eg.hinting) "Indice : l'Ordinateur cherche un bon coup" else null,
+                // Indice en deux temps, comme dans les Problèmes : la pièce, puis la flèche (sans nouvelle recherche).
+                if (eg.hinting) DuckButton(
+                    "Recherche…", {}, Modifier.weight(1.4f), enabled = false, accent = c.green, icon = Icons.Rounded.Lightbulb,
+                    contentDescription = "Indice : l'Ordinateur cherche un bon coup",
                 )
+                else HintButton(eg.hintStage, vm.endgame::hint, Modifier.weight(1.4f), enabled = eg.heroToMove)
             }
         }
     }

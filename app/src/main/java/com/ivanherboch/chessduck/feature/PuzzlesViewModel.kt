@@ -10,26 +10,20 @@ import com.ivanherboch.chessduck.data.SettingsRepository
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.ivanherboch.chessduck.util.runCatchingSuspend
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewModelScope
 import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.chess.Move
-import com.ivanherboch.chessduck.chess.PAWN
-import com.ivanherboch.chessduck.chess.PIECE_NAMES_FR
 import com.ivanherboch.chessduck.chess.Position
-import com.ivanherboch.chessduck.chess.pieceType
 import com.ivanherboch.chessduck.content.PuzzleThemes
 import com.ivanherboch.chessduck.data.Puzzle
-import com.ivanherboch.chessduck.engine.isMateScore
-import com.ivanherboch.chessduck.engine.mateIn
-import com.ivanherboch.chessduck.ui.Arrow
+import com.ivanherboch.chessduck.ui.REFUTE_HOLD
+import com.ivanherboch.chessduck.ui.Refutation
 import com.ivanherboch.chessduck.ui.BoardAnim
 import com.ivanherboch.chessduck.ui.Tone
 import com.ivanherboch.chessduck.ui.moveAnim
 import com.ivanherboch.chessduck.ui.undoAnim
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,10 +36,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withTimeoutOrNull
-
-/** Affichage temporaire d'un mauvais coup puis de sa réfutation (la grille reste dégagée). */
-@Immutable
-data class Refutation(val position: Position, val last: Move, val arrow: Arrow?)
 
 @Immutable
 data class PuzzleState(
@@ -85,9 +75,7 @@ data class Suggestion(val id: String, val type: String, val rating: Int)
 /** [more] : nombre de résultats au-delà de ceux affichés. */
 data class Suggestions(val query: String = "", val items: List<Suggestion> = emptyList(), val more: Int = 0)
 
-/** Durée d'affichage de la réfutation avant l'annulation automatique. */
-const val REFUTE_HOLD = 4000L
-private const val AUTO_UNDO = " Le coup sera annulé automatiquement."
+private const val AUTO_UNDO = RefutationLogic.AUTO_UNDO
 
 class PuzzlesViewModel(
     private val prefs: SettingsRepository,
@@ -367,44 +355,24 @@ class PuzzlesViewModel(
                 message = "$san n'est pas la solution. Regardez la réponse des $oppName…",
             )
         }
+        missed = pos to m
         job = viewModelScope.launch {
-            val t0 = System.currentTimeMillis()
-            if (after.legalMoves.isEmpty()) {
-                _state.update { it.copy(message = "$san met l'adversaire pat : la partie serait nulle alors que vous aviez bien mieux !", refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD) }
-                delay(REFUTE_HOLD)
-                retry()
-                return@launch
-            }
-            val search = async { withTimeoutOrNull(1800) { engine.search(after.toFen(), 380) } }
-            val res = search.await()
-            delay((650 - (System.currentTimeMillis() - t0)).coerceAtLeast(0))
-            val reply = res?.best?.takeIf { after.isLegal(it) }
-                ?: after.legalMoves.firstOrNull { it.to == m.to } ?: after.legalMoves.first()
-            val replySan = after.san(reply)
-            val after2 = after.play(reply)
-            val score = res?.score
-            val captured = after[reply.to]
-            val detail = when {
-                after2.isCheckmate -> " : échec et mat !"
-                score != null && isMateScore(score) && score > 0 -> " et forcent le mat en ${mateIn(score)}."
-                captured != 0 && pieceType(captured) != PAWN -> " et capturent votre ${PIECE_NAMES_FR[pieceType(captured)].lowercase()}."
-                captured != 0 -> " et gagnent un pion."
-                score != null && score > 150 -> " et prennent l'avantage."
-                score != null && score > -80 -> " et égalisent : votre avantage s'est envolé."
-                else -> " et se défendent : il existait un coup bien plus fort."
-            }
+            val r = RefutationLogic.reply(engine, pos, m)
             _state.update {
                 it.copy(
-                    anim = moveAnim(after, reply),
-                    refute = Refutation(after2, reply, Arrow(reply.from, reply.to, Color(0xFFEF4444))),
+                    anim = r.reply?.let { reply -> moveAnim(after, reply) } ?: it.anim,
+                    refute = Refutation(r.position, r.reply ?: m, r.reply),
                     refuteUntil = System.currentTimeMillis() + REFUTE_HOLD, refuteHold = REFUTE_HOLD,
-                    message = "Réfutation : après $san, les $oppName répondent $replySan$detail$AUTO_UNDO",
+                    message = r.text + AUTO_UNDO,
                 )
             }
             delay(REFUTE_HOLD)
             retry()
         }
     }
+
+    /** Mauvais coup réfuté (position d'avant, coup) : il glisse en arrière quand la position revient. */
+    private var missed: Pair<Position, Move>? = null
 
     /** Suspend l'annulation automatique : la réfutation reste affichée jusqu'à « Réessayer ». */
     fun holdRefutation() {
@@ -418,7 +386,10 @@ class PuzzlesViewModel(
         if (state.value.refute == null) return
         job?.cancel()
         _state.update {
-            it.copy(refute = null, anim = null, tone = Tone.INFO, refuteUntil = 0L, message = "Position rétablie : à vous de rejouer.")
+            it.copy(
+                refute = null, anim = missed?.let { (p, m) -> undoAnim(p, m) }, tone = Tone.INFO, refuteUntil = 0L,
+                message = "Position rétablie : à vous de rejouer.",
+            )
         }
     }
 

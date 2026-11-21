@@ -1,5 +1,12 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.layout.heightIn
+import com.ivanherboch.chessduck.ui.LocalIsTwoPane
+import com.ivanherboch.chessduck.ui.BoardRow
+import com.ivanherboch.chessduck.ui.LoadingState
+import com.ivanherboch.chessduck.ui.EmptyState
+import com.ivanherboch.chessduck.ui.icons.SearchOff
+import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.Arrangement
 import android.content.Intent
@@ -61,6 +68,8 @@ import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.LocalFeedback
 import com.ivanherboch.chessduck.ui.ModuleLayout
 import com.ivanherboch.chessduck.ui.MoveStrip
+import com.ivanherboch.chessduck.ui.RefuteCountdown
+import com.ivanherboch.chessduck.ui.refuteArrow
 import com.ivanherboch.chessduck.ui.Tone
 import com.ivanherboch.chessduck.ui.icons.ExpandMore
 import com.ivanherboch.chessduck.ui.icons.Extension
@@ -114,11 +123,15 @@ fun AcademyScreen(
     val model = l.kind == LessonKind.MODEL_GAME
     // Retour haptique des coups jugés (bon coup, coup équivalent, erreur), y compris après le jugement de l'Ordinateur.
     LaunchedEffect(s.pulse?.id) { s.pulse?.let { if (it.good) fb?.success() else fb?.error() } }
+    LaunchedEffect(eg?.pulse?.id) { eg?.pulse?.let { if (it.good) fb?.success() else fb?.error() } }
+    LaunchedEffect(rx?.pulse?.id) { rx?.pulse?.let { if (it.good) fb?.success() else fb?.error() } }
     val endFen = line.positions[cur].takeIf { it.legalMoves.isNotEmpty() }?.toFen()
     val bridges: @Composable () -> Unit = { LessonBridges(l, endFen, onTrainTheme, onPlayPosition) }
 
     // Explication brève quand on touche une pièce qui ne peut pas bouger ; effacée au coup suivant.
-    var stuck by remember(s.lessonId, s.cursor, s.challenge) { mutableStateOf<String?>(null) }
+    var stuck by remember(
+        s.lessonId, s.cursor, s.challenge, s.variant, s.refute, s.tentative, pr?.index, pr?.cursor, eg?.index, eg?.moves, rx?.index,
+    ) { mutableStateOf<String?>(null) }
     // Haut-parleur touché alors que la voix est coupée ou absente : explication à la place du commentaire.
     var voiceTip by remember(s.lessonId, s.cursor) { mutableStateOf<String?>(null) }
     val voice by vm.voice.collectAsStateWithLifecycle()
@@ -178,19 +191,39 @@ fun AcademyScreen(
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
             }
         },
+        overBoard = { AcademyBoardInfo(s, l, eg, rx) },
         board = {
             val egs = eg
             val rxs = rx
             when {
+                // Préparation des exercices, ou aucun exercice trouvé : jamais l'échiquier de la leçon en arrière-plan.
+                (pr != null && pr.loading) || (rxs != null && rxs.loading) -> LoadingState("Préparation des exercices…")
+                (pr != null && pr.finished && pr.ids.isEmpty()) || (rxs != null && rxs.finished && rxs.total == 0) -> Box(
+                    Modifier.fillMaxSize(), contentAlignment = Alignment.Center,
+                ) {
+                    EmptyState(
+                        Icons.Rounded.SearchOff, "Aucun exercice disponible", (pr?.message ?: rxs?.message).orEmpty(),
+                        actionLabel = "Revenir à la leçon", onAction = vm::closeTraining,
+                    )
+                }
                 egs?.position != null -> {
                     val pos = egs.position
-                    ChessBoard(
-                        position = pos, modifier = Modifier.fillMaxSize(), flipped = !egs.family.heroWhite, interactive = egs.heroToMove,
-                        lastMove = egs.last, anim = egs.anim,
-                        arrows = listOfNotNull(egs.hint?.let { Arrow(it.from, it.to, c.green) }),
-                        onIllegalTouch = { stuck = GameLogic.whyStuck(pos, it) },
-                        onMove = vm.endgame::move,
-                    )
+                    val flip = !egs.family.heroWhite != s.sessionFlipped
+                    val hint = egs.hint.takeIf { egs.heroToMove }
+                    // La jauge n'apparaît qu'une fois la position terminée : elle montre l'issue sans aider pendant la recherche.
+                    BoardRow(egs.evalWhite.takeIf { egs.over || egs.finished }, flip) { mod ->
+                        ChessBoard(
+                            position = pos, modifier = mod, flipped = flip, interactive = egs.heroToMove,
+                            lastMove = egs.last, anim = egs.anim,
+                            arrows = listOfNotNull(
+                                egs.punish?.let { Arrow(it.from, it.to, c.red) },
+                                hint?.takeIf { egs.hintStage >= 2 }?.let { Arrow(it.from, it.to, c.green) },
+                            ),
+                            marks = listOfNotNull(hint?.takeIf { egs.hintStage == 1 }?.let { it.from to c.green }),
+                            onIllegalTouch = { stuck = GameLogic.whyStuck(pos, it) },
+                            onMove = vm.endgame::move,
+                        )
+                    }
                 }
                 rxs?.position != null -> {
                     val pos = rxs.position!!
@@ -199,7 +232,7 @@ fun AcademyScreen(
                     val b = rxs.blind
                     ChessBoard(
                         // Calcul à l'aveugle : l'échiquier reste orienté comme au départ, même réaffiché.
-                        position = pos, modifier = Modifier.fillMaxSize(), flipped = !(b?.start ?: pos).whiteToMove,
+                        position = pos, modifier = Modifier.fillMaxSize(), flipped = !(b?.start ?: pos).whiteToMove != s.sessionFlipped,
                         lastMove = t?.lastMove,
                         arrows = when {
                             cp != null -> listOf(Arrow(cp.capture.from, cp.capture.to, c.blue))
@@ -208,8 +241,11 @@ fun AcademyScreen(
                             else -> emptyList()
                         },
                         marks = when {
-                            t != null && rxs.answered -> listOfNotNull(t.target to c.gold, rxs.tapped.takeIf { it >= 0 && it != t.target }?.let { it to c.red })
-                            b != null && !rxs.answered && rxs.from >= 0 -> listOf(rxs.from to c.gold)
+                            t != null && rxs.answered -> listOfNotNull(t.target to c.green, rxs.tapped.takeIf { it >= 0 && it != t.target }?.let { it to c.red })
+                            b != null && !rxs.answered && rxs.from >= 0 -> listOf(rxs.from to c.select)
+                            // Calcul à l'aveugle, réponse fausse : la case d'arrivée jouée en rouge, la flèche verte montre le bon coup.
+                            b != null && rxs.answered && rxs.tapped >= 0 && !(rxs.from == b.expected.from && rxs.tapped == b.expected.to) ->
+                                listOf(rxs.tapped to c.red)
                             else -> emptyList()
                         },
                         onSquareTap = if ((t != null || b != null) && !rxs.answered) vm.reflex::tap else null,
@@ -224,7 +260,7 @@ fun AcademyScreen(
                     ChessBoard(
                         position = ppos,
                         modifier = Modifier.fillMaxSize(),
-                        flipped = !pr.heroWhite,
+                        flipped = !pr.heroWhite != s.sessionFlipped,
                         interactive = pTurn,
                         lastMove = if (pl != null && pc > 0) pl.moves[pc - 1] else null,
                         anim = pr.anim,
@@ -241,8 +277,9 @@ fun AcademyScreen(
                     val last = r?.last ?: if (cur > 0) line.moves[cur - 1] else null
                     val heroTurn = s.challenge && !s.done && !s.judging && r == null && cur < line.size && line.positions[cur].whiteToMove == l.heroWhite
                     val next = if (cur < line.size) line.moves[cur] else null
-                    // Repères du mode Guidé : cases dorées et flèches rouges propres à la leçon (ligne principale).
+                    // Repères du mode Guidé : cases dorées (observation) et flèches bleues (démonstration) de la leçon.
                     val visuals = if (!s.challenge && s.variant == 0) l.stepVisuals[cur] else null
+                    val refArrow = refuteArrow(r)
                     ChessBoard(
                         position = pos,
                         modifier = Modifier.fillMaxSize(),
@@ -251,11 +288,11 @@ fun AcademyScreen(
                         lastMove = last,
                         anim = s.anim,
                         arrows = when {
-                            r?.arrow != null -> listOf(r.arrow.copy(color = c.red))
+                            refArrow != null -> listOf(refArrow)
                             (heroTurn || asking) && s.suggest != null -> s.suggest!!.let { listOf(Arrow(it.from, it.to, c.green)) }
                             heroTurn && s.hintStage >= 2 && next != null -> listOf(Arrow(next.from, next.to, c.green))
-                            !s.challenge -> listOfNotNull(last?.let { Arrow(it.from, it.to, c.blue) }) +
-                                (visuals?.arrows ?: emptyList()).map { (f, t) -> Arrow(f, t, c.red) }
+                            // Démonstration pédagogique : flèches bleues (le dernier coup est déjà surligné).
+                            !s.challenge -> (visuals?.arrows ?: emptyList()).map { (f, t) -> Arrow(f, t, c.blue) }
                             else -> emptyList()
                         },
                         marks = when {
@@ -274,13 +311,14 @@ fun AcademyScreen(
             val rxs = rx
             val quiz = s.quiz
             when {
-                egs != null -> EndgamePanel(vm, egs, s.review)
+                egs != null -> EndgamePanel(vm, egs, s.review, stuck)
                 rxs != null -> ReflexPanel(vm, rxs)
-                pr != null -> PracticePanel(vm, pr, s.review)
+                pr != null -> PracticePanel(vm, pr, s.review, stuck)
                 quiz != null -> QuizPanel(vm, l, quiz)
                 !s.challenge -> {
-                    // Progression dans la leçon : chaque coup est cliquable.
-                    MoveStrip(
+                    // Progression dans la leçon : chaque coup est cliquable (sur tablette, tableau complet sous le commentaire).
+                    val wide = LocalIsTwoPane.current
+                    if (!wide) MoveStrip(
                         line, cur, Modifier.padding(top = 4.dp), onSelect = vm::jump, onPrev = { vm.step(-1) }, onNext = { vm.step(1) },
                         emptyText = "Les coups de la leçon s'afficheront ici.", firstTurn = 1,
                     )
@@ -297,20 +335,23 @@ fun AcademyScreen(
                     } else texts[cur - 1]
                     val text = when {
                         voiceTip != null -> voiceTip!!
+                        stuck != null && asking -> stuck!!
                         s.note != null -> s.note + "\n\n" + base
                         asking -> base + "\n\nJouez votre coup sur l'échiquier, ou touchez Lecture pour découvrir celui de la leçon."
                         else -> base
                     }
                     val tone = when {
                         voiceTip != null -> Tone.GOLD
+                        stuck != null && asking -> Tone.GOLD
                         s.note != null -> s.noteTone
                         asking -> Tone.GOLD
                         else -> Tone.INFO
                     }
                     FeedbackCard(
-                        text, tone, Modifier.padding(top = 4.dp).weight(1f), title = title,
+                        text, tone, Modifier.padding(top = 4.dp).then(if (wide) Modifier.heightIn(max = 220.dp) else Modifier.weight(1f)), title = title,
                         action = if (cur == line.size) bridges else null,
                     )
+                    if (wide) MoveTable(line, cur, emptyList(), vm::jump, Modifier.padding(top = 6.dp).weight(1f))
                     EqualRow(Modifier.padding(vertical = 6.dp)) {
                         // Toujours visible : relit ou arrête la voix, ou explique comment l'activer.
                         DuckIconButton(

@@ -148,6 +148,8 @@ data class ReflexSession(
     val finished: Boolean = false,
     val message: String = "",
     val tone: Tone = Tone.INFO,
+    /** Retour haptique et sonore de la dernière réponse (réussite ou erreur). */
+    val pulse: Pulse? = null,
 ) {
     val score: Int get() = results.count { it }
     val position: Position? get() = threat?.position ?: capture?.position ?: blind?.let { if (shown || answered) it.after else it.start }
@@ -256,7 +258,7 @@ class ReflexTrainer(
         if (s.answered) return
         val ok = sq == t.target
         _state.value = s.copy(
-            answered = true, tapped = sq, results = s.results + ok, tone = if (ok) Tone.GOOD else Tone.BAD,
+            answered = true, tapped = sq, results = s.results + ok, tone = if (ok) Tone.GOOD else Tone.BAD, pulse = pulse(ok),
             message = (if (ok) "Bien vu ! " else "Ce n'est pas la pièce menacée. ") + t.explanation,
         )
     }
@@ -275,7 +277,7 @@ class ReflexTrainer(
         val right = s.from == b.expected.from && sq == b.expected.to
         val ok = right && !s.shown
         _state.value = s.copy(
-            answered = true, tapped = sq, results = s.results + ok, tone = if (right) Tone.GOOD else Tone.BAD,
+            answered = true, tapped = sq, results = s.results + ok, tone = if (right) Tone.GOOD else Tone.BAD, pulse = pulse(right),
             message = when {
                 ok -> "Bien calculé ! Le coup suivant était ${b.answer}."
                 right -> "Exact : ${b.answer}. Vous avez réaffiché l'échiquier : réessayez sans le regarder."
@@ -291,7 +293,7 @@ class ReflexTrainer(
         if (s.answered) return
         val ok = yes == c.good
         _state.value = s.copy(
-            answered = true, results = s.results + ok, tone = if (ok) Tone.GOOD else Tone.BAD,
+            answered = true, results = s.results + ok, tone = if (ok) Tone.GOOD else Tone.BAD, pulse = pulse(ok),
             message = (if (ok) "Exact. " else "Pas tout à fait. ") + c.explanation,
         )
     }
@@ -311,4 +313,7 @@ class ReflexTrainer(
         job?.cancel()
         _state.value = null
     }
+
+    private var pulses = 0L
+    private fun pulse(good: Boolean) = Pulse(++pulses, good)
 }

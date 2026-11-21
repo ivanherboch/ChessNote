@@ -12,6 +12,7 @@ import com.ivanherboch.chessduck.chess.pieceType
 import com.ivanherboch.chessduck.chess.rankOf
 import com.ivanherboch.chessduck.chess.sq
 import com.ivanherboch.chessduck.engine.ChessEngine
+import com.ivanherboch.chessduck.engine.MATE
 import com.ivanherboch.chessduck.engine.isMateScore
 import com.ivanherboch.chessduck.ui.BoardAnim
 import com.ivanherboch.chessduck.ui.Tone
@@ -220,7 +221,9 @@ data class EndgameSession(
     /** Coups joués par l'élève sur la position en cours. */
     val moves: Int = 0,
     val thinking: Boolean = false,
+    /** Indice en deux temps : 1 = pièce à jouer surlignée, 2 = flèche du coup. */
     val hint: Move? = null,
+    val hintStage: Int = 0,
     /** L'Ordinateur cherche un indice : le bouton est désactivé pendant la recherche. */
     val hinting: Boolean = false,
     /** Position en cours terminée (gagnée, tenue ou perdue) ; série terminée. */
@@ -228,6 +231,15 @@ data class EndgameSession(
     val finished: Boolean = false,
     val message: String = "",
     val tone: Tone = Tone.INFO,
+    /** Évaluation finale (centipions, point de vue des Blancs), montrée par la jauge une fois la position terminée. */
+    val evalWhite: Int? = null,
+    /** Réponse de l'Ordinateur qui punit le coup perdant (flèche rouge). */
+    val punish: Move? = null,
+    /** Position de départ, pour la rejouer à l'entraînement après un échec (sans changer le score). */
+    val start: Position? = null,
+    /** Position rejouée pour s'entraîner : son résultat ne compte pas. */
+    val replay: Boolean = false,
+    val pulse: Pulse? = null,
 ) {
     val score: Int get() = results.count { it }
     val heroToMove: Boolean get() = position != null && !over && !thinking && position.whiteToMove == family.heroWhite
@@ -270,8 +282,22 @@ class EndgameTrainer(
         val p = EndgamePositions.generate(s.family, random)
         hintJob?.cancel()
         _state.value = s.copy(
-            index = index, position = p, last = null, anim = null, moves = 0, thinking = false, hint = null, hinting = false, over = false,
+            index = index, position = p, start = p, last = null, anim = null, moves = 0, thinking = false, hint = null, hintStage = 0, hinting = false,
+            over = false, evalWhite = null, punish = null, replay = false,
             tone = Tone.INFO, message = "Position ${index + 1} sur ${s.total} : ${s.family.instruction}",
+        )
+    }
+
+    /** Rejoue la position qui vient d'échouer, pour s'entraîner : le score de la série ne change pas. */
+    fun retry() {
+        val s = _state.value ?: return
+        if (!s.over || s.finished || s.start == null || s.results.lastOrNull() != false) return
+        job?.cancel()
+        hintJob?.cancel()
+        _state.value = s.copy(
+            position = s.start, last = null, anim = null, moves = 0, thinking = false, hint = null, hintStage = 0, hinting = false,
+            over = false, evalWhite = null, punish = null, replay = true, tone = Tone.INFO,
+            message = "Entraînement : rejouez la position (le score de la série ne change pas). ${s.family.instruction}",
         )
     }
 
@@ -291,6 +317,12 @@ class EndgameTrainer(
     fun hint() {
         val s = _state.value ?: return
         if (!s.heroToMove || s.hinting) return
+        // Second temps : la flèche du coup déjà trouvé, sans nouvelle recherche.
+        if (s.hint != null && s.hintStage == 1) {
+            _state.value = s.copy(hintStage = 2, tone = Tone.GOLD, message = "Indice 2/2 : suivez la flèche verte.")
+            return
+        }
+        if (s.hint != null) return
         // Une seule recherche d'indice à la fois, sans toucher à la réponse de l'Ordinateur en cours.
         hintJob?.cancel()
         val fen = s.position!!.toFen()
@@ -300,7 +332,10 @@ class EndgameTrainer(
             _state.update { cur ->
                 // La position a changé entre-temps (coup joué, position suivante) : l'indice est périmé.
                 if (cur == null || cur.position?.toFen() != fen) cur?.copy(hinting = false)
-                else cur.copy(hinting = false, hint = best, tone = Tone.GOLD, message = if (best != null) "Indice : la flèche montre un bon coup." else "Indice indisponible.")
+                else cur.copy(
+                    hinting = false, hint = best, hintStage = if (best != null) 1 else 0, tone = Tone.GOLD,
+                    message = if (best != null) "Indice 1/2 : la pièce à jouer est surlignée en vert." else "Indice indisponible.",
+                )
             }
         }
     }
@@ -313,7 +348,7 @@ class EndgameTrainer(
         hintJob?.cancel()
         val after = pos.play(m)
         val moves = s.moves + 1
-        _state.value = s.copy(position = after, last = m, anim = moveAnim(pos, m), moves = moves, thinking = true, hint = null, hinting = false)
+        _state.value = s.copy(position = after, last = m, anim = moveAnim(pos, m), moves = moves, thinking = true, hint = null, hintStage = 0, hinting = false)
         job = scope.launch {
             val f = s.family
             val promoted = m.promo != 0
@@ -334,8 +369,21 @@ class EndgameTrainer(
                 EndgameGoal.WIN -> !(isMateScore(mine) && mine > 0) && mine < WIN_CP
                 EndgameGoal.DRAW -> mine < -WIN_CP
             }
-            if (lost) return@launch end(false, if (f.goal == EndgameGoal.WIN) "Ce coup laisse échapper le gain. Recommencez en suivant la méthode de la leçon." else "Ce coup perd la nulle : l'Ordinateur gagne maintenant.")
-            if (f.goal == EndgameGoal.WIN && promoted) return@launch end(true, "Le pion devient dame et le gain est assuré !")
+            val ev = if (f.heroWhite) mine else -mine
+            if (lost) {
+                // L'Ordinateur montre comment il punit l'erreur : sa réponse est jouée, avec une flèche rouge.
+                delay(450)
+                val punished = after.play(reply)
+                _state.update { it?.copy(position = punished, last = reply, anim = moveAnim(after, reply), punish = reply) }
+                val why = "L'Ordinateur répond ${after.san(reply)}."
+                return@launch end(
+                    false,
+                    if (f.goal == EndgameGoal.WIN) "Ce coup laisse échapper le gain. $why Rejouez la position, ou passez à la suivante."
+                    else "Ce coup perd la nulle. $why Rejouez la position, ou passez à la suivante.",
+                    ev,
+                )
+            }
+            if (f.goal == EndgameGoal.WIN && promoted) return@launch end(true, "Le pion devient dame et le gain est assuré !", ev)
             delay(450)
             val next = after.play(reply)
             _state.update { it?.copy(position = next, last = reply, anim = moveAnim(after, reply), thinking = false) }
@@ -343,8 +391,8 @@ class EndgameTrainer(
                 next.isCheckmate -> end(false, "Échec et mat : l'Ordinateur a gagné.")
                 next.legalMoves.isEmpty() -> end(f.goal == EndgameGoal.DRAW, if (f.goal == EndgameGoal.DRAW) "Pat : la nulle est acquise." else "Pat : la partie est nulle.")
                 f.goal == EndgameGoal.DRAW && next.noPawns() -> pawnGone(next)
-                f.goal == EndgameGoal.DRAW && moves >= f.maxMoves -> end(true, "Vous avez tenu $moves coups : la nulle est acquise.")
-                f.goal == EndgameGoal.WIN && moves >= f.maxMoves -> end(false, "Trop lent : il fallait conclure en ${f.maxMoves} coups. Cherchez une méthode plus directe.")
+                f.goal == EndgameGoal.DRAW && moves >= f.maxMoves -> end(true, "Vous avez tenu $moves coups : la nulle est acquise.", ev)
+                f.goal == EndgameGoal.WIN && moves >= f.maxMoves -> end(false, "Trop lent : il fallait conclure en ${f.maxMoves} coups. Cherchez une méthode plus directe.", ev)
                 else -> _state.update {
                     it?.copy(tone = Tone.INFO, message = "Coup $moves sur ${f.maxMoves}. ${f.instruction}")
                 }
@@ -352,11 +400,28 @@ class EndgameTrainer(
         }
     }
 
-    private fun end(ok: Boolean, text: String) {
+    /**
+     * Fin de la position. [evalWhite] : évaluation finale (point de vue des Blancs) ; sans recherche, elle se déduit de
+     * l'issue (mat : ±MATE, pat ou nulle : 0). Une position rejouée à l'entraînement ne compte pas dans la série.
+     */
+    private fun end(ok: Boolean, text: String, evalWhite: Int? = null) {
         _state.update { s ->
-            s?.copy(over = true, thinking = false, results = s.results + ok, tone = if (ok) Tone.GOOD else Tone.BAD, message = text)
+            if (s == null) return@update null
+            val p = s.position
+            val ev = evalWhite ?: when {
+                p != null && p.isCheckmate -> if (p.whiteToMove) -MATE else MATE
+                p != null && p.legalMoves.isEmpty() -> 0
+                s.family.goal == EndgameGoal.DRAW && ok -> 0
+                else -> null
+            }
+            s.copy(
+                over = true, thinking = false, results = if (s.replay) s.results else s.results + ok, tone = if (ok) Tone.GOOD else Tone.BAD,
+                message = if (s.replay) "$text (entraînement, hors score)" else text, evalWhite = ev, pulse = Pulse(++pulses, ok),
+            )
         }
     }
+
+    private var pulses = 0L
 
     private fun Position.noPawns(): Boolean = (0 until 64).none { pieceType(this[it]) == PAWN }
 

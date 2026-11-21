@@ -305,8 +305,31 @@ class ViewModelsTest {
         val eg = vm.endgame.state.value!!
         vm.endgame.move(eg.position!!.legalMoves.first { !eg.position!!.play(it).isCheckmate && eg.position!!.play(it).legalMoves.isNotEmpty() })
         advanceUntilIdle()
-        assertTrue(vm.endgame.state.value!!.over)
-        assertEquals(listOf(false), vm.endgame.state.value!!.results)
+        val lost = vm.endgame.state.value!!
+        assertTrue(lost.over)
+        assertEquals(listOf(false), lost.results)
+        // L'Ordinateur joue sa réponse (flèche rouge), la jauge reçoit l'évaluation finale, l'erreur vibre.
+        assertNotNull(lost.punish)
+        assertEquals(lost.punish, lost.last)
+        assertEquals(0, lost.evalWhite)
+        assertEquals(false, lost.pulse?.good)
+        // « Rejouer » : la même position, hors score.
+        vm.endgame.retry()
+        val again = vm.endgame.state.value!!
+        assertFalse(again.over)
+        assertTrue(again.replay)
+        assertEquals(eg.position!!.toFen(), again.position!!.toFen())
+        assertNull(again.evalWhite)
+        // Indice en deux temps : la pièce (recherche), puis la flèche sans nouvelle recherche.
+        vm.endgame.hint(); advanceUntilIdle()
+        assertEquals(1, vm.endgame.state.value!!.hintStage)
+        assertNotNull(vm.endgame.state.value!!.hint)
+        vm.endgame.hint(); advanceUntilIdle()
+        assertEquals(2, vm.endgame.state.value!!.hintStage)
+        val p2 = vm.endgame.state.value!!.position!!
+        vm.endgame.move(p2.legalMoves.first { !p2.play(it).isCheckmate && p2.play(it).legalMoves.isNotEmpty() })
+        advanceUntilIdle()
+        assertEquals(listOf(false), vm.endgame.state.value!!.results) // la position rejouée ne compte pas
         vm.closeEndgame()
         assertNull(vm.endgame.state.value)
     }
@@ -535,8 +558,16 @@ class ViewModelsTest {
         assertFalse(vm.challengeMove(wrong))
         runCurrent()
         assertNotNull(vm.state.value.refute)
-        advanceUntilIdle() // réponse adverse, compte à rebours, puis retour à la position d'avant l'erreur
+        advanceTimeBy(1_000); runCurrent() // réponse adverse affichée (flèche rouge), avec la conséquence de la faute
+        assertNotNull(vm.state.value.refute?.arrow)
+        assertTrue(vm.state.value.message, vm.state.value.message.startsWith("Réfutation : après a3"))
+        // Pause : la réfutation reste affichée et le message invite à reprendre.
+        vm.holdRefutation()
+        assertTrue(vm.state.value.message, "Reprendre au coup manqué" in vm.state.value.message)
+        assertEquals(0L, vm.state.value.refuteUntil)
+        vm.resumeAtMiss()
         assertNull(vm.state.value.refute)
+        assertNotNull(vm.state.value.anim) // le coup glisse en arrière
         assertEquals(0, vm.state.value.cursor)
         assertEquals(1, vm.state.value.errors)
         while (!vm.state.value.done) {

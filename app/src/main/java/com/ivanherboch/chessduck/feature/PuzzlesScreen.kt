@@ -32,6 +32,8 @@ import com.ivanherboch.chessduck.ui.SideDot
 import com.ivanherboch.chessduck.ui.DuckIconButton
 import com.ivanherboch.chessduck.ui.EmptyState
 import com.ivanherboch.chessduck.ui.LoadingState
+import com.ivanherboch.chessduck.ui.RefuteCountdown
+import com.ivanherboch.chessduck.ui.refuteArrow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -151,7 +153,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                 interactive = canPlay,
                 lastMove = last,
                 anim = s.anim,
-                arrows = listOfNotNull(r?.arrow?.copy(color = c.red), if (next != null && s.hintStage >= 2) Arrow(next.from, next.to, c.green) else null),
+                arrows = listOfNotNull(refuteArrow(r), if (next != null && s.hintStage >= 2) Arrow(next.from, next.to, c.green) else null),
                 marks = if (next != null && s.hintStage >= 1) listOf(next.from to c.green) else emptyList(),
                 onIllegalTouch = { stuck = GameLogic.whyStuck(pos, it) },
                 onMove = { m ->
@@ -229,23 +231,4 @@ private fun filterLabel(band: Int, theme: String, solved: Int): String {
     val name = PuzzleThemes.byKey[theme]?.name ?: PuzzleThemes.groupOf(theme)
     return if (name == null && band == 0) "Libre · ${fr(solved)} résolu${if (solved > 1) "s" else ""}"
     else listOfNotNull(PuzzleThemes.BANDS[band].takeIf { band > 0 }, name ?: "Tous les thèmes").joinToString(" · ")
-}
-
-/** Compte à rebours visuel avant l'annulation automatique d'une réfutation ; le bouton pause le suspend. */
-@Composable
-internal fun RefuteCountdown(until: Long, hold: Long, onHold: () -> Unit) {
-    val c = LocalDuck.current
-    val progress = remember(until) { Animatable(((until - System.currentTimeMillis()).toFloat() / hold).coerceIn(0f, 1f)) }
-    LaunchedEffect(until) {
-        val left = (until - System.currentTimeMillis()).coerceAtLeast(0)
-        progress.animateTo(0f, tween(left.toInt(), easing = LinearEasing))
-    }
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        LinearProgressIndicator(
-            progress = { progress.value }, color = c.redRole.fill, trackColor = c.surfaceHi,
-            modifier = Modifier.weight(1f).height(4.dp).clip(RoundedCornerShape(2.dp))
-                .semantics { contentDescription = "Annulation automatique du coup imminente" },
-        )
-        DuckIconButton(Icons.Rounded.Pause, "Garder la position affichée", onHold, Modifier.padding(start = 8.dp))
-    }
 }
