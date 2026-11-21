@@ -51,6 +51,16 @@ data class PlayState(
     val evalOn: Boolean = false,
     /** Partie qui vient de se terminer, enregistrée dans l'historique : « Analyser la partie » l'ouvre en revue. */
     val lastRecord: GameRecord? = null,
+    /**
+     * Partie accompagnée (positions de l'Académie) : avant une gaffe, l'Ordinateur arrête le coup et pose la question
+     * réflexe ; au plus [coachLeft] fois par partie.
+     */
+    val coached: Boolean = false,
+    val coachLeft: Int = 0,
+    /** Le coup de l'élève est en cours de vérification (partie accompagnée). */
+    val checking: Boolean = false,
+    /** Coup arrêté avant d'être joué : l'élève en change, ou le joue quand même. */
+    val warning: CoachWarning? = null,
 ) {
     /** Partie d'entraînement lancée depuis une position de l'Académie : elle ne compte pas pour l'ELO. */
     val fromPosition: Boolean get() = line.startFen != START_FEN
@@ -59,7 +69,7 @@ data class PlayState(
     val inProgress: Boolean get() = result == null && line.size >= 2
 
     val position: Position get() = line.positions[cursor.coerceIn(0, line.size)]
-    val canPlay: Boolean get() = result == null && !thinking && (twoPlayers || position.whiteToMove == playerWhite)
+    val canPlay: Boolean get() = result == null && !thinking && !checking && warning == null && (twoPlayers || position.whiteToMove == playerWhite)
     val hint: Move? get() = analysis[cursor]?.best?.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }
 }
 
@@ -81,6 +91,7 @@ class PlayViewModel(
     private var applyJob: Job? = null
     private var aiJob: Job? = null
     private var analysisJob: Job? = null
+    private var coachJob: Job? = null
     /** Lecture automatique de la revue de partie. */
 
     init {
@@ -132,7 +143,10 @@ class PlayViewModel(
             gameGeneration++
             aiJob?.cancel(); analysisJob?.cancel()
             _state.update {
-                PlayState(line = start, playerWhite = playerWhite, twoPlayers = false, aiElo = positionElo(st.academyLevel), flipped = !playerWhite, evalOn = it.evalOn)
+                PlayState(
+                    line = start, playerWhite = playerWhite, twoPlayers = false, aiElo = positionElo(st.academyLevel), flipped = !playerWhite, evalOn = it.evalOn,
+                    coached = true, coachLeft = COACH_STOPS,
+                )
             }
             if (start.last.whiteToMove != playerWhite) aiMove() else precompute()
         }
@@ -155,6 +169,52 @@ class PlayViewModel(
     fun playerMove(m: Move) {
         val s = state.value
         if (!s.canPlay || !s.position.isLegal(m)) return
+        if (s.coached && s.coachLeft > 0 && !s.twoPlayers && s.cursor == s.line.size) return coach(s, m)
+        commit(m)
+    }
+
+    /** Partie accompagnée : active ou coupe les arrêts avant une gaffe. */
+    fun toggleCoach() = _state.update { if (it.fromPosition) it.copy(coached = !it.coached, warning = null) else it }
+
+    /** Coup arrêté : l'élève le joue quand même. */
+    fun playAnyway() {
+        val w = state.value.warning ?: return
+        _state.update { it.copy(warning = null) }
+        commit(w.move)
+    }
+
+    /** Coup arrêté : l'élève cherche un autre coup. */
+    fun dismissWarning() = _state.update { it.copy(warning = null) }
+
+    /**
+     * Vérifie le coup avant de le jouer : s'il fait perdre au moins [BLUNDER_CP] centipions (sans que la partie soit
+     * déjà perdue), le coup est arrêté et la question réflexe s'affiche, sans dévoiler la réponse adverse.
+     */
+    private fun coach(s: PlayState, m: Move) {
+        analysisJob?.cancel()
+        val gen = gameGeneration
+        val pos = s.position
+        _state.update { it.copy(checking = true) }
+        coachJob?.cancel()
+        coachJob = viewModelScope.launch {
+            val before = s.analysis[s.cursor] ?: analyse(pos, 350)
+            val after = pos.play(m)
+            val res = if (before == null) null else analyse(after, 350)
+            if (gen != gameGeneration) return@launch
+            val sign = if (s.playerWhite) 1 else -1
+            val warn = before != null && res != null && sign * before.eval > -LOST_CP && sign * (before.eval - res.eval) >= BLUNDER_CP
+            if (!warn) {
+                _state.update { it.copy(checking = false) }
+                return@launch commit(m)
+            }
+            val reply = res!!.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { after.isLegal(it) }
+            _state.update { it.copy(checking = false, coachLeft = it.coachLeft - 1, warning = CoachWarning(m, coachText(pos.san(m), after, reply))) }
+        }
+    }
+
+    private fun commit(m: Move) {
+        val s = state.value
+        if (s.result != null || !s.position.isLegal(m)) return
         analysisJob?.cancel()
         val cur = s.cursor
         val nl = s.line.copy(cur)
@@ -358,6 +418,27 @@ class PlayViewModel(
 }
 
 /** Force de l'Ordinateur pour « Jouer cette position », selon le palier de l'Académie (1 à 5). */
+/** Coup arrêté par la partie accompagnée, et la question réflexe à se poser. */
+data class CoachWarning(val move: Move, val text: String)
+
+/** Arrêts de la partie accompagnée (une ou deux fois par partie), et seuils (centipions). */
+const val COACH_STOPS = 2
+const val BLUNDER_CP = 200
+private const val LOST_CP = 300
+
+/** La question réflexe adaptée à la réponse adverse qui punirait le coup [san] (sans la dévoiler). */
+internal fun coachText(san: String, after: Position, reply: Move?): String {
+    val next = reply?.let { after.play(it) }
+    val q = when {
+        reply == null || next == null -> "Quelle menace laissez-vous à l'adversaire ?"
+        next.isCheckmate -> "Attention au mat : quel échec laissez-vous à l'adversaire ?"
+        after[reply.to] != 0 -> "Quelle prise laissez-vous à l'adversaire ? Vérifiez les défenseurs de vos pièces."
+        next.inCheck -> "Quel échec laissez-vous à l'adversaire ?"
+        else -> "Quelle menace laissez-vous à l'adversaire ? Regardez ses échecs, ses prises et ses attaques."
+    }
+    return "Partie accompagnée : $san serait une grosse erreur. $q Changez de coup, ou jouez-le quand même."
+}
+
 fun positionElo(level: Int): Int = when (level.coerceIn(1, 5)) {
     1 -> 600
     2 -> 900

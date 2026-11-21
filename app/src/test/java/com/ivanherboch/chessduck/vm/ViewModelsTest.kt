@@ -895,6 +895,37 @@ class ViewModelsTest {
 
     /** « Jouer cette position » : partie d'entraînement sans ELO, enregistrée avec sa position de départ et relue en revue. */
     @Test
+    fun coachedGameStopsABlunderBeforeItIsPlayed() = test {
+        val games = FakeGames()
+        val engine = FakeEngine()
+        val vm = PlayViewModel(FakeSettings(), games, engine, GameAnalysisService(engine, games, backgroundScope))
+        advanceUntilIdle()
+        // Le moteur (scripté) juge que Td4 perd 6 pions : le coup doit être arrêté.
+        val fen = "6k1/5ppp/8/3n4/8/8/5PPP/3R2K1 w - - 0 1"
+        vm.startFromPosition(fen, playerWhite = true)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.coached)
+        val blunder = Move.fromUci("d1d4")
+        val after = com.ivanherboch.chessduck.chess.Position.fromFen(fen).play(blunder)
+        val take = after.legalMoves.first()
+        engine.scripted[after.toFen().split(' ').take(4).joinToString(" ")] = SearchResult(take, listOf(PvLine(take, 600)))
+        vm.playerMove(blunder)
+        advanceUntilIdle()
+        val w = vm.state.value.warning
+        assertTrue("le coup doit être arrêté", w != null)
+        assertEquals(0, vm.state.value.line.size) // rien n'est joué
+        assertFalse(vm.state.value.canPlay)
+        assertEquals(com.ivanherboch.chessduck.feature.COACH_STOPS - 1, vm.state.value.coachLeft)
+        // Changer de coup : la position reste jouable ; jouer quand même : le coup part.
+        vm.dismissWarning()
+        assertTrue(vm.state.value.canPlay)
+        vm.playerMove(blunder); advanceUntilIdle()
+        vm.playAnyway(); advanceUntilIdle()
+        assertTrue(vm.state.value.line.size >= 1)
+        assertEquals(blunder, vm.state.value.line.moves[0])
+    }
+
+    @Test
     fun playFromLessonPositionIsUnratedAndReviewable() = test {
         val games = FakeGames()
         val engine = FakeEngine()

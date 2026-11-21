@@ -27,6 +27,8 @@ import com.ivanherboch.chessduck.ui.icons.Flag
 import com.ivanherboch.chessduck.ui.icons.History
 import com.ivanherboch.chessduck.ui.icons.Insights
 import com.ivanherboch.chessduck.ui.icons.People
+import com.ivanherboch.chessduck.ui.ButtonVariant
+import com.ivanherboch.chessduck.ui.icons.School
 import com.ivanherboch.chessduck.ui.icons.SmartToy
 import com.ivanherboch.chessduck.ui.icons.SwapVert
 import com.ivanherboch.chessduck.ui.icons.Tune
@@ -139,6 +141,10 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                     )
                 }
                 }
+                if (s.fromPosition && s.result == null) DuckIconButton(
+                    Icons.Rounded.School, if (s.coached) "Partie accompagnée activée : la désactiver" else "Activer la partie accompagnée (arrêt avant une grosse erreur)",
+                    vm::toggleCoach, accent = c.green, selected = s.coached,
+                )
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
                 DuckIconButton(Icons.Rounded.Insights, "Jauge d'évaluation", vm::toggleEval, accent = c.blue, selected = s.evalOn)
                 DuckIconButton(Icons.Rounded.History, "Historique des parties", { history = true })
@@ -178,7 +184,12 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
             FeedbackCard(stuck ?: msg, if (stuck != null) Tone.GOLD else tone, Modifier.padding(top = 4.dp).then(if (wide) Modifier.heightIn(max = 180.dp) else Modifier.weight(1f)))
             if (wide) MoveTable(s.line, s.cursor, emptyList(), { if (!s.thinking) vm.goTo(it) }, Modifier.padding(top = 6.dp).weight(1f))
             EqualRow(Modifier.padding(vertical = 6.dp), gap = 6.dp) {
-                if (s.result != null) {
+                val w = s.warning
+                if (w != null) {
+                    // Partie accompagnée : le coup est arrêté, l'élève choisit.
+                    DuckButton("Changer de coup", vm::dismissWarning, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.Undo)
+                    DuckButton("Jouer quand même", vm::playAnyway, Modifier.weight(1f), accent = c.gold, variant = ButtonVariant.OUTLINED)
+                } else if (s.result != null) {
                     // Fin de partie : l'analyse est à un geste.
                     DuckButton(
                         "Analyser la partie", { s.lastRecord?.let(openReview) }, Modifier.weight(1f), enabled = s.lastRecord != null,
@@ -241,6 +252,8 @@ private fun liveStatus(s: PlayState, p1: String, p2: String): Pair<String, Tone>
         return (if (s.cursor < s.line.size) "$at. " else "") + r.text +
             (if (s.lastRecord != null) " Touchez « Analyser la partie » pour la revue commentée." else "") to r.tone
     }
+    s.warning?.let { return it.text to Tone.GOLD }
+    if (s.checking) return "Partie accompagnée : vérification de votre coup…" to Tone.NEUTRAL
     if (s.thinking) return "L'ordinateur (${s.aiElo} ELO) réfléchit…" to Tone.NEUTRAL
     if (s.canPlay && s.hintStage > 0) {
         val h = s.hint ?: return "Calcul en cours, l'indice s'affiche dans un instant…" to Tone.GOLD
@@ -253,7 +266,8 @@ private fun liveStatus(s: PlayState, p1: String, p2: String): Pair<String, Tone>
     }
     val check = if (pos.inCheck) "Échec ! " else ""
     return if (s.twoPlayers) "${check}À ${if (pos.whiteToMove) p1 else p2} de jouer (les $side)." to Tone.INFO
-    else if (s.line.size == 0 && s.fromPosition) "Position de la leçon contre l'ordinateur (${s.aiElo} ELO). Vous jouez les $side. Partie d'entraînement : l'ELO ne change pas." to Tone.INFO
+    else if (s.line.size == 0 && s.fromPosition) "Position de la leçon contre l'ordinateur (${s.aiElo} ELO). Vous jouez les $side. Partie d'entraînement : l'ELO ne change pas." +
+        (if (s.coached) " Partie accompagnée : l'Ordinateur vous arrête avant une grosse erreur, $COACH_STOPS fois au plus." else "") to Tone.INFO
     else if (s.line.size == 0) "Nouvelle partie contre l'ordinateur (${s.aiElo} ELO). Vous jouez les $side : à vous de commencer !" to Tone.INFO
     else "${check}À vous de jouer (les $side)." to Tone.INFO
 }
