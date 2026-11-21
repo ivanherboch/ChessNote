@@ -1,3 +1,10 @@
+## ChessDuck 3.3.2 — plus de texte coupé au-dessus de l'échiquier
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- La ligne d'information au-dessus de l'échiquier (calcul à l'aveugle, séries, réflexes, finales) n'est plus rognée : sa hauteur est calculée à la largeur de l'échiquier, et l'échiquier cède la place nécessaire si le texte passe à la ligne.
+- Calcul à l'aveugle : « Après ces coups : trait aux Blancs », plus court.
+
 ## ChessDuck 3.3.1 — des finales qui expliquent
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

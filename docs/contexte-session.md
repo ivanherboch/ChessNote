@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `3.3.1` (`versionCode = 62`), publiée en release GitHub `v3.3.1`.
+- **Version actuelle** : `3.3.2` (`versionCode = 63`), publiée en release GitHub `v3.3.2`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -172,6 +172,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
   mode enfant et paramètres). Interface adulte et commentaires de revue au vouvoiement ; mode enfant au tutoiement.
 - **2.7.0** : refonte de l'Académie, étape 2 sur 3 : finales jouables, réflexes, révisions espacées, paliers,
   placement et examens, variantes, QCM, répertoire, partie modèle et « Devinez le coup ».
+- **3.3.2** : `ModuleLayout` mesure `overBoard` à la largeur de l'échiquier (portrait et paysage) et réduit l'échiquier si besoin : plus de texte rogné.
 - **3.3.1** : `EndgameFamily.method` (méthode en une phrase) ; `EndgameSession.better`/`before`/`beforeMoves` : après un coup perdant, meilleur coup cherché sur la position d'avant, et `retry()` y revient (flèche verte).
 - **3.3.0** : `IDEA:`/`TRAP:` rédigés pour les 158 leçons qui n'en avaient pas (basics, middlegames, strategy, endgames, model_games) : 2-3 idées, 2 pièges (« Pour vous » / « Contre vous ») ; les 211 leçons en ont.
 - **3.2.6** : `ReflexDrills.threatFrom` lit la menace sur la position affichée (`threatsIn` : prises adverses gagnantes si l'adversaire rejouait, `opponentToMove`), `ThreatItem.threats` (fourchette : plusieurs cibles), confirmation par l'Ordinateur (`threatConfirmed`) ; calcul à l'aveugle : tout mat accepté. Outil `ReflexAuditTool` (REFLEX_AUDIT=entrée.tsv) + script Stockfish pour auditer un échantillon.

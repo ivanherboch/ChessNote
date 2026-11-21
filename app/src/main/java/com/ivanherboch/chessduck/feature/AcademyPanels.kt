@@ -499,7 +499,7 @@ internal fun AcademyBoardInfo(s: AcademyState, l: Lesson, eg: EndgameSession?, r
         return
     }
     val (white, text) = when {
-        rx?.blind != null -> rx.blind.after.whiteToMove to "Après les coups annoncés, trait aux ${if (rx.blind.after.whiteToMove) "Blancs" else "Noirs"}"
+        rx?.blind != null -> rx.blind.after.whiteToMove to "Après ces coups : trait aux ${if (rx.blind.after.whiteToMove) "Blancs" else "Noirs"}"
         rx?.position != null -> rx.position!!.whiteToMove to "Trait aux ${if (rx.position!!.whiteToMove) "Blancs" else "Noirs"}"
         pr != null && pr.line != null && !pr.finished -> pr.heroWhite to "Vous jouez les ${if (pr.heroWhite) "Blancs" else "Noirs"}"
         else -> return

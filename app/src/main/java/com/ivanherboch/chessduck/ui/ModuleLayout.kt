@@ -311,10 +311,13 @@ fun ModuleLayout(
             val probe = minOf(h, (w * 0.6f).toInt())
             val underH0 = measurables[3].minIntrinsicHeight(probe)
             val overH0 = measurables[4].minIntrinsicHeight(probe)
-            val side = minOf(h - underH0 - overH0, w - 320.dp.roundToPx(), (w * 0.62f).toInt()).coerceAtLeast(0)
+            var side = minOf(h - underH0 - overH0, w - 320.dp.roundToPx(), (w * 0.62f).toInt()).coerceAtLeast(0)
+            val overAt = measurables[4].minIntrinsicHeight(side)
+            if (overAt > overH0) side = (side - (overAt - overH0)).coerceAtLeast(0)
+            val overH1 = maxOf(overH0, measurables[4].minIntrinsicHeight(side))
             val boardP = measurables[1].measure(Constraints.fixed(side, side))
             val underP = measurables[3].measure(Constraints(minWidth = side, maxWidth = side, minHeight = 0, maxHeight = underH0))
-            val overP = measurables[4].measure(Constraints(minWidth = side, maxWidth = side, minHeight = 0, maxHeight = overH0))
+            val overP = measurables[4].measure(Constraints(minWidth = side, maxWidth = side, minHeight = 0, maxHeight = overH1))
             val panelW = (w - side - gap).coerceAtLeast(0)
             val topP = measurables[0].measure(Constraints(minWidth = panelW, maxWidth = panelW, minHeight = 0, maxHeight = h))
             val bottomP = measurables[2].measure(Constraints.fixed(panelW, (h - topP.height).coerceAtLeast(0)))
@@ -336,11 +339,16 @@ fun ModuleLayout(
             val needed = runCatching { measurables[2].minIntrinsicHeight(w) }.getOrDefault(0)
             wanted[0] = (needed - avail).coerceIn(0, (baseSide * 0.22f).toInt())
         }
-        val side = (baseSide - if (adaptive) animReserve else 0).coerceAtLeast(0)
+        var side = (baseSide - if (adaptive) animReserve else 0).coerceAtLeast(0)
+        // La ligne au-dessus de l'échiquier a la largeur de l'échiquier : plus étroite que l'écran, son texte peut passer à
+        // la ligne. On mesure donc sa hauteur à cette largeur, et l'échiquier cède la différence (jamais de texte rogné).
+        val overAtSide = measurables[4].minIntrinsicHeight(side)
+        if (overAtSide > overH) side = (side - (overAtSide - overH)).coerceAtLeast(0)
+        val overH1 = maxOf(overH, measurables[4].minIntrinsicHeight(side))
         val boardP = measurables[1].measure(Constraints.fixed(side, side))
         val underW = if (underBoardFullWidth) w else side
         val underP = measurables[3].measure(Constraints(minWidth = underW, maxWidth = underW, minHeight = 0, maxHeight = underH))
-        val overP = measurables[4].measure(Constraints(minWidth = side, maxWidth = side, minHeight = 0, maxHeight = overH))
+        val overP = measurables[4].measure(Constraints(minWidth = side, maxWidth = side, minHeight = 0, maxHeight = overH1))
         val rest = (h - topP.height - side - underP.height - overP.height).coerceAtLeast(0)
         val bottomP = measurables[2].measure(Constraints.fixed(w, rest))
         layout(w, h) {
