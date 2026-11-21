@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -577,6 +578,9 @@ class AppRobolectricTest {
         desc("Aller à la fin").performClick(); settle(800)
         rule.onNodeWithText("Quel est le plan ?").performClick(); settle(800); shot("2m_qcm")
         rule.onNodeWithText("Jouer c3 puis d4 pour construire un centre de deux pions").performClick(); settle(600); shot("2n_qcm_reponse")
+        // Défi pas encore réussi : la question de fin mène au Défi, pas à la leçon suivante.
+        rule.onNodeWithText("Passer au Défi").assertExists()
+        rule.onAllNodesWithText("Leçon suivante").assertCountEquals(0)
         rule.onNodeWithText("Revoir la leçon").performClick(); settle(600)
         desc("Ouvrir le catalogue des leçons").performClick(); settle(1200)
         rule.onNodeWithText("Filtres").performClick(); settle(500)

@@ -1,3 +1,10 @@
+## ChessDuck 3.2.1 — le Défi n'est plus sauté
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Après la question de fin de leçon (« Quel est le plan ? »), le bouton principal est « Passer au Défi » tant que le Défi de la leçon n'est pas réussi ; « Leçon suivante » n'apparaît qu'ensuite.
+- Même parcours pour les finales lancées depuis le mode Guidé (« Gagnez-la », « Tenez la nulle ») : à la fin de la série, « Passer au Défi ».
+
 ## ChessDuck 3.2.0 — une Académie alignée sur le reste de l'application
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

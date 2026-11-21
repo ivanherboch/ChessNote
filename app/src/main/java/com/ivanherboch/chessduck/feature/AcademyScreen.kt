@@ -123,6 +123,8 @@ fun AcademyScreen(
     val total = Lessons.all.size
     val cur = s.cursor.coerceIn(0, line.size)
     val stars = progress[l.id]?.stars ?: 0
+    // Le Défi de la leçon reste à réussir (au moins 2 étoiles) : c'est l'étape suivante du parcours, avant la leçon suivante.
+    val needsChallenge = l.id !in mastered && stars < 2 && s.review == null && s.repertoire == null
     val pr = s.practice
     val asking = vm.asking(s)
     val model = l.kind == LessonKind.MODEL_GAME
@@ -340,10 +342,10 @@ fun AcademyScreen(
             val rxs = rx
             val quiz = s.quiz
             when {
-                egs != null -> EndgamePanel(vm, egs, s.review, stuck)
+                egs != null -> EndgamePanel(vm, egs, s.review, stuck, needsChallenge && egs.family == EndgameFamily.of(l.drill))
                 rxs != null -> ReflexPanel(vm, rxs)
                 pr != null -> PracticePanel(vm, pr, s.review, stuck)
-                quiz != null -> QuizPanel(vm, l, quiz)
+                quiz != null -> QuizPanel(vm, l, quiz, needsChallenge)
                 !s.challenge -> {
                     // Progression dans la leçon : chaque coup est cliquable (sur tablette, tableau complet sous le commentaire).
                     val wide = LocalIsTwoPane.current

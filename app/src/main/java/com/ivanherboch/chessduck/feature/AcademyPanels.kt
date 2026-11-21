@@ -322,7 +322,7 @@ internal fun VariantMenu(l: Lesson, selected: Int, onSelect: (Int) -> Unit) {
 
 /** QCM de fin de leçon : question, 2 ou 3 choix, puis l'explication. */
 @Composable
-internal fun ColumnScope.QuizPanel(vm: AcademyViewModel, l: Lesson, q: QuizState) {
+internal fun ColumnScope.QuizPanel(vm: AcademyViewModel, l: Lesson, q: QuizState, needsChallenge: Boolean = false) {
     val c = LocalDuck.current
     val quiz = l.quiz ?: return
     val picked = q.picked
@@ -350,7 +350,12 @@ internal fun ColumnScope.QuizPanel(vm: AcademyViewModel, l: Lesson, q: QuizState
     }
     if (picked != null) EqualRow(Modifier.padding(vertical = 6.dp)) {
         DuckButton("Revoir la leçon", vm::closeQuiz, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
-        DuckButton("Leçon suivante", { vm.closeQuiz(); vm.nextLesson(guided = true) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
+        // Le parcours continue par le Défi tant qu'il n'est pas réussi ; ensuite seulement, la leçon suivante.
+        if (needsChallenge) DuckButton(
+            if (l.kind == LessonKind.MODEL_GAME) "Devinez le coup" else "Passer au Défi", { vm.closeQuiz(); vm.setChallenge(true) }, Modifier.weight(1f),
+            accent = c.gold, filled = true, icon = Icons.Rounded.SportsScore,
+        )
+        else DuckButton("Leçon suivante", { vm.closeQuiz(); vm.nextLesson(guided = true) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
     }
 }
 
@@ -509,7 +514,7 @@ internal fun AcademyBoardInfo(s: AcademyState, l: Lesson, eg: EndgameSession?, r
 
 /** Finale jouée contre l'Ordinateur. */
 @Composable
-internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, review: ReviewSession?, stuck: String? = null) {
+internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, review: ReviewSession?, stuck: String? = null, needsChallenge: Boolean = false) {
     val c = LocalDuck.current
     val title = when {
         eg.finished -> "${eg.family.label} · bilan : ${eg.score} sur ${eg.total}"
@@ -519,6 +524,14 @@ internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, 
     EqualRow(Modifier.padding(vertical = 6.dp)) {
         when {
             eg.finished && review != null -> ReviewNextButton(vm, review, Modifier.weight(1f))
+            // Finale lancée depuis une leçon dont le Défi reste à réussir : la suite du parcours est le Défi.
+            eg.finished && needsChallenge -> {
+                DuckButton("Recommencer", { vm.startEndgame(eg.family) }, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt)
+                DuckButton(
+                    "Passer au Défi", { vm.closeEndgame(); vm.setChallenge(true) }, Modifier.weight(1f), accent = c.gold, filled = true,
+                    icon = Icons.Rounded.SportsScore,
+                )
+            }
             eg.finished -> {
                 DuckButton("Fermer", vm::closeEndgame, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
                 DuckButton("Recommencer", { vm.startEndgame(eg.family) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.Rounded.RestartAlt)
