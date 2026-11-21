@@ -193,7 +193,7 @@ fun AcademyScreen(
                         arrows = when {
                             refArrow != null -> listOf(refArrow)
                             (heroTurn || asking) && s.suggest != null -> s.suggest!!.let { listOf(Arrow(it.from, it.to, c.green)) }
-                            heroTurn && s.hintStage >= 2 && next != null -> listOf(Arrow(next.from, next.to, c.green))
+                            (heroTurn || (asking && !s.judging)) && s.hintStage >= 2 && next != null -> listOf(Arrow(next.from, next.to, c.green))
                             // Démonstration pédagogique : flèches bleues (le dernier coup est déjà surligné).
                             !s.challenge -> (visuals?.arrows ?: emptyList()).map { (f, t) -> Arrow(f, t, c.blue) }
                             else -> emptyList()
@@ -296,7 +296,7 @@ fun AcademyScreen(
                         )
                         // Avec le haut-parleur, quatre boutons : Début et Fin en icônes pour que rien ne se coupe sur 360 dp.
                         // Arrêt « À vous » : un indice (la pièce à jouer) avant de découvrir le coup avec Lecture.
-                        if (asking) HintIconButton(s.hintStage, vm::guideHint, enabled = !s.judging && s.hintStage == 0)
+                        if (asking) HintIconButton(s.hintStage, vm::guideHint, enabled = !s.judging)
                         else DuckIconButton(Icons.Rounded.SkipPrevious, "Revenir au début", vm::rewind, enabled = cur > 0)
                         // Fin de leçon : le QCM ou la finale à jouer prend la place de Lecture.
                         // La voix qui lit (l'objectif à l'ouverture, ou un commentaire) compte comme une lecture en cours :

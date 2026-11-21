@@ -822,6 +822,27 @@ class ViewModelsTest {
         assertTrue(vm.challengeMove(l.line.moves[0]))
     }
 
+    /** Mode Guidé, arrêt « À vous » : indice en deux temps (pièce, puis flèche), remis à zéro au coup suivant. */
+    @Test
+    fun guidedHintHasTwoStages() = test {
+        val vm = academy()
+        advanceUntilIdle()
+        val l = Lessons.byId(1)
+        val p = l.pauseSteps.first()
+        vm.jump(p)
+        assertTrue(vm.asking())
+        vm.guideHint()
+        assertEquals(1, vm.state.value.hintStage)
+        assertTrue(vm.state.value.note!!.startsWith("Indice 1/2"))
+        vm.guideHint()
+        assertEquals(2, vm.state.value.hintStage)
+        assertTrue(vm.state.value.note!!.startsWith("Indice 2/2"))
+        vm.guideHint()
+        assertEquals(2, vm.state.value.hintStage) // pas de troisième temps
+        vm.guideMove(l.line.moves[p]); runCurrent()
+        assertEquals(0, vm.state.value.hintStage)
+    }
+
     @Test
     fun academyGuidedPausesAskForTheMove() = test {
         val engine = FakeEngine()

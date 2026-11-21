@@ -1,3 +1,9 @@
+## ChessDuck 3.8.3 — le deuxième indice en mode Guidé
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Mode Guidé, questions « À vous » : l'indice se donne en deux temps, comme dans le Défi, les exercices, les finales et les Problèmes. Le premier surligne la pièce à jouer, le second montre le coup par une flèche verte. Le bouton restait grisé après le premier indice.
+
 ## ChessDuck 3.8.2 — plus d'échiquier gelé
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

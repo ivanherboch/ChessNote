@@ -338,8 +338,15 @@ class AcademyViewModel(
     /** Indice pendant un arrêt « À vous » du mode Guidé : la pièce à jouer est surlignée en vert. */
     fun guideHint() {
         val s = state.value
-        if (!asking(s) || s.judging) return
-        _state.update { it.copy(hintStage = 1, note = "Indice : la pièce à jouer est surlignée en vert.", noteTone = Tone.GOLD) }
+        if (!asking(s) || s.judging || s.hintStage >= 2) return
+        // Deux temps, comme partout ailleurs : la pièce à jouer, puis la flèche du coup.
+        val stage = s.hintStage + 1
+        _state.update {
+            it.copy(
+                hintStage = stage, noteTone = Tone.GOLD,
+                note = if (stage == 1) "Indice 1/2 : la pièce à jouer est surlignée en vert." else "Indice 2/2 : la flèche verte montre le coup.",
+            )
+        }
     }
 
     /** Arrêt « À vous » : dévoile le coup de la leçon (bouton suivant ou Lecture) et le marque comme vu. */
