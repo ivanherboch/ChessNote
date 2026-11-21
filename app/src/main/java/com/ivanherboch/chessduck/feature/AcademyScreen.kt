@@ -252,6 +252,9 @@ fun AcademyScreen(
                             lastMove = egs.last, anim = egs.anim,
                             arrows = listOfNotNull(
                                 egs.punish?.let { Arrow(it.from, it.to, c.red) },
+                                // Coup repris après une erreur : le bon coup en vert.
+                                egs.better?.takeIf { egs.replay && egs.heroToMove && egs.before == null && egs.moves == egs.beforeMoves }
+                                    ?.let { Arrow(it.from, it.to, c.green) },
                                 hint?.takeIf { egs.hintStage >= 2 }?.let { Arrow(it.from, it.to, c.green) },
                             ),
                             marks = listOfNotNull(hint?.takeIf { egs.hintStage == 1 }?.let { it.from to c.green }),

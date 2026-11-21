@@ -541,8 +541,9 @@ internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, 
             eg.over -> {
                 // Position perdue : on peut la rejouer pour s'entraîner (le score de la série ne change pas).
                 if (eg.results.lastOrNull() == false) DuckButton(
-                    "Rejouer", vm.endgame::retry, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt,
-                    contentDescription = "Rejouer cette position pour s'entraîner, sans changer le score",
+                    if (eg.before != null) "Reprendre le coup" else "Rejouer", vm.endgame::retry, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt,
+                    contentDescription = if (eg.before != null) "Revenir juste avant l'erreur pour s'entraîner, sans changer le score"
+                    else "Rejouer cette position pour s'entraîner, sans changer le score",
                 )
                 DuckButton(
                     if (eg.index + 1 < eg.total) "Position suivante" else "Voir le bilan", vm.endgame::next, Modifier.weight(1.4f),

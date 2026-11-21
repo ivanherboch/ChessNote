@@ -54,6 +54,22 @@ enum class EndgameFamily(val label: String, val goal: EndgameGoal, val maxMoves:
 
     val heroWhite: Boolean get() = goal == EndgameGoal.WIN
 
+    /** La méthode à appliquer, en une phrase : rappelée au départ de chaque position et après une erreur. */
+    val method: String
+        get() = when (this) {
+            KQK -> "Enfermez le roi avec la dame, à un saut de cavalier de lui, amenez votre roi, puis matez au bord. Laissez-lui toujours une case pour éviter le pat."
+            KRRK -> "Montez l'escalier : une tour garde une rangée, l'autre donne échec une rangée plus loin, jusqu'au bord."
+            KRK -> "La tour coupe le roi noir et rétrécit sa boîte, votre roi vient se placer en face du sien, puis la tour mate sur le bord."
+            KBBK -> "Les deux fous côte à côte forment un mur, votre roi les soutient, et l'on repousse le roi noir vers un coin, sans le mettre pat."
+            KPK_WIN -> "Le roi passe devant son pion et gagne une case clé, deux rangées devant lui. Ne poussez le pion que quand la route est sûre : si le roi noir prend l'opposition devant le pion, c'est nul."
+            LUCENA -> "Construisez le pont : la tour vient sur la quatrième rangée pour abriter le roi des échecs, puis le pion va à dame."
+            PHILIDOR_DRAW -> "Gardez la tour sur votre troisième rangée pour empêcher le roi blanc d'avancer ; dès que le pion y arrive, donnez des échecs par derrière."
+            ROOK_PAWN_DRAW -> "Gardez votre roi dans le coin, devant le pion tour : personne ne peut l'en chasser."
+            KQKP -> "Par des échecs et des attaques du pion, forcez le roi noir à se placer devant son pion ; chaque fois, rapprochez votre roi d'un pas."
+            QUEEN_BISHOP_PAWN_DRAW -> "Réfugiez votre roi dans le coin, à côté du pion : si la dame prend le pion, c'est pat."
+            VANCURA_DRAW -> "Votre tour attaque le pion tour de côté ; donnez des échecs dès que le roi blanc s'approche du pion."
+        }
+
     /** Consigne complète : « Matez le roi noir en 12 coups au plus. » */
     val instruction: String
         get() = task.replaceFirstChar { it.uppercase() } +
@@ -240,6 +256,11 @@ data class EndgameSession(
     /** Position rejouée pour s'entraîner : son résultat ne compte pas. */
     val replay: Boolean = false,
     val pulse: Pulse? = null,
+    /** Coup qu'il fallait jouer à la place du coup perdant (flèche verte quand on reprend le coup). */
+    val better: Move? = null,
+    /** Position juste avant le coup perdant, et coups déjà joués : « Reprendre le coup » y revient. */
+    val before: Position? = null,
+    val beforeMoves: Int = 0,
 ) {
     val score: Int get() = results.count { it }
     val heroToMove: Boolean get() = position != null && !over && !thinking && position.whiteToMove == family.heroWhite
@@ -284,20 +305,27 @@ class EndgameTrainer(
         _state.value = s.copy(
             index = index, position = p, start = p, last = null, anim = null, moves = 0, thinking = false, hint = null, hintStage = 0, hinting = false,
             over = false, evalWhite = null, punish = null, replay = false,
-            tone = Tone.INFO, message = "Position ${index + 1} sur ${s.total} : ${s.family.instruction}",
+            better = null, before = null, beforeMoves = 0,
+            tone = Tone.INFO, message = "Position ${index + 1} sur ${s.total} : ${s.family.instruction}\n\nMéthode : ${s.family.method}",
         )
     }
 
-    /** Rejoue la position qui vient d'échouer, pour s'entraîner : le score de la série ne change pas. */
+    /**
+     * Reprend le coup perdant, pour s'entraîner : la position revient juste avant l'erreur (ou au départ si l'échec
+     * n'est pas dû à un coup précis), avec le bon coup en flèche verte. Le score de la série ne change pas.
+     */
     fun retry() {
         val s = _state.value ?: return
         if (!s.over || s.finished || s.start == null || s.results.lastOrNull() != false) return
         job?.cancel()
         hintJob?.cancel()
+        val back = s.before
         _state.value = s.copy(
-            position = s.start, last = null, anim = null, moves = 0, thinking = false, hint = null, hintStage = 0, hinting = false,
-            over = false, evalWhite = null, punish = null, replay = true, tone = Tone.INFO,
-            message = "Entraînement : rejouez la position (le score de la série ne change pas). ${s.family.instruction}",
+            position = back ?: s.start, last = null, anim = null, moves = if (back != null) s.beforeMoves else 0, thinking = false,
+            hint = null, hintStage = 0, hinting = false, over = false, evalWhite = null, punish = null, replay = true, tone = Tone.INFO,
+            before = null,
+            message = if (back != null && s.better != null) "Entraînement (hors score) : rejouez ce coup. La flèche verte montre le bon coup. ${s.family.method}"
+            else "Entraînement (hors score) : rejouez la position. ${s.family.method}",
         )
     }
 
@@ -348,7 +376,7 @@ class EndgameTrainer(
         hintJob?.cancel()
         val after = pos.play(m)
         val moves = s.moves + 1
-        _state.value = s.copy(position = after, last = m, anim = moveAnim(pos, m), moves = moves, thinking = true, hint = null, hintStage = 0, hinting = false)
+        _state.value = s.copy(position = after, last = m, anim = moveAnim(pos, m), moves = moves, thinking = true, hint = null, hintStage = 0, hinting = false, better = null)
         job = scope.launch {
             val f = s.family
             val promoted = m.promo != 0
@@ -371,17 +399,20 @@ class EndgameTrainer(
             }
             val ev = if (f.heroWhite) mine else -mine
             if (lost) {
-                // L'Ordinateur montre comment il punit l'erreur : sa réponse est jouée, avec une flèche rouge.
+                // L'Ordinateur montre comment il punit l'erreur (sa réponse, flèche rouge) et quel coup il fallait jouer.
+                val best = runCatchingSuspend { withTimeoutOrNull(movetimeMs * 5L + 1000) { engine.search(pos.toFen(), movetimeMs).best } }
+                    .getOrNull()?.takeIf { it != m && pos.isLegal(it) }
                 delay(450)
                 val punished = after.play(reply)
-                _state.update { it?.copy(position = punished, last = reply, anim = moveAnim(after, reply), punish = reply) }
-                val why = "L'Ordinateur répond ${after.san(reply)}."
-                return@launch end(
-                    false,
-                    if (f.goal == EndgameGoal.WIN) "Ce coup laisse échapper le gain. $why Rejouez la position, ou passez à la suivante."
-                    else "Ce coup perd la nulle. $why Rejouez la position, ou passez à la suivante.",
-                    ev,
-                )
+                _state.update {
+                    it?.copy(position = punished, last = reply, anim = moveAnim(after, reply), punish = reply, better = best, before = pos, beforeMoves = s.moves)
+                }
+                val san = pos.san(m)
+                val text = (if (f.goal == EndgameGoal.WIN) "$san laisse échapper le gain" else "$san perd la nulle") +
+                    " : l'Ordinateur répond ${after.san(reply)}." +
+                    (if (best != null) " Il fallait jouer ${pos.san(best)}." else "") +
+                    "\n\nMéthode : ${f.method}\n\nReprenez le coup pour vous entraîner, ou passez à la position suivante."
+                return@launch end(false, text, ev)
             }
             if (f.goal == EndgameGoal.WIN && promoted) return@launch end(true, "Le pion devient dame et le gain est assuré !", ev)
             delay(450)
@@ -392,7 +423,7 @@ class EndgameTrainer(
                 next.legalMoves.isEmpty() -> end(f.goal == EndgameGoal.DRAW, if (f.goal == EndgameGoal.DRAW) "Pat : la nulle est acquise." else "Pat : la partie est nulle.")
                 f.goal == EndgameGoal.DRAW && next.noPawns() -> pawnGone(next)
                 f.goal == EndgameGoal.DRAW && moves >= f.maxMoves -> end(true, "Vous avez tenu $moves coups : la nulle est acquise.", ev)
-                f.goal == EndgameGoal.WIN && moves >= f.maxMoves -> end(false, "Trop lent : il fallait conclure en ${f.maxMoves} coups. Cherchez une méthode plus directe.", ev)
+                f.goal == EndgameGoal.WIN && moves >= f.maxMoves -> end(false, "Trop lent : il fallait conclure en ${f.maxMoves} coups.\n\nMéthode : ${f.method}", ev)
                 else -> _state.update {
                     it?.copy(tone = Tone.INFO, message = "Coup $moves sur ${f.maxMoves}. ${f.instruction}")
                 }

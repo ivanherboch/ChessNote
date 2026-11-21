@@ -323,6 +323,9 @@ class ViewModelsTest {
         assertEquals(lost.punish, lost.last)
         assertEquals(0, lost.evalWhite)
         assertEquals(false, lost.pulse?.good)
+        // L'explication rappelle la méthode de la finale ; « Reprendre le coup » revient juste avant l'erreur.
+        assertTrue(lost.message, "Méthode : ${com.ivanherboch.chessduck.feature.EndgameFamily.KQK.method}" in lost.message)
+        assertEquals(eg.position!!.toFen(), lost.before?.toFen())
         // « Rejouer » : la même position, hors score.
         vm.endgame.retry()
         val again = vm.endgame.state.value!!

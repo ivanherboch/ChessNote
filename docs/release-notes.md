@@ -1,3 +1,11 @@
+## ChessDuck 3.3.1 — des finales qui expliquent
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Finales contre l'Ordinateur : chaque finale a sa méthode en une phrase (par exemple, roi et pion : « Le roi passe devant son pion et gagne une case clé, deux rangées devant lui… »). Elle s'affiche au départ de chaque position.
+- Après un coup qui laisse échapper le gain (ou perd la nulle), l'explication dit quelle réponse de l'Ordinateur le punit, quel coup il fallait jouer, et rappelle la méthode.
+- « Reprendre le coup » remplace « Rejouer » : la position revient juste avant l'erreur, avec le bon coup en flèche verte, pour s'entraîner (le score de la série ne change pas).
+
 ## ChessDuck 3.3.0 — des idées et des pièges pour chaque leçon
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
