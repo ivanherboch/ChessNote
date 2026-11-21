@@ -68,7 +68,7 @@ class LessonsTest {
         assertEquals(3, italian.ideas.size)
         assertEquals(2, italian.traps.size)
         assertTrue(italian.quiz != null)
-        assertEquals(12, all.count { it.drill.isNotEmpty() })
+        assertEquals(13, all.count { it.drill.isNotEmpty() })
         for (l in all) {
             val line = l.line // lève une exception si un coup est illégal
             assertEquals(l.title, line.size, l.texts.size)

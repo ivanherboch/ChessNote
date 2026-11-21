@@ -129,7 +129,7 @@ class LessonAuditTool {
         /** « le cavalier g7 », « la dame noire en b6 », « le pion blanc, en e4 »… (pièce, couleur facultative, case). */
         val CITED = Regex("""\b(pion|cavalier|fou|tour|dame|roi)s? (?:(?:blanc|noir|blanche|noire)s?,? )?(?:en )?([a-h][1-8])\b""", RegexOption.IGNORE_CASE)
 
-        val FUTURE = Regex("""\b(sortie|sortir|jouer|venir|aller|placer|installer|amener|sauter|suivie|prépare|pourra|ira|veut|veulent)\b""", RegexOption.IGNORE_CASE)
+        val FUTURE = Regex("""\b(sortie|sortir|jouer|jouez|venir|aller|placer|installer|amener|sauter|suivie|prépare|pourra|ira|veut|veulent)\b""", RegexOption.IGNORE_CASE)
 
         /** Pièces citées avec leur case qui ne sont sur cette case ni avant ni après le coup commenté. */
         fun lexicalProblems(l: Lesson): List<String> = (0..l.variants.size).flatMap { v -> lexicalProblems(l, v) }

@@ -16,9 +16,9 @@ internal val BASICS_LESSONS: List<LessonData> = listOf(
         uci = "e2e4 e7e5 g1f3 b8c6 f1c4",
         texts = listOf(
             "Les colonnes portent les lettres a à h, de gauche à droite vu des Blancs. Les rangées portent les chiffres 1 à 8. Ce pion part de la case e2 et arrive en e4 : on note simplement e4.",
-            "Les Noirs répondent. Leur pion arrive en e5. Pour un pion, on ne note que la case d'arrivée. À vous : jouez le coup noté « cavalier f3 ».",
+            "Les Noirs répondent. Leur pion arrive en e5. Pour un pion, on ne note que la case d'arrivée. À vous : jouez le cavalier en f3.",
             "Pour une pièce, on note son nom et sa case d'arrivée : cavalier f3. La case a1, en bas à gauche, est toujours une case sombre.",
-            "Le cavalier noir arrive en c6. Quand une pièce prend, on ajoute le signe « prend », et le signe « plus » quand elle donne échec. À vous : jouez le coup noté « fou c4 ».",
+            "Le cavalier noir arrive en c6. Quand une pièce prend, on ajoute le signe « prend », et le signe « plus » quand elle donne échec. À vous : jouez le fou en c4.",
             "Le fou blanc arrive en c4. À retenir : chaque case a un nom unique, une lettre puis un chiffre. Noter ses parties permet de les rejouer et de les comprendre.",
         ),
         level = 1,

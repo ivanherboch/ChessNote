@@ -32,7 +32,7 @@ class EndgamePracticeTest {
 
     private val expected = mapOf(
         EndgameFamily.KQK to "BK,WK,WQ", EndgameFamily.KRK to "BK,WK,WR", EndgameFamily.KRRK to "BK,WK,WR,WR",
-        EndgameFamily.KBBK to "BK,WB,WB,WK", EndgameFamily.KPK_WIN to "BK,WK,WP", EndgameFamily.LUCENA to "BK,BR,WK,WP,WR",
+        EndgameFamily.KBBK to "BK,WB,WB,WK", EndgameFamily.KPK_WIN to "BK,WK,WP", EndgameFamily.PAWN_WAR to "BK,BP,BP,BP,WK,WP,WP,WP", EndgameFamily.LUCENA to "BK,BR,WK,WP,WR",
         EndgameFamily.PHILIDOR_DRAW to "BK,BR,WK,WP,WR", EndgameFamily.ROOK_PAWN_DRAW to "BK,WK,WP",
         EndgameFamily.KQKP to "BK,BP,WK,WQ", EndgameFamily.QUEEN_BISHOP_PAWN_DRAW to "BK,BP,WK,WQ",
         EndgameFamily.VANCURA_DRAW to "BK,BR,WK,WP,WR",
