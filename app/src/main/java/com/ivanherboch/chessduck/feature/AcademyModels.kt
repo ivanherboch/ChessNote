@@ -46,8 +46,16 @@ data class Practice(
     val refute: Refutation? = null,
     val refuteUntil: Long = 0L,
     val refuteHold: Long = 0L,
-    /** Une erreur a été commise sur ce problème : même résolu ensuite, il ne compte pas. */
+    /** Une erreur a été commise sur ce problème. */
     val hadError: Boolean = false,
+    /**
+     * Cœurs de la série (autant que de problèmes, pour les validations, « Le seul coup » et les révisions ; aucun pour
+     * le placement et l'examen) : une erreur coûte un cœur et le problème compte encore s'il est résolu ensuite.
+     */
+    val hearts: Int = 0,
+    val heartsMax: Int = 0,
+    /** Erreur commise sans cœur restant : ce problème ne compte plus, même résolu ensuite. */
+    val penalized: Boolean = false,
     /** Demi-coups déjà joués du problème (on peut revenir en arrière et avancer jusque-là). */
     val progress: Int = 0,
 ) {

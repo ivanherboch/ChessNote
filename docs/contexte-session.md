@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `3.8.3` (`versionCode = 74`), publiée en release GitHub `v3.8.3`.
+- **Version actuelle** : `3.9.0` (`versionCode = 75`), publiée en release GitHub `v3.9.0`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -180,6 +180,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **3.8.1** : `warmEngine()` rappelé dans `AcademyViewModel.init` (l'attente du premier coup après la 3.8.0 gênait les entraînements) ; les points d'entrée des séances le rappellent sans effet.
 - **3.8.2** : `ChessBoard.pointerInput` lit `size` à chaque toucher (la taille de case calculée au démarrage du gestionnaire devenait fausse quand l'échiquier changeait de taille sans recomposition : réserve de `ModuleLayout`) ; `MoveJudge.JUDGE_WAIT = 5 s` ; `Verdict.UNAVAILABLE` (Défi, Guidé) et `loss == null` (Deviner) : à rejouer, sans erreur ni 0 point ; tests `BoardResizeTest` (échoue sans le correctif) et `EndgameRealEngineTest` (vrai Stockfish de la machine branché dans `AppContainer.engineLazy`, finales Blancs/Noirs et réflexes ; ignoré sans /usr/games/stockfish).
 - **3.8.3** : `guideHint` en deux temps (pièce, puis flèche ; bouton actif jusqu'à 2/2) ; flèche verte aussi à l'arrêt « À vous » du Guidé ; test `guidedHintHasTwoStages`.
+- **3.9.0** : cœurs des séries (`Practice.hearts/heartsMax/penalized`, `PracticeSeries.HEARTS_KINDS` = LESSON, ONLY_MOVE, REVIEW ; autant de cœurs que de problèmes) : une erreur coûte un cœur, le problème compte si `!penalized && hintStage < 2` ; `heartsText` ; titre de la série « N cœurs sur M ».
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.

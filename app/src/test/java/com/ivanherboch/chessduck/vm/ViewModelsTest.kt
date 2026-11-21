@@ -898,10 +898,14 @@ class ViewModelsTest {
                 val msg = vm.state.value.practice!!.message
                 assertTrue(msg, "Rappel de la leçon « ${l.title} » : ${l.takeaway}" in msg)
                 com.ivanherboch.chessduck.content.PuzzleThemes.byKey[l.theme]?.let { assertTrue(msg, "À chercher : ${it.name.lowercase()}" in msg) }
-                // Mauvais coup : réfuté (comme dans les Problèmes), puis « Réessayer » ; résolu ensuite, il ne compte pas.
+                // Cinq cœurs pour les cinq problèmes.
+                assertEquals(5, vm.state.value.practice!!.hearts)
+                // Mauvais coup : réfuté (comme dans les Problèmes), puis « Réessayer » ; il coûte un cœur, et le problème
+                // compte encore s'il est résolu ensuite.
                 vm.practiceMove(line.positions[1].legalMoves.first { it != line.moves[1] && !line.positions[1].play(it).isCheckmate })
                 assertNotNull(vm.state.value.practice!!.refute)
                 assertTrue(vm.state.value.practice!!.hadError)
+                assertEquals(4, vm.state.value.practice!!.hearts)
                 assertFalse(vm.state.value.practice!!.failed)
                 advanceTimeBy(1_000); runCurrent()
                 assertNotNull(vm.state.value.practice!!.refute?.arrow)
@@ -914,14 +918,28 @@ class ViewModelsTest {
                 vm.practiceForward(); assertEquals(reached, vm.state.value.practice!!.cursor)
                 vm.practiceMove(line.moves[3]); advanceUntilIdle()
                 assertTrue(vm.state.value.practice!!.solved)
-                assertEquals(listOf(false), vm.state.value.practice!!.results)
+                assertEquals(listOf(true), vm.state.value.practice!!.results)
+                assertTrue(vm.state.value.practice!!.message.contains("cœur"))
             } else if (k == 1) {
                 // « Solution » après une erreur : le problème est compté manqué, la flèche montre le coup.
                 vm.practiceMove(line.positions[1].legalMoves.first { it != line.moves[1] && !line.positions[1].play(it).isCheckmate })
                 vm.retryPractice()
                 vm.practiceSolution()
                 assertTrue(vm.state.value.practice!!.failed)
-                assertEquals(listOf(false, false), vm.state.value.practice!!.results)
+                assertEquals(listOf(true, false), vm.state.value.practice!!.results)
+                assertEquals(3, vm.state.value.practice!!.hearts)
+            } else if (k == 2) {
+                // Les trois derniers cœurs, puis une erreur sans cœur : ce problème ne compte plus, même résolu.
+                repeat(4) {
+                    vm.practiceMove(line.positions[1].legalMoves.first { it != line.moves[1] && !line.positions[1].play(it).isCheckmate })
+                    vm.retryPractice()
+                }
+                assertEquals(0, vm.state.value.practice!!.hearts)
+                assertTrue(vm.state.value.practice!!.penalized)
+                vm.practiceMove(line.moves[1]); advanceUntilIdle()
+                vm.practiceMove(line.moves[3]); advanceUntilIdle()
+                assertTrue(vm.state.value.practice!!.solved)
+                assertEquals(listOf(true, false, false), vm.state.value.practice!!.results)
             } else {
                 vm.practiceMove(line.moves[1]); advanceUntilIdle()
                 vm.practiceMove(line.moves[3]); advanceUntilIdle()
@@ -931,7 +949,7 @@ class ViewModelsTest {
         }
         val pr = vm.state.value.practice!!
         assertTrue(pr.finished)
-        assertEquals(3, pr.score) // erreurs comptées : le seuil de 4 sur 5 reste exigeant
+        assertEquals(3, pr.score) // la solution montrée et l'erreur sans cœur comptent : le seuil de 4 sur 5 n'est pas atteint
         assertTrue(lessons.masteredLessons().first().isEmpty())
         assertEquals(3, lessons.progress(l.id)?.practicePassed)
         assertEquals(3, puzzles.solved.value.size)

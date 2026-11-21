@@ -132,7 +132,8 @@ internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, revie
     val title = when {
         pr.finished -> "$name · bilan : ${pr.score} sur ${pr.ids.size.coerceAtLeast(1)}"
         pr.loading -> name
-        else -> "$name · problème ${pr.index + 1} sur ${pr.ids.size} · ${pr.score} réussi${if (pr.score > 1) "s" else ""}"
+        else -> "$name · problème ${pr.index + 1} sur ${pr.ids.size} · ${pr.score} réussi${if (pr.score > 1) "s" else ""}" +
+            if (pr.heartsMax > 0) " · ${pr.hearts} cœur${if (pr.hearts > 1) "s" else ""} sur ${pr.heartsMax}" else ""
     }
     FeedbackCard(stuck ?: pr.message, if (stuck != null) Tone.GOLD else pr.tone, Modifier.padding(top = 4.dp).weight(1f), title = title)
     if (pr.refute != null && pr.refuteUntil > 0) RefuteCountdown(pr.refuteUntil, pr.refuteHold, vm::holdPracticeRefutation)

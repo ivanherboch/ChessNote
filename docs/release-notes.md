@@ -1,3 +1,14 @@
+## ChessDuck 3.9.0 — des cœurs pour les entraînements
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Séries d'exercices de l'Académie (validation d'une leçon, « Le seul coup », révisions) : vous avez autant de cœurs que de problèmes, soit 5 cœurs pour 5 problèmes.
+  - Une erreur coûte un cœur, et le problème compte encore si vous le résolvez ensuite.
+  - Sans cœur restant, une erreur fait manquer le problème, comme avant.
+  - Les cœurs restants s'affichent dans le titre de la série.
+  - La flèche de l'indice 2/2 et le bouton « Solution » font toujours manquer le problème.
+- Le test de placement et l'examen du palier restent sans cœurs : ils mesurent votre niveau.
+
 ## ChessDuck 3.8.3 — le deuxième indice en mode Guidé
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

@@ -123,7 +123,8 @@ internal class PracticeSeries(
                 _state.update { it.copy(practice = Practice(kind = kind, loading = false, finished = true, message = "Aucun problème disponible pour cette série.")) }
                 return@launch
             }
-            _state.update { it.copy(practice = Practice(kind = kind, ids = ids, loading = false, level = level)) }
+            val hearts = if (kind in HEARTS_KINDS) ids.size else 0
+            _state.update { it.copy(practice = Practice(kind = kind, ids = ids, loading = false, level = level, hearts = hearts, heartsMax = hearts)) }
             showPractice(0)
         }
     }
@@ -156,7 +157,7 @@ internal class PracticeSeries(
             s.copy(
                 practice = s.practice?.copy(
                     index = index, line = line, cursor = 0, progress = 0, hintStage = 0, failed = false, solved = false, anim = null, tone = Tone.INFO,
-                    refute = null, refuteUntil = 0L, hadError = false,
+                    refute = null, refuteUntil = 0L, hadError = false, penalized = false,
                     message = "Problème ${index + 1} sur ${ids.size} : $goal",
                 ),
             )
@@ -184,7 +185,7 @@ internal class PracticeSeries(
         val finished = cur + 1 >= line.size || pos.play(m).isCheckmate
         host.pulse(true)
         if (finished) {
-            val ok = pr.hintStage < 2 && !pr.hadError
+            val ok = pr.hintStage < 2 && !pr.penalized
             // Enregistrement à part du travail annulable de la série : passer tout de suite au problème suivant, ou fermer
             // la série, ne doit pas faire perdre la résolution.
             if (ok) {
@@ -198,8 +199,9 @@ internal class PracticeSeries(
                         tone = if (ok) Tone.GOOD else Tone.GOLD,
                         line = if (m == expected) line else Line(line.startFen, line.moves.take(cur) + m),
                         message = when {
+                            ok && pr.hadError -> "Résolu ! Votre erreur vous a seulement coûté un cœur."
                             ok -> "Résolu !"
-                            pr.hadError -> "Résolu, mais après une erreur : ce problème ne compte pas."
+                            pr.penalized -> "Résolu, mais après une erreur sans cœur restant : ce problème ne compte pas."
                             else -> "Résolu, mais avec l'indice qui montre le coup : ce problème ne compte pas."
                         },
                     ),
@@ -227,16 +229,24 @@ internal class PracticeSeries(
         host.pulse(false)
         val after = pos.play(m)
         practiceMissed = pos to m
+        // Un cœur couvre l'erreur (le problème compte encore s'il est résolu) ; sans cœur, le problème est manqué.
+        val heart = pr.hearts > 0
+        val left = if (heart) pr.hearts - 1 else 0
+        val extra = when {
+            heart -> " Vous perdez un cœur (${heartsText(left)}) : trouvez la solution, le problème comptera encore."
+            pr.heartsMax > 0 -> " Plus de cœur : ce problème ne comptera plus, mais trouvez la solution."
+            else -> " Ce problème ne comptera plus, mais trouvez la solution."
+        }
         _state.update { s ->
             s.copy(
                 practice = pr.copy(
-                    hadError = true, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m), refute = Refutation(after, m), refuteUntil = 0L, refuteHold = 0L,
+                    hadError = true, hearts = left, penalized = pr.penalized || !heart, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m), refute = Refutation(after, m), refuteUntil = 0L, refuteHold = 0L,
                     message = RefutationLogic.intro(pos, m),
                 ),
             )
         }
         practiceJob = scope.launch {
-            RefutationLogic.play(engine, pos, m, extra = " Ce problème ne comptera plus, mais trouvez la solution.") { refute, anim, message, until ->
+            RefutationLogic.play(engine, pos, m, extra = extra) { refute, anim, message, until ->
                 _state.update { s ->
                     val p2 = s.practice?.takeIf { it.refute != null } ?: return@update s
                     s.copy(practice = p2.copy(anim = anim ?: p2.anim, refute = refute, refuteUntil = until, refuteHold = REFUTE_HOLD, message = message))
@@ -383,9 +393,18 @@ internal class PracticeSeries(
     }
 
     companion object {
+        /** Séries avec des cœurs : les entraînements ; le placement et l'examen mesurent le niveau, sans droit à l'erreur. */
+        val HEARTS_KINDS = setOf(PracticeKind.LESSON, PracticeKind.ONLY_MOVE, PracticeKind.REVIEW)
         /** Problèmes d'une série de validation (et du « Seul coup »). */
         const val SIZE = 5
         /** Problèmes réussis pour valider une série. */
         const val PASS = 4
     }
+}
+
+/** « il vous reste 3 cœurs », « il ne vous reste aucun cœur ». */
+internal fun heartsText(n: Int): String = when (n) {
+    0 -> "il ne vous reste aucun cœur"
+    1 -> "il vous reste 1 cœur"
+    else -> "il vous reste $n cœurs"
 }
