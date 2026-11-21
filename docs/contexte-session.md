@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `3.1.0` (`versionCode = 51`), publiée en release GitHub `v3.1.0`.
+- **Version actuelle** : `3.1.1` (`versionCode = 52`), publiée en release GitHub `v3.1.1`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -172,6 +172,9 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
   mode enfant et paramètres). Interface adulte et commentaires de revue au vouvoiement ; mode enfant au tutoiement.
 - **2.7.0** : refonte de l'Académie, étape 2 sur 3 : finales jouables, réflexes, révisions espacées, paliers,
   placement et examens, variantes, QCM, répertoire, partie modèle et « Devinez le coup ».
+- **3.1.1** : plus de bandeau au-dessus de l'échiquier de l'Académie : suggestions dans le tiroir (« À faire maintenant »,
+  `AcademyViewModel.suggestions` affiché sur le bouton), révision et répertoire dans `sessionTitle`, carte de leçon sur
+  deux lignes compactes.
 - **3.1.0** : ergonomie de l'Académie : « Entraînements » dans l'en-tête (`AcademyTrainingsButton`, onglet 1), bandeau
   d'une ligne masqué s'il est vide, en-tête de séance (`sessionTitle` → `SessionTitle`), menu des variantes, tiroir
   avec séance surlignée et cartes de priorités, catalogue à filtres repliables et persistants (`setFilter` n'ouvre plus

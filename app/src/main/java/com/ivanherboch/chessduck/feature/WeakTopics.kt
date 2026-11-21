@@ -39,7 +39,8 @@ object WeakTopics {
         val analysis = Analysis.decodeAll(g.analysis, line.size + 1)
         val out = HashMap<ReviewTopic, Int>()
         for (i in 0 until line.size) {
-            ReviewComments.topic(g, line, i, analysis)?.let { out[it] = (out[it] ?: 0) + 1 }
+            // Une analyse incohérente (partie interrompue, ancienne version) ne doit pas empêcher tout le bilan.
+            runCatching { ReviewComments.topic(g, line, i, analysis) }.getOrNull()?.let { out[it] = (out[it] ?: 0) + 1 }
         }
         return out
     }

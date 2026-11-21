@@ -233,7 +233,8 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
             if (tab == 1) {
                 val avm = viewModel<AcademyViewModel>(factory = DuckViewModels.Factory)
                 val active by avm.trainingActive.collectAsStateWithLifecycle()
-                AcademyTrainingsButton(academyTrainings, active) { academyTrainings = true }
+                val suggestions by avm.suggestions.collectAsStateWithLifecycle()
+                AcademyTrainingsButton(academyTrainings, active, suggestions) { academyTrainings = true }
                 Spacer(Modifier.width(4.dp))
             }
             DuckIconButton(Icons.Rounded.Settings, "Paramètres", { showSettings = true })

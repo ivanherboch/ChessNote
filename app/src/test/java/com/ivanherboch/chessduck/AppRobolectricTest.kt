@@ -106,7 +106,7 @@ class AppRobolectricTest {
         rule.onNodeWithText("Travailler ce point dans l'Académie").performClick(); settle(3000)
         shot("2q_pont_academie")
         rule.onNodeWithText("Méthode : le contrôle anti-gaffe", substring = true, useUnmergedTree = true).assertExists()
-        rule.onNodeWithText("Entraînements").performClick(); settle(1500)
+        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1500)
         // Le bilan relit les parties en tâche de fond : on attend qu'il soit publié.
         rule.waitUntil(30_000) {
             shadowOf(Looper.getMainLooper()).idle()
@@ -120,7 +120,7 @@ class AppRobolectricTest {
         }
         settle(800); shot("2s_aveugle")
         // Tiroir rouvert pendant la séance : l'exercice en cours est surligné et annoncé « En cours ».
-        rule.onNodeWithText("Entraînements").performClick(); settle(1000)
+        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000)
         rule.onNodeWithText("Calcul à l'aveugle (palier 5) · En cours").performScrollTo()
             .assert(androidx.compose.ui.test.SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Selected, true))
         settle(400); shot("2t_entrainement_en_cours")
@@ -486,7 +486,7 @@ class AppRobolectricTest {
 
     /**
      * Grande police : « Entraînements » devient une icône de l'en-tête, sans chevaucher le titre ChessDuck ni sortir de
-     * l'écran ; le bandeau tient sur une ligne et abrège la puce « Conseillée ».
+     * l'écran ; aucune puce n'est posée entre la leçon et l'échiquier, la leçon conseillée est dans le tiroir.
      */
     @Test
     @Config(fontScale = 1.6f)
@@ -501,17 +501,17 @@ class AppRobolectricTest {
         }; settle(600)
         rule.onAllNodes(opera)[0].performClick(); settle(1200)
         shot("2p_bandeau_grande_police")
-        val trainings = desc("Entraînements").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val trainings = rule.onNodeWithContentDescription("Entraînements", substring = true).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
         val root = rule.onRoot().fetchSemanticsNode().boundsInRoot
         val title = rule.onNodeWithText("ChessDuck").fetchSemanticsNode().boundsInRoot
         assertTrue("« Entraînements » dépasse de l'écran", trainings.right <= root.right + 0.5f)
         assertTrue("« Entraînements » chevauche le titre", !trainings.overlaps(title))
-        val advised = rule.onNodeWithText("Conseillée", substring = true).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-        assertTrue("La puce « Conseillée » dépasse de l'écran", advised.right <= root.right + 0.5f)
-        // Une seule ligne : la puce tient dans la hauteur d'une puce (48 dp de cible tactile au plus).
-        assertTrue("Le bandeau passe à la ligne", advised.height <= 48f * rule.density.density + 0.5f)
+        // Plus aucun bandeau entre la leçon et l'échiquier : la leçon conseillée est proposée dans le tiroir.
+        assertTrue(rule.onAllNodesWithText("Conseillée", substring = true).fetchSemanticsNodes().isEmpty())
+        rule.onNodeWithContentDescription("Entraînements", substring = true).performClick(); settle(1200)
+        shot("2p_suggestions_grande_police")
         // On revient à la leçon conseillée (la leçon 1) : la leçon ouverte est mémorisée pour les tests suivants.
-        rule.onNodeWithText("Conseillée", substring = true).performClick(); settle(1200)
+        rule.onNodeWithText("Ouvrir la leçon conseillée").performScrollTo().performClick(); settle(1200)
     }
 
     @Test
@@ -527,24 +527,25 @@ class AppRobolectricTest {
         // Fin de la leçon : passerelle « Jouer la position » vers le Jeu Libre (partie d'entraînement).
         desc("Aller à la fin").performClick(); settle(800); shot("2e_fin_lecon")
         desc("Jouer cette position contre l'Ordinateur dans le Jeu Libre").performClick(); settle(2000)
-        rule.onNodeWithText("Position de la leçon", substring = true).assertExists(); shot("2f_jouer_position")
+        shot("2f_jouer_position")
+        rule.onNodeWithText("Position de la leçon", substring = true).assertExists()
         rule.onNodeWithText("Académie").performClick(); settle(1200)
         rule.onNodeWithText("Défi").performClick(); settle(1500); shot("2b_defi")
         desc("Ouvrir le catalogue des leçons").performClick(); settle(1200); shot("2c_catalogue_lecons")
         close(); settle(800)
         // Étape 2 : entraînements (réflexes, finales jouables), variantes, QCM et partie modèle.
-        rule.onNodeWithText("Entraînements").performClick(); settle(1000); shot("2g_entrainements")
+        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000); shot("2g_entrainements")
         rule.onNodeWithText("Quelle est la menace ?").performClick(); settle(1000)
         rule.waitUntil(20_000) { rule.onAllNodesWithText("Question 1 sur", substring = true).fetchSemanticsNodes().isNotEmpty() }
         settle(500); shot("2h_menace")
         rule.onNodeWithText("Arrêter").performClick(); settle(600)
-        rule.onNodeWithText("Entraînements").performClick(); settle(1000)
+        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000)
         rule.onNodeWithText("Puis-je prendre ?").performClick(); settle(1000)
         rule.waitUntil(20_000) { rule.onAllNodesWithText("Oui, je prends").fetchSemanticsNodes().isNotEmpty() }
         settle(500); shot("2i_prise")
         rule.onNodeWithText("Oui, je prends").performClick(); settle(600); shot("2j_prise_reponse")
         rule.onNodeWithText("Arrêter").performClick(); settle(600)
-        rule.onNodeWithText("Entraînements").performClick(); settle(1000)
+        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000)
         rule.onNodeWithText("Gagnez : Roi et tour contre roi").performScrollTo().performClick(); settle(1500); shot("2k_finale")
         rule.onNodeWithText("Arrêter").performClick(); settle(600)
         rule.onNodeWithText("Guidé").performClick(); settle(800)

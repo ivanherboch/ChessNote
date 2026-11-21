@@ -1,3 +1,13 @@
+## ChessDuck 3.1.1 — l'échiquier de l'Académie au plus grand
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Plus rien entre la leçon et l'échiquier : les puces « Conseillée », « Reprendre » et « Révisions du jour » passent dans le tiroir « Entraînements », en tête, sous « À faire maintenant ». Le bouton de l'en-tête affiche leur nombre (« Entraînements · 1 »).
+- La leçon conseillée est aussi marquée « Conseillée » dans le catalogue.
+- Pendant les révisions et le répertoire, la progression (« Révision 1 sur 3 ») s'affiche dans l'en-tête de séance, avec la croix pour quitter.
+- La carte de la leçon tient sur deux lignes compactes : le titre, puis la catégorie, le palier, la progression et les étoiles en petit.
+- En mode Défi, l'échiquier occupe désormais toute la largeur d'un téléphone.
+
 ## ChessDuck 3.1.0 — une Académie plus lisible, un échiquier plus grand
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

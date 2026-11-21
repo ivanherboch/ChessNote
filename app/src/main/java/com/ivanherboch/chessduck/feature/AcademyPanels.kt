@@ -94,52 +94,6 @@ internal fun StarRow(stars: Int, modifier: Modifier = Modifier, size: Dp = 16.dp
  * entraînements. Pendant une séance (révisions, répertoire), il en montre l'avancement et permet de la quitter.
  */
 /**
- * Bandeau contextuel sous la carte de la leçon : révisions du jour, leçon à reprendre, leçon conseillée, ou barre
- * d'une séance de révision / de répertoire. Une seule ligne ; rien du tout (0 dp) quand il n'y a rien d'utile.
- * Chaque puce se partage la largeur et abrège son libellé, sans jamais passer à la ligne.
- */
-@Composable
-internal fun AcademyBanner(vm: AcademyViewModel, s: AcademyState, home: AcademyHome) {
-    val c = LocalDuck.current
-    val r = s.review
-    val rep = s.repertoire
-    val cont = home.continueId
-    val rec = home.recommended?.takeIf { it != s.lessonId && it != cont }
-    if (r == null && rep == null && home.due.isEmpty() && cont == null && rec == null) return
-    Row(
-        Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val share = Modifier.weight(1f, fill = false)
-        when {
-            // Barre de séance : la progression est une information, seul « Quitter » est un bouton.
-            r != null -> {
-                InfoPill("Révision ${r.index + 1} sur ${r.queue.size}", share, icon = Icons.Rounded.School, accent = c.gold)
-                DuckChip("Quitter", false, vm::closeReviews, icon = Icons.Rounded.Close)
-            }
-            rep != null -> {
-                InfoPill("Répertoire ${rep.index + 1} sur ${rep.items.size}", share, icon = Icons.Rounded.School, accent = c.blue)
-                DuckChip("Quitter", false, vm::closeRepertoire, icon = Icons.Rounded.Close)
-            }
-            else -> {
-                if (home.due.isNotEmpty()) DuckChip(
-                    "Révisions : ${home.due.size}", false, vm::startReviews,
-                    share.semantics { contentDescription = "Révisions du jour : ${home.due.size}. Commencer" }, accent = c.gold,
-                )
-                cont?.let { id ->
-                    val t = Lessons.byId(id).title
-                    DuckChip("Reprendre : $t", false, { vm.open(id) }, share.semantics { contentDescription = "Reprendre la leçon : $t" }, accent = c.blue)
-                }
-                rec?.let { id ->
-                    val t = Lessons.byId(id).title
-                    DuckChip("Conseillée : $t", false, { vm.open(id) }, share.semantics { contentDescription = "Leçon conseillée : $t" }, accent = c.green)
-                }
-            }
-        }
-    }
-}
-
-/**
  * En-tête d'une séance (entraînement, validation, révision, finale, question) : il remplace le sélecteur de leçon et
  * les modes Guidé/Défi, pour qu'on sache toujours ce que montre l'échiquier. Une croix compacte revient à la leçon.
  */
@@ -165,17 +119,25 @@ internal fun TrainingHeader(t: SessionTitle, onClose: () -> Unit) {
  * qu'une séance est en cours. Avec une très grande police, il se réduit à son icône pour ne pas chevaucher le titre.
  */
 @Composable
-fun AcademyTrainingsButton(open: Boolean, active: Boolean, onClick: () -> Unit) {
+fun AcademyTrainingsButton(open: Boolean, active: Boolean, suggestions: Int, onClick: () -> Unit) {
     val c = LocalDuck.current
     val on = open || active
-    val desc = "Entraînements" + if (active) ", séance en cours" else ""
+    val desc = "Entraînements" + (if (active) ", séance en cours" else "") +
+        if (suggestions > 0) ", $suggestions suggestion${if (suggestions > 1) "s" else ""} à faire maintenant" else ""
     if (LocalDensity.current.fontScale > 1.3f) {
-        DuckIconButton(Icons.Rounded.School, desc, onClick, accent = c.gold, selected = on, badge = if (active) "•" else null)
+        DuckIconButton(
+            Icons.Rounded.School, desc, onClick, accent = c.gold, selected = on,
+            badge = when {
+                suggestions > 0 -> "$suggestions"
+                active -> "•"
+                else -> null
+            },
+        )
     } else {
         DuckButton(
-            "Entraînements", onClick, Modifier.semantics { selected = on }, accent = c.gold, height = 44.dp,
-            icon = Icons.Rounded.School, variant = if (on) ButtonVariant.PRIMARY else ButtonVariant.OUTLINED,
-            contentDescription = if (active) desc else null,
+            if (suggestions > 0) "Entraînements · $suggestions" else "Entraînements", onClick, Modifier.semantics { selected = on },
+            accent = c.gold, height = 44.dp, icon = Icons.Rounded.School, variant = if (on) ButtonVariant.PRIMARY else ButtonVariant.OUTLINED,
+            contentDescription = if (active || suggestions > 0) desc else null,
         )
     }
 }
@@ -196,6 +158,23 @@ internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, s: AcademyS
             color = c.muted, style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.semantics { contentDescription = "Votre palier : ${levelSpoken(home.level)}." + if (home.placementDone) "" else " Un court test de placement peut l'ajuster." },
         )
+        // À faire maintenant : révisions du jour, leçon à reprendre, leçon conseillée. Placées ici plutôt qu'au-dessus
+        // de l'échiquier, elles ne prennent aucune place à la grille.
+        val cont = home.continueId
+        val rec = home.recommended?.takeIf { it != s.lessonId && it != cont }
+        if (home.due.isNotEmpty() || cont != null || rec != null) {
+            SectionTitle("À faire maintenant")
+            if (home.due.isNotEmpty()) SuggestionCard(
+                "Révisions du jour : ${home.due.size}", "Rejouez en Défi les leçons à revoir aujourd'hui.", "Commencer les révisions",
+                c.gold, go(vm::startReviews),
+            )
+            cont?.let { id ->
+                SuggestionCard("Reprendre", Lessons.byId(id).title, "Reprendre cette leçon", c.blue, go { vm.open(id) })
+            }
+            rec?.let { id ->
+                SuggestionCard("Conseillée : ${Lessons.byId(id).title}", "La prochaine leçon de votre palier.", "Ouvrir la leçon conseillée", c.green, go { vm.open(id) })
+            }
+        }
         // Bilan des thèmes faibles : des cartes à part, avant le catalogue des exercices.
         SectionTitle("Vos 3 priorités")
         if (priorities.isEmpty()) {
@@ -240,6 +219,20 @@ internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, s: AcademyS
             "Examen du palier ${levelName(examLevel)} : 10 positions", go(vm::startExam), active = pk == PracticeKind.EXAM,
             done = examLevel in home.examsPassed,
         )
+    }
+}
+
+/** Carte « À faire maintenant » : ce qui est proposé, pourquoi, et le bouton pour y aller. */
+@Composable
+private fun SuggestionCard(title: String, detail: String, action: String, accent: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
+    val c = LocalDuck.current
+    Column(
+        Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
+            .border(1.dp, accent, RoundedCornerShape(DuckRadius.M)).padding(12.dp),
+    ) {
+        Text(title, color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
+        Text(detail, color = c.muted, style = MaterialTheme.typography.bodyMedium)
+        DuckButton(action, onClick, Modifier.fillMaxWidth().padding(top = 8.dp), accent = accent, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
     }
 }
 

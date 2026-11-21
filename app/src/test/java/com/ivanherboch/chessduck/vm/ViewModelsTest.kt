@@ -452,6 +452,14 @@ class ViewModelsTest {
         assertEquals("Question de fin de leçon", vm.sessionTitle(vm.state.value, null, null)!!.label)
         vm.closeTraining()
         assertNull(vm.state.value.quiz)
+        // La leçon conseillée (la leçon 1) n'est plus au-dessus de l'échiquier : elle compte comme suggestion du tiroir.
+        val sugg = backgroundScope.launch { vm.suggestions.collect {} }
+        advanceUntilIdle()
+        assertEquals(1, vm.suggestions.value)
+        vm.open(1); advanceUntilIdle()
+        assertEquals(0, vm.suggestions.value)
+        vm.open(2); advanceUntilIdle()
+        sugg.cancel()
         // Filtrer une catégorie ne change pas la leçon ouverte.
         vm.setFilter(com.ivanherboch.chessduck.content.LessonCategory.ENDGAME)
         assertEquals(2, vm.state.value.lessonId)

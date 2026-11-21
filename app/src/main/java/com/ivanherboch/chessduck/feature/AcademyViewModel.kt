@@ -1053,12 +1053,26 @@ class AcademyViewModel(
             pr?.kind == PracticeKind.REVIEW -> SessionTitle("Révision · problèmes", l.title)
             pr != null -> SessionTitle("Validation · ${if (pr.ids.isEmpty()) PRACTICE_SIZE else pr.ids.size} problèmes", l.title)
             s.quiz != null -> SessionTitle("Question de fin de leçon", l.title)
+            // Révisions du jour et répertoire : la progression s'affiche dans l'en-tête, pas au-dessus de l'échiquier.
+            s.review != null -> SessionTitle("Révision ${s.review.index + 1} sur ${s.review.queue.size}", l.title)
+            s.repertoire != null -> SessionTitle(
+                "Répertoire ${if (s.repertoire.white) "Blancs" else "Noirs"} · ${s.repertoire.index + 1} sur ${s.repertoire.items.size}", l.title,
+            )
             else -> null
         }
     }
 
     /** Titre de l'entraînement en cours (voir [sessionTitle]). */
     fun trainingTitle(s: AcademyState, eg: EndgameSession?, rx: ReflexSession?): String? = sessionTitle(s, eg, rx)?.title
+
+    /**
+     * Suggestions « À faire maintenant » du tiroir (révisions du jour, leçon à reprendre, leçon conseillée autre que
+     * celle ouverte) : leur nombre s'affiche sur le bouton « Entraînements » de l'en-tête.
+     */
+    val suggestions: StateFlow<Int> = combine(home, state.map { it.lessonId }.distinctUntilChanged()) { h, current ->
+        val rec = h.recommended?.takeIf { it != current && it != h.continueId }
+        (if (h.due.isNotEmpty()) 1 else 0) + (if (h.continueId != null) 1 else 0) + (if (rec != null) 1 else 0)
+    }.distinctUntilChanged().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     /** Une séance lancée depuis le tiroir « Entraînements » (ou une révision) est en cours : le bouton est surligné. */
     val trainingActive: StateFlow<Boolean> = combine(state, endgame.state, reflex.state) { s, eg, rx ->
@@ -1071,6 +1085,8 @@ class AcademyViewModel(
         closeReflex()
         closePractice()
         closeQuiz()
+        closeReviews()
+        closeRepertoire()
     }
 
     // ---- Réflexes ----

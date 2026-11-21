@@ -73,6 +73,7 @@ internal fun LessonCatalog(
 ) {
     val c = LocalDuck.current
     val progress by vm.progress.collectAsStateWithLifecycle()
+    val home by vm.home.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf("") }
     // Catégorie : filtre du ViewModel (conservé, il oriente aussi Leçon précédente / suivante) ; il n'ouvre aucune leçon.
     val cat = s.filter
@@ -156,6 +157,7 @@ internal fun LessonCatalog(
         }
         items(items, key = { it.id }) { item ->
             val current = item.id == s.lessonId
+            val advised = item.id == home.recommended && !current
             val done = item.id in mastered
             val stars = progress[item.id]?.stars ?: 0
             // Révision espacée : « À revoir » aujourd'hui, ou dans combien de jours.
@@ -172,7 +174,8 @@ internal fun LessonCatalog(
                     .semantics {
                         stateDescription = (if (done) "maîtrisée" else "à maîtriser") +
                             (if (stars > 0) ", $stars étoile${if (stars > 1) "s" else ""} sur 3" else "") + ", palier ${levelSpoken(item.level)}" +
-                            (if (srsText != null) ", ${srsText.lowercase()}" else "") + if (current) ", leçon en cours" else ""
+                            (if (srsText != null) ", ${srsText.lowercase()}" else "") + (if (current) ", leçon en cours" else "") +
+                            if (advised) ", leçon conseillée" else ""
                     }
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -182,8 +185,9 @@ internal fun LessonCatalog(
                     else Text("${item.id}", color = c.goldText, style = MaterialTheme.typography.labelLarge)
                 }
                 Column(Modifier.padding(start = 8.dp).weight(1f)) {
-                    if (current || stars > 0 || srsText != null) Row(Modifier.padding(bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (current || advised || stars > 0 || srsText != null) Row(Modifier.padding(bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (current) InfoPill("En cours", accent = c.blue, modifier = Modifier.padding(end = 6.dp))
+                        if (advised) InfoPill("Conseillée", accent = c.green, modifier = Modifier.padding(end = 6.dp))
                         if (stars > 0) StarRow(stars, size = 14.dp)
                         if (srsText != null) Text("  $srsText", color = if (days == 0) c.goldText else c.muted, style = MaterialTheme.typography.labelSmall)
                     }

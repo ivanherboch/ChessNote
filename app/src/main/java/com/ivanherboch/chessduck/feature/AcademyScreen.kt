@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.Arrangement
 import android.content.Intent
 import android.speech.tts.TextToSpeech
@@ -145,26 +146,27 @@ fun AcademyScreen(
                                 ". ${mastered.size} leçons maîtrisées sur $total. Ouvrir le catalogue des leçons"
                             onClick { catalog = true; true }
                         }
-                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                        .padding(horizontal = 10.dp, vertical = 3.dp),
                 ) {
-                    // Badges aérés : catégorie (abrégée si besoin) et palier à gauche, progression à droite.
+                    // Deux lignes compactes pour laisser le maximum de hauteur à l'échiquier : le titre, puis la
+                    // catégorie, le palier, la progression, la maîtrise et les étoiles en petit.
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        InfoPill(l.category.label, Modifier.weight(1f, fill = false), accent = c.blue)
-                        Text("P${l.level}", color = c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 8.dp))
-                        Spacer(Modifier.weight(0.01f).padding(start = 8.dp))
-                        Text("${mastered.size}/$total", color = c.goldText, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 8.dp))
+                        Text("${l.id}. ${l.title}", color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                         Icon(Icons.Rounded.ExpandMore, contentDescription = null, tint = c.muted, modifier = Modifier.size(20.dp))
                     }
-                    // Titre, puis maîtrise et étoiles à sa suite.
-                    Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("${l.id}. ${l.title}", color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f, fill = false))
-                        if (l.id in mastered) Icon(Icons.Rounded.CheckCircle, "Maîtrisée", tint = c.greenText, modifier = Modifier.padding(start = 6.dp).size(18.dp))
-                        if (stars > 0) StarRow(stars, Modifier.padding(start = 6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "${l.category.label} · P${l.level}", color = c.blueText, style = MaterialTheme.typography.labelMedium,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
+                        )
+                        if (l.id in mastered) Icon(Icons.Rounded.CheckCircle, "Maîtrisée", tint = c.greenText, modifier = Modifier.padding(start = 6.dp).size(16.dp))
+                        if (stars > 0) StarRow(stars, Modifier.padding(start = 6.dp), size = 14.dp)
+                        Spacer(Modifier.weight(0.01f))
+                        Text("${mastered.size}/$total", color = c.goldText, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 8.dp))
                     }
                 }
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Leçon suivante", vm::nextLesson)
             }
-            AcademyBanner(vm, s, home)
             Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 DuckSegmentedRow(
                     listOf("Guidé", if (model) "Devinez le coup" else "Défi"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) },

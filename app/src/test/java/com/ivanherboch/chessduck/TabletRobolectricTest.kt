@@ -100,7 +100,7 @@ class TabletRobolectricTest {
     fun tabletLandscape() {
         settle(2500); shot("t1_notation")
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("t2_academie")
-        rule.onNodeWithText("Entraînements").performClick(); settle(1000); shot("t9_entrainements")
+        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000); shot("t9_entrainements")
         rule.onNodeWithText("Gagnez : Roi et dame contre roi").performScrollTo().performClick(); settle(1500); shot("t10_finale")
         rule.onNodeWithText("Arrêter").performClick(); settle(600)
         rule.onNodeWithText("Problèmes").performClick(); settle(2500); shot("t3_problemes")
