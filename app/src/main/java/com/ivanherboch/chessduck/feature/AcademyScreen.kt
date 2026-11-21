@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.material.icons.rounded.Info
+import com.ivanherboch.chessduck.ui.HintButton
+import com.ivanherboch.chessduck.ui.HintIconButton
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.heightIn
 import com.ivanherboch.chessduck.ui.LocalIsTwoPane
@@ -63,7 +66,6 @@ import com.ivanherboch.chessduck.ui.DuckRadius
 import com.ivanherboch.chessduck.ui.DuckSegmentedRow
 import com.ivanherboch.chessduck.ui.EqualRow
 import com.ivanherboch.chessduck.ui.FeedbackCard
-import com.ivanherboch.chessduck.ui.HintButton
 import com.ivanherboch.chessduck.ui.InfoPill
 import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.LocalFeedback
@@ -133,7 +135,7 @@ fun AcademyScreen(
     val play: (String, Boolean) -> Unit = if (model) { fen, _ -> playChoice = fen } else onPlayPosition
     val bridges: @Composable () -> Unit = { LessonBridges(l, endFen, onTrainTheme, play) }
     // Partie modèle : « Jouer cette position » à chaque coup (hors jugement et réfutation).
-    val modelPlay: (@Composable () -> Unit)? = if (model && endFen != null && !s.judging && s.refute == null) ({ PlayPositionButton { playChoice = endFen } }) else null
+    val modelPlay = model && endFen != null && !s.judging && s.refute == null && !s.done
 
     // Explication brève quand on touche une pièce qui ne peut pas bouger ; effacée au coup suivant.
     var stuck by remember(
@@ -198,6 +200,12 @@ fun AcademyScreen(
                 )
                 // Les variantes d'une ouverture se choisissent ici (mode Guidé), sans rangée de plus sous l'échiquier.
                 if (!s.challenge && l.variants.isNotEmpty()) VariantMenu(l, s.variant, vm::setVariant)
+                // Fiche complète (conditions, idées, pièges) et, pour une partie modèle, « Jouer cette position » à chaque
+                // coup : des icônes ici, pour que l'échiquier garde toute sa taille.
+                if (hasBrief(l)) DuckIconButton(Icons.Rounded.Info, "Fiche de la leçon : idées et pièges", { brief = true }, accent = c.blue)
+                if (modelPlay) DuckIconButton(
+                    Icons.Rounded.SportsEsports, "Jouer cette position contre l'Ordinateur, avec le camp de votre choix", { playChoice = endFen }, accent = c.blue,
+                )
                 // Le retournement ne concerne que l'échiquier de la leçon : il n'apparaît pas pendant une séance.
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
             }
@@ -370,12 +378,7 @@ fun AcademyScreen(
                         text, tone, Modifier.padding(top = 4.dp).then(if (wide) Modifier.heightIn(max = 220.dp) else Modifier.weight(1f)), title = title,
                         action = when {
                             cur == line.size -> bridges
-                            cur == 0 && hasBrief(l) -> ({ LessonBriefButton(l) { brief = true } })
-                            // Arrêt « À vous » : un indice (la pièce à jouer) avant de découvrir le coup avec Lecture.
-                            asking -> ({
-                                HintButton(s.hintStage, vm::guideHint, Modifier.fillMaxWidth().padding(top = 6.dp), enabled = !s.judging && s.hintStage == 0)
-                            })
-                            else -> modelPlay
+                            else -> null
                         },
                     )
                     if (wide) MoveTable(line, cur, emptyList(), vm::jump, Modifier.padding(top = 6.dp).weight(1f))
@@ -406,7 +409,9 @@ fun AcademyScreen(
                             },
                         )
                         // Avec le haut-parleur, quatre boutons : Début et Fin en icônes pour que rien ne se coupe sur 360 dp.
-                        DuckIconButton(Icons.Rounded.SkipPrevious, "Revenir au début", vm::rewind, enabled = cur > 0)
+                        // Arrêt « À vous » : un indice (la pièce à jouer) avant de découvrir le coup avec Lecture.
+                        if (asking) HintIconButton(s.hintStage, vm::guideHint, enabled = !s.judging && s.hintStage == 0)
+                        else DuckIconButton(Icons.Rounded.SkipPrevious, "Revenir au début", vm::rewind, enabled = cur > 0)
                         // Fin de leçon : le QCM ou la finale à jouer prend la place de Lecture.
                         if (cur < line.size || !EndOfLessonAction(vm, l)) DuckButton(
                             if (s.playing) "Pause" else "Lecture", vm::togglePlay, Modifier.weight(1f), accent = c.blue, filled = true,
@@ -431,11 +436,7 @@ fun AcademyScreen(
                     }
                     FeedbackCard(
                         stuck ?: s.message, if (stuck != null) Tone.GOLD else s.tone, Modifier.padding(top = 4.dp).weight(1f), title = title,
-                        action = when {
-                            s.done && s.review == null && s.repertoire == null -> bridges
-                            !s.done -> modelPlay
-                            else -> null
-                        },
+                        action = if (s.done && s.review == null && s.repertoire == null) bridges else null,
                     )
                     if (s.refute != null && s.refuteUntil > 0) RefuteCountdown(s.refuteUntil, s.refuteHold, vm::holdRefutation)
                     EqualRow(Modifier.padding(vertical = 6.dp)) {

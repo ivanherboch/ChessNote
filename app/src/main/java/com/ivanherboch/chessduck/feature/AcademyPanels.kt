@@ -547,16 +547,6 @@ internal fun ColumnScope.ReflexPanel(vm: AcademyViewModel, rx: ReflexSession) {
     }
 }
 
-/** « Jouer cette position » seul (parties modèles, à chaque coup) : ouvre le choix du camp. */
-@Composable
-internal fun PlayPositionButton(onClick: () -> Unit) {
-    val c = LocalDuck.current
-    DuckButton(
-        "Jouer cette position", onClick, Modifier.fillMaxWidth().padding(top = 6.dp), accent = c.blue, variant = ButtonVariant.OUTLINED,
-        icon = Icons.Rounded.SportsEsports, contentDescription = "Jouer cette position contre l'Ordinateur dans le Jeu Libre, avec le camp de votre choix",
-    )
-}
-
 /** Choix du camp avant d'ouvrir une position de partie modèle dans le Jeu Libre. */
 @Composable
 internal fun ChooseColorSheet(fen: String, l: Lesson, onPick: (Boolean) -> Unit, onClose: () -> Unit) {
@@ -586,16 +576,6 @@ internal fun ChooseColorSheet(fen: String, l: Lesson, onPick: (Boolean) -> Unit,
 
 /** La leçon a-t-elle une fiche détaillée (conditions, idées, pièges) à ouvrir dans un tiroir ? */
 internal fun hasBrief(l: Lesson) = l.conditions.isNotEmpty() || l.ideas.isNotEmpty() || l.traps.isNotEmpty()
-
-/** Bouton compact qui ouvre la fiche complète de la leçon, sous le résumé de la position de départ. */
-@Composable
-internal fun LessonBriefButton(l: Lesson, onOpen: () -> Unit) {
-    val c = LocalDuck.current
-    DuckButton(
-        if (l.conditions.isNotEmpty() && l.ideas.isEmpty() && l.traps.isEmpty()) "Conditions de la finale" else "Fiche complète (idées et pièges)",
-        onOpen, Modifier.fillMaxWidth().padding(top = 6.dp), accent = c.blue, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Visibility,
-    )
-}
 
 /** Fiche de la leçon dans un tiroir : objectif, règle, conditions, idées et pièges (l'échiquier garde toute sa taille). */
 @Composable
