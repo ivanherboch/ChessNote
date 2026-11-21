@@ -271,15 +271,16 @@ fun AcademyScreen(
                         lastMove = t?.lastMove,
                         arrows = when {
                             cp != null -> listOf(Arrow(cp.capture.from, cp.capture.to, c.blue))
-                            t != null && rxs.answered -> listOf(Arrow(t.attacker, t.target, c.red))
+                            t != null && rxs.answered -> t.threats.map { (to, from) -> Arrow(from, to, c.red) }
                             b != null && rxs.answered -> listOf(Arrow(b.expected.from, b.expected.to, c.green))
                             else -> emptyList()
                         },
                         marks = when {
-                            t != null && rxs.answered -> listOfNotNull(t.target to c.green, rxs.tapped.takeIf { it >= 0 && it != t.target }?.let { it to c.red })
+                            t != null && rxs.answered -> t.targets.map { it to c.green } + listOfNotNull(rxs.tapped.takeIf { it >= 0 && it !in t.targets }?.let { it to c.red })
                             b != null && !rxs.answered && rxs.from >= 0 -> listOf(rxs.from to c.select)
                             // Calcul à l'aveugle, réponse fausse : la case d'arrivée jouée en rouge, la flèche verte montre le bon coup.
-                            b != null && rxs.answered && rxs.tapped >= 0 && !(rxs.from == b.expected.from && rxs.tapped == b.expected.to) ->
+                            b != null && rxs.answered && rxs.tapped >= 0 && rxs.tone == Tone.BAD &&
+                                !(rxs.from == b.expected.from && rxs.tapped == b.expected.to) ->
                                 listOf(rxs.tapped to c.red)
                             else -> emptyList()
                         },

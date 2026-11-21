@@ -26,9 +26,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.random.Random
 
-/** « Quelle est la menace ? » : l'adversaire vient de jouer [lastMove] ; il menace de prendre la pièce en [target]. */
+/**
+ * « Quelle est la menace ? » : l'adversaire vient de jouer [lastMove] ; il menace de prendre la pièce en [target]
+ * (attaquée depuis [attacker]). [threats] : toutes les pièces menacées (cible, attaquant) ; une fourchette en compte
+ * plusieurs, et toucher l'une d'elles est juste.
+ */
 @Immutable
-data class ThreatItem(val position: Position, val lastMove: Move, val target: Int, val attacker: Int, val explanation: String)
+data class ThreatItem(
+    val position: Position, val lastMove: Move, val target: Int, val attacker: Int, val explanation: String,
+    val threats: List<Pair<Int, Int>> = listOf(target to attacker),
+) {
+    val targets: List<Int> get() = threats.map { it.first }
+}
 
 /** « Puis-je prendre ? » : la prise [capture] est-elle bonne ([good]) ? */
 @Immutable
@@ -52,23 +61,59 @@ object ReflexDrills {
     private fun points(n: Int) = "$n point${if (n > 1) "s" else ""}"
 
     /**
-     * Menace tirée d'un problème Lichess : après la faute (1er coup) et le coup gagnant (2e coup), l'élève a le trait
-     * avec le camp qui a fait la faute. La menace est la prise que la solution réalise au 4e coup, sur une pièce qui
-     * était déjà sur sa case (l'élève ne l'a pas déplacée en répondant).
+     * Menace tirée d'un problème Lichess : après la faute (1er coup) et le coup de l'adversaire (2e coup), l'élève a le
+     * trait avec le camp qui a fait la faute. La menace se lit sur la position affichée, et non dans la suite de la
+     * solution (une enfilade y prendrait la pièce de derrière, alors que c'est celle de devant qui est attaquée) :
+     * une pièce de l'élève est menacée si l'adversaire, s'il rejouait, pouvait la prendre en gagnant du matériel
+     * (pièce non protégée, ou de plus grande valeur que celle qui la prend). Sans menace de ce genre, l'exercice est écarté.
      */
     fun threatFrom(p: Puzzle): ThreatItem? {
         val line = runCatching { Line.fromUci(p.fen, p.moves) }.getOrNull() ?: return null
-        if (line.size < 4) return null
-        val pos = line.positions[2]
-        val follow = line.moves[3]
-        if (!line.positions[3].isCapture(follow) || line.moves[2].from == follow.to || line.moves[2].to == follow.to) return null
-        val victim = pos[follow.to]
-        val attacker = pos[follow.from]
-        if (victim == 0 || attacker == 0 || isWhite(victim) != pos.whiteToMove || isWhite(attacker) == pos.whiteToMove) return null
-        if (pieceType(victim) == KING) return null
-        val text = "${PieceLexiconFr.definiteCapitalized(pieceType(attacker))} ${sqName(follow.from)} menace de prendre " +
-            "votre ${PieceLexiconFr.name(pieceType(victim))} en ${sqName(follow.to)}."
-        return ThreatItem(pos, line.moves[1], follow.to, follow.from, text)
+        if (line.size < 2) return null
+        val pos = line.positions[2.coerceAtMost(line.size)]
+        val threats = threatsIn(pos)
+        if (threats.isEmpty()) return null
+        // Cible principale : la pièce la plus précieuse menacée (puis celle que prend l'attaquant le moins cher).
+        val (target, attacker) = threats.maxWith(compareBy({ value(pieceType(pos[it.first])) }, { -value(pieceType(pos[it.second])) }))
+        val text = threats.joinToString(" ") { (t, a) ->
+            val victim = pieceType(pos[t])
+            val by = pieceType(pos[a])
+            val defended = defended(pos, t, a)
+            "${PieceLexiconFr.definiteCapitalized(by)} ${sqName(a)} menace de prendre votre ${PieceLexiconFr.name(victim)} en ${sqName(t)}" +
+                if (!defended) " : ${if (PieceLexiconFr.isFeminine(victim)) "elle" else "il"} n'est pas protégé${if (PieceLexiconFr.isFeminine(victim)) "e" else ""}."
+                else ", qui vaut plus que ${PieceLexiconFr.definite(by)}."
+        }
+        return ThreatItem(pos, line.moves[1], target, attacker, text, threats)
+    }
+
+    /**
+     * Pièces menacées du camp au trait dans [pos] : (case de la pièce, case de l'attaquant le moins cher), pour chaque
+     * prise adverse qui gagnerait du matériel si l'adversaire rejouait. Le roi n'est pas compté (c'est un échec).
+     */
+    fun threatsIn(pos: Position): List<Pair<Int, Int>> {
+        // Position où l'adversaire aurait le trait ; si son roi y est en échec, elle n'a pas de sens.
+        val q = opponentToMove(pos) ?: return emptyList()
+        if (q.inCheck) return emptyList()
+        return q.legalMoves.asSequence()
+            .filter { m -> q[m.to] != 0 && isWhite(q[m.to]) == pos.whiteToMove && pieceType(q[m.to]) != KING && m.promo == 0 }
+            .filter { m -> value(pieceType(q[m.to])) - (if (defended(pos, m.to, m.from)) value(pieceType(q[m.from])) else 0) > 0 }
+            .groupBy { it.to }
+            .map { (t, ms) -> t to ms.minBy { value(pieceType(q[it.from])) }.from }
+    }
+
+    /** Même position, l'adversaire ayant le trait (« et s'il rejouait ? ») ; null si elle ne se lit pas. */
+    fun opponentToMove(pos: Position): Position? {
+        val f = pos.toFen().split(' ').toMutableList()
+        f[1] = if (f[1] == "w") "b" else "w"
+        f[3] = "-"
+        return runCatching { Position.fromFen(f.joinToString(" ")) }.getOrNull()
+    }
+
+    /** La pièce en [target] (camp au trait de [pos]) pourrait-elle être reprise après sa prise par la pièce en [from] ? */
+    private fun defended(pos: Position, target: Int, from: Int): Boolean {
+        val q = opponentToMove(pos) ?: return true
+        val m = q.legalMoves.firstOrNull { it.from == from && it.to == target } ?: return true
+        return q.play(m).legalMoves.any { it.to == target }
     }
 
     /**
@@ -194,7 +239,7 @@ class ReflexTrainer(
                 exclude = id
                 val p = runCatchingSuspend { puzzles.byId(id) }.getOrNull() ?: return@repeat
                 val item: Any? = when (kind) {
-                    ReflexKind.THREAT -> ReflexDrills.threatFrom(p)
+                    ReflexKind.THREAT -> ReflexDrills.threatFrom(p)?.takeIf { threatConfirmed(it) }
                     ReflexKind.CAPTURE -> runCatching { Line.fromUci(p.fen, p.moves).positions[1] }.getOrNull()
                         ?.let { ReflexDrills.captureFrom(it, random) }?.takeIf { confirmed(it) }
                     ReflexKind.BLIND -> ReflexDrills.blindFrom(p)
@@ -208,6 +253,19 @@ class ReflexTrainer(
             _state.update { it?.copy(total = queue.size, loading = false) }
             show(0)
         }
+    }
+
+    /**
+     * Menace : si l'adversaire rejouait, l'Ordinateur prendrait-il bien l'une des pièces annoncées ? Sinon, il a mieux
+     * (un mat, une attaque plus forte) et la question « quelle pièce menace-t-il ? » serait trompeuse : on l'écarte.
+     * En échec (fourchette avec échec, par exemple), la règle matérielle suffit.
+     */
+    private suspend fun threatConfirmed(t: ThreatItem): Boolean {
+        if (!engineOk || t.position.inCheck) return true
+        val q = ReflexDrills.opponentToMove(t.position) ?: return false
+        val best = runCatchingSuspend { withTimeoutOrNull(2_000) { engine.search(q.toFen(), 200).best } }.getOrNull()
+            ?: return true.also { engineOk = false }
+        return best.to in t.targets
     }
 
     /** L'Ordinateur confirme-t-il le verdict ? (sans réponse du moteur, on garde le verdict matériel) */
@@ -256,7 +314,7 @@ class ReflexTrainer(
         s.blind?.let { b -> return blindTap(s, b, sq) }
         val t = s.threat ?: return
         if (s.answered) return
-        val ok = sq == t.target
+        val ok = sq in t.targets
         _state.value = s.copy(
             answered = true, tapped = sq, results = s.results + ok, tone = if (ok) Tone.GOOD else Tone.BAD, pulse = pulse(ok),
             message = (if (ok) "Bien vu ! " else "Ce n'est pas la pièce menacée. ") + t.explanation,
@@ -274,11 +332,15 @@ class ReflexTrainer(
             )
             return
         }
-        val right = s.from == b.expected.from && sq == b.expected.to
+        // Le coup attendu, ou tout autre mat quand il mate (deux pièces peuvent mater, par exemple Qxh7# et Rxh7#).
+        val played = b.after.legalMoves.firstOrNull { it.from == s.from && it.to == sq }
+        val right = (s.from == b.expected.from && sq == b.expected.to) ||
+            (played != null && b.after.play(b.expected).isCheckmate && b.after.play(played).isCheckmate)
         val ok = right && !s.shown
         _state.value = s.copy(
             answered = true, tapped = sq, results = s.results + ok, tone = if (right) Tone.GOOD else Tone.BAD, pulse = pulse(right),
             message = when {
+                ok && played != null && played != b.expected -> "Bien calculé : ${b.after.san(played)} mate aussi ! La solution jouait ${b.answer}."
                 ok -> "Bien calculé ! Le coup suivant était ${b.answer}."
                 right -> "Exact : ${b.answer}. Vous avez réaffiché l'échiquier : réessayez sans le regarder."
                 else -> "Ce n'est pas le bon coup. Il fallait jouer ${b.answer}. Regardez la position après les coups annoncés."

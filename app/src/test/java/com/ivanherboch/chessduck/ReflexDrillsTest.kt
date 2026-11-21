@@ -29,9 +29,25 @@ class ReflexDrillsTest {
         assertEquals(sqFromName("a1"), t!!.target)
         assertEquals(sqFromName("c2"), t.attacker)
         assertTrue(t.position.whiteToMove)
-        assertEquals("Le cavalier c2 menace de prendre votre tour en a1.", t.explanation)
-        // Le 4e coup reprend sur la case où l'élève vient de jouer : ce n'est pas une menace, le problème est écarté.
-        assertNull(ReflexDrills.threatFrom(PUZZLE_0000D))
+        assertEquals("Le cavalier c2 menace de prendre votre tour en a1 : elle n'est pas protégée.", t.explanation)
+        // #0000D : après Qd6 Rd8, la dame d6 est attaquée par la tour d8 ; protégée par la tour d1, elle vaut plus qu'elle.
+        val q = ReflexDrills.threatFrom(PUZZLE_0000D)!!
+        assertEquals(sqFromName("d6"), q.target)
+        assertEquals(sqFromName("d8"), q.attacker)
+        assertEquals("La tour d8 menace de prendre votre dame en d6, qui vaut plus que la tour.", q.explanation)
+    }
+
+    @Test
+    fun threatIsReadOnTheShownPositionNotLaterInTheSolution() {
+        // Position signalée : le fou g5 attaque la dame f6 ; la tour d8, derrière elle, n'est pas menacée tout de suite.
+        val pos = Position.fromFen("3rr1k1/pp3ppp/3b1q2/2p1p1B1/8/8/PPPQ1PPP/3R1RK1 b - - 0 20")
+        assertEquals(listOf(sqFromName("f6") to sqFromName("g5")), ReflexDrills.threatsIn(pos))
+        // Pièce protégée par une pièce qui ne vaut pas plus qu'elle : pas de menace (le fou d6 attaqué par la dame).
+        assertTrue(ReflexDrills.threatsIn(Position.fromFen("3r2k1/8/3b4/8/8/8/3Q4/6K1 b - - 0 1")).isEmpty())
+        // Fourchette : deux pièces menacées, l'une ou l'autre est une bonne réponse.
+        val fork = ReflexDrills.threatsIn(Position.fromFen("4k3/8/8/1q3r2/3N4/8/8/4K3 b - - 0 1"))
+        assertEquals(setOf(sqFromName("b5"), sqFromName("f5")), fork.map { it.first }.toSet())
+        assertTrue(fork.all { it.second == sqFromName("d4") })
     }
 
     @Test

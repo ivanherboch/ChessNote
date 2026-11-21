@@ -1,3 +1,14 @@
+## ChessDuck 3.2.6 — des réflexes qui ont du sens
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- « Quelle est la menace ? » : la menace se lit désormais sur la position affichée. Avant, elle était tirée de la suite de la solution : dans une enfilade, l'exercice désignait la pièce de derrière (une tour) alors que c'est celle de devant (la dame) qui est attaquée.
+  - Une pièce est menacée si l'adversaire peut la prendre en gagnant du matériel : elle n'est pas protégée, ou elle vaut plus que la pièce qui la prend. L'explication le précise.
+  - Fourchette : chacune des pièces attaquées est une bonne réponse, et toutes sont montrées.
+  - L'Ordinateur confirme chaque exercice : si l'adversaire a mieux à faire (un mat, une attaque plus forte), l'exercice est écarté.
+- « Calcul à l'aveugle » : quand le coup attendu mate, tout autre mat est accepté (par exemple Rxh7# au lieu de Qxh7#).
+- Vérification sur un échantillon de la base (1 200 exercices générés), avec Stockfish : les exercices de prise étaient déjà filtrés par l'Ordinateur ; les menaces et le calcul à l'aveugle sont corrigés comme ci-dessus.
+
 ## ChessDuck 3.2.5 — la leçon reprend après « À vous »
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
