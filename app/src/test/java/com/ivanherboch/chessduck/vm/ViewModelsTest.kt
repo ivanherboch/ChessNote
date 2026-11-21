@@ -320,7 +320,8 @@ class ViewModelsTest {
     @Test
     fun academyEndgameLessonValidatesAgainstTheComputer() = test {
         val lessons = FakeLessons()
-        val vm = academy(lessons)
+        val engine = FakeEngine()
+        val vm = academy(lessons, engine = engine)
         advanceUntilIdle()
         val kqk = Lessons.all.first { it.drill == "KQK" }
         vm.open(kqk.id)
@@ -329,9 +330,13 @@ class ViewModelsTest {
         assertEquals(3, vm.state.value.stars)
         assertTrue(lessons.masteredLessons().first().isEmpty())
         assertTrue(vm.state.value.message.contains("contre l'Ordinateur"))
-        // Faux moteur (évaluation nulle) : le gain « s'envole » au premier coup, la position est perdue.
+        // Faux moteur : la position de départ est évaluée gagnante (mat), et le coup joué la rend nulle (évaluation 0) :
+        // le gain « s'envole », la position est perdue.
         vm.startEndgame(com.ivanherboch.chessduck.feature.EndgameFamily.KQK, fromLesson = true)
         val eg = vm.endgame.state.value!!
+        val start = eg.position!!
+        engine.scripted[start.toFen().split(' ').take(4).joinToString(" ")] =
+            SearchResult(start.legalMoves.first(), listOf(PvLine(start.legalMoves.first(), com.ivanherboch.chessduck.engine.MATE - 9)))
         vm.endgame.move(eg.position!!.legalMoves.first { !eg.position!!.play(it).isCheckmate && eg.position!!.play(it).legalMoves.isNotEmpty() })
         advanceUntilIdle()
         val lost = vm.endgame.state.value!!
@@ -369,6 +374,33 @@ class ViewModelsTest {
         assertEquals(listOf(false), vm.endgame.state.value!!.results) // la position rejouée ne compte pas
         vm.closeEndgame()
         assertNull(vm.endgame.state.value)
+    }
+
+    @Test
+    fun endgameDoesNotFailWhenTheEngineIsSilentOrUnderestimates() = test {
+        val engine = FakeEngine()
+        val trainer = com.ivanherboch.chessduck.feature.EndgameTrainer(this, engine, Random(5))
+        trainer.start(com.ivanherboch.chessduck.feature.EndgameFamily.KPK_WIN, total = 1)
+        advanceUntilIdle()
+        val s0 = trainer.state.value!!
+        val pos = s0.position!!
+        // Le moteur évalue toute la position à 0 (il ne voit pas le gain) : un coup ne fait rien baisser, il est accepté.
+        val m = pos.legalMoves.first { !pos.play(it).isCheckmate && pos.play(it).legalMoves.isNotEmpty() }
+        trainer.move(m); advanceUntilIdle()
+        assertFalse(trainer.state.value!!.message, trainer.state.value!!.over)
+        assertTrue(trainer.state.value!!.results.isEmpty())
+        // Le moteur ne répond pas : le coup est annulé, la position reste jouable, rien n'est compté.
+        val p1 = trainer.state.value!!.position!!
+        val m1 = p1.legalMoves.first { !p1.play(it).isCheckmate && p1.play(it).legalMoves.isNotEmpty() }
+        engine.scripted[p1.play(m1).toFen().split(' ').take(4).joinToString(" ")] = null
+        trainer.move(m1); advanceUntilIdle()
+        val s1 = trainer.state.value!!
+        assertFalse(s1.over)
+        assertEquals(p1.toFen(), s1.position!!.toFen())
+        assertTrue(s1.heroToMove)
+        assertTrue(s1.message, "rejouez votre coup" in s1.message)
+        assertTrue(s1.results.isEmpty())
+        trainer.stop()
     }
 
     @Test

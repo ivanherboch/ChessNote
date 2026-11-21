@@ -1,5 +1,10 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.chess.ROOK
+import com.ivanherboch.chessduck.ui.undoAnim
+import com.ivanherboch.chessduck.engine.SearchResult
+import kotlinx.coroutines.async
+import kotlinx.coroutines.Deferred
 import androidx.compose.runtime.Immutable
 import com.ivanherboch.chessduck.chess.Move
 import com.ivanherboch.chessduck.chess.KING
@@ -286,6 +291,27 @@ class EndgameTrainer(
     private var job: Job? = null
     private var hintJob: Job? = null
 
+    /**
+     * Analyse de la position où l'élève a le trait (meilleur coup, évaluation), lancée dès qu'il a la main : le moteur
+     * démarre et travaille pendant qu'il réfléchit. Elle sert de référence pour juger son coup, et donne l'indice tout de suite.
+     */
+    private var prepFen: String? = null
+    private var prep: Deferred<SearchResult?>? = null
+
+    private fun prepare(p: Position?) {
+        if (p == null) return
+        val fen = p.toFen()
+        if (prepFen == fen) return
+        prep?.cancel()
+        prepFen = fen
+        prep = scope.async { runCatchingSuspend { withTimeoutOrNull(ENGINE_WAIT) { engine.search(fen, movetimeMs) } }.getOrNull() }
+    }
+
+    private suspend fun prepared(fen: String): SearchResult? {
+        val d = prep?.takeIf { prepFen == fen && !it.isCancelled } ?: return null
+        return runCatchingSuspend { withTimeoutOrNull(ENGINE_WAIT) { d.await() } }.getOrNull()
+    }
+
     fun start(family: EndgameFamily, total: Int = 5) {
         job?.cancel()
         _state.value = EndgameSession(family, total = total)
@@ -295,6 +321,9 @@ class EndgameTrainer(
     fun stop() {
         job?.cancel()
         hintJob?.cancel()
+        prep?.cancel()
+        prep = null
+        prepFen = null
         _state.value = null
     }
 
@@ -308,6 +337,7 @@ class EndgameTrainer(
             better = null, before = null, beforeMoves = 0,
             tone = Tone.INFO, message = "Position ${index + 1} sur ${s.total} : ${s.family.instruction}\n\nMéthode : ${s.family.method}",
         )
+        prepare(p.takeIf { it.whiteToMove == s.family.heroWhite })
     }
 
     /**
@@ -327,6 +357,7 @@ class EndgameTrainer(
             message = if (back != null && s.better != null) "Entraînement (hors score) : rejouez ce coup. La flèche verte montre le bon coup. ${s.family.method}"
             else "Entraînement (hors score) : rejouez la position. ${s.family.method}",
         )
+        prepare(back ?: s.start)
     }
 
     fun next() {
@@ -356,7 +387,8 @@ class EndgameTrainer(
         val fen = s.position!!.toFen()
         _state.update { it?.copy(hinting = true, tone = Tone.INFO, message = "L'Ordinateur cherche un bon coup…") }
         hintJob = scope.launch {
-            val best = runCatchingSuspend { withTimeoutOrNull(3_000) { engine.search(fen, movetimeMs).best } }.getOrNull()
+            val best = prepared(fen)?.best
+                ?: runCatchingSuspend { withTimeoutOrNull(ENGINE_WAIT) { engine.search(fen, movetimeMs).best } }.getOrNull()
             _state.update { cur ->
                 // La position a changé entre-temps (coup joué, position suivante) : l'indice est périmé.
                 if (cur == null || cur.position?.toFen() != fen) cur?.copy(hinting = false)
@@ -386,22 +418,42 @@ class EndgameTrainer(
                 else end(true, "Pat : la nulle est acquise.")
                 f.goal == EndgameGoal.DRAW && after.noPawns() -> return@launch pawnGone(after)
                 f == EndgameFamily.KQKP && after.noPawns() -> return@launch end(true, "Le pion est tombé : avec la dame contre le roi seul, le gain est assuré.")
-                f.goal == EndgameGoal.WIN && after.noPawns() && f in PAWN_FAMILIES && !promoted -> return@launch end(false, "Le pion est perdu : le gain s'est envolé.")
+                f.goal == EndgameGoal.WIN && after.noPawns() && f in PAWN_FAMILIES && !promoted ->
+                    // Pion disparu : avec une tour (ou une dame) contre le roi seul, le gain reste assuré.
+                    return@launch if (after.onlyKing(!f.heroWhite) && after.hasMajor(f.heroWhite)) end(true, "Le pion a disparu, mais il vous reste une pièce lourde contre le roi seul : le gain est assuré.")
+                    else end(false, "Le pion est perdu : le gain s'est envolé.")
             }
-            val res = runCatchingSuspend { withTimeoutOrNull(movetimeMs * 5L + 1000) { engine.search(after.toFen(), movetimeMs) } }.getOrNull()
+            // Référence : l'évaluation de la position avant le coup (préparée pendant la réflexion de l'élève).
+            val ref = prepared(pos.toFen())
+            val res = runCatchingSuspend { withTimeoutOrNull(ENGINE_WAIT) { engine.search(after.toFen(), movetimeMs) } }.getOrNull()
             val reply = res?.best?.takeIf { after.isLegal(it) }
-            if (res?.score == null || reply == null) return@launch end(false, "L'Ordinateur ne répond pas : la position est arrêtée.")
+            if (res?.score == null || reply == null) {
+                // Le moteur n'a pas répondu à temps (démarrage lent, téléphone occupé) : ce n'est pas la faute de l'élève.
+                // Le coup est annulé et la position reste jouable, sans compter d'échec.
+                _state.update {
+                    it?.copy(
+                        position = pos, last = null, anim = undoAnim(pos, m), moves = s.moves, thinking = false, tone = Tone.GOLD,
+                        message = "L'Ordinateur n'a pas répondu à temps : rejouez votre coup.",
+                    )
+                }
+                prepare(pos)
+                return@launch
+            }
             // Score du point de vue de l'élève (le moteur l'a donné pour l'adversaire, au trait).
             val mine = -res.score!!
-            val lost = when (f.goal) {
+            val below = when (f.goal) {
                 EndgameGoal.WIN -> !(isMateScore(mine) && mine > 0) && mine < WIN_CP
                 EndgameGoal.DRAW -> mine < -WIN_CP
             }
+            // Un coup n'est perdant que s'il fait nettement baisser l'évaluation de la position d'avant : si le moteur
+            // sous-estime toute la position (recherche courte sur téléphone), les bons coups ne sont pas refusés.
+            val before = ref?.score
+            val lost = below && (before == null || before - mine >= DROP_CP)
             val ev = if (f.heroWhite) mine else -mine
             if (lost) {
                 // L'Ordinateur montre comment il punit l'erreur (sa réponse, flèche rouge) et quel coup il fallait jouer.
-                val best = runCatchingSuspend { withTimeoutOrNull(movetimeMs * 5L + 1000) { engine.search(pos.toFen(), movetimeMs).best } }
-                    .getOrNull()?.takeIf { it != m && pos.isLegal(it) }
+                val best = (ref?.best ?: runCatchingSuspend { withTimeoutOrNull(ENGINE_WAIT) { engine.search(pos.toFen(), movetimeMs).best } }.getOrNull())
+                    ?.takeIf { it != m && pos.isLegal(it) }
                 delay(450)
                 val punished = after.play(reply)
                 _state.update {
@@ -424,8 +476,9 @@ class EndgameTrainer(
                 f.goal == EndgameGoal.DRAW && next.noPawns() -> pawnGone(next)
                 f.goal == EndgameGoal.DRAW && moves >= f.maxMoves -> end(true, "Vous avez tenu $moves coups : la nulle est acquise.", ev)
                 f.goal == EndgameGoal.WIN && moves >= f.maxMoves -> end(false, "Trop lent : il fallait conclure en ${f.maxMoves} coups.\n\nMéthode : ${f.method}", ev)
-                else -> _state.update {
-                    it?.copy(tone = Tone.INFO, message = "Coup $moves sur ${f.maxMoves}. ${f.instruction}")
+                else -> {
+                    _state.update { it?.copy(tone = Tone.INFO, message = "Coup $moves sur ${f.maxMoves}. ${f.instruction}") }
+                    prepare(next)
                 }
             }
         }
@@ -455,6 +508,9 @@ class EndgameTrainer(
     private var pulses = 0L
 
     private fun Position.noPawns(): Boolean = (0 until 64).none { pieceType(this[it]) == PAWN }
+    private fun Position.onlyKing(white: Boolean): Boolean = (0 until 64).none { this[it] != 0 && isWhite(this[it]) == white && pieceType(this[it]) != KING }
+    private fun Position.hasMajor(white: Boolean): Boolean =
+        (0 until 64).any { this[it] != 0 && isWhite(this[it]) == white && (pieceType(this[it]) == ROOK || pieceType(this[it]) == QUEEN) }
 
     /**
      * Nulle à tenir et plus aucun pion : nulle acquise, sauf si l'attaquant garde une dame contre le roi seul
@@ -472,6 +528,10 @@ class EndgameTrainer(
         const val PASS = 3
         /** En dessous de cet avantage (centipions), un gain n'est plus décisif. */
         const val WIN_CP = 250
+        /** Baisse d'évaluation (centipions) au-delà de laquelle un coup est jugé fautif. */
+        const val DROP_CP = 150
+        /** Attente maximale d'une réponse du moteur (démarrage compris, sur un téléphone lent). */
+        const val ENGINE_WAIT = 10_000L
         private val PAWN_FAMILIES = setOf(EndgameFamily.KPK_WIN, EndgameFamily.LUCENA)
     }
 }
