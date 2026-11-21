@@ -196,16 +196,16 @@ fun AcademyScreen(
                 }
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Leçon suivante", vm::nextLesson)
             }
+            // Très grande police : les modes occupent toute une rangée (libellés jamais coupés), les icônes passent dessous.
             val big = LocalDensity.current.fontScale > 1.3f
-            Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            val modes: @Composable (Modifier) -> Unit = { m ->
+                // Partie modèle : libellé court (« Deviner »), la rangée porte aussi la fiche et « Jouer cette position ».
                 DuckSegmentedRow(
-                    // Très grande police : libellé court, pour que la rangée (avec ses icônes) tienne sur une ligne.
-                    // Partie modèle : libellé court (« Deviner »), la rangée porte aussi la fiche et « Jouer cette position ».
-                    // Très grande police : ni icônes ni coche, pour que les libellés tiennent sur une ligne.
-                    listOf("Guidé", if (model) "Deviner" else "Défi"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) },
-                    Modifier.weight(1f),
-                    icons = if (big) null else listOf(Icons.Rounded.Visibility, Icons.Rounded.SportsScore), checkmark = !big,
+                    listOf("Guidé", if (model) "Deviner" else "Défi"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) }, m,
+                    icons = if (big) null else listOf(Icons.Rounded.Visibility, Icons.Rounded.SportsScore),
                 )
+            }
+            val tools: @Composable () -> Unit = {
                 // Les variantes d'une ouverture se choisissent ici (mode Guidé), sans rangée de plus sous l'échiquier.
                 if (!s.challenge && l.variants.isNotEmpty()) VariantMenu(l, s.variant, vm::setVariant)
                 // Fiche de la leçon (pour toutes les leçons) et, pour une partie modèle, « Jouer cette position » à chaque
@@ -214,8 +214,16 @@ fun AcademyScreen(
                 if (modelPlay) DuckIconButton(
                     Icons.Rounded.SportsEsports, "Jouer cette position contre l'Ordinateur, avec le camp de votre choix", { playChoice = endFen }, accent = c.blue,
                 )
-                // Le retournement ne concerne que l'échiquier de la leçon : il n'apparaît pas pendant une séance.
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
+            }
+            if (big) {
+                modes(Modifier.fillMaxWidth().padding(top = 2.dp))
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End)) { tools() }
+            } else {
+                Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    modes(Modifier.weight(1f))
+                    tools()
+                }
             }
         },
         overBoard = { AcademyBoardInfo(s, l, eg, rx) },

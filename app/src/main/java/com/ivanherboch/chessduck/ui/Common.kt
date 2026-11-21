@@ -373,8 +373,6 @@ fun DuckSegmentedRow(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
     icons: List<ImageVector>? = null,
-    /** Coche du segment choisi (sans icônes) ; sans elle, le choix reste signalé par la couleur et pour TalkBack. */
-    checkmark: Boolean = true,
 ) {
     val c = LocalDuck.current
     SingleChoiceSegmentedButtonRow(modifier) {
@@ -385,10 +383,8 @@ fun DuckSegmentedRow(
                 shape = SegmentedButtonDefaults.itemShape(i, options.size),
                 icon = if (icon != null) {
                     { Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                } else if (checkmark) {
-                    { SegmentedButtonDefaults.Icon(selectedIndex == i) }
                 } else {
-                    {}
+                    { SegmentedButtonDefaults.Icon(selectedIndex == i) }
                 },
                 colors = SegmentedButtonDefaults.colors(
                     activeContainerColor = c.goldRole.fill, activeContentColor = c.goldRole.onFill, activeBorderColor = c.outlineStrong,
