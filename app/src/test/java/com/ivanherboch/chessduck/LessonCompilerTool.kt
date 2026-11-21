@@ -96,7 +96,8 @@ class LessonCompilerTool {
             val (variable, fileName) = key
             File(outDir, fileName).writeText(
                 "package com.ivanherboch.chessduck.content\n\n" +
-                    "import com.ivanherboch.chessduck.chess.START_FEN\n\n" +
+                    // L'import n'est écrit que si une leçon du fichier part de la position initiale.
+                    (if ("START_FEN" in body) "import com.ivanherboch.chessduck.chess.START_FEN\n\n" else "") +
                     "// Fichier généré par scripts/gen_lessons.py + LessonCompilerTool — modifier scripts/lessons/*.txt.\n" +
                     "// Coups en UCI, validés à la génération : aucune analyse de texte ni de notation SAN au démarrage.\n" +
                     "// Cases des repères : 0 = a1 … 63 = h8.\n\n" +

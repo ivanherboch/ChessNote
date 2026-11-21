@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.withTimeoutOrNull
 
 @Immutable
 data class PuzzleState(
@@ -230,10 +229,8 @@ class PuzzlesViewModel(
     }
 
     /** « S'entraîner sur ce thème » (Académie) : filtre sur le thème et la tranche, puis tire un problème. */
-    fun train(theme: String, band: Int) {
-        setFilter(band, theme)
-        random()
-    }
+    /** « S'entraîner sur ce thème » (Académie) : le filtre est appliqué et enregistré, puis un seul problème est tiré. */
+    fun train(theme: String, band: Int) = setFilter(band, theme)
 
     fun setFilter(band: Int, theme: String) {
         _state.update { it.copy(band = band, theme = theme) }

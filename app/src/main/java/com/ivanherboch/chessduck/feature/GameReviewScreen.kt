@@ -25,13 +25,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import com.ivanherboch.chessduck.ui.icons.Insights
 import com.ivanherboch.chessduck.ui.icons.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import com.ivanherboch.chessduck.ui.icons.SkipNext
 import com.ivanherboch.chessduck.ui.icons.SkipPrevious
-import com.ivanherboch.chessduck.ui.icons.SwapVert
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text

@@ -414,7 +414,7 @@ class EndgameTrainer(
         if (s.hint != null) return
         // Une seule recherche d'indice à la fois, sans toucher à la réponse de l'Ordinateur en cours.
         hintJob?.cancel()
-        val fen = s.position!!.toFen()
+        val fen = s.position?.toFen() ?: return
         _state.update { it?.copy(hinting = true, tone = Tone.INFO, message = "L'Ordinateur cherche un bon coup…") }
         hintJob = scope.launch {
             val best = prepared(fen)?.best
@@ -445,11 +445,12 @@ class EndgameTrainer(
         job = scope.launch {
             val f = s.family
             val promoted = m.promo != 0
+            val ruleAfter = drawRule(after, s.history)
             when {
                 after.isCheckmate -> return@launch end(true, "Échec et mat ! Position gagnée en $moves coup${if (moves > 1) "s" else ""}.")
                 after.legalMoves.isEmpty() -> return@launch if (f.goal == EndgameGoal.WIN) end(false, "Pat ! La partie est nulle : laissez toujours une case au roi adverse.")
                 else end(true, "Pat : la nulle est acquise.")
-                drawRule(after, s.history) != null -> return@launch drawn(drawRule(after, s.history)!!)
+                ruleAfter != null -> return@launch drawn(ruleAfter)
                 f.goal == EndgameGoal.DRAW && after.noPawns() -> return@launch pawnGone(after)
                 f == EndgameFamily.KQKP && after.noPawns() -> return@launch end(true, "Le pion est tombé : avec la dame contre le roi seul, le gain est assuré.")
                 f.goal == EndgameGoal.WIN && after.noPawns() && f in PAWN_FAMILIES && !promoted ->
@@ -461,7 +462,8 @@ class EndgameTrainer(
             val ref = prepared(pos.toFen())
             val res = runCatchingSuspend { withTimeoutOrNull(ENGINE_WAIT) { engine.search(after.toFen(), movetimeMs) } }.getOrNull()
             val reply = res?.best?.takeIf { after.isLegal(it) }
-            if (res?.score == null || reply == null) {
+            val score = res?.score
+            if (score == null || reply == null) {
                 // Le moteur n'a pas répondu à temps (démarrage lent, téléphone occupé) : ce n'est pas la faute de l'élève.
                 // Le coup est annulé et la position reste jouable, sans compter d'échec.
                 _state.update {
@@ -474,7 +476,7 @@ class EndgameTrainer(
                 return@launch
             }
             // Score du point de vue de l'élève (le moteur l'a donné pour l'adversaire, au trait).
-            val mine = -res.score!!
+            val mine = -score
             val below = when (f.goal) {
                 EndgameGoal.WIN -> !(isMateScore(mine) && mine > 0) && mine < WIN_CP
                 EndgameGoal.DRAW -> mine < -DRAW_CP
@@ -507,11 +509,12 @@ class EndgameTrainer(
             val next = after.play(reply)
             val seen = s.history + after.key()
             _state.update { it?.copy(position = next, last = reply, anim = moveAnim(after, reply), thinking = false, history = seen + next.key()) }
+            val ruleNext = drawRule(next, seen)
             when {
                 next.isCheckmate -> end(false, "Échec et mat : l'Ordinateur a gagné.")
                 next.legalMoves.isEmpty() -> end(f.goal == EndgameGoal.DRAW, if (f.goal == EndgameGoal.DRAW) "Pat : la nulle est acquise." else "Pat : la partie est nulle.")
                 f.goal == EndgameGoal.DRAW && next.noPawns() -> pawnGone(next)
-                drawRule(next, seen) != null -> drawn(drawRule(next, seen)!!, ev)
+                ruleNext != null -> drawn(ruleNext, ev)
                 f.goal == EndgameGoal.DRAW && moves >= f.maxMoves -> end(true, "Vous avez tenu $moves coups : la nulle est acquise.", ev)
                 f.goal == EndgameGoal.WIN && moves >= f.maxMoves -> end(false, "Trop lent : il fallait conclure en ${f.maxMoves} coups.\n\nMéthode : ${f.method}", ev)
                 else -> {

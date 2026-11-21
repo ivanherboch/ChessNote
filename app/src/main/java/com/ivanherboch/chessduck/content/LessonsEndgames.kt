@@ -1,7 +1,5 @@
 package com.ivanherboch.chessduck.content
 
-import com.ivanherboch.chessduck.chess.START_FEN
-
 // Fichier généré par scripts/gen_lessons.py + LessonCompilerTool — modifier scripts/lessons/*.txt.
 // Coups en UCI, validés à la génération : aucune analyse de texte ni de notation SAN au démarrage.
 // Cases des repères : 0 = a1 … 63 = h8.

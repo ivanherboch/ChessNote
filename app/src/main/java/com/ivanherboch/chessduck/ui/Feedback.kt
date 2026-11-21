@@ -16,11 +16,24 @@ import java.io.Closeable
  * et des vibrations subtiles (coup, touche, double vibration d'erreur, succès).
  */
 class Feedback(context: Context) : Closeable {
-    private val pool = SoundPool.Builder().setMaxStreams(3).setAudioAttributes(
+    private val appContext = context.applicationContext
+    private var pool: SoundPool? = null
+    private var wood = 0
+
+    /** SoundPool natif, recréé (et le son rechargé) s'il a été libéré par [close]. */
+    @Synchronized
+    private fun pool(): SoundPool = pool ?: SoundPool.Builder().setMaxStreams(3).setAudioAttributes(
         AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
-    ).build()
-    private val wood = pool.load(context, R.raw.wood_move, 1)
+    ).build().also { p ->
+        pool = p
+        wood = p.load(appContext, R.raw.wood_move, 1)
+    }
+
+    init {
+        // Chargement du son dès la création : le premier coup joué est entendu.
+        pool()
+    }
     private val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= 31) {
         (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
     } else {
@@ -46,7 +59,7 @@ class Feedback(context: Context) : Closeable {
      * doublée pour un échec et montante pour une promotion (différences subtiles, jamais d'alarme).
      */
     fun move(capture: Boolean = false, check: Boolean = false, promotion: Boolean = false) {
-        if (soundEnabled) pool.play(wood, if (capture) 0.28f else 0.2f, if (capture) 0.28f else 0.2f, 1, 0, 1f)
+        if (soundEnabled) pool().play(wood, if (capture) 0.28f else 0.2f, if (capture) 0.28f else 0.2f, 1, 0, 1f)
         buzz(
             when {
                 promotion -> VibrationEffect.createWaveform(longArrayOf(0, 12, 40, 18), intArrayOf(0, 60, 0, 120), -1)
@@ -61,8 +74,12 @@ class Feedback(context: Context) : Closeable {
     fun error() = buzz(VibrationEffect.createWaveform(longArrayOf(0, 35, 70, 35), intArrayOf(0, 150, 0, 150), -1))
     fun success() = buzz(VibrationEffect.createOneShot(45, 130))
 
-    /** Libère le SoundPool natif ; l'instance ne doit plus être utilisée ensuite. */
-    override fun close() = pool.release()
+    /** Libère le SoundPool natif ; il est recréé au prochain son joué. */
+    @Synchronized
+    override fun close() {
+        pool?.release()
+        pool = null
+    }
 }
 
 val LocalFeedback = staticCompositionLocalOf<Feedback?> { null }

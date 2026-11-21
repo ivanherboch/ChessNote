@@ -84,11 +84,18 @@ class Stockfish(private val executable: File) : ChessEngine, Closeable {
         out = p.outputStream.bufferedWriter()
         lines = ch
         send("uci")
-        waitFor("uciok")
+        // Moteur muet au démarrage (binaire absent, plantage, appareil saturé) : le processus est arrêté et la
+        // recherche échoue proprement (résultat vide) au lieu d'attendre un « bestmove » qui ne viendra jamais.
+        if (!waitFor("uciok")) failStart("uciok")
         send("setoption name Hash value 32")
         send("setoption name Threads value ${Runtime.getRuntime().availableProcessors().coerceIn(1, 2)}")
         send("isready")
-        waitFor("readyok")
+        if (!waitFor("readyok")) failStart("readyok")
+    }
+
+    private fun failStart(token: String): Nothing {
+        shutdown(force = true)
+        throw IllegalStateException("Stockfish n'a pas répondu « $token »")
     }
 
     /** Attend une ligne commençant par [token] ; renvoie faux en cas de délai dépassé ou de flux fermé. */
@@ -149,19 +156,23 @@ class Stockfish(private val executable: File) : ChessEngine, Closeable {
                 var best: Move? = null
                 var done = false
                 try {
-                    for (l in lines) {
-                        if (l.startsWith("info") && " pv " in l && " score " in l) {
-                            parseInfo(l)?.let { (idx, pv) -> pvs[idx] = pv }
-                        } else if (l.startsWith("bestmove")) {
-                            val tok = l.split(' ').getOrNull(1)
-                            best = if (tok != null && Move.isUci(tok)) Move.fromUci(tok) else null
-                            done = true
-                            break
+                    // Délai de garde : la recherche est bornée par movetime, mais un moteur bloqué ou un flux qui ne se
+                    // ferme pas ne doit jamais garder le verrou indéfiniment (Jeu Libre, analyse des parties).
+                    withTimeoutOrNull(movetimeMs + SEARCH_GRACE_MS) {
+                        for (l in lines) {
+                            if (l.startsWith("info") && " pv " in l && " score " in l) {
+                                parseInfo(l)?.let { (idx, pv) -> pvs[idx] = pv }
+                            } else if (l.startsWith("bestmove")) {
+                                val tok = l.split(' ').getOrNull(1)
+                                best = if (tok != null && Move.isUci(tok)) Move.fromUci(tok) else null
+                                done = true
+                                break
+                            }
                         }
                     }
                 } finally {
                     if (!done) withContext(NonCancellable) {
-                        // Annulation : on arrête la recherche, on consomme son « bestmove », puis on vérifie
+                        // Annulation, délai dépassé ou flux fermé : on arrête la recherche, on consomme son « bestmove », puis on vérifie
                         // que le moteur est de nouveau prêt. Sinon il est relancé à la prochaine recherche.
                         runCatching { send("stop") }
                         val stopped = waitFor("bestmove", 1500)
@@ -178,6 +189,11 @@ class Stockfish(private val executable: File) : ChessEngine, Closeable {
                 SearchResult(null, emptyList())
             }
         }
+    }
+
+    private companion object {
+        /** Marge accordée au moteur au-delà de movetime avant de le considérer comme bloqué (téléphone lent compris). */
+        const val SEARCH_GRACE_MS = 4_000L
     }
 
     private fun parseInfo(l: String): Pair<Int, PvLine>? {

@@ -9,8 +9,6 @@ import com.ivanherboch.chessduck.chess.Move
 import com.ivanherboch.chessduck.chess.PAWN
 import com.ivanherboch.chessduck.chess.PIECE_VALUES
 import com.ivanherboch.chessduck.chess.Position
-import com.ivanherboch.chessduck.chess.QUEEN
-import com.ivanherboch.chessduck.chess.ROOK
 import com.ivanherboch.chessduck.chess.fileOf
 import com.ivanherboch.chessduck.chess.isWhite
 import com.ivanherboch.chessduck.chess.pieceType

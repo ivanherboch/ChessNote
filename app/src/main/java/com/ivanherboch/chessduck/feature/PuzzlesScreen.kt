@@ -2,9 +2,6 @@ package com.ivanherboch.chessduck.feature
 
 import androidx.compose.runtime.rememberCoroutineScope
 import com.ivanherboch.chessduck.ui.DuckRadius
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
@@ -13,7 +10,6 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import com.ivanherboch.chessduck.ui.icons.Undo
 import com.ivanherboch.chessduck.ui.icons.Casino
-import com.ivanherboch.chessduck.ui.icons.Pause
 import androidx.compose.material.icons.rounded.CheckCircle
 import com.ivanherboch.chessduck.ui.icons.Extension
 import com.ivanherboch.chessduck.ui.icons.History
@@ -21,12 +17,10 @@ import com.ivanherboch.chessduck.ui.icons.IosShare
 import com.ivanherboch.chessduck.ui.icons.SearchOff
 import com.ivanherboch.chessduck.ui.icons.Visibility
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import com.ivanherboch.chessduck.ui.ButtonVariant
 import com.ivanherboch.chessduck.ui.SideDot
 import com.ivanherboch.chessduck.ui.DuckIconButton
@@ -40,11 +34,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ivanherboch.chessduck.content.PuzzleThemes
+import com.ivanherboch.chessduck.data.Puzzle
 import com.ivanherboch.chessduck.data.DuckDatabase
 import com.ivanherboch.chessduck.ui.Arrow
 import com.ivanherboch.chessduck.ui.ChessBoard
@@ -105,7 +98,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         if (catalog) PuzzleCatalog(vm, s, onClose = { catalog = false; vm.clearSearch() })
         return
     }
-    val type = PuzzleThemes.primary(p.themes)
+    val type = themeOf(p)
     val visible = s.themeVisible
 
     // Explication brève quand on touche une pièce qui ne peut pas bouger ; effacée au coup suivant.
@@ -203,7 +196,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                 ) {
                     Column(Modifier.weight(1f)) {
                         // Le thème d'un problème non résolu et jamais révélé reste masqué (anti-spoiler).
-                        Text("#${r.id} · ${if (themeShown) PuzzleThemes.primary(r.themes).name else "thème masqué"}", color = c.text, style = MaterialTheme.typography.titleSmall)
+                        Text("#${r.id} · ${if (themeShown) themeOf(r).name else "thème masqué"}", color = c.text, style = MaterialTheme.typography.titleSmall)
                         Text("${PuzzleThemes.BANDS[PuzzleThemes.bandOf(r.rating)]} · ${r.rating}", color = c.muted, style = MaterialTheme.typography.bodySmall)
                     }
                     if (done) Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = c.greenText, modifier = Modifier.padding(end = 4.dp).size(18.dp))
@@ -229,6 +222,12 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
 }
 
 /** Filtre actif du catalogue, en clair : « Intermédiaire · Clouage », « Libre · 12 résolus »… */
+/**
+ * Thème principal du problème : la clé calculée une fois pour toutes dans la base ([Puzzle.primaryTheme]),
+ * sans réanalyser la liste des thèmes à chaque recomposition ; la liste ne sert que si la clé manque.
+ */
+private fun themeOf(p: Puzzle) = PuzzleThemes.byKey[p.primaryTheme] ?: PuzzleThemes.primary(p.themes)
+
 private fun filterLabel(band: Int, theme: String, solved: Int): String {
     val name = PuzzleThemes.byKey[theme]?.name ?: PuzzleThemes.groupOf(theme)
     return if (name == null && band == 0) "Libre · ${fr(solved)} résolu${if (solved > 1) "s" else ""}"

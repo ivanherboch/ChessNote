@@ -69,7 +69,18 @@ internal object ShareExporter {
                 }
                 val resolver = context.contentResolver
                 val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return@runCatchingSuspend null
-                resolver.openOutputStream(uri)?.use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) } ?: return@runCatchingSuspend null
+                // Écriture ratée (flux absent, compression échouée, exception) : l'entrée créée dans la galerie est
+                // supprimée, pour ne pas y laisser une image vide ou « en attente ».
+                val written = try {
+                    resolver.openOutputStream(uri)?.use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) } ?: false
+                } catch (e: Exception) {
+                    runCatching { resolver.delete(uri, null, null) }
+                    throw e
+                }
+                if (!written) {
+                    runCatching { resolver.delete(uri, null, null) }
+                    return@runCatchingSuspend null
+                }
                 values.clear(); values.put(MediaStore.Images.Media.IS_PENDING, 0)
                 resolver.update(uri, values, null, null)
                 "Image enregistrée dans la galerie (Images/ChessDuck)."

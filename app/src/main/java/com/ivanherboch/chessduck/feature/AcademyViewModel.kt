@@ -47,6 +47,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.NonCancellable
 import kotlin.random.Random
 
 /** Signal ponctuel de retour haptique (réussite ou erreur), identifié pour n'être joué qu'une fois. */
@@ -279,9 +281,21 @@ class AcademyViewModel(
         }
     }
 
-    init {
-        // Le moteur démarre tout de suite, en tâche de fond : le premier coup jugé (Défi, finale) n'attend pas son lancement.
+    /** Le moteur a déjà été démarré (pré-chauffage fait une seule fois). */
+    private var engineWarm = false
+
+    /**
+     * Démarre le moteur en tâche de fond dès qu'un coup va devoir être jugé (arrêt « À vous », Défi, exercices,
+     * finale, réflexes) : le premier jugement n'attend pas son lancement, et un simple passage dans l'Académie
+     * (lecture d'une leçon) ne lance pas Stockfish.
+     */
+    private fun warmEngine() {
+        if (engineWarm) return
+        engineWarm = true
         viewModelScope.launch { runCatchingSuspend { withTimeoutOrNull(10_000) { engine.search(com.ivanherboch.chessduck.chess.START_FEN, 50) } } }
+    }
+
+    init {
         viewModelScope.launch {
             val restoredId = saved.get<Int>(KEY_LESSON)
             val restoredChallenge = saved.get<Boolean>(KEY_CHALLENGE) ?: false
@@ -384,6 +398,7 @@ class AcademyViewModel(
         }
         if (save) viewModelScope.launch { prefs.setLesson(l.id) }
         if (challenge) startChallenge() else _state.update { it.copy(message = "", tone = Tone.INFO) }
+        if (asking()) warmEngine()
         // Ouverture choisie par l'utilisateur (pas la restauration au lancement) : on lit l'objectif.
         if (save) narrate()
     }
@@ -458,6 +473,7 @@ class AcademyViewModel(
         if (t == s.cursor) return
         val anim = LinePlaybackController.transition(ln, s.cursor, t)
         _state.update { it.copy(cursor = t, anim = anim, note = null, suggest = null, hintStage = if (it.challenge) it.hintStage else 0) }
+        if (asking()) warmEngine()
         narrate()
     }
 
@@ -618,6 +634,7 @@ class AcademyViewModel(
     private fun sideName(l: Lesson) = if (l.heroWhite) "Blancs" else "Noirs"
 
     private fun startChallenge() {
+        warmEngine()
         val l = lesson
         val intro = if (l.kind == LessonKind.MODEL_GAME) {
             (if (state.value.keyMoments) "Devinez les ${l.pauseSteps.size} moments clés des ${sideName(l)} (les autres coups se jouent seuls)" else "Devinez les coups des ${sideName(l)}") +
@@ -978,6 +995,7 @@ class AcademyViewModel(
     }
 
     private fun startSeries(kind: PracticeKind, specs: List<PuzzleSpec>, level: Int = 2) {
+        warmEngine()
         cancelAll()
         narrator.stop()
         _state.update { it.copy(practice = Practice(kind = kind, level = level, message = "Préparation des problèmes…"), quiz = null, sessionFlipped = false) }
@@ -1061,7 +1079,12 @@ class AcademyViewModel(
         pulse(true)
         if (finished) {
             val ok = pr.hintStage < 2 && !pr.hadError
-            practiceJob = viewModelScope.launch { if (ok) runCatchingSuspend { puzzles.markSolved(pr.ids[pr.index]) } }
+            // Enregistrement à part du travail annulable de la série : passer tout de suite au problème suivant, ou fermer
+            // la série, ne doit pas faire perdre la résolution.
+            if (ok) {
+                val id = pr.ids[pr.index]
+                viewModelScope.launch { withContext(NonCancellable) { runCatchingSuspend { puzzles.markSolved(id) } } }
+            }
             _state.update { s ->
                 s.copy(
                     practice = pr.copy(
@@ -1271,6 +1294,7 @@ class AcademyViewModel(
 
     /** Lance la finale [family] ; depuis une leçon, la réussite (3 positions sur 5) valide sa maîtrise. */
     fun startEndgame(family: EndgameFamily, fromLesson: Boolean = false, total: Int = 5) {
+        warmEngine()
         cancelAll()
         narrator.stop()
         endgameLesson = if (fromLesson) lesson.id else null
@@ -1360,6 +1384,7 @@ class AcademyViewModel(
     // ---- Réflexes ----
 
     fun startReflex(kind: ReflexKind) {
+        warmEngine()
         cancelAll()
         narrator.stop()
         _state.update { it.copy(quiz = null, practice = null, sessionFlipped = false) }
@@ -1420,7 +1445,9 @@ class AcademyViewModel(
         when (validation(l)) {
             Validation.PUZZLES -> startSeries(PracticeKind.REVIEW, List(REVIEW_SIZE) { PuzzleSpec(listOf(l.theme), AcademyAssessments.levelRange(l.level)) })
             Validation.ENDGAME -> {
-                startEndgame(EndgameFamily.of(l.drill)!!, total = 1)
+                // Sans finale connue (donnée de leçon incohérente), la révision est validée par le Défi seul.
+                val family = EndgameFamily.of(l.drill) ?: return completeReview(true, fluent)
+                startEndgame(family, total = 1)
                 endgameReview = true
             }
             Validation.NONE -> completeReview(true, fluent)

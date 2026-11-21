@@ -60,6 +60,9 @@ class GameAnalysisService(
      * Analyse une partie en tâche de fond (une position après l'autre, recherche courte) et enregistre le résultat.
      * Lancée dès la fin de la partie : quand on ouvre la revue, l'essentiel est déjà prêt.
      */
+    /** Une analyse de partie est en cours (le moteur ne doit pas être libéré pendant ce temps). */
+    val busy: Boolean get() = job?.isActive == true
+
     fun start(g: GameRecord, line: Line) {
         if (gameId == g.id && job?.isActive == true) return
         job?.cancel()

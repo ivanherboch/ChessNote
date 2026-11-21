@@ -44,10 +44,25 @@ class AppContainer(context: Context, val scope: CoroutineScope) {
     val puzzles: PuzzleRepository by lazy { RoomPuzzleRepository(appContext, db) }
     val games: GameRepository by lazy { RoomGameRepository(db) }
     val lessons: LessonProgressRepository by lazy { RoomLessonProgressRepository(db) }
-    val engine: ChessEngine by lazy { Stockfish(appContext) }
-    val analysis: GameAnalysisService by lazy { GameAnalysisService(engine, games, scope) }
-    val feedback: Feedback by lazy { Feedback(appContext) }
-    val narrator: TtsNarrator by lazy { TtsNarrator(appContext) }
+    private val engineLazy = lazy { Stockfish(appContext) }
+    val engine: ChessEngine by engineLazy
+    private val analysisLazy = lazy { GameAnalysisService(engine, games, scope) }
+    val analysis: GameAnalysisService by analysisLazy
+    private val feedbackLazy = lazy { Feedback(appContext) }
+    val feedback: Feedback by feedbackLazy
+    private val narratorLazy = lazy { TtsNarrator(appContext) }
+    val narrator: TtsNarrator by narratorLazy
+
+    /**
+     * L'utilisateur quitte l'application (fin de l'activité) : le processus natif de Stockfish, la synthèse vocale et
+     * les sons sont libérés. Chaque service redémarre de lui-même s'il resert (nouvelle activité dans le même
+     * processus). Seuls les services déjà créés sont touchés ; une analyse de partie en cours garde son moteur.
+     */
+    fun release() {
+        if (engineLazy.isInitialized() && !(analysisLazy.isInitialized() && analysisLazy.value.busy)) engineLazy.value.close()
+        if (narratorLazy.isInitialized()) narratorLazy.value.close()
+        if (feedbackLazy.isInitialized()) feedbackLazy.value.close()
+    }
 }
 
 class ChessDuckApp : Application() {

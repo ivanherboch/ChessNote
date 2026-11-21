@@ -4,7 +4,6 @@
     <application
         android:name=".ChessDuckApp"
         android:allowBackup="true"
-        android:extractNativeLibs="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:label="ChessDuck"

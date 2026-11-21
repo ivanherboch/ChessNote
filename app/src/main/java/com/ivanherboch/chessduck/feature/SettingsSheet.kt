@@ -235,7 +235,6 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
             "Réinitialiser mon ELO", { resetElo = true }, Modifier.fillMaxWidth(),
             enabled = st.elo != DEFAULT_ELO, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Replay,
         )
-        val context = LocalContext.current
         val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "" }
         Text(
             "© Ivan Herboch, 2026 · v$version", color = c.muted, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center,

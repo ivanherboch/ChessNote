@@ -47,8 +47,11 @@ android {
         // Stockfish est un exécutable lancé depuis nativeLibraryDir : il doit être extrait sur le disque.
         jniLibs { useLegacyPackaging = true; keepDebugSymbols += "**/libstockfish.so" }
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        // Table de débogage des coroutines, inutile dans l'APK.
+        resources.excludes += "DebugProbesKt.bin"
     }
-    androidResources { noCompress += "db" }
+    // La base embarquée (chessduck.db) est compressée dans l'APK : Room (createFromAsset) et syncPuzzles la lisent
+    // en flux (assets.open), sans accès direct au fichier, ce qui divise sa place par plus de deux.
     testOptions {
         unitTests.isIncludeAndroidResources = true
         // Par défaut, Roborazzi enregistre les captures (build/screenshots n'est pas versionné) ;

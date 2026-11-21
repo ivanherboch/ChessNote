@@ -3,6 +3,8 @@ package com.ivanherboch.chessduck.ui
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.layout.onPlaced
+import android.content.pm.ApplicationInfo
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.getValue
@@ -293,6 +295,10 @@ fun ModuleLayout(
     val animReserve by animateIntAsState(reserve, tween(260), label = "reserve")
     // Besoin calculé pendant la mesure (sans écriture d'état), publié après le placement.
     val wanted = remember { IntArray(1) }
+    // Version de débogage (tests compris) : une zone basse qui ne sait pas annoncer sa hauteur fait échouer la mesure
+    // au lieu de désactiver la réserve en silence ; en production, on garde l'échiquier entier sans réserve.
+    val context = LocalContext.current
+    val strict = remember(context) { (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0 }
     Layout(
         modifier = Modifier.onPlaced { if (wanted[0] != target) target = wanted[0] },
         content = {
@@ -336,7 +342,15 @@ fun ModuleLayout(
         val baseSide = minOf(w, h - topP.height - underH - overH - bottomMin.roundToPx()).coerceAtLeast(0)
         if (adaptive) {
             val avail = h - topP.height - underH - overH - baseSide
-            val needed = runCatching { measurables[2].minIntrinsicHeight(w) }.getOrDefault(0)
+            // La zone basse annonce sa hauteur nécessaire par les mesures intrinsèques. Les listes paresseuses
+            // (bande des coups : LazyRow) n'en fournissent pas : elles sont toujours placées sous une hauteur fixe
+            // (MoveStrip : 48 dp), qui répond à leur place.
+            val needed = try {
+                measurables[2].minIntrinsicHeight(w)
+            } catch (e: IllegalStateException) {
+                if (strict) throw e
+                0
+            }
             wanted[0] = (needed - avail).coerceIn(0, (baseSide * 0.22f).toInt())
         }
         var side = (baseSide - if (adaptive) animReserve else 0).coerceAtLeast(0)

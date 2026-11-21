@@ -165,6 +165,12 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    /** L'utilisateur quitte l'application : Stockfish, la synthèse vocale et les sons sont libérés (pas à une recréation). */
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isFinishing) (application as ChessDuckApp).container.release()
+    }
 }
 
 private class TabSpec(val label: String, val icon: @Composable () -> Painter, val selectedIcon: @Composable () -> Painter)
@@ -200,8 +206,8 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
     var tab by rememberSaveable { mutableIntStateOf(1) }
     var showSettings by remember { mutableStateOf(false) }
     // Les ViewModels vivent au niveau de l'activité : l'état de chaque module est conservé d'un onglet à l'autre.
-    // Ils ne sont créés qu'à la première visite de leur onglet (Stockfish et l'index des 150 000 problèmes
-    // ne sont donc chargés que si l'utilisateur ouvre le Jeu Libre ou les Problèmes).
+    // Ils ne sont créés qu'à la première visite de leur onglet. Stockfish ne démarre qu'au premier vrai besoin
+    // (coup à juger, finale, exercice de l'Académie, Jeu Libre, Problèmes), jamais au simple lancement.
     val holder = rememberSaveableStateHolder()
     var kidUsed by rememberSaveable { mutableStateOf(st.kidMode) }
     val kid: KidViewModel? = if (st.kidMode || kidUsed) viewModel(factory = DuckViewModels.Factory) else null
@@ -236,6 +242,11 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
     }
 
     var academyTrainings by rememberSaveable { mutableStateOf(false) }
+    // ViewModel de l'Académie, partagé par l'en-tête (bouton « Entraînements ») et l'onglet : une seule obtention,
+    // à la première visite de l'onglet, puis gardé pour l'animation de sortie et les retours.
+    var academyUsed by rememberSaveable { mutableStateOf(tab == 1) }
+    LaunchedEffect(tab) { if (tab == 1) academyUsed = true }
+    val academy: AcademyViewModel? = if (tab == 1 || academyUsed) viewModel(factory = DuckViewModels.Factory) else null
     val header: @Composable (Modifier) -> Unit = { m ->
         Row(m.fillMaxWidth().height(50.dp).padding(start = 12.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Image(painterResource(R.drawable.mascot), contentDescription = null, modifier = Modifier.size(34.dp))
@@ -247,8 +258,8 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                 modifier = Modifier.padding(start = 8.dp, end = 8.dp).weight(1f).semantics { heading() },
             )
             // Académie : le tiroir « Entraînements » s'ouvre depuis l'en-tête, sans prendre de place au-dessus de l'échiquier.
-            if (tab == 1) {
-                val avm = viewModel<AcademyViewModel>(factory = DuckViewModels.Factory)
+            if (tab == 1 && academy != null) {
+                val avm = academy
                 val active by avm.trainingActive.collectAsStateWithLifecycle()
                 val suggestions by avm.suggestions.collectAsStateWithLifecycle()
                 AcademyTrainingsButton(academyTrainings, active, suggestions) { academyTrainings = true }
@@ -276,8 +287,7 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                         LaunchedEffect(vision) { if (vision) { nvm.startVision(com.ivanherboch.chessduck.feature.VisionKind.TOUCH); vision = false } }
                         NotationScreen(nvm)
                     }
-                    1 -> {
-                        val avm = viewModel<AcademyViewModel>(factory = DuckViewModels.Factory)
+                    1 -> academy?.let { avm ->
                         LaunchedEffect(academyTopic) {
                             academyTopic?.let { t -> avm.trainTopic(t.lessonId, t.theme); academyTopic = null }
                         }

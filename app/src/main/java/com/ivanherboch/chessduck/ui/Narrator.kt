@@ -98,7 +98,8 @@ class TtsNarrator(context: Context) : Narrator, Closeable {
     private fun onInit(status: Int) {
         val engine = tts ?: return
         val voice = if (status == TextToSpeech.SUCCESS) {
-            engine.voices.orEmpty()
+            // Certains moteurs de synthèse lèvent une exception en listant leurs voix : on fait alors comme s'il n'y en avait aucune.
+            runCatching { engine.voices }.getOrNull().orEmpty()
                 .filter { it.locale.language == "fr" && !it.isNetworkConnectionRequired && "notInstalled" !in it.features }
                 .sortedWith(compareBy({ it.locale.country != "FR" }, { -it.quality }))
                 .firstOrNull()
@@ -151,7 +152,10 @@ class TtsNarrator(context: Context) : Narrator, Closeable {
         tts?.stop()
     }
 
+    /** Libère le moteur de synthèse ; une lecture ultérieure le redémarre (voir [speak]). */
     override fun close() {
+        paused = null
+        silence()
         tts?.shutdown()
         tts = null
     }

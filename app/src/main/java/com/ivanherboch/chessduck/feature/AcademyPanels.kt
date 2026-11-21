@@ -2,8 +2,6 @@ package com.ivanherboch.chessduck.feature
 
 import com.ivanherboch.chessduck.ui.moveLabel
 import com.ivanherboch.chessduck.content.PuzzleThemes
-import com.ivanherboch.chessduck.ui.icons.ExpandLess
-import androidx.compose.runtime.saveable.rememberSaveable
 import com.ivanherboch.chessduck.content.LessonKind
 import com.ivanherboch.chessduck.ui.icons.SportsScore
 import androidx.compose.ui.semantics.Role
@@ -36,8 +34,6 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.stateDescription
 import com.ivanherboch.chessduck.ui.DuckIconButton
 import com.ivanherboch.chessduck.ui.icons.ExpandMore
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics

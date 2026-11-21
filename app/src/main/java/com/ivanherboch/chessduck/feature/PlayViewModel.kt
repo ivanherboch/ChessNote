@@ -114,7 +114,7 @@ class PlayViewModel(
 
     private fun newGame(st: Settings) {
         gameGeneration++
-        aiJob?.cancel(); analysisJob?.cancel()
+        aiJob?.cancel(); analysisJob?.cancel(); coachJob?.cancel()
         val white = when (st.colorChoice) {
             0 -> true
             2 -> false
@@ -141,7 +141,7 @@ class PlayViewModel(
         applyJob = viewModelScope.launch {
             val st = prefs.settings.first()
             gameGeneration++
-            aiJob?.cancel(); analysisJob?.cancel()
+            aiJob?.cancel(); analysisJob?.cancel(); coachJob?.cancel()
             _state.update {
                 PlayState(
                     line = start, playerWhite = playerWhite, twoPlayers = false, aiElo = positionElo(st.academyLevel), flipped = !playerWhite, evalOn = it.evalOn,
@@ -174,7 +174,18 @@ class PlayViewModel(
     }
 
     /** Partie accompagnée : active ou coupe les arrêts avant une gaffe. */
-    fun toggleCoach() = _state.update { if (it.fromPosition) it.copy(coached = !it.coached, warning = null) else it }
+    fun toggleCoach() {
+        if (!state.value.fromPosition) return
+        // Une vérification en cours est abandonnée : le coup n'est pas joué, l'élève le rejoue.
+        coachJob?.cancel()
+        _state.update { it.copy(coached = !it.coached, warning = null, checking = false) }
+    }
+
+    /** Abandonne la vérification ou l'arrêt en cours de la partie accompagnée. */
+    private fun stopCoach() {
+        coachJob?.cancel()
+        _state.update { it.copy(checking = false, warning = null) }
+    }
 
     /** Coup arrêté : l'élève le joue quand même. */
     fun playAnyway() {
@@ -203,11 +214,11 @@ class PlayViewModel(
             if (gen != gameGeneration) return@launch
             val sign = if (s.playerWhite) 1 else -1
             val warn = before != null && res != null && sign * before.eval > -LOST_CP && sign * (before.eval - res.eval) >= BLUNDER_CP
-            if (!warn) {
+            if (!warn || res == null) {
                 _state.update { it.copy(checking = false) }
                 return@launch commit(m)
             }
-            val reply = res!!.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { after.isLegal(it) }
+            val reply = res.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { after.isLegal(it) }
             _state.update { it.copy(checking = false, coachLeft = it.coachLeft - 1, warning = CoachWarning(m, coachText(pos.san(m), after, reply))) }
         }
     }
@@ -302,7 +313,7 @@ class PlayViewModel(
      * (deux demi-coups si l'ordinateur a déjà répondu) ; à deux joueurs, d'un demi-coup. -1 si impossible.
      */
     fun undoTarget(s: PlayState = state.value): Int {
-        if (s.thinking || s.result != null || s.cursor == 0) return -1
+        if (s.thinking || s.checking || s.result != null || s.cursor == 0) return -1
         if (s.twoPlayers) return s.cursor - 1
         var t = s.cursor - 1
         while (t >= 0 && s.line.positions[t].whiteToMove != s.playerWhite) t--
@@ -313,6 +324,7 @@ class PlayViewModel(
         val t = undoTarget()
         if (t < 0) return
         aiJob?.cancel()
+        stopCoach()
         goTo(t)
     }
 
@@ -330,6 +342,7 @@ class PlayViewModel(
         val s = state.value
         if (s.result != null) return
         aiJob?.cancel()
+        stopCoach()
         _state.update { it.copy(thinking = false) }
         finish(GameEnd.NONE, if (s.twoPlayers) s.line.last.whiteToMove else s.playerWhite)
     }
