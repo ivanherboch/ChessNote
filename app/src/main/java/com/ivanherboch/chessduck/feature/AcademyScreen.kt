@@ -196,14 +196,15 @@ fun AcademyScreen(
                 }
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Leçon suivante", vm::nextLesson)
             }
+            val big = LocalDensity.current.fontScale > 1.3f
             Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 DuckSegmentedRow(
                     // Très grande police : libellé court, pour que la rangée (avec ses icônes) tienne sur une ligne.
                     // Partie modèle : libellé court (« Deviner »), la rangée porte aussi la fiche et « Jouer cette position ».
-                    // Très grande police : sans les petites icônes, pour que les libellés tiennent sur une ligne.
+                    // Très grande police : ni icônes ni coche, pour que les libellés tiennent sur une ligne.
                     listOf("Guidé", if (model) "Deviner" else "Défi"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) },
                     Modifier.weight(1f),
-                    icons = if (LocalDensity.current.fontScale > 1.3f) null else listOf(Icons.Rounded.Visibility, Icons.Rounded.SportsScore),
+                    icons = if (big) null else listOf(Icons.Rounded.Visibility, Icons.Rounded.SportsScore), checkmark = !big,
                 )
                 // Les variantes d'une ouverture se choisissent ici (mode Guidé), sans rangée de plus sous l'échiquier.
                 if (!s.challenge && l.variants.isNotEmpty()) VariantMenu(l, s.variant, vm::setVariant)
