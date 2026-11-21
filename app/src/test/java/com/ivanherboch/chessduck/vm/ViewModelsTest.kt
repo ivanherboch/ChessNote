@@ -26,6 +26,7 @@ import com.ivanherboch.chessduck.ui.DuckPalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -61,6 +62,22 @@ class ViewModelsTest {
     @After fun tearDown() = Dispatchers.resetMain()
 
     private fun test(block: suspend TestScope.() -> Unit) = runTest(main) { block() }
+
+    /**
+     * Dans l'application, le fil principal exécute la coroutine de démarrage sans attendre (Main.immediate) : la leçon
+     * s'ouvre pendant la construction même du ViewModel, qui doit donc être entièrement initialisé à ce moment-là.
+     */
+    @Test
+    fun academyOpensItsLessonDuringConstructionOnAnImmediateDispatcher() {
+        Dispatchers.setMain(kotlinx.coroutines.test.UnconfinedTestDispatcher())
+        try {
+            val vm = AcademyViewModel(FakeSettings(), FakeLessons(), FakeNarrator(), FakeEngine(), FakePuzzles(listOf(PUZZLE_0000D)))
+            assertEquals(1, vm.state.value.lessonId)
+            vm.viewModelScope.cancel()
+        } finally {
+            Dispatchers.setMain(main)
+        }
+    }
 
     @Test
     fun globalSettingsArePersistedThroughTheRepository() = test {
@@ -923,6 +940,28 @@ class ViewModelsTest {
         vm.playAnyway(); advanceUntilIdle()
         assertTrue(vm.state.value.line.size >= 1)
         assertEquals(blunder, vm.state.value.line.moves[0])
+    }
+
+    /** « Jouer cette position » à la première ouverture du Jeu Libre : la partie de départ ne doit pas l'écraser. */
+    @Test
+    fun lessonPositionIsNotOverwrittenByTheStartingGame() = test {
+        val games = FakeGames()
+        val engine = FakeEngine()
+        val base = FakeSettings()
+        var reads = 0
+        // La première lecture des réglages (celle de la partie de départ) est lente, les suivantes immédiates.
+        val slow = object : com.ivanherboch.chessduck.data.SettingsRepository by base {
+            override val settings = kotlinx.coroutines.flow.flow {
+                if (reads++ == 0) kotlinx.coroutines.delay(500)
+                emitAll(base.flow)
+            }
+        }
+        val vm = PlayViewModel(slow, games, engine, GameAnalysisService(engine, games, backgroundScope))
+        val fen = "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1"
+        vm.startFromPosition(fen, playerWhite = true)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.fromPosition)
+        assertEquals(fen, vm.state.value.line.startFen)
     }
 
     @Test

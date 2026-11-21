@@ -95,7 +95,9 @@ class PlayViewModel(
     /** Lecture automatique de la revue de partie. */
 
     init {
-        viewModelScope.launch { newGame(prefs.settings.first()) }
+        // Partie de départ : comme toute mise en place, elle passe par applyJob, si bien qu'une position demandée
+        // aussitôt (« Jouer cette position » à la première ouverture du Jeu Libre) l'annule au lieu d'être écrasée par elle.
+        applyJob = viewModelScope.launch { newGame(prefs.settings.first()) }
     }
 
     fun applySettings(twoPlayers: Boolean, color: Int, aiElo: Int) {
@@ -214,7 +216,7 @@ class PlayViewModel(
             if (gen != gameGeneration) return@launch
             val sign = if (s.playerWhite) 1 else -1
             val warn = before != null && res != null && sign * before.eval > -LOST_CP && sign * (before.eval - res.eval) >= BLUNDER_CP
-            if (!warn || res == null) {
+            if (!warn) {
                 _state.update { it.copy(checking = false) }
                 return@launch commit(m)
             }

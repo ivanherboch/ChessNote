@@ -67,7 +67,7 @@ import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -144,10 +144,10 @@ class MainActivity : ComponentActivity() {
                 1 -> false
                 else -> true
             }
-            DisposableEffect(dark) {
+            // Barres système transparentes, icônes claires ou sombres selon le thème (réappliqué à chaque changement).
+            LaunchedEffect(dark) {
                 val style = if (dark) SystemBarStyle.dark(AColor.TRANSPARENT) else SystemBarStyle.light(AColor.TRANSPARENT, AColor.TRANSPARENT)
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
-                onDispose {}
             }
             LaunchedEffect(st.haptics, st.sound) {
                 app.feedback.hapticsEnabled = st.haptics
@@ -268,12 +268,8 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
             DuckIconButton(Icons.Rounded.Settings, "Paramètres", { showSettings = true })
         }
     }
-    // Passerelles de l'Académie : thème à travailler dans Problèmes, position à jouer dans le Jeu Libre.
-    var trainTheme by remember { mutableStateOf<Pair<String, Int>?>(null) }
-    var playPosition by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
-    var vision by remember { mutableStateOf(false) }
-    // Pont Revue de partie → Académie : point faible à travailler (leçon et 5 exercices).
-    var academyTopic by remember { mutableStateOf<ReviewTopic?>(null) }
+    // Passerelles entre onglets : une demande en attente, consommée puis effacée par l'onglet d'arrivée.
+    val bridges = remember { TabBridges() }
     val content: @Composable (Modifier) -> Unit = { m ->
         AnimatedContent(
             targetState = tab, modifier = m, label = "onglet",
@@ -284,42 +280,43 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                 when (t) {
                     0 -> {
                         val nvm = viewModel<NotationViewModel>(factory = DuckViewModels.Factory)
-                        LaunchedEffect(vision) { if (vision) { nvm.startVision(com.ivanherboch.chessduck.feature.VisionKind.TOUCH); vision = false } }
+                        LaunchedEffect(bridges.vision) { if (bridges.vision) { nvm.startVision(com.ivanherboch.chessduck.feature.VisionKind.TOUCH); bridges.vision = false } }
                         NotationScreen(nvm)
                     }
                     1 -> academy?.let { avm ->
-                        LaunchedEffect(academyTopic) {
-                            academyTopic?.let { t -> avm.trainTopic(t.lessonId, t.theme); academyTopic = null }
+                        LaunchedEffect(bridges.academyTopic) {
+                            bridges.academyTopic?.let { t -> avm.trainTopic(t.lessonId, t.theme); bridges.academyTopic = null }
                         }
                         AcademyScreen(
                             avm,
-                            onTrainTheme = { theme, level -> trainTheme = theme to level; select(2) },
-                            onPlayPosition = { fen, white -> playPosition = fen to white; select(3) },
-                            onVision = { vision = true; select(0) },
+                            onTrainTheme = { theme, level -> bridges.trainTheme = theme to level; select(2) },
+                            onPlayPosition = { fen, white -> bridges.playPosition = fen to white; select(3) },
+                            onVision = { bridges.vision = true; select(0) },
                             trainingsOpen = academyTrainings, onTrainings = { academyTrainings = it },
                         )
                     }
                     2 -> {
                         val pvm = viewModel<PuzzlesViewModel>(factory = DuckViewModels.Factory)
-                        LaunchedEffect(trainTheme) {
-                            trainTheme?.let { (theme, level) -> pvm.train(theme, (level - 1).coerceIn(1, 4)); trainTheme = null }
+                        LaunchedEffect(bridges.trainTheme) {
+                            bridges.trainTheme?.let { (theme, level) -> pvm.train(theme, (level - 1).coerceIn(1, 4)); bridges.trainTheme = null }
                         }
                         PuzzlesScreen(pvm)
                     }
                     else -> {
                         val play = viewModel<PlayViewModel>(factory = DuckViewModels.Factory)
                         val review = viewModel<GameReviewViewModel>(factory = DuckViewModels.Factory)
-                        LaunchedEffect(playPosition) {
-                            playPosition?.let { (fen, white) -> review.close(); play.startFromPosition(fen, white); playPosition = null }
+                        LaunchedEffect(bridges.playPosition) {
+                            bridges.playPosition?.let { (fen, white) -> review.close(); play.startFromPosition(fen, white); bridges.playPosition = null }
                         }
-                        PlayScreen(play, review, onTrainTopic = { t -> academyTopic = t; select(1) })
+                        PlayScreen(play, review, onTrainTopic = { t -> bridges.academyTopic = t; select(1) })
                     }
                 }
             }
         }
     }
 
-    BoxWithConstraints(Modifier.fillMaxSize().background(c.bg)) {
+    // La disposition (rail ou barre du bas) suit LocalIsTwoPane, déjà calculé par l'activité : un simple Box suffit.
+    Box(Modifier.fillMaxSize().background(c.bg)) {
         if (LocalIsTwoPane.current) {
             // Paysage (tablette) : rail de navigation à gauche, l'échiquier garde toute la hauteur.
             Row(Modifier.fillMaxSize()) {
@@ -368,4 +365,16 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
     }
 
     if (showSettings) SettingsSheet(prefs, narrator, appScope) { showSettings = false }
+}
+
+/**
+ * Passerelles entre onglets, regroupées : thème à travailler dans Problèmes, position à jouer dans le Jeu Libre,
+ * Vision des cases (onglet Notation), point faible repéré par la revue de partie (Académie).
+ */
+@Stable
+private class TabBridges {
+    var trainTheme by mutableStateOf<Pair<String, Int>?>(null)
+    var playPosition by mutableStateOf<Pair<String, Boolean>?>(null)
+    var vision by mutableStateOf(false)
+    var academyTopic by mutableStateOf<ReviewTopic?>(null)
 }

@@ -1,42 +1,22 @@
 package com.ivanherboch.chessduck.feature
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Star
 import com.ivanherboch.chessduck.ui.HintButton
 import com.ivanherboch.chessduck.ui.HintIconButton
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.heightIn
 import com.ivanherboch.chessduck.ui.LocalIsTwoPane
-import com.ivanherboch.chessduck.ui.BoardRow
 import com.ivanherboch.chessduck.ui.LoadingState
 import com.ivanherboch.chessduck.ui.EmptyState
 import com.ivanherboch.chessduck.ui.icons.SearchOff
 import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.foundation.layout.Arrangement
 import android.content.Intent
 import android.speech.tts.TextToSpeech
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -48,13 +28,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -65,8 +40,6 @@ import com.ivanherboch.chessduck.ui.Arrow
 import com.ivanherboch.chessduck.ui.ChessBoard
 import com.ivanherboch.chessduck.ui.DuckButton
 import com.ivanherboch.chessduck.ui.DuckIconButton
-import com.ivanherboch.chessduck.ui.DuckRadius
-import com.ivanherboch.chessduck.ui.DuckSegmentedRow
 import com.ivanherboch.chessduck.ui.EqualRow
 import com.ivanherboch.chessduck.ui.FeedbackCard
 import com.ivanherboch.chessduck.ui.LocalDuck
@@ -76,15 +49,12 @@ import com.ivanherboch.chessduck.ui.MoveStrip
 import com.ivanherboch.chessduck.ui.RefuteCountdown
 import com.ivanherboch.chessduck.ui.refuteArrow
 import com.ivanherboch.chessduck.ui.Tone
-import com.ivanherboch.chessduck.ui.icons.ExpandMore
 import com.ivanherboch.chessduck.ui.icons.Extension
 import com.ivanherboch.chessduck.ui.icons.Pause
 import com.ivanherboch.chessduck.ui.icons.RestartAlt
 import com.ivanherboch.chessduck.ui.icons.SkipNext
 import com.ivanherboch.chessduck.ui.icons.SkipPrevious
 import com.ivanherboch.chessduck.ui.icons.SportsEsports
-import com.ivanherboch.chessduck.ui.icons.SportsScore
-import com.ivanherboch.chessduck.ui.icons.SwapVert
 import com.ivanherboch.chessduck.ui.icons.Undo
 import com.ivanherboch.chessduck.ui.icons.Visibility
 import com.ivanherboch.chessduck.ui.icons.VolumeOff
@@ -180,78 +150,8 @@ fun AcademyScreen(
             }
             // Défi réussi (2 étoiles ou plus) mais leçon pas encore validée sur problèmes ou contre l'Ordinateur.
             val toValidate = l.id !in mastered && stars >= 2 && vm.validation(l) != Validation.NONE
-            // Sélecteur de leçon : précédente / leçon courante (ouvre le catalogue) / suivante.
-            Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Leçon précédente", vm::prevLesson)
-                Column(
-                    Modifier.weight(1f).heightIn(min = 48.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
-                        .border(1.dp, c.outline, RoundedCornerShape(DuckRadius.M))
-                        .clickable(role = Role.Button, onClickLabel = "Ouvrir le catalogue des leçons") { catalog = true }
-                        .clearAndSetSemantics {
-                            role = Role.Button
-                            contentDescription = "Leçon ${Lessons.number(l.id)} : ${l.title}, ${l.category.label}, palier ${levelSpoken(l.level)}" +
-                                (if (l.id in mastered) ", maîtrisée" else if (toValidate) ", Défi réussi, validation restante" else "") + (if (stars > 0) ", ${starsText(stars)}" else "") +
-                                ". ${mastered.size} leçons maîtrisées sur $total. Ouvrir le catalogue des leçons"
-                            onClick { catalog = true; true }
-                        }
-                        .padding(horizontal = 10.dp, vertical = 3.dp),
-                ) {
-                    // Deux lignes compactes pour laisser le maximum de hauteur à l'échiquier : le titre, puis la
-                    // catégorie, le palier, la progression, la maîtrise et les étoiles en petit.
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("${Lessons.number(l.id)}. ${l.title}", color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-                        Icon(Icons.Rounded.ExpandMore, contentDescription = null, tint = c.muted, modifier = Modifier.size(20.dp))
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            "${l.category.label} · P${l.level}", color = c.blueText, style = MaterialTheme.typography.labelMedium,
-                            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
-                        )
-                        if (l.id in mastered) Icon(Icons.Rounded.CheckCircle, "Maîtrisée", tint = c.greenText, modifier = Modifier.padding(start = 6.dp).size(16.dp))
-                        else if (toValidate) Text(" · À valider", color = c.goldText, style = MaterialTheme.typography.labelMedium, maxLines = 1)
-                        if (stars > 0) StarRow(stars, Modifier.padding(start = 6.dp), size = 14.dp)
-                        Spacer(Modifier.weight(0.01f))
-                        Text("${mastered.size}/$total", color = c.goldText, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 8.dp))
-                    }
-                }
-                DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Leçon suivante", vm::nextLesson)
-            }
-            // Très grande police : les modes occupent toute une rangée (libellés jamais coupés), les icônes passent dessous.
-            val big = LocalDensity.current.fontScale > 1.3f
-            val modes: @Composable (Modifier) -> Unit = { m ->
-                // Partie modèle : libellé court (« Deviner »), la rangée porte aussi la fiche et « Jouer cette position ».
-                DuckSegmentedRow(
-                    listOf("Guidé", if (model) "Deviner" else "Défi"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) }, m,
-                    icons = if (big) null else listOf(Icons.Rounded.Visibility, Icons.Rounded.SportsScore),
-                )
-            }
-            val tools: @Composable () -> Unit = {
-                // Les variantes d'une ouverture se choisissent ici (Guidé comme Défi), sans rangée de plus sous l'échiquier.
-                // Hors répertoire et révision, qui imposent leur ligne.
-                if (l.variants.isNotEmpty() && s.repertoire == null && s.review == null) VariantMenu(l, s.variant, vm::setVariant, variantsDone)
-                // Fiche de la leçon (pour toutes les leçons) et, pour une partie modèle, « Jouer cette position » à chaque
-                // coup : des icônes ici, pour que l'échiquier garde toute sa taille.
-                DuckIconButton(Icons.Rounded.Info, "Fiche de la leçon", { brief = true }, accent = c.blue)
-                // Partie modèle en mode Deviner : ne deviner que les moments clés (les autres coups se jouent seuls).
-                if (model && s.challenge && l.pauseSteps.isNotEmpty()) DuckIconButton(
-                    Icons.Rounded.Star,
-                    if (s.keyMoments) "Moments clés seulement (activé) : deviner tous les coups" else "Ne deviner que les ${l.pauseSteps.size} moments clés",
-                    { vm.setKeyMoments(!s.keyMoments) }, accent = c.gold, selected = s.keyMoments,
-                )
-                if (modelPlay) DuckIconButton(
-                    Icons.Rounded.SportsEsports, "Jouer cette position contre l'Ordinateur, avec le camp de votre choix", { playChoice = endFen }, accent = c.blue,
-                )
-                DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
-            }
-            if (big) {
-                modes(Modifier.fillMaxWidth().padding(top = 2.dp))
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End)) { tools() }
-            } else {
-                Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    modes(Modifier.weight(1f))
-                    tools()
-                }
-            }
+            LessonSelector(l, mastered, stars, toValidate, total, onCatalog = { catalog = true }, onPrev = vm::prevLesson, onNext = vm::nextLesson)
+            LessonModeBar(vm, s, l, model, variantsDone, modelPlay, onBrief = { brief = true }, onPlay = { playChoice = endFen })
         },
         overBoard = { AcademyBoardInfo(s, l, eg, rx) },
         board = {
@@ -270,83 +170,9 @@ fun AcademyScreen(
                 }
                 // Position de finale en cours de génération (hors du fil principal) : un instant de chargement.
                 egs != null && egs.position == null && !egs.finished -> LoadingState("Préparation de la position…")
-                egs?.position != null -> {
-                    val pos = egs.position
-                    val flip = !egs.family.heroWhite != s.sessionFlipped
-                    val hint = egs.hint.takeIf { egs.heroToMove }
-                    // La jauge n'apparaît qu'une fois la position terminée : elle montre l'issue sans aider pendant la recherche.
-                    BoardRow(egs.evalWhite.takeIf { egs.over || egs.finished }, flip) { mod ->
-                        ChessBoard(
-                            position = pos, modifier = mod, flipped = flip, interactive = egs.heroToMove,
-                            lastMove = egs.last, anim = egs.anim,
-                            arrows = listOfNotNull(
-                                egs.punish?.let { Arrow(it.from, it.to, c.red) },
-                                // Coup repris après une erreur : le bon coup en vert.
-                                egs.better?.takeIf { egs.replay && egs.heroToMove && egs.before == null && egs.moves == egs.beforeMoves }
-                                    ?.let { Arrow(it.from, it.to, c.green) },
-                                hint?.takeIf { egs.hintStage >= 2 }?.let { Arrow(it.from, it.to, c.green) },
-                            ),
-                            marks = listOfNotNull(hint?.takeIf { egs.hintStage == 1 }?.let { it.from to c.green }),
-                            onIllegalTouch = { stuck = GameLogic.whyStuck(pos, it) },
-                            onMove = vm.endgame::move,
-                        )
-                    }
-                }
-                rxs?.position != null -> {
-                    val pos = rxs.position!!
-                    val t = rxs.threat
-                    val cp = rxs.capture
-                    val b = rxs.blind
-                    ChessBoard(
-                        // Calcul à l'aveugle : l'échiquier reste orienté comme au départ, même réaffiché.
-                        position = pos, modifier = Modifier.fillMaxSize(), flipped = !(b?.start ?: pos).whiteToMove != s.sessionFlipped,
-                        lastMove = t?.lastMove,
-                        arrows = when {
-                            cp != null -> listOf(Arrow(cp.capture.from, cp.capture.to, c.blue))
-                            t != null && rxs.answered -> t.threats.map { (to, from) -> Arrow(from, to, c.red) }
-                            b != null && rxs.answered -> listOf(Arrow(b.expected.from, b.expected.to, c.green))
-                            else -> emptyList()
-                        },
-                        marks = when {
-                            t != null && rxs.answered -> t.targets.map { it to c.green } + listOfNotNull(rxs.tapped.takeIf { it >= 0 && it !in t.targets }?.let { it to c.red })
-                            b != null && !rxs.answered && rxs.from >= 0 -> listOf(rxs.from to c.select)
-                            // Calcul à l'aveugle, réponse fausse : la case d'arrivée jouée en rouge, la flèche verte montre le bon coup.
-                            b != null && rxs.answered && rxs.tapped >= 0 && rxs.tone == Tone.BAD &&
-                                !(rxs.from == b.expected.from && rxs.tapped == b.expected.to) ->
-                                listOf(rxs.tapped to c.red)
-                            else -> emptyList()
-                        },
-                        onSquareTap = if ((t != null || b != null) && !rxs.answered) vm.reflex::tap else null,
-                    )
-                }
-                pr != null -> {
-                    val pl = pr.line
-                    val pc = pr.cursor.coerceIn(0, pl?.size ?: 0)
-                    val r = pr.refute
-                    val ppos = r?.position ?: pl?.positions?.get(pc) ?: line.positions[0]
-                    val pnext = if (pl != null && pc < pl.size) pl.moves[pc] else null
-                    val pTurn = pl != null && r == null && !pr.failed && !pr.solved && !pr.finished && pc == pr.progress && pc < pl.size &&
-                        ppos.whiteToMove == pr.heroWhite
-                    val refArrow = refuteArrow(r)
-                    ChessBoard(
-                        position = ppos,
-                        modifier = Modifier.fillMaxSize(),
-                        flipped = !pr.heroWhite != s.sessionFlipped,
-                        interactive = pTurn,
-                        lastMove = r?.last ?: if (pl != null && pc > 0) pl.moves[pc - 1] else null,
-                        anim = pr.anim,
-                        arrows = when {
-                            refArrow != null -> listOf(refArrow)
-                            pnext != null && (pr.failed || (pTurn && pr.hintStage >= 2)) -> listOf(Arrow(pnext.from, pnext.to, c.green))
-                            else -> emptyList()
-                        },
-                        marks = if (pTurn && pr.hintStage >= 1 && pnext != null) listOf(pnext.from to c.green) else emptyList(),
-                        onIllegalTouch = { stuck = GameLogic.whyStuck(ppos, it) },
-                        // Réfutation affichée : un toucher sur l'échiquier remet la position pour rejouer aussitôt.
-                        onSquareTap = if (r != null) { _ -> vm.retryPractice() } else null,
-                        onMove = vm::practiceMove,
-                    )
-                }
+                egs?.position != null -> EndgameBoard(vm, egs, s.sessionFlipped) { stuck = it }
+                rxs?.position != null -> ReflexBoard(vm, rxs, s.sessionFlipped)
+                pr != null -> PracticeBoard(vm, pr, line.positions[0], s.sessionFlipped) { stuck = it }
                 else -> {
                     // Réfutation d'un mauvais coup, ou coup de l'élève en cours de jugement : affiché tel qu'il l'a joué.
                     val r = s.refute ?: s.tentative
