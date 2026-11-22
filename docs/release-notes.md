@@ -1,3 +1,9 @@
+## ChessDuck 4.0.4 — noms des pièces en entier (mode enfant)
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Mode enfant : le nom de chaque pièce est écrit sous sa carte colorée, sur toute sa largeur. « Cavalier » ne déborde plus sur les petits écrans.
+
 ## ChessDuck 4.0.3 — Calcul à l'aveugle plus clair, jamais bloqué
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

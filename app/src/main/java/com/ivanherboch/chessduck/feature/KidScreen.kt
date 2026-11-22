@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.MIN_TEXT
 import androidx.compose.animation.AnimatedContent
 import com.ivanherboch.chessduck.ui.DuckRadius
 import androidx.compose.animation.fadeIn
@@ -166,19 +167,27 @@ private fun PieceCard(p: KidPiece, modifier: Modifier, onClick: () -> Unit) {
         if (pressed) 0.86f else 1f, spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = Spring.StiffnessMedium), label = "bounce",
     )
     val shape = RoundedCornerShape(DuckRadius.Kid)
+    // Le nom est écrit sous la carte colorée, sur toute sa largeur : les coins arrondis et la bordure ne le rognent
+    // jamais (« Cavalier » tient en entier sur un écran de 360 dp). Carte et nom forment une seule cible tactile.
     Column(
         modifier
             .graphicsLayer { scaleX = scale; scaleY = scale }
-            .clip(shape).background(p.bg).border(2.5.dp, p.edge, shape)
-            .clickable(interactionSource = source, indication = ripple(), role = Role.Button) { fb?.key(); onClick() }
+            .clickable(interactionSource = source, indication = null, role = Role.Button) { fb?.key(); onClick() }
             .semantics(mergeDescendants = true) {
                 contentDescription = "${p.name} : voir comment bouge ${p.article.replaceFirstChar { it.lowercase() }}"
-            }
-            .padding(horizontal = 3.dp, vertical = 5.dp),
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Image(painterResource(KID_PIECE_RES.getValue(p.type)), null, Modifier.fillMaxWidth(0.86f).aspectRatio(1f))
-        AutoText(p.name, color = Color(0xFF1F3B57), maxSize = 14.sp, weight = FontWeight.Bold, align = TextAlign.Center)
+        Box(
+            Modifier.fillMaxWidth().clip(shape).background(p.bg).border(2.5.dp, p.edge, shape).padding(5.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(painterResource(KID_PIECE_RES.getValue(p.type)), null, Modifier.fillMaxWidth().aspectRatio(1f))
+        }
+        AutoText(
+            p.name, Modifier.padding(top = 3.dp), color = Color(0xFF1F3B57), maxSize = 14.sp, minSize = MIN_TEXT,
+            weight = FontWeight.Bold, align = TextAlign.Center,
+        )
     }
 }
 
@@ -311,7 +320,7 @@ private fun KidGame(vm: KidViewModel, onQuit: () -> Unit, onResign: () -> Unit) 
                     // Zone compacte : nom des pièces
                     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                         AutoText("👆 Touche une pièce pour voir comment elle bouge !", color = c.text, maxSize = 17.sp, minSize = 13.sp, weight = FontWeight.Bold, align = TextAlign.Center, maxLines = 2)
-                        Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                             for (p in KID_LEGEND) PieceCard(p, Modifier.weight(1f)) { demo = p.type }
                         }
                     }
