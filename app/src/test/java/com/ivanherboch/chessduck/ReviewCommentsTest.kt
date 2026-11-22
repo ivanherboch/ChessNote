@@ -181,6 +181,18 @@ class ReviewCommentsTest {
         assertEquals(com.ivanherboch.chessduck.feature.ReviewTopic.HANGING_PIECE, r.topic)
     }
 
+    /**
+     * Cas signalé : le cavalier c6, attaqué par la dame c7 et défendu une fois par la dame b5, tombera après f4 Bd7
+     * (deux attaquants pour un défenseur) : le filet l'explique au lieu de « Bb2 était plus fort ».
+     */
+    @Test
+    fun netReasonSeesAPieceThatWillFallAfterTheReply() {
+        val p = com.ivanherboch.chessduck.chess.Position.fromFen("2b2k1r/2q2p1p/n1N1pnp1/pQ1p4/N7/P7/2PP1PPP/R1B1K2R w KQ - 0 15")
+        val r = ReviewComments.netReason(p, com.ivanherboch.chessduck.chess.Move.fromUci("f2f4"), Analysis(500, 0, "c1b2"), Analysis(200, null, "c8d7"))
+        assertEquals(com.ivanherboch.chessduck.feature.ReviewTopic.HANGING_PIECE, r.topic)
+        assertTrue(r.text, "votre cavalier en c6 trop peu défendu" in r.text && "Bd7" in r.text)
+    }
+
     /** Filet de sécurité : une gaffe arrêtée compte dans « À travailler », même sans partie enregistrée. */
     @Test
     fun netEventsFeedWeakTopics() {

@@ -1,3 +1,11 @@
+## ChessDuck 4.2.5 — le filet de sécurité ne s'arrête que pour une vraie gaffe
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Le filet ne vous arrête plus que pour une gaffe concrète qu'il sait expliquer : pièce laissée en prise, pièce qui va tomber, mat permis, fourchette… Plus d'arrêt avec un simple « X était plus fort que Y ».
+- Pas d'arrêt non plus si vous restez nettement gagnant après votre coup.
+- Nouveau cas reconnu (aussi dans la revue de partie) : une pièce qui n'est plus assez défendue après la réponse adverse (« après Bd7, il est attaqué plus de fois qu'il n'est défendu et va tomber »).
+
 ## ChessDuck 4.2.4 — coup conseillé expliqué en clair
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

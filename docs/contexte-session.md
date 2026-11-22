@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `4.2.4` (`versionCode = 92`), publiée en release GitHub `v4.2.4`.
+- **Version actuelle** : `4.2.5` (`versionCode = 93`), publiée en release GitHub `v4.2.5`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -196,6 +196,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **4.2.1–4.2.2** : carte « Séance du jour » (`JourneyCard`, `DailyPlan.buttonLabel/stepDetail`, pastilles numérotées) ; filet : `ReviewComments.netReason` → `NetReason(text, topic, best)` (pièce attaquée « mais pas en danger », « Coup conseillé »), `CoachWarning.best` (flèche verte), deuxième arrêt au même demi-coup → explication d'emblée (`stopPly/stopLine`).
 - **4.2.3** : `PlayViewModel.coach` affiche le coup aussitôt (ligne poussée, `checking`), vérifie en `CHECK_MS` (250 ms) par position, retire la gaffe (`undoAnim`) ou enchaîne `afterMove` ; `replySince` fait partir la pause minimale de la réponse de l'affichage du coup ; analyse de la position d'après gardée pour l'indice.
 - **4.2.4** : `ReviewComments.bestNote` : le coup conseillé du filet est décrit (échange de dames, échange égal, gain de matériel, prise gratuite, coup tranquille).
+- **4.2.5** : filet : arrêt seulement si `netReason` renvoie un point faible (`topic`) et si le joueur ne reste pas au-dessus de `STILL_WINNING_CP` (300) ; `ReviewComments` : cas 2 ter « pièce qui va tomber après la réponse » (`underAttack` : non défendue, attaquée par moins fort, ou plus d'attaquants que de défenseurs).
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.

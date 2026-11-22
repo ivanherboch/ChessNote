@@ -1131,13 +1131,14 @@ class ViewModelsTest {
         val vm = PlayViewModel(FakeSettings(), games, engine, GameAnalysisService(engine, games, backgroundScope))
         advanceUntilIdle()
         // Le moteur (scripté) juge que Td4 perd 6 pions : le coup doit être arrêté.
-        val fen = "6k1/5ppp/8/3n4/8/8/5PPP/3R2K1 w - - 0 1"
+        // Td4 se jette sous le cavalier e6 : Nxd4 la gagne.
+        val fen = "6k1/5ppp/4n3/8/8/8/5PPP/3R2K1 w - - 0 1"
         vm.startFromPosition(fen, playerWhite = true)
         advanceUntilIdle()
         assertTrue(vm.state.value.coached)
         val blunder = Move.fromUci("d1d4")
         val after = com.ivanherboch.chessduck.chess.Position.fromFen(fen).play(blunder)
-        val take = after.legalMoves.first()
+        val take = Move.fromUci("e6d4")
         engine.scripted[after.toFen().split(' ').take(4).joinToString(" ")] = SearchResult(take, listOf(PvLine(take, 600)))
         vm.playerMove(blunder)
         advanceUntilIdle()
@@ -1164,26 +1165,33 @@ class ViewModelsTest {
         val vm = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope))
         advanceUntilIdle()
         assertTrue(vm.state.value.coached) // réglage mémorisé : actif dès la nouvelle partie
+        fun key(p: com.ivanherboch.chessduck.chess.Position) = p.toFen().split(' ').take(4).joinToString(" ")
+        // 1.e4 d5 : l'Ordinateur répond d5 (scripté), ce qui ouvre la diagonale du fou c8.
         val start = vm.state.value.position
-        val blunder = Move.fromUci("d2d4")
-        val after = start.play(blunder)
-        val reply = after.legalMoves.first()
-        engine.scripted[after.toFen().split(' ').take(4).joinToString(" ")] = SearchResult(reply, listOf(PvLine(reply, 600)))
+        val afterE4 = start.play(Move.fromUci("e2e4"))
+        engine.scripted[key(afterE4)] = SearchResult(Move.fromUci("d7d5"), listOf(PvLine(Move.fromUci("d7d5"), 0)))
+        vm.playerMove(Move.fromUci("e2e4")); advanceUntilIdle()
+        assertNull(vm.state.value.warning) // coup sans danger : joué, l'Ordinateur répond
+        assertEquals(2, vm.state.value.line.size)
+        // 2.Qg4 ?? : la dame se jette sous le fou c8.
+        val blunder = Move.fromUci("d1g4")
+        val after = vm.state.value.position.play(blunder)
+        engine.scripted[key(after)] = SearchResult(Move.fromUci("c8g4"), listOf(PvLine(Move.fromUci("c8g4"), 900)))
         vm.playerMove(blunder)
         // Fluidité : le coup s'affiche aussitôt, pendant la vérification…
-        assertEquals(1, vm.state.value.line.size)
+        assertEquals(3, vm.state.value.line.size)
         assertTrue(vm.state.value.checking)
         advanceUntilIdle()
         // … puis la gaffe est retirée de l'échiquier, avec l'arrêt.
-        assertEquals(0, vm.state.value.line.size)
+        assertEquals(2, vm.state.value.line.size)
         val w = vm.state.value.warning!!
         assertTrue(w.text, w.text.startsWith("Filet de sécurité"))
-        assertNotNull(w.why)
+        assertTrue(w.why!!, "dame" in w.why!!)
         assertTrue(vm.state.value.netUsed)
         vm.showWhy()
         assertTrue(vm.state.value.warning!!.showWhy)
         vm.playAnyway(); advanceUntilIdle()
-        assertEquals(blunder, vm.state.value.line.moves[0])
+        assertEquals(blunder, vm.state.value.line.moves[2])
         // Un bon coup ensuite : affiché aussitôt, et l'Ordinateur répond sans arrêt.
         val ply = vm.state.value.line.size
         val good = vm.state.value.position.legalMoves.first()

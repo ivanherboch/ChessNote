@@ -63,6 +63,20 @@ object ReviewComments {
         }
     }
 
+    /**
+     * La pièce en [sq] peut être prise avec profit : attaquée et non défendue, attaquée par une pièce moins forte, ou
+     * attaquée plus de fois qu'elle n'est défendue.
+     */
+    private fun underAttack(p: Position, sq: Int): Boolean {
+        val piece = p[sq]
+        if (piece == 0) return false
+        val attackers = p.attackers(sq, !isWhite(piece))
+        if (attackers.isEmpty()) return false
+        val defenders = p.attackers(sq, isWhite(piece))
+        return defenders.isEmpty() || attackers.size > defenders.size ||
+            attackers.any { PIECE_VALUES[pieceType(p[it])] < PIECE_VALUES[pieceType(piece)] }
+    }
+
     private fun attackedCheaply(p: Position, sq: Int): Boolean {
         val piece = p[sq]
         if (piece == 0) return false
@@ -195,6 +209,21 @@ object ReviewComments {
         // 2 bis. Le coup permet une fourchette : la réponse attaque deux pièces à la fois.
         if (reply != null && !after.isCapture(reply) && isFork(after, reply)) {
             return "en jouant $san, ${v.f("vous permettez", "il permet")} la fourchette ${after.san(reply)}, qui attaque deux pièces à la fois." to ReviewTopic.FORK_ALLOWED
+        }
+        // 2 ter. La réponse ajoute un attaquant : une pièce n'est plus assez défendue et va tomber au coup suivant.
+        if (reply != null && !after.isCapture(reply)) {
+            val next = after.play(reply)
+            val mine = p.whiteToMove
+            for (sq in 0 until 64) {
+                val pc = next[sq]
+                if (pc == 0 || isWhite(pc) != mine || pieceType(pc) == PAWN || pieceType(pc) == KING) continue
+                if (!underAttack(next, sq) || underAttack(after, sq)) continue
+                val t = pieceType(pc)
+                val e = if (PieceLexiconFr.isFeminine(t)) "e" else ""
+                return ("en jouant $san, ${v.f("vous laissez", "il laisse")} ${poss(v, t)} en ${sqName(sq)} trop peu défendu$e : après " +
+                    "${after.san(reply)}, ${if (e.isEmpty()) "il" else "elle"} est attaqué$e plus de fois qu'${if (e.isEmpty()) "il" else "elle"} n'est défendu$e et va tomber.") to
+                    ReviewTopic.HANGING_PIECE
+            }
         }
         if (best != null) {
             val bs = p.san(best)

@@ -254,14 +254,18 @@ class PlayViewModel(
             // Partie changée entre-temps (nouvelle partie, coup annulé, navigation) : cette vérification ne la concerne plus.
             if (gen != gameGeneration || state.value.line !== nl) return@launch
             val sign = if (s.playerWhite) 1 else -1
-            val warn = before != null && res != null && sign * before.eval > -LOST_CP && sign * (before.eval - res.eval) >= BLUNDER_CP
+            // Arrêt seulement pour une gaffe nette, que l'on sait expliquer (pièce en prise ou qui va tomber, mat, fourchette…),
+            // et jamais si le joueur reste nettement gagnant après son coup.
+            val drop = before != null && res != null && sign * before.eval > -LOST_CP && sign * (before.eval - res.eval) >= BLUNDER_CP &&
+                sign * res.eval < STILL_WINNING_CP
+            val reason = if (drop && before != null && res != null) runCatching { ReviewComments.netReason(pos, m, before, res) }.getOrNull() else null
+            val warn = reason?.topic != null
             if (!warn) {
                 _state.update { it.copy(checking = false, analysis = if (res != null) it.analysis + (nl.size to res) else it.analysis) }
                 return@launch afterMove()
             }
-            val reply = res.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { after.isLegal(it) }
+            val reply = res?.best?.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { after.isLegal(it) }
             // L'explication de la revue de partie, montrée à la demande (« Pourquoi ? »), et le point faible révélé.
-            val reason = runCatching { ReviewComments.netReason(pos, m, before, res) }.getOrNull()
             val net = !s.fromPosition
             reason?.topic?.let { t -> if (net) launch { prefs.addNetEvent(t.name, System.currentTimeMillis()) } }
             // Deuxième arrêt dans la même position : l'explication et le coup conseillé s'affichent d'emblée (on ne tourne
@@ -512,6 +516,8 @@ const val COACH_STOPS = 2
 const val BLUNDER_CP = 200
 /** Temps d'analyse de chaque position vérifiée par le filet (le coup est déjà affiché pendant ce temps). */
 private const val CHECK_MS = 250
+/** Après le coup, le joueur garde au moins cet avantage (centipions) : pas d'arrêt, même si le coup n'est pas le meilleur. */
+private const val STILL_WINNING_CP = 300
 private const val LOST_CP = 300
 
 /** La question réflexe adaptée à la réponse adverse qui punirait le coup [san] (sans la dévoiler). */
