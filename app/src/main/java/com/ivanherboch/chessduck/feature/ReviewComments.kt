@@ -131,7 +131,7 @@ object ReviewComments {
         val e = if (PieceLexiconFr.isFeminine(moved)) "e" else ""
         val pre = when {
             moved == KING || moved == PAWN || p.attackers(m.from, !p.whiteToMove).isEmpty() -> ""
-            attackedCheaply(p, m.from) -> "Mettre ${poss(v, moved)} à l'abri était nécessaire, mais "
+            underAttack(p, m.from) -> "Mettre ${poss(v, moved)} à l'abri était nécessaire, mais "
             else -> "${poss(v, moved).replaceFirstChar { it.uppercase() }} en ${sqName(m.from)} était attaqué$e, mais pas en danger : " +
                 "${if (e.isEmpty()) "il" else "elle"} est défendu$e, et un échange ne vous ferait rien perdre. Le vrai problème : "
         }
@@ -165,7 +165,7 @@ object ReviewComments {
     }
 
     /** Explication du filet de sécurité : texte, point faible révélé, coup conseillé (flèche verte). */
-    data class NetReason(val text: String, val topic: ReviewTopic?, val best: Move?)
+    data class NetReason(val text: String, val topic: ReviewTopic?, val best: Move?, val stop: Boolean = topic != null)
 
     internal fun isFork(p: Position, m: Move): Boolean {
         val white = p.whiteToMove

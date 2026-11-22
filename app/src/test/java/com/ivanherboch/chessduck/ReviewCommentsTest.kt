@@ -193,6 +193,28 @@ class ReviewCommentsTest {
         assertTrue(r.text, "votre cavalier en c6 trop peu défendu" in r.text && "Bd7" in r.text)
     }
 
+    /** Décision du filet : pat quand on gagne → arrêt ; pas d'arrêt sans danger concret ni quand on reste nettement gagnant. */
+    @Test
+    fun safetyNetDecisionRules() {
+        val SN = com.ivanherboch.chessduck.feature.SafetyNet
+        val mv = { u: String -> com.ivanherboch.chessduck.chess.Move.fromUci(u) }
+        // Qf7 ?? pat (le roi h8 n'a plus de case), alors que Qg7# matait.
+        val pat = com.ivanherboch.chessduck.chess.Position.fromFen("7k/4Q3/6K1/8/8/8/8/8 w - - 0 1")
+        val d = SN.decide(pat, mv("e7f7"), Analysis(MATE - 1, null, "e7g7"), Analysis(0, null, ""))!!
+        assertTrue(d.stop && "pat" in d.text)
+        assertEquals(mv("e7g7"), d.best)
+        // Dame en prise (Qg4 ?? Bxg4) : arrêt, avec le point faible.
+        val l = Line.fromSan(START_FEN, "e4 d5".split(" "))
+        val g = SN.decide(l.last, mv("d1g4"), Analysis(30, 0, "e4d5"), Analysis(-900, null, "c8g4"))!!
+        assertEquals(com.ivanherboch.chessduck.feature.ReviewTopic.HANGING_PIECE, g.topic)
+        // Même perte d'évaluation, mais aucun danger concret (coup tranquille) : pas d'arrêt.
+        assertEquals(null, SN.decide(l.last, mv("a2a3"), Analysis(30, 0, "e4d5"), Analysis(-300, null, "g8f6")))
+        // Toujours nettement gagnant après le coup (+9 → +6) : pas d'arrêt.
+        assertEquals(null, SN.decide(l.last, mv("d1g4"), Analysis(900, 0, "e4d5"), Analysis(600, null, "c8g4")))
+        // Partie déjà perdue : pas d'arrêt.
+        assertEquals(null, SN.decide(l.last, mv("d1g4"), Analysis(-900, 0, "e4d5"), Analysis(-1800, null, "c8g4")))
+    }
+
     /** Filet de sécurité : une gaffe arrêtée compte dans « À travailler », même sans partie enregistrée. */
     @Test
     fun netEventsFeedWeakTopics() {

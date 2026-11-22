@@ -1211,6 +1211,37 @@ class ViewModelsTest {
         assertFalse(vm.state.value.coached)
     }
 
+    /** Filet : un coup rejoué depuis l'historique est vérifié aussi ; une gaffe rend la partie d'origine intacte. */
+    @Test
+    fun safetyNetChecksMovesReplayedFromHistory() = test {
+        val games = FakeGames()
+        val engine = FakeEngine()
+        val prefs = FakeSettings(com.ivanherboch.chessduck.data.Settings(lessonId = 1, academyLevel = 2, safetyNet = true))
+        val vm = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope))
+        advanceUntilIdle()
+        fun key(p: com.ivanherboch.chessduck.chess.Position) = p.toFen().split(' ').take(4).joinToString(" ")
+        val start = vm.state.value.position
+        val afterE4 = start.play(Move.fromUci("e2e4"))
+        engine.scripted[key(afterE4)] = SearchResult(Move.fromUci("d7d5"), listOf(PvLine(Move.fromUci("d7d5"), 0)))
+        vm.playerMove(Move.fromUci("e2e4")); advanceUntilIdle()
+        vm.playerMove(Move.fromUci("g1f3")); advanceUntilIdle()
+        val full = vm.state.value.line
+        assertEquals(4, full.size)
+        // Retour après 1.e4 d5, puis Qg4 ?? (le fou c8 la prend).
+        vm.goTo(2)
+        val blunder = Move.fromUci("d1g4")
+        val after = vm.state.value.position.play(blunder)
+        engine.scripted[key(after)] = SearchResult(Move.fromUci("c8g4"), listOf(PvLine(Move.fromUci("c8g4"), 900)))
+        vm.playerMove(blunder)
+        // Pendant la vérification, la navigation est bloquée.
+        vm.goTo(0)
+        assertEquals(3, vm.state.value.cursor)
+        advanceUntilIdle()
+        assertNotNull(vm.state.value.warning)
+        assertTrue(vm.state.value.line === full) // la partie d'origine est rendue intacte…
+        assertEquals(2, vm.state.value.cursor) // … à la position où l'on rejouait
+    }
+
     /** Séance du jour : les étapes du jour, cochées une à une, puis la série de jours. */
     @Test
     fun dailySessionPlansStepsAndCountsTheStreak() = test {

@@ -174,7 +174,8 @@ class PlayViewModel(
     fun playerMove(m: Move) {
         val s = state.value
         if (!s.canPlay || !s.position.isLegal(m)) return
-        if (s.coached && s.coachLeft > 0 && !s.twoPlayers && s.cursor == s.line.size) return coach(s, m)
+        // Aussi quand on rejoue depuis un coup de l'historique (la suite est alors remplacée).
+        if (s.coached && s.coachLeft > 0 && !s.twoPlayers) return coach(s, m)
         commit(m)
     }
 
@@ -253,14 +254,9 @@ class PlayViewModel(
             val res = if (before == null) null else analyse(after, CHECK_MS)
             // Partie changée entre-temps (nouvelle partie, coup annulé, navigation) : cette vérification ne la concerne plus.
             if (gen != gameGeneration || state.value.line !== nl) return@launch
-            val sign = if (s.playerWhite) 1 else -1
-            // Arrêt seulement pour une gaffe nette, que l'on sait expliquer (pièce en prise ou qui va tomber, mat, fourchette…),
-            // et jamais si le joueur reste nettement gagnant après son coup.
-            val drop = before != null && res != null && sign * before.eval > -LOST_CP && sign * (before.eval - res.eval) >= BLUNDER_CP &&
-                sign * res.eval < STILL_WINNING_CP
-            val reason = if (drop && before != null && res != null) runCatching { ReviewComments.netReason(pos, m, before, res) }.getOrNull() else null
-            val warn = reason?.topic != null
-            if (!warn) {
+            // Arrêt seulement pour une gaffe nette et explicable (voir SafetyNet).
+            val reason = if (before != null && res != null) SafetyNet.decide(pos, m, before, res)?.takeIf { it.stop } else null
+            if (reason == null) {
                 _state.update { it.copy(checking = false, analysis = if (res != null) it.analysis + (nl.size to res) else it.analysis) }
                 return@launch afterMove()
             }
@@ -364,7 +360,8 @@ class PlayViewModel(
     /** Affiche la position après [n] demi-coups (clic dans la liste des coups). */
     fun goTo(n: Int) {
         val s = state.value
-        if (s.thinking) return
+        // Pendant la réflexion de l'Ordinateur ou la vérification du filet, la partie avance : pas de navigation.
+        if (s.thinking || s.checking) return
         val t = n.coerceIn(0, s.line.size)
         if (t != s.cursor) navigate(t - s.cursor)
     }
@@ -391,7 +388,7 @@ class PlayViewModel(
 
     private fun navigate(delta: Int) {
         val s = state.value
-        if (s.thinking) return
+        if (s.thinking || s.checking) return
         val t = (s.cursor + delta).coerceIn(0, s.line.size)
         if (t == s.cursor) return
         val anim = LinePlaybackController.transition(s.line, s.cursor, t)
@@ -513,12 +510,10 @@ data class CoachWarning(
 
 /** Arrêts de la partie accompagnée (une ou deux fois par partie), et seuils (centipions). */
 const val COACH_STOPS = 2
-const val BLUNDER_CP = 200
+const val BLUNDER_CP = SafetyNet.BLUNDER_CP
 /** Temps d'analyse de chaque position vérifiée par le filet (le coup est déjà affiché pendant ce temps). */
 private const val CHECK_MS = 250
-/** Après le coup, le joueur garde au moins cet avantage (centipions) : pas d'arrêt, même si le coup n'est pas le meilleur. */
-private const val STILL_WINNING_CP = 300
-private const val LOST_CP = 300
+
 
 /** La question réflexe adaptée à la réponse adverse qui punirait le coup [san] (sans la dévoiler). */
 internal fun coachText(san: String, after: Position, reply: Move?, net: Boolean = false): String {

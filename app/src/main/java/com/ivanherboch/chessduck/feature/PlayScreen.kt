@@ -195,12 +195,12 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
             val wide = LocalIsTwoPane.current
             if (!wide) MoveStrip(
                 s.line, s.cursor, Modifier.padding(top = 2.dp), onSelect = vm::goTo, onPrev = vm::back, onNext = vm::forward,
-                prevEnabled = s.cursor > 0 && !s.thinking, nextEnabled = s.cursor < s.line.size && !s.thinking,
+                prevEnabled = s.cursor > 0 && !s.thinking && !s.checking, nextEnabled = s.cursor < s.line.size && !s.thinking && !s.checking,
             )
             val (msg, tone) = liveStatus(s, st.pseudo, st.pseudo2)
             // Tablette : message compact puis tableau complet des coups, comme dans la revue.
             FeedbackCard(stuck ?: msg, if (stuck != null) Tone.GOLD else tone, Modifier.padding(top = 4.dp).then(if (wide) Modifier.heightIn(max = 180.dp) else Modifier.weight(1f)))
-            if (wide) MoveTable(s.line, s.cursor, emptyList(), { if (!s.thinking) vm.goTo(it) }, Modifier.padding(top = 6.dp).weight(1f))
+            if (wide) MoveTable(s.line, s.cursor, emptyList(), { if (!s.thinking && !s.checking) vm.goTo(it) }, Modifier.padding(top = 6.dp).weight(1f))
             EqualRow(Modifier.padding(vertical = 6.dp), gap = 6.dp) {
                 val w = s.warning
                 if (w != null) {
