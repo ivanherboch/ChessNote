@@ -175,7 +175,8 @@ class ReviewCommentsTest {
         val r = ReviewComments.netReason(p, qe2, Analysis(0, 0, "d1d8"), Analysis(-300, null, "e4f3"))
         assertTrue(r.text, "était attaquée, mais pas en danger" in r.text)
         assertTrue(r.text, "exf3" in r.text)
-        assertTrue(r.text, "Coup conseillé : Qxd8+" in r.text)
+        // Le coup conseillé est un échange de dames : dit tel quel (pas « qui ne perd rien », trompeur ici).
+        assertTrue(r.text, "Coup conseillé : Qxd8+, qui échange les dames" in r.text)
         assertEquals(com.ivanherboch.chessduck.chess.Move.fromUci("d1d8"), r.best)
         assertEquals(com.ivanherboch.chessduck.feature.ReviewTopic.HANGING_PIECE, r.topic)
     }

@@ -1,3 +1,12 @@
+## ChessDuck 4.2.4 — coup conseillé expliqué en clair
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Filet de sécurité : le coup conseillé dit ce qu'il fait vraiment, au lieu d'un « qui ne perd rien » parfois trompeur :
+  - échange de dames (« vous prenez sa dame, l'adversaire reprend la vôtre, et vous ne perdez rien ») ou autre échange égal ;
+  - gain de matériel (la pièce prise vaut plus que celle qui prend) ou prise gratuite ;
+  - « qui ne perd rien » seulement pour un coup sans prise.
+
 ## ChessDuck 4.2.3 — filet de sécurité fluide
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

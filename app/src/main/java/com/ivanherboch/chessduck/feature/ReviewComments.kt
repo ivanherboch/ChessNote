@@ -8,6 +8,7 @@ import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.chess.Move
 import com.ivanherboch.chessduck.chess.PAWN
 import com.ivanherboch.chessduck.chess.PIECE_VALUES
+import com.ivanherboch.chessduck.chess.QUEEN
 import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.chess.fileOf
 import com.ivanherboch.chessduck.chess.isWhite
@@ -123,7 +124,30 @@ object ReviewComments {
         val body = if (pre.isEmpty()) text.replaceFirstChar { it.uppercase() } else pre + text
         // Le coup conseillé : il évite la perte (souvent, il règle les deux problèmes à la fois).
         val best = a0.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { p.isLegal(it) && it != m }
-        return NetReason(body + (best?.let { "\n\nCoup conseillé : ${p.san(it)}, qui ne perd rien." } ?: ""), topic, best)
+        return NetReason(body + (best?.let { "\n\nCoup conseillé : " + bestNote(p, it) } ?: ""), topic, best)
+    }
+
+    /**
+     * Ce que fait le coup conseillé, en clair : un échange (on prend une pièce de même valeur, l'adversaire reprend :
+     * rien n'est perdu), un gain de matériel, une prise gratuite, ou un coup tranquille qui ne perd rien.
+     */
+    private fun bestNote(p: Position, best: Move): String {
+        val bs = p.san(best)
+        if (!p.isCapture(best)) return "$bs, qui ne perd rien."
+        val mover = pieceType(p[best.from])
+        val taken = p.capturedType(best)
+        val after = p.play(best)
+        val retaken = after.attackers(best.to, !p.whiteToMove).isNotEmpty()
+        return when {
+            !retaken -> "$bs, qui prend ${the(taken)} adverse gratuitement."
+            PIECE_VALUES[taken] > PIECE_VALUES[mover] ->
+                "$bs, qui gagne du matériel : ${the(taken)} adverse vaut plus que ${the(mover)} qui ${if (PieceLexiconFr.isFeminine(taken)) "la" else "le"} prend."
+            PIECE_VALUES[taken] == PIECE_VALUES[mover] && taken == QUEEN ->
+                "$bs, qui échange les dames : vous prenez sa dame, l'adversaire reprend la vôtre, et vous ne perdez rien."
+            PIECE_VALUES[taken] == PIECE_VALUES[mover] ->
+                "$bs, un échange : vous prenez ${the(taken)} adverse, l'adversaire reprend, et vous ne perdez rien."
+            else -> "$bs, qui ne perd rien au bout des échanges."
+        }
     }
 
     /** Explication du filet de sécurité : texte, point faible révélé, coup conseillé (flèche verte). */
