@@ -145,7 +145,7 @@ class AppRobolectricTest {
     fun endgameKingTapShowsTargets() {
         settle(2500)
         rule.onNodeWithText("Académie").performClick(); settle(1500)
-        rule.onNodeWithText("Finales contre l'Ordinateur").performScrollTo().performClick(); settle(1000)
+        rule.onNodeWithText("Finales").performScrollTo().performClick(); settle(1000)
         rule.onNodeWithText("Gagnez : Roi et pion contre roi").performScrollTo().performClick(); settle(2000)
         shot("2x_finale_depart")
         val king = rule.onNode(androidx.compose.ui.test.hasContentDescription("roi blanc", substring = true, ignoreCase = true), useUnmergedTree = true)
@@ -214,7 +214,7 @@ class AppRobolectricTest {
             check(prioritiesShown(30_000)) { "Bilan des priorités absent" }
         }
         settle(500); shot("2r_priorites")
-        rule.onNodeWithText("Travailler ce point").assertExists()
+        desc("Travailler ce point").assertExists()
         rule.onNodeWithText("Réflexes & Calcul").performScrollTo().performClick(); settle(1000)
         rule.onNodeWithText("Calcul à l'aveugle").performScrollTo().performClick(); settle(1500)
         rule.waitUntil(30_000) {
@@ -601,6 +601,31 @@ class AppRobolectricTest {
         assertTrue("la ligne de l'Ordinateur passe à la ligne ($line px)", line <= 40f * rule.activity.resources.displayMetrics.density)
     }
 
+    /**
+     * Accueil de l'Académie sur un téléphone de 360 dp, dans le cas le plus chargé (révisions du jour et 3 points à
+     * travailler) : tout tient au-dessus de la barre de navigation, sans défilement.
+     */
+    @Test
+    fun academyHomeFitsWithoutScrolling() {
+        val app = ApplicationProvider.getApplicationContext<ChessDuckApp>()
+        runBlocking {
+            for (id in listOf(41, 42, 43)) app.db.user().saveLesson(LessonProgress(id, 0L, stars = 1, errors = 3, practicePassed = 1, practiceTotal = 5))
+            app.db.user().saveLesson(LessonProgress(5, 1L, stars = 3, srsStage = 1, nextReviewAt = 1L))
+        }
+        settle(2500)
+        rule.onNodeWithText("Académie").performClick(); settle(1500)
+        rule.waitUntil(15_000) {
+            shadowOf(Looper.getMainLooper()).idle()
+            rule.onAllNodesWithContentDescription("Travailler ce point", substring = true).fetchSemanticsNodes().size == 3
+        }
+        settle(500); shot("2g_accueil_charge")
+        rule.onNodeWithText("Révisions (", substring = true).assertExists()
+        val navTop = rule.onAllNodesWithText("Problèmes").onFirst().fetchSemanticsNode().boundsInRoot.top
+        // Position réelle (non rognée par la zone visible) du bas de la dernière carte.
+        val lastTile = rule.onNodeWithText("Tests de niveau").fetchSemanticsNode().let { it.positionInRoot.y + it.size.height }
+        assertTrue("l'accueil déborde : dernière tuile à $lastTile, barre de navigation à $navTop", lastTile <= navTop)
+    }
+
     /** Clavier de Notation : touches assez grandes pour le doigt (hauteurs 44 et 48 dp) sur un téléphone de 360 dp. */
     @Test
     fun notationKeysStayLargeEnough() {
@@ -719,7 +744,7 @@ class AppRobolectricTest {
         rule.onNodeWithText("Oui, je prends").performClick(); settle(600); shot("2j_prise_reponse")
         desc("Revenir à l'Atelier").performClick(); settle(1000)
         desc("Revenir à l'accueil de l'Académie").performClick(); settle(1000)
-        rule.onNodeWithText("Finales contre l'Ordinateur").performScrollTo().performClick(); settle(1000); shot("2k_atelier_finales")
+        rule.onNodeWithText("Finales").performScrollTo().performClick(); settle(1000); shot("2k_atelier_finales")
         rule.onNodeWithText("Gagnez : Roi et tour contre roi").performScrollTo().performClick(); settle(1500); shot("2k_finale")
         desc("Retourner l'échiquier").assertExists() // le retournement reste offert pendant une séance
         desc("Revenir à l'Atelier").performClick(); settle(1000)

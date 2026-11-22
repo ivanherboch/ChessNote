@@ -1,5 +1,13 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.ivanherboch.chessduck.ui.MIN_TEXT
+import com.ivanherboch.chessduck.ui.AutoText
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.runtime.remember
 import com.ivanherboch.chessduck.ui.icons.ExpandMore
 import com.ivanherboch.chessduck.ui.icons.ExpandLess
@@ -13,8 +21,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -55,13 +61,11 @@ import com.ivanherboch.chessduck.content.LessonCategory
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.ui.ButtonVariant
 import com.ivanherboch.chessduck.ui.DuckButton
-import com.ivanherboch.chessduck.ui.DuckChip
 import com.ivanherboch.chessduck.ui.DuckRadius
 import com.ivanherboch.chessduck.ui.DuckSheet
 import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.LocalIsTwoPane
 import com.ivanherboch.chessduck.ui.SessionHeader
-import com.ivanherboch.chessduck.ui.icons.Flag
 import com.ivanherboch.chessduck.ui.icons.History
 import com.ivanherboch.chessduck.ui.icons.Insights
 import com.ivanherboch.chessduck.ui.icons.LocalFireDepartment
@@ -87,7 +91,7 @@ internal fun AcademyHomeScreen(vm: AcademyViewModel, onCatalog: (level: Int, cat
         if (priorities.isNotEmpty()) PrioritiesCard(vm, priorities)
     }
     val right: @Composable ColumnScope.() -> Unit = {
-        LessonsCard(home, mastered.size, onCatalog)
+        LessonsCard(mastered.size, onCatalog)
         WorkshopTiles(vm, home)
     }
     if (LocalIsTwoPane.current) {
@@ -98,7 +102,8 @@ internal fun AcademyHomeScreen(vm: AcademyViewModel, onCatalog: (level: Int, cat
             Column(Modifier.weight(1f).widthIn(max = 560.dp).verticalScroll(rememberScrollState()).padding(vertical = 8.dp), content = right)
         }
     } else {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 6.dp)) {
+        // Conçu pour tenir sans défilement sur un téléphone ; le défilement ne sert qu'aux très petits écrans et grandes polices.
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 2.dp)) {
             left()
             right()
         }
@@ -108,44 +113,59 @@ internal fun AcademyHomeScreen(vm: AcademyViewModel, onCatalog: (level: Int, cat
 
 /** Carte de l'accueil : fond de surface, bord discret (ou coloré), titre de section lu comme un titre par TalkBack. */
 @Composable
-private fun HomeCard(title: String, accent: Color? = null, content: @Composable ColumnScope.() -> Unit) {
+private fun HomeCard(title: String?, accent: Color? = null, content: @Composable ColumnScope.() -> Unit) {
     val c = LocalDuck.current
     Column(
-        Modifier.fillMaxWidth().padding(vertical = 6.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
-            .border(1.dp, accent ?: c.outline, RoundedCornerShape(DuckRadius.M)).padding(14.dp),
+        Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
+            .border(1.dp, accent ?: c.outline, RoundedCornerShape(DuckRadius.M)).padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        Text(title, color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+        if (title != null) Text(title, color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
         content()
     }
 }
 
 /**
- * « Mon parcours » : palier, leçons maîtrisées du palier, « Changer de palier », puis une seule action principale
- * (reprendre la leçon commencée, sinon la prochaine leçon conseillée) et les révisions du jour quand il y en a.
+ * « Mon parcours » : palier et « Changer de palier » sur une ligne, la progression du palier, puis une seule action
+ * principale (reprendre la leçon commencée, sinon la prochaine leçon conseillée) et les révisions du jour s'il y en a.
+ * Compacte, pour que tout l'accueil tienne sur un écran de téléphone sans défilement.
  */
 @Composable
 private fun JourneyCard(vm: AcademyViewModel, home: AcademyHome, onLevels: () -> Unit) {
     val c = LocalDuck.current
-    HomeCard("Mon parcours") {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                "Palier ${levelName(home.level)}", color = c.blueText, style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.weight(1f).semantics { contentDescription = "Palier ${levelSpoken(home.level)}" },
-            )
+    HomeCard(null) {
+        val heading: @Composable (Modifier) -> Unit = { m ->
+            Column(m) {
+                Text("Mon parcours", color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+                Text(
+                    "Palier ${levelName(home.level)}", color = c.blueText, style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.semantics { contentDescription = "Palier ${levelSpoken(home.level)}" },
+                )
+            }
+        }
+        // Grande police : le bouton passe sous le titre au lieu de le serrer.
+        if (LocalDensity.current.fontScale > 1.3f) {
+            heading(Modifier.fillMaxWidth())
+            DuckButton("Changer de palier", onLevels, Modifier.fillMaxWidth().padding(top = 4.dp), accent = c.blue, variant = ButtonVariant.OUTLINED, height = 40.dp)
+        } else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            heading(Modifier.weight(1f))
             DuckButton("Changer de palier", onLevels, accent = c.blue, variant = ButtonVariant.OUTLINED, height = 40.dp)
         }
         if (home.levelTotal > 0) {
             val exam = home.level in home.examsPassed
-            val text = "${home.levelMastered} leçon${if (home.levelMastered > 1) "s" else ""} maîtrisée${if (home.levelMastered > 1) "s" else ""} " +
-                "sur ${home.levelTotal}" + if (exam) " · examen réussi" else ""
-            Column(Modifier.fillMaxWidth().padding(top = 8.dp).semantics(mergeDescendants = true) { contentDescription = "Palier ${home.level} : $text" }) {
+            val text = "${home.levelMastered}/${home.levelTotal} maîtrisée${if (home.levelMastered > 1) "s" else ""}" + if (exam) " · examen réussi" else ""
+            Row(
+                Modifier.fillMaxWidth().padding(top = 6.dp).semantics(mergeDescendants = true) {
+                    contentDescription = "Palier ${home.level} : ${home.levelMastered} leçons maîtrisées sur ${home.levelTotal}" + if (exam) ", examen réussi" else ""
+                },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 LinearProgressIndicator(
                     progress = { home.levelMastered.toFloat() / home.levelTotal }, color = c.greenRole.fill, trackColor = c.surfaceHi,
                     // Barre pleine et continue : ni écart entre la partie remplie et le reste, ni point final (style Material 3 par défaut).
                     gapSize = 0.dp, drawStopIndicator = {},
-                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                    modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
                 )
-                Text(text, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+                Text(text, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp))
             }
         }
         // Une seule action principale, selon l'état réel de l'élève.
@@ -156,95 +176,124 @@ private fun JourneyCard(vm: AcademyViewModel, home: AcademyHome, onLevels: () ->
             next != null -> "Prochaine leçon : ${Lessons.byId(next).title}" to next
             else -> null to null
         }
-        if (label != null && id != null) DuckButton(
-            label, { vm.open(id, guided = true) }, Modifier.fillMaxWidth().padding(top = 10.dp), accent = c.green, filled = true,
-            icon = Icons.AutoMirrored.Rounded.ArrowForward,
-        )
-        if (home.due.isNotEmpty()) DuckButton(
-            "Révisions du jour (${home.due.size})", vm::startReviews, Modifier.fillMaxWidth().padding(top = 8.dp), accent = c.gold,
-            filled = cont == null && next == null, variant = if (cont == null && next == null) null else ButtonVariant.OUTLINED,
-            icon = Icons.Rounded.History,
-            contentDescription = "Révisions du jour : ${home.due.size} leçon${if (home.due.size > 1) "s" else ""} à rejouer",
-        )
+        // L'action principale et les révisions du jour partagent une rangée (l'accueil tient sans défilement).
+        if (label != null && id != null || home.due.isNotEmpty()) Row(
+            Modifier.fillMaxWidth().padding(top = 8.dp).height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            if (label != null && id != null) DuckButton(
+                label, { vm.open(id, guided = true) }, Modifier.weight(1.7f).fillMaxHeight(), accent = c.green, filled = true,
+                icon = Icons.AutoMirrored.Rounded.ArrowForward,
+            )
+            if (home.due.isNotEmpty()) DuckButton(
+                "Révisions (${home.due.size})", vm::startReviews, Modifier.weight(1f).fillMaxHeight(), accent = c.gold,
+                filled = id == null, variant = if (id == null) null else ButtonVariant.OUTLINED, icon = Icons.Rounded.History,
+                contentDescription = "Révisions du jour : ${home.due.size} leçon${if (home.due.size > 1) "s" else ""} à rejouer",
+            )
+        }
     }
 }
 
-/** « À travailler » : les 1 à 3 points faibles du moment (parties analysées, difficultés de l'Académie). */
+/**
+ * « À travailler » : les 1 à 3 points faibles du moment, chacun sur une ligne qu'on touche pour le travailler (leçon et
+ * exercices) : le titre, la raison en petit, et « Travailler » à droite.
+ */
 @Composable
 private fun PrioritiesCard(vm: AcademyViewModel, priorities: List<Priority>) {
     val c = LocalDuck.current
     HomeCard("À travailler", accent = c.goldRole.fill) {
         priorities.forEachIndexed { i, p ->
-            Column(Modifier.fillMaxWidth().padding(top = if (i == 0) 6.dp else 12.dp)) {
-                Text("${i + 1}. ${p.title}", color = c.text, style = MaterialTheme.typography.titleSmall)
-                Text(p.reason, color = c.muted, style = MaterialTheme.typography.bodyMedium)
-                DuckButton(
-                    "Travailler ce point", { vm.trainTopic(p.lessonId, p.theme) }, Modifier.fillMaxWidth().padding(top = 6.dp),
-                    accent = c.gold, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Flag,
-                    contentDescription = "Travailler ce point : ${p.title}" + if (p.theme.isEmpty()) ", la leçon" else ", la leçon et 5 exercices",
-                )
+            Row(
+                Modifier.fillMaxWidth().padding(top = if (i == 0) 4.dp else 6.dp).heightIn(min = 48.dp).clip(RoundedCornerShape(DuckRadius.S))
+                    .background(c.surfaceHi)
+                    .clickable(role = Role.Button) { vm.trainTopic(p.lessonId, p.theme) }
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = "Travailler ce point : ${p.title}. ${p.reason}" + if (p.theme.isEmpty()) " La leçon." else " La leçon et 5 exercices."
+                    }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("${i + 1}. ${p.title}", color = c.text, style = MaterialTheme.typography.titleSmall)
+                    Text(p.reason, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                }
+                Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = c.goldText, modifier = Modifier.padding(start = 4.dp))
             }
         }
     }
 }
 
-/** « Leçons » : le catalogue complet, et des raccourcis vers le palier en cours et chaque catégorie. */
-@OptIn(ExperimentalLayoutApi::class)
+/** « Leçons » : le nombre de leçons maîtrisées et le catalogue (recherche et filtres par palier et catégorie), sur une ligne. */
 @Composable
-private fun LessonsCard(home: AcademyHome, masteredCount: Int, onCatalog: (Int, LessonCategory?) -> Unit) {
+private fun LessonsCard(masteredCount: Int, onCatalog: (Int, LessonCategory?) -> Unit) {
     val c = LocalDuck.current
     val total = Lessons.all.size
-    HomeCard("Leçons ($total)") {
-        Text("$masteredCount maîtrisée${if (masteredCount > 1) "s" else ""} sur $total, toutes en accès libre.", color = c.muted, style = MaterialTheme.typography.bodyMedium)
-        DuckButton(
-            "Ouvrir le catalogue", { onCatalog(0, null) }, Modifier.fillMaxWidth().padding(top = 8.dp), accent = c.blue, filled = true,
-            icon = Icons.AutoMirrored.Rounded.MenuBook, contentDescription = "Ouvrir le catalogue des leçons",
-        )
-        FlowRow(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            DuckChip(
-                "Palier ${home.level}", false, { onCatalog(home.level, null) },
-                Modifier.semantics { contentDescription = "Leçons du palier ${levelSpoken(home.level)}" }, accent = c.blue,
+    HomeCard(null) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Leçons ($total)", color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+                Text("$masteredCount maîtrisée${if (masteredCount > 1) "s" else ""}, toutes en accès libre", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            }
+            DuckButton(
+                "Catalogue", { onCatalog(0, null) }, accent = c.blue, filled = true, height = 40.dp,
+                icon = Icons.AutoMirrored.Rounded.MenuBook, contentDescription = "Ouvrir le catalogue des leçons",
             )
-            for (k in Lessons.categories) DuckChip(k.label, false, { onCatalog(0, k) }, Modifier.semantics { contentDescription = "Leçons : ${k.label}" }, accent = c.blue)
         }
     }
 }
 
-/** « Atelier » : 4 tuiles (finales, réflexes et calcul, répertoire, tests), chacune vers sa sous-liste. */
+/** « Atelier » : 4 tuiles compactes (finales, réflexes et calcul, répertoire, tests), chacune vers sa sous-liste. */
 @Composable
 private fun WorkshopTiles(vm: AcademyViewModel, home: AcademyHome) {
     val c = LocalDuck.current
     HomeCard("Atelier") {
         val tests = listOfNotNull(if (home.placementDone) "placement fait" else null, if (home.level in home.examsPassed) "examen réussi" else null)
-        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Tile(
-                "Finales contre l'Ordinateur", "${home.endgamesDone.size}/${EndgameFamily.entries.size} validées", Icons.Rounded.SportsScore, c.green,
-                Modifier.weight(1f),
-            ) { vm.openRoute(AcademyRoute.WORKSHOP_ENDGAMES) }
-            Tile("Réflexes & Calcul", "4 exercices", Icons.Rounded.LocalFireDepartment, c.red, Modifier.weight(1f)) { vm.openRoute(AcademyRoute.WORKSHOP_REFLEX) }
-        }
-        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Tile("Mon répertoire", "Blancs ou Noirs", Icons.AutoMirrored.Rounded.MenuBook, c.blue, Modifier.weight(1f)) { vm.openRoute(AcademyRoute.WORKSHOP_REPERTOIRE) }
-            Tile(
-                "Tests de niveau", tests.joinToString(" · ").ifEmpty { "Placement et examen" }, Icons.Rounded.Insights, c.gold, Modifier.weight(1f),
-            ) { vm.openRoute(AcademyRoute.WORKSHOP_TESTS) }
+        // Une seule rangée de 4 tuiles (deux rangées de 2 en grande police) : nom court, description complète pour TalkBack.
+        val tiles: List<@Composable (Modifier) -> Unit> = listOf(
+            { m ->
+                Tile(
+                    "Finales", "${home.endgamesDone.size}/${EndgameFamily.entries.size}", Icons.Rounded.SportsScore, c.green, m,
+                    "Finales contre l'Ordinateur : ${home.endgamesDone.size} validées sur ${EndgameFamily.entries.size}",
+                ) { vm.openRoute(AcademyRoute.WORKSHOP_ENDGAMES) }
+            },
+            { m -> Tile("Réflexes & Calcul", null, Icons.Rounded.LocalFireDepartment, c.red, m, "Réflexes et calcul : 4 exercices") { vm.openRoute(AcademyRoute.WORKSHOP_REFLEX) } },
+            { m ->
+                Tile("Mon répertoire", null, Icons.AutoMirrored.Rounded.MenuBook, c.blue, m, "Mon répertoire : réviser mes ouvertures, Blancs ou Noirs") {
+                    vm.openRoute(AcademyRoute.WORKSHOP_REPERTOIRE)
+                }
+            },
+            { m ->
+                Tile(
+                    "Tests de niveau", null, Icons.Rounded.Insights, c.gold, m,
+                    "Tests de niveau : placement et examen du palier" + tests.joinToString("") { ", $it" },
+                ) { vm.openRoute(AcademyRoute.WORKSHOP_TESTS) }
+            },
+        )
+        val perRow = if (LocalDensity.current.fontScale > 1.3f) 2 else 4
+        for (row in tiles.chunked(perRow)) {
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp).height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                for (t in row) t(Modifier.weight(1f).fillMaxHeight())
+            }
         }
     }
 }
 
-/** Tuile de l'Atelier : icône, titre et état sur deux lignes au plus, sans troncature. */
+/** Tuile de l'Atelier : icône, nom court (deux lignes au plus, réduit plutôt que coupé) et état éventuel. */
 @Composable
-private fun Tile(title: String, detail: String, icon: ImageVector, accent: Color, modifier: Modifier, onClick: () -> Unit) {
+private fun Tile(title: String, detail: String?, icon: ImageVector, accent: Color, modifier: Modifier, description: String, onClick: () -> Unit) {
     val c = LocalDuck.current
     Column(
-        modifier.heightIn(min = 104.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surfaceHi)
+        modifier.heightIn(min = 64.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surfaceHi)
             .clickable(role = Role.Button, onClickLabel = "Ouvrir") { onClick() }
-            .semantics(mergeDescendants = true) {}
-            .padding(12.dp),
+            .semantics(mergeDescendants = true) { contentDescription = description }
+            .padding(horizontal = 4.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(26.dp))
-        Text(title, color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 6.dp))
-        Text(detail, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(24.dp))
+        AutoText(
+            title, Modifier.padding(top = 4.dp), color = c.text, maxSize = 13.sp, minSize = MIN_TEXT, weight = FontWeight.SemiBold,
+            align = TextAlign.Center, maxLines = 2,
+        )
+        if (detail != null) Text(detail, color = c.muted, style = MaterialTheme.typography.bodySmall)
     }
 }
 

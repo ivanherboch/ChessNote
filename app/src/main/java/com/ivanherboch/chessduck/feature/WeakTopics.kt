@@ -121,9 +121,9 @@ object WeakTopics {
             val l = lessonFor(t, progress, worked) ?: return@mapNotNull null
             val days = ((now - last) / DAY).toInt().coerceAtLeast(0)
             val when_ = when (days) { 0 -> "aujourd'hui"; 1 -> "hier"; else -> "il y a $days jours" }
-            val where = if (analyzed > 1) "vos $analyzed dernières parties analysées" else "votre dernière partie analysée"
-            val reason = "Repéré $total fois dans $where (la dernière fois $when_)." +
-                if (since > 0) " Déjà travaillé : $after fois depuis." else ""
+            val where = if (analyzed > 1) "vos $analyzed dernières parties" else "votre dernière partie"
+            // Court (deux lignes au plus sur un téléphone) : l'accueil tient sans défilement.
+            val reason = "$total fois dans $where, la dernière $when_." + if (since > 0) " $after depuis votre entraînement." else ""
             Priority(t.label, reason, l.id, l.theme.ifEmpty { t.theme }, weight * 3)
         }
         val fromAcademy = progress.filter { !it.mastered }.mapNotNull { p ->
@@ -132,10 +132,10 @@ object WeakTopics {
             if (score < 2) return@mapNotNull null
             val l = Lessons.byId(p.lessonId).takeIf { it.id == p.lessonId } ?: return@mapNotNull null
             val why = buildList {
-                if (p.errors > 0) add("${p.errors} erreur${if (p.errors > 1) "s" else ""} en pratique")
+                if (p.errors > 0) add("${p.errors} erreur${if (p.errors > 1) "s" else ""}")
                 if (failedPractice > 0) add("$failedPractice exercice${if (failedPractice > 1) "s" else ""} manqué${if (failedPractice > 1) "s" else ""}")
             }.joinToString(" et ")
-            Priority("Leçon : ${l.title}", "Dans l'Académie : $why.", l.id, l.theme, score.toDouble())
+            Priority(l.title, "Leçon : $why en pratique.", l.id, l.theme, score.toDouble())
         }
         return (fromGames + fromAcademy).sortedByDescending { it.score }.distinctBy { it.lessonId }.take(3)
     }

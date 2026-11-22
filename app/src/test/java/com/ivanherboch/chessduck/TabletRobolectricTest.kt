@@ -123,7 +123,7 @@ class TabletRobolectricTest {
         rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("trois principes"); settle(800)
         rule.onNodeWithText("Les trois principes de l'ouverture").performClick(); settle(1500); shot("t2_academie")
         rule.onNodeWithContentDescription("Revenir à l'accueil de l'Académie").performClick(); settle(1000)
-        rule.onNodeWithText("Finales contre l'Ordinateur").performClick(); settle(1000); shot("t9_atelier_finales")
+        rule.onNodeWithText("Finales").performClick(); settle(1000); shot("t9_atelier_finales")
         rule.onNodeWithText("Gagnez : Roi et dame contre roi").performScrollTo().performClick(); settle(1500); shot("t10_finale")
         rule.onNodeWithContentDescription("Revenir à l'Atelier").performClick(); settle(1000)
         rule.onNodeWithContentDescription("Revenir à l'accueil de l'Académie").performClick(); settle(800)

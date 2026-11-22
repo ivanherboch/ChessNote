@@ -21,6 +21,16 @@ val Icons.AutoMirrored.Rounded.Backspace: ImageVector
         )
     }.also { _automirrored_rounded_Backspace = it }
 
+private var _automirrored_rounded_KeyboardReturn: ImageVector? = null
+
+val Icons.AutoMirrored.Rounded.KeyboardReturn: ImageVector
+    get() = _automirrored_rounded_KeyboardReturn ?: materialIcon(name = "AutoMirrored.Rounded.KeyboardReturn", autoMirror = true) {
+        addPath(
+            addPathNodes("M19,8 v3 H5.83 l2.88,-2.88 c0.39,-0.39 0.39,-1.02 0,-1.41 c-0.39,-0.39 -1.02,-0.39 -1.41,0 L2.71,11.3 c-0.39,0.39 -0.39,1.02 0,1.41 L7.3,17.3 c0.39,0.39 1.02,0.39 1.41,0 c0.39,-0.39 0.39,-1.02 0,-1.41 L5.83,13 H20 c0.55,0 1,-0.45 1,-1 V8 c0,-0.55 -0.45,-1 -1,-1 s-1,0.45 -1,1 Z"),
+            pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black), fillAlpha = 1.0f,
+        )
+    }.also { _automirrored_rounded_KeyboardReturn = it }
+
 private var _automirrored_rounded_Logout: ImageVector? = null
 
 val Icons.AutoMirrored.Rounded.Logout: ImageVector

@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import com.ivanherboch.chessduck.ui.icons.KeyboardReturn
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -54,9 +54,10 @@ internal fun LessonSelector(
     onCatalog: () -> Unit, onHome: () -> Unit, onNext: () -> Unit,
 ) {
     val c = LocalDuck.current
-    // ← Accueil / leçon courante (ouvre le catalogue) / leçon suivante.
+    // ↵ Accueil / leçon courante (ouvre le catalogue) / leçon suivante.
     Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-        DuckIconButton(Icons.AutoMirrored.Rounded.ArrowBack, "Revenir à l'accueil de l'Académie", onHome)
+        // Flèche coudée (retour au menu), bien distincte de la flèche « Leçon suivante » à droite.
+        DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardReturn, "Revenir à l'accueil de l'Académie", onHome)
         Column(
             Modifier.weight(1f).heightIn(min = 48.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
                 .border(1.dp, c.outline, RoundedCornerShape(DuckRadius.M))

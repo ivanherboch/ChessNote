@@ -1,3 +1,15 @@
+## ChessDuck 4.1.2 — l'accueil de l'Académie tient sur un écran
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- L'accueil de l'Académie tient sans défilement sur un téléphone, même avec les révisions du jour et 3 points à travailler :
+  - « Mon parcours » plus compact : palier et « Changer de palier » sur une ligne, progression et nombre de leçons maîtrisées côte à côte, l'action principale et « Révisions » sur la même rangée ;
+  - « À travailler » : chaque point est une ligne qu'on touche (titre, raison courte, flèche) ;
+  - « Leçons » sur une ligne avec le bouton « Catalogue » (les filtres par palier et catégorie restent dans le catalogue) ;
+  - « Atelier » : les 4 tuiles sur une seule rangée.
+- Grande police : les tuiles passent à deux par rangée et « Changer de palier » sous le titre, sans aucun texte coupé.
+- Leçon : le bouton de retour à l'accueil (à gauche du nom de la leçon) est une flèche coudée, bien distincte de la flèche « Leçon suivante ».
+
 ## ChessDuck 4.1.0 — « À travailler » qui suit vos progrès
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

@@ -134,8 +134,8 @@ class ReviewCommentsTest {
         assertTrue(WT.compute(listOf(game), emptyList(), mapOf(hanging.lessonId to now - day), now).isEmpty())
         // Réapparu après le travail : il revient, en le disant.
         val again = WT.compute(listOf(game, game.copy(id = 6, date = now - 1000)), emptyList(), mapOf(hanging.lessonId to now - day), now)
-        assertTrue(again[0].reason, "Déjà travaillé : 1 fois depuis" in again[0].reason)
-        assertTrue(again[0].reason, "2 dernières parties analysées" in again[0].reason)
+        assertTrue(again[0].reason, "1 depuis votre entraînement" in again[0].reason)
+        assertTrue(again[0].reason, "2 dernières parties" in again[0].reason)
         // Leçon de référence maîtrisée : une autre leçon du même thème est proposée.
         val mastered = listOf(com.ivanherboch.chessduck.data.LessonProgress(hanging.lessonId, masteredAt = 1))
         val next = WT.lessonFor(hanging, mastered)!!
@@ -153,7 +153,7 @@ class ReviewCommentsTest {
         assertEquals(2, p.size)
         // La leçon du clouage (3 erreurs + 3 exercices manqués) passe avant la pièce en prise vue 2 fois.
         assertEquals(41, p[0].lessonId)
-        assertTrue(p[0].reason, "3 erreurs en pratique" in p[0].reason && "3 exercices manqués" in p[0].reason)
+        assertTrue(p[0].reason, "3 erreurs et 3 exercices manqués en pratique" in p[0].reason)
         assertEquals("Pièce laissée en prise", p[1].title)
         assertTrue(p[1].reason, "2 fois" in p[1].reason)
     }
