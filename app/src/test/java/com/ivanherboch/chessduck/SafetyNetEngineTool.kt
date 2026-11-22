@@ -37,6 +37,29 @@ class SafetyNetEngineTool {
         return sign * (b.eval - a.eval)
     }
 
+    /** Détail des gaffes manquées listées dans SAFETY_IDS : explication et point faible trouvés (ou non). */
+    @Test
+    fun explainMisses() = runBlocking {
+        val ids = System.getenv("SAFETY_IDS")?.split(',')?.toSet() ?: return@runBlocking
+        assumeTrue(sf.canExecute())
+        val e = Stockfish(sf)
+        val out = StringBuilder()
+        File(System.getenv("PUZZLE_DUMP") ?: "/opt/work/puzzles_dump.txt").forEachLine { row ->
+            val (id, fen, moves) = row.split('|')
+            if (id !in ids) return@forEachLine
+            runBlocking {
+                val p0 = Line(fen).last
+                val ms = moves.split(' ').map { Move.fromUci(it) }
+                val b = analyse(e, p0, 450)!!; val a = analyse(e, p0.play(ms[0]), 250)!!
+                val r = runCatching { com.ivanherboch.chessduck.feature.ReviewComments.netReason(p0, ms[0], b, a) }.getOrNull()
+                val reply = a.best.takeIf { it.isNotEmpty() }?.let { p0.play(ms[0]).san(Move.fromUci(it)) }
+                out.append("$id ${p0.toFen()} ${p0.san(ms[0])} réponse=$reply suite=${moves} topic=${r?.topic} : ${r?.text?.replace("\n", " ")}\n")
+            }
+        }
+        e.close()
+        File(System.getenv("SAFETY_REPORT") ?: "build/safety_misses.txt").writeText(out.toString())
+    }
+
     @Test
     fun audit() = runBlocking {
         assumeTrue(System.getenv("SAFETY_AUDIT") == "1" && sf.canExecute())

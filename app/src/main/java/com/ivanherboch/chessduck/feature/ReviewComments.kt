@@ -135,7 +135,8 @@ object ReviewComments {
             else -> "${poss(v, moved).replaceFirstChar { it.uppercase() }} en ${sqName(m.from)} était attaqué$e, mais pas en danger : " +
                 "${if (e.isEmpty()) "il" else "elle"} est défendu$e, et un échange ne vous ferait rien perdre. Le vrai problème : "
         }
-        val body = if (pre.isEmpty()) text.replaceFirstChar { it.uppercase() } else pre + text
+        // Majuscule en début de phrase, sauf si la phrase commence par un coup (« b4 », « f5 » : la notation ne change pas).
+        val body = if (pre.isNotEmpty()) pre + text else if (text.startsWith(p.san(m))) text else text.replaceFirstChar { it.uppercase() }
         // Le coup conseillé : il évite la perte (souvent, il règle les deux problèmes à la fois).
         val best = a0.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { p.isLegal(it) && it != m }
         return NetReason(body + (best?.let { "\n\nCoup conseillé : " + bestNote(p, it) } ?: ""), topic, best)
@@ -145,7 +146,7 @@ object ReviewComments {
      * Ce que fait le coup conseillé, en clair : un échange (on prend une pièce de même valeur, l'adversaire reprend :
      * rien n'est perdu), un gain de matériel, une prise gratuite, ou un coup tranquille qui ne perd rien.
      */
-    private fun bestNote(p: Position, best: Move): String {
+    internal fun bestNote(p: Position, best: Move): String {
         val bs = p.san(best)
         if (!p.isCapture(best)) return "$bs, qui ne perd rien."
         val mover = pieceType(p[best.from])
