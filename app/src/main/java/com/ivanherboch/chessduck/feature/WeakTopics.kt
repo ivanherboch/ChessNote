@@ -123,7 +123,11 @@ object WeakTopics {
             val when_ = when (days) { 0 -> "aujourd'hui"; 1 -> "hier"; else -> "il y a $days jours" }
             val where = if (analyzed > 1) "vos $analyzed dernières parties" else "votre dernière partie"
             // Court (deux lignes au plus sur un téléphone) : l'accueil tient sans défilement.
-            val reason = "$total fois dans $where, la dernière $when_." + if (since > 0) " $after depuis votre entraînement." else ""
+            val reason = "$total fois dans $where, la dernière $when_." + when {
+                since <= 0 -> ""
+                after == 0 -> " Plus revu depuis votre entraînement."
+                else -> " $after depuis votre entraînement."
+            }
             Priority(t.label, reason, l.id, l.theme.ifEmpty { t.theme }, weight * 3)
         }
         val fromAcademy = progress.filter { !it.mastered }.mapNotNull { p ->

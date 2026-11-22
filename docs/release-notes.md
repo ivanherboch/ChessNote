@@ -1,3 +1,10 @@
+## ChessDuck 4.1.4 — l'Atelier avant les Leçons
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Accueil de l'Académie : la carte « Atelier » passe avant la carte « Leçons ».
+- « À travailler » : un point travaillé qui n'est pas réapparu dans vos parties l'indique en clair (« Plus revu depuis votre entraînement ») au lieu de « 0 depuis votre entraînement ».
+
 ## ChessDuck 4.1.3 — fin de « Comprendre » bien signalée
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

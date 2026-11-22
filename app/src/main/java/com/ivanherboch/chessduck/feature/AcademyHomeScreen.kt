@@ -77,7 +77,7 @@ import com.ivanherboch.chessduck.ui.icons.SportsScore
 /**
  * Accueil de l'Académie, ouvert à chaque arrivée sur l'onglet : le palier et sa progression avec une seule action
  * principale (continuer, ou la prochaine leçon), les révisions du jour, les points faibles à travailler s'il y en a,
- * l'accès au catalogue des leçons et les 4 tuiles de l'Atelier. Sur tablette, deux colonnes équilibrées.
+ * les 4 tuiles de l'Atelier, puis l'accès au catalogue des leçons. Sur tablette, deux colonnes équilibrées.
  * [onCatalog] ouvre le catalogue, filtré sur un palier (0 : tous) ou une catégorie (null : toutes).
  */
 @Composable
@@ -91,8 +91,8 @@ internal fun AcademyHomeScreen(vm: AcademyViewModel, onCatalog: (level: Int, cat
         if (priorities.isNotEmpty()) PrioritiesCard(vm, priorities)
     }
     val right: @Composable ColumnScope.() -> Unit = {
-        LessonsCard(mastered.size, onCatalog)
         WorkshopTiles(vm, home)
+        LessonsCard(mastered.size, onCatalog)
     }
     if (LocalIsTwoPane.current) {
         Row(
