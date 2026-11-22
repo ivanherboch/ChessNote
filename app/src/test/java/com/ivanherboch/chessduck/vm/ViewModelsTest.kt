@@ -755,6 +755,18 @@ class ViewModelsTest {
         vm.reflex.tap(com.ivanherboch.chessduck.chess.sqFromName("f6")) // second toucher : la case est désélectionnée
         assertEquals(-1, vm.reflex.state.value!!.from)
         assertTrue("Départ" !in vm.reflex.state.value!!.message)
+        // « Voir la position » : la position après les coups annoncés, avec la marche à suivre ; puis « Solution » :
+        // la question est manquée et l'on peut passer à la suivante (jamais bloqué).
+        vm.reflex.showBoard()
+        assertTrue(vm.reflex.state.value!!.shown)
+        assertTrue(vm.reflex.state.value!!.message, "position après les coups annoncés" in vm.reflex.state.value!!.message)
+        assertEquals(vm.reflex.state.value!!.blind!!.after.toFen(), vm.reflex.state.value!!.position!!.toFen())
+        vm.reflex.giveUp()
+        assertTrue(vm.reflex.state.value!!.answered)
+        assertEquals(listOf(false), vm.reflex.state.value!!.results)
+        assertTrue(vm.reflex.state.value!!.message, "Solution : ${vm.reflex.state.value!!.blind!!.answer}" in vm.reflex.state.value!!.message)
+        vm.reflex.next()
+        assertTrue(vm.reflex.state.value!!.finished || !vm.reflex.state.value!!.answered)
         vm.closeReflex()
     }
 

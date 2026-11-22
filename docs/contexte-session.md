@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `4.0.2` (`versionCode = 80`), publiée en release GitHub `v4.0.2`.
+- **Version actuelle** : `4.0.3` (`versionCode = 81`), publiée en release GitHub `v4.0.3`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -186,6 +186,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **4.0.0** : refonte UX Académie, étape 3 sur 3 : révisions à une épreuve (`openReview` selon `practiceMode`), `Settings.repertoireIds` (clé `academy_repertoire_ids`, `toggleRepertoire`), `repertoirePool`, signet d'ouverture (icônes `Bookmark`/`BookmarkBorder`), `LessonBriefSheet` en 3 sections, test vocal du Calcul à l'aveugle ; `Validation` et `validation()` supprimés.
 - **4.0.1** : `ModuleLayout` (portrait) mesure `overBoard` à toute la largeur moins 16 dp (plus de rétroaction largeur de l'échiquier → lignes) et accepte `reserveKey` (réserve remise à zéro, sans animation, au changement d'écran) ; `AcademyScreen` : `bottomMin` 150 dp en séance, `reserveKey` = leçon, mode, variante, série, finale, réflexe ; titre de finale sans « position i sur n » ; test `endgameBoardFillsThePhoneWidth` (≥ 92 % de la largeur, taille stable, w393dp).
 - **4.0.2** : `LinearProgressIndicator` (accueil, revue, réfutation) avec `gapSize = 0.dp, drawStopIndicator = {}` : plus de point d'arrêt Material 3.
+- **4.0.3** : Calcul à l'aveugle : `ReflexKind.BLIND.question` réécrite, `ReflexTrainer.showBoard` (message de marche à suivre, une seule fois), `ReflexTrainer.giveUp` (solution, question manquée) ; `ReflexPanel` : « Voir la position » puis « Solution ».
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.

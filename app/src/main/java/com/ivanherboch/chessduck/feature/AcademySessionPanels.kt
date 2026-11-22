@@ -348,9 +348,14 @@ internal fun ColumnScope.ReflexPanel(vm: AcademyViewModel, rx: ReflexSession) {
                 // La voix peut être coupée (ou TalkBack actif) : les coups annoncés restent écrits dans la carte, et
                 // « Réécouter » explique alors comment activer la voix.
                 DuckIconButton(Icons.AutoMirrored.Rounded.VolumeUp, "Réécouter les coups annoncés", vm::replayBlind, accent = c.blue)
+                // Aide en deux temps : voir la position après les coups (réponse hors score), puis la solution.
+                if (!rx.shown) DuckButton(
+                    "Voir la position", vm.reflex::showBoard, Modifier.weight(1.3f), icon = Icons.Rounded.Visibility,
+                    contentDescription = "Voir la position après les coups annoncés ; la réponse ne comptera plus",
+                )
                 DuckButton(
-                    "Revoir l'échiquier", vm.reflex::showBoard, Modifier.weight(1.3f), enabled = !rx.shown, icon = Icons.Rounded.Visibility,
-                    contentDescription = "Réafficher l'échiquier après les coups annoncés ; la réponse ne comptera plus",
+                    "Solution", vm.reflex::giveUp, Modifier.weight(1f), accent = c.gold, icon = Icons.Rounded.Lightbulb,
+                    contentDescription = "Voir la solution ; la question compte comme manquée",
                 )
             }
             // Menace à toucher : la réponse se donne sur l'échiquier, aucun bouton ici.

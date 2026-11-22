@@ -183,7 +183,8 @@ enum class ReflexKind(val label: String, val question: String) {
     CAPTURE("Puis-je prendre ?", "Cette prise est-elle bonne ? Répondez par oui ou par non."),
     BLIND(
         "Calcul à l'aveugle",
-        "Sans les voir joués, suivez les deux coups annoncés, puis touchez la case de départ et la case d'arrivée du coup suivant.",
+        "Les pièces restent à leur place : imaginez les deux coups annoncés sans les voir joués, puis jouez le coup suivant " +
+            "en touchant la pièce, puis sa case d'arrivée.",
     ),
 }
 
@@ -335,8 +336,25 @@ class ReflexTrainer(
     /** Précision ajoutée à l'énoncé de la question en cours (par exemple : comment activer la voix). */
     fun note(text: String) = _state.update { s -> s?.takeIf { !it.answered && !it.finished }?.copy(message = "${s.prompt}\n\n$text", tone = Tone.GOLD) ?: s }
 
-    /** Calcul à l'aveugle : réaffiche l'échiquier après les coups annoncés (la réponse ne comptera plus). */
-    fun showBoard() = _state.update { it?.takeIf { s -> s.blind != null && !s.answered }?.copy(shown = true) ?: it }
+    /** Calcul à l'aveugle : affiche la position après les coups annoncés (la réponse ne comptera plus). */
+    fun showBoard() = _state.update { s ->
+        s?.takeIf { it.blind != null && !it.answered && !it.shown }?.copy(
+            shown = true, from = -1, tone = Tone.GOLD,
+            message = "${s.prompt}\n\nVoici la position après les coups annoncés. Jouez le coup suivant : touchez la pièce, puis sa case " +
+                "d'arrivée (cette réponse ne comptera pas). Ou touchez « Solution ».",
+        ) ?: s
+    }
+
+    /** Calcul à l'aveugle : montre la solution (question manquée) ; on peut passer à la suivante. */
+    fun giveUp() {
+        val s = _state.value ?: return
+        val b = s.blind ?: return
+        if (s.answered) return
+        _state.value = s.copy(
+            answered = true, shown = true, from = -1, tapped = -1, results = s.results + false, tone = Tone.GOLD,
+            message = "Solution : ${b.answer} (flèche verte), dans la position après ${ReflexDrills.announcedText(b)}.",
+        )
+    }
 
     /** Menace : case touchée par l'élève ; calcul à l'aveugle : case de départ, puis case d'arrivée. */
     fun tap(sq: Int) {

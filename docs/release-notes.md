@@ -1,3 +1,11 @@
+## ChessDuck 4.0.3 — Calcul à l'aveugle plus clair, jamais bloqué
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Consigne explicite : les pièces restent à leur place ; imaginez les deux coups annoncés, puis jouez le coup suivant en touchant la pièce, puis sa case d'arrivée.
+- « Revoir l'échiquier » devient « Voir la position » : la position après les coups annoncés s'affiche avec la marche à suivre (la réponse ne compte alors plus).
+- Nouveau bouton « Solution » : la flèche verte montre le bon coup, la question compte comme manquée et « Question suivante » apparaît. On n'est plus jamais bloqué sur une question.
+
 ## ChessDuck 4.0.2 — barres de progression nettes
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

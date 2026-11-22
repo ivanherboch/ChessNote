@@ -308,7 +308,7 @@ internal fun WorkshopScreen(vm: AcademyViewModel, route: AcademyRoute) {
                         WorkshopItem(ReflexKind.THREAT.label, "Repérez la pièce que l'adversaire menace de prendre.") { vm.startReflex(ReflexKind.THREAT) }
                         WorkshopItem(ReflexKind.CAPTURE.label, "Décidez si une prise est bonne, avant de la jouer.") { vm.startReflex(ReflexKind.CAPTURE) }
                         WorkshopItem("Le seul coup", "5 positions où une seule défense tient.") { vm.startOnlyMove() }
-                        WorkshopItem("Calcul à l'aveugle", "Palier 5 : suivez deux coups annoncés sans les voir, puis jouez le suivant.") { vm.startReflex(ReflexKind.BLIND) }
+                        WorkshopItem("Calcul à l'aveugle", "Palier 5 : imaginez deux coups annoncés sans les voir joués, puis jouez le suivant.") { vm.startReflex(ReflexKind.BLIND) }
                     }
                     AcademyRoute.WORKSHOP_REPERTOIRE -> {
                         Text(
