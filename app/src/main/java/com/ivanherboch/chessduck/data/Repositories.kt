@@ -23,6 +23,8 @@ interface SettingsRepository {
     suspend fun markVariantDone(key: String)
     /** Ajoute l'ouverture [lessonId] à « Mon répertoire », ou l'en retire si elle y est déjà. */
     suspend fun toggleRepertoire(lessonId: Int)
+    /** Note une pratique réussie de la leçon [lessonId] (le point faible qu'elle enseigne recule dans le bilan). */
+    suspend fun markLessonWorked(lessonId: Int, at: Long)
 
     // Réglages globaux (tiroir Paramètres, mode enfant, style des images partagées).
     /** 0 = suivre le système, 1 = Jour, 2 = Nuit. */

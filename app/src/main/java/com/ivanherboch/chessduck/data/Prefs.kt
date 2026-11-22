@@ -60,6 +60,8 @@ data class Settings(
     val variantsDone: Set<String> = emptySet(),
     /** Ouvertures (identifiants de leçon) que l'élève a mises dans « Mon répertoire ». */
     val repertoireIds: Set<Int> = emptySet(),
+    /** Dernière pratique réussie de chaque leçon (identifiant → horodatage) : un point faible travaillé recule. */
+    val lessonWorkedAt: Map<Int, Long> = emptyMap(),
     val pseudo: String = "Joueur",
     /** Second joueur humain du mode 2 joueurs. */
     val pseudo2: String = "Joueur 2",
@@ -109,6 +111,7 @@ class Prefs(private val context: Context) : SettingsRepository {
         val knownThemes = stringPreferencesKey("recent_known_themes")
         val variantsDone = stringPreferencesKey("variants_done")
         val repertoireIds = stringPreferencesKey("academy_repertoire_ids")
+        val workedAt = stringPreferencesKey("academy_lesson_worked_at")
         val pseudo = stringPreferencesKey("pseudo")
         val pseudo2 = stringPreferencesKey("pseudo2")
         val elo = intPreferencesKey("elo")
@@ -141,6 +144,7 @@ class Prefs(private val context: Context) : SettingsRepository {
             knownThemePuzzles = (p[K.knownThemes] ?: "").split(',').filter { it.isNotBlank() }.toSet(),
             variantsDone = (p[K.variantsDone] ?: "").split(',').filter { it.isNotBlank() }.toSet(),
             repertoireIds = (p[K.repertoireIds] ?: "").split(',').mapNotNull { it.trim().toIntOrNull() }.toSet(),
+            lessonWorkedAt = decodeWorked(p[K.workedAt]),
             pseudo = p[K.pseudo] ?: "Joueur",
             pseudo2 = p[K.pseudo2] ?: "Joueur 2",
             elo = p[K.elo] ?: DEFAULT_ELO,
@@ -195,6 +199,16 @@ class Prefs(private val context: Context) : SettingsRepository {
         val done = (p[K.variantsDone] ?: "").split(',').filter { it.isNotBlank() }.toMutableSet()
         if (done.add(key)) p[K.variantsDone] = done.joinToString(",")
     } }
+    override suspend fun markLessonWorked(lessonId: Int, at: Long) { context.store.edit { p ->
+        p[K.workedAt] = (decodeWorked(p[K.workedAt]) + (lessonId to at)).entries.joinToString(",") { "${it.key}:${it.value}" }
+    } }
+
+    /** « id:horodatage,… » → table ; les entrées illisibles sont ignorées. */
+    private fun decodeWorked(v: String?): Map<Int, Long> = (v ?: "").split(',').mapNotNull { e ->
+        val (id, at) = e.split(':').takeIf { it.size == 2 } ?: return@mapNotNull null
+        (id.trim().toIntOrNull() ?: return@mapNotNull null) to (at.trim().toLongOrNull() ?: return@mapNotNull null)
+    }.toMap()
+
     override suspend fun toggleRepertoire(lessonId: Int) { context.store.edit { p ->
         val ids = (p[K.repertoireIds] ?: "").split(',').mapNotNull { it.trim().toIntOrNull() }.toMutableSet()
         if (!ids.remove(lessonId)) ids.add(lessonId)

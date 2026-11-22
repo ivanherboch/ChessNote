@@ -105,6 +105,43 @@ class ReviewCommentsTest {
             ReviewComments.topic(record(false, true, "Ivan", "Léa"), l, 0, listOf(Analysis(900, 0, "d1d5"), Analysis(-100, null, "e8e7"))))
     }
 
+    /** Fourchettes : détection géométrique, fourchette manquée dans une partie, leçon de la fourchette proposée. */
+    @Test
+    fun forksAreDetectedAndPointToForkLessons() {
+        val p = com.ivanherboch.chessduck.chess.Position.fromFen("r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1")
+        assertTrue(ReviewComments.isFork(p, com.ivanherboch.chessduck.chess.Move.fromUci("b5c7"))) // roi et tour
+        assertTrue(!ReviewComments.isFork(p, com.ivanherboch.chessduck.chess.Move.fromUci("b5d6"))) // le roi seul
+        val l = Line.fromSan("r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", listOf("Kd2"))
+        val t = ReviewComments.topic(record(false, true, "Ivan", "Léa"), l, 0, listOf(Analysis(600, 0, "b5c7"), Analysis(0, null, "a8a1")))
+        assertEquals(com.ivanherboch.chessduck.feature.ReviewTopic.MISSED_FORK, t)
+        assertEquals("fork", com.ivanherboch.chessduck.content.Lessons.byId(t!!.lessonId).theme)
+    }
+
+    /** Bilan : récence, point travaillé (recul puis disparition temporaire) et rotation des leçons d'un même point faible. */
+    @Test
+    fun weakTopicsFollowRecencyAndWork() {
+        val day = 86_400_000L
+        val now = 100 * day
+        val game = record(true, true, "Ivan", "").copy(moves = "e2e4 e7e5 d1h5 b8c6 h5f7 e8f7", analysis = Analysis.encodeAll(analysis), date = now - 5 * day)
+        val WT = com.ivanherboch.chessduck.feature.WeakTopics
+        val hanging = com.ivanherboch.chessduck.feature.ReviewTopic.HANGING_PIECE
+        // Récence : la même erreur pèse plus dans une partie récente.
+        val recent = WT.compute(listOf(game.copy(id = 1, date = now - day)), emptyList(), now = now)[0].score
+        val older = WT.compute(listOf(game.copy(id = 2, date = now - day), game.copy(id = 3, date = now - 2 * day, analysis = "")), emptyList(), now = now)
+        assertEquals(recent, older[0].score, 0.001)
+        assertTrue(WT.compute(listOf(game.copy(id = 4), game.copy(id = 5)), emptyList(), now = now)[0].score < 2 * recent)
+        // Travaillé hier, pas réapparu depuis : le point disparaît quelques jours.
+        assertTrue(WT.compute(listOf(game), emptyList(), mapOf(hanging.lessonId to now - day), now).isEmpty())
+        // Réapparu après le travail : il revient, en le disant.
+        val again = WT.compute(listOf(game, game.copy(id = 6, date = now - 1000)), emptyList(), mapOf(hanging.lessonId to now - day), now)
+        assertTrue(again[0].reason, "Déjà travaillé : 1 fois depuis" in again[0].reason)
+        assertTrue(again[0].reason, "2 dernières parties analysées" in again[0].reason)
+        // Leçon de référence maîtrisée : une autre leçon du même thème est proposée.
+        val mastered = listOf(com.ivanherboch.chessduck.data.LessonProgress(hanging.lessonId, masteredAt = 1))
+        val next = WT.lessonFor(hanging, mastered)!!
+        assertTrue(next.id != hanging.lessonId && next.theme == "hangingPiece")
+    }
+
     /** Bilan : les erreurs des parties et les difficultés de l'Académie donnent au plus 3 priorités, les plus fréquentes d'abord. */
     @Test
     fun weakTopicsBalanceGamesAndAcademy() {

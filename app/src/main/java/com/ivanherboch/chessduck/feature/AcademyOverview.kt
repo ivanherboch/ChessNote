@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.CoroutineScope
@@ -53,7 +54,9 @@ internal class AcademyOverview(
     }.stateIn(scope, SharingStarted.WhileSubscribed(5_000), AcademyHome())
 
     /** Bilan : les 3 priorités du moment, d'après les parties analysées et la progression dans l'Académie. */
-    val priorities: StateFlow<List<Priority>> = combine(games?.games() ?: flowOf(emptyList()), lessons.progress()) { g, p ->
-        WeakTopics.compute(g, p)
+    val priorities: StateFlow<List<Priority>> = combine(
+        games?.games() ?: flowOf(emptyList()), lessons.progress(), prefs.settings.map { it.lessonWorkedAt }.distinctUntilChanged(),
+    ) { g, p, worked ->
+        WeakTopics.compute(g, p, worked, srs.now())
     }.let { f -> if (work != null) f.flowOn(work) else f }.stateIn(scope, SharingStarted.WhileSubscribed(5_000), emptyList())
 }

@@ -607,6 +607,7 @@ class AcademyViewModel(
             old?.mastered != true -> "\n\nLeçon maîtrisée !"
             else -> ""
         } + if (l.quiz != null && !s.quizPassed) " Une question de fin vous attend." else ""
+        if (stars >= 2) prefs.markLessonWorked(l.id, srs.now())
         saveProgress(l.id) { p ->
             p.copy(
                 masteredAt = if (p.mastered) p.masteredAt else if (nowMastered) srs.now() else 0,
@@ -823,6 +824,19 @@ class AcademyViewModel(
         viewModelScope.launch {
             val level = prefs.settings.first().academyLevel.coerceAtLeast(2)
             startSeries(PracticeKind.LESSON, List(PRACTICE_SIZE) { PuzzleSpec(listOf(theme), AcademyAssessments.levelRange(level)) }, level)
+        }
+    }
+
+    /**
+     * Pont depuis la revue de partie : la leçon du lot de [topic] à travailler maintenant (pas encore maîtrisée, ou
+     * travaillée il y a le plus longtemps), puis 5 exercices de son thème.
+     */
+    fun trainReviewTopic(topic: ReviewTopic) {
+        // Avant toute attente : la restauration de la dernière leçon au démarrage ne doit pas passer devant.
+        openedExplicitly = true
+        viewModelScope.launch {
+            val l = WeakTopics.lessonFor(topic, lessons.progress().first(), prefs.settings.first().lessonWorkedAt)
+            trainTopic(l?.id ?: topic.lessonId, l?.theme?.ifEmpty { null } ?: topic.theme)
         }
     }
 

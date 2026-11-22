@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `4.0.4` (`versionCode = 82`), publiée en release GitHub `v4.0.4`.
+- **Version actuelle** : `4.1.0` (`versionCode = 83`), publiée en release GitHub `v4.1.0`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -188,6 +188,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **4.0.2** : `LinearProgressIndicator` (accueil, revue, réfutation) avec `gapSize = 0.dp, drawStopIndicator = {}` : plus de point d'arrêt Material 3.
 - **4.0.3** : Calcul à l'aveugle : `ReflexKind.BLIND.question` réécrite, `ReflexTrainer.showBoard` (message de marche à suivre, une seule fois), `ReflexTrainer.giveUp` (solution, question manquée) ; `ReflexPanel` : « Voir la position » puis « Solution ».
 - **4.0.4** : `KidScreen.PieceCard` : nom sous la carte (hors coins arrondis et bordure), `AutoText` jusqu'à `MIN_TEXT`, écart 3 dp entre cartes.
+- **4.1.0** : `WeakTopics.compute(games, progress, worked, now)` : poids `DECAY` (0,93) par partie, erreurs d'avant le dernier travail × `WORKED_WEIGHT` (0,25), disparition `SNOOZE_DAYS` (3) si pas réapparu ; `ReviewTopic.themes` + `pool`/`lessonFor` (rotation des leçons) ; `ReviewTopic.FORK_ALLOWED` (leçon 38) et `MISSED_FORK` (138) via `ReviewComments.isFork` ; `Settings.lessonWorkedAt` (DataStore `academy_lesson_worked_at`, `markLessonWorked`, posé par une pratique réussie ou un Pratiquer ≥ 2 étoiles) ; `AcademyViewModel.trainReviewTopic` ; `Priority.score` en Double.
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.

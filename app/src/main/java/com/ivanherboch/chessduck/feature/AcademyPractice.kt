@@ -365,6 +365,8 @@ internal class PracticeSeries(
     private suspend fun lessonPracticeDone(score: Int, total: Int): String {
         val l = lesson
         val passed = score >= PASS
+        // Pratique réussie : le point faible enseigné par la leçon recule dans « À travailler ».
+        if (passed) prefs.markLessonWorked(l.id, srs.now())
         // Pratiquer réussi (4 problèmes sur 5) : la leçon est maîtrisée, sans autre étape.
         host.saveProgress(l.id) { p ->
             val mastered = p.mastered || passed

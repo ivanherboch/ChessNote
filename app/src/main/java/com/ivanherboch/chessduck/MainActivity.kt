@@ -274,7 +274,7 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                     }
                     1 -> academy?.let { avm ->
                         LaunchedEffect(bridges.academyTopic) {
-                            bridges.academyTopic?.let { t -> avm.trainTopic(t.lessonId, t.theme); bridges.academyTopic = null }
+                            bridges.academyTopic?.let { t -> avm.trainReviewTopic(t); bridges.academyTopic = null }
                         }
                         AcademyScreen(
                             avm,

@@ -99,6 +99,29 @@ object ReviewComments {
         diagnose(v, p, m, san, a0, a1).first
 
     /** Explication d'une faute et, s'il y a lieu, le point faible qu'elle révèle (pont vers l'Académie). */
+    /**
+     * Fourchette : après [m], la pièce jouée attaque au moins deux pièces adverses (hors pions) qu'elle gagne à prendre
+     * (le roi, une pièce plus forte qu'elle, ou une pièce non défendue), sans pouvoir être prise elle-même par une pièce
+     * plus faible ni sans protection.
+     */
+    internal fun isFork(p: Position, m: Move): Boolean {
+        val white = p.whiteToMove
+        val after = p.play(m)
+        val sq = m.to
+        val value = PIECE_VALUES[pieceType(after[sq])]
+        val takers = after.attackers(sq, !white)
+        if (takers.isNotEmpty() && (after.attackers(sq, white).isEmpty() || takers.any { PIECE_VALUES[pieceType(after[it])] < value })) return false
+        var targets = 0
+        for (s in 0 until 64) {
+            val pc = after[s]
+            if (pc == 0 || isWhite(pc) == white || pieceType(pc) == PAWN) continue
+            if (sq !in after.attackers(s, white)) continue
+            val t = pieceType(pc)
+            if (t == KING || PIECE_VALUES[t] > value || after.attackers(s, !white).isEmpty()) targets++
+        }
+        return targets >= 2
+    }
+
     private fun diagnose(v: Voice, p: Position, m: Move, san: String, a0: Analysis, a1: Analysis): Pair<String, ReviewTopic?> {
         val after = p.play(m)
         val reply = a1.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { after.isLegal(it) }
@@ -120,6 +143,10 @@ object ReviewComments {
                 else "$san laisse ${poss(v, victim)} en ${sqName(reply.to)} sans protection suffisante : $rs ${it(victim)} capture.") to ReviewTopic.HANGING_PIECE
             }
         }
+        // 2 bis. Le coup permet une fourchette : la réponse attaque deux pièces à la fois.
+        if (reply != null && !after.isCapture(reply) && isFork(after, reply)) {
+            return "en jouant $san, ${v.f("vous permettez", "il permet")} la fourchette ${after.san(reply)}, qui attaque deux pièces à la fois." to ReviewTopic.FORK_ALLOWED
+        }
         if (best != null) {
             val bs = p.san(best)
             val bt = pieceType(p[best.from])
@@ -130,6 +157,10 @@ object ReviewComments {
                 if (free || PIECE_VALUES[victim] >= PIECE_VALUES[bt]) {
                     return "${v.f("vous avez", "il a")} manqué l'occasion de capturer ${the(victim)} en ${sqName(best.to)} avec $bs : cela ${v.f("vous ", "lui ")}aurait donné l'avantage." to ReviewTopic.MISSED_CAPTURE
                 }
+            }
+            // 3 bis. Une fourchette a été manquée.
+            if (!p.isCapture(best) && isFork(p, best)) {
+                return "${v.f("vous avez", "il a")} manqué la fourchette $bs, qui attaquait deux pièces à la fois." to ReviewTopic.MISSED_FORK
             }
             // 4. Une pièce attaquée n'a pas été mise à l'abri.
             if (attackedCheaply(p, best.from) && bt != PAWN && bt != KING && best.from != m.from) {

@@ -1,3 +1,14 @@
+## ChessDuck 4.1.0 — « À travailler » qui suit vos progrès
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Les parties récentes comptent plus que les anciennes : le bilan suit vos progrès au lieu de rester figé sur vos 20 dernières parties.
+- Un point travaillé avec succès (série d'exercices réussie, leçon maîtrisée) recule : ses erreurs d'avant comptent beaucoup moins, et il disparaît 3 jours s'il ne réapparaît pas dans vos parties.
+- Plusieurs leçons par point faible : quand la leçon proposée est maîtrisée, une autre leçon du même thème prend le relais (pièces en prise, prises gagnantes, mats, défense, roque et sécurité du roi…).
+- Deux nouveaux points faibles détectés dans vos parties : « Fourchette subie » et « Fourchette manquée », avec les 6 leçons sur la fourchette. La revue de partie les explique aussi.
+- L'explication précise le nombre de parties analysées, la dernière occurrence et, après un entraînement, le nombre d'erreurs depuis.
+- « Travailler ce point dans l'Académie », depuis la revue de partie, propose lui aussi la leçon du moment.
+
 ## ChessDuck 4.0.4 — noms des pièces en entier (mode enfant)
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
