@@ -2,8 +2,6 @@ package com.ivanherboch.chessduck.feature
 
 import com.ivanherboch.chessduck.ui.moveLabel
 import com.ivanherboch.chessduck.content.PuzzleThemes
-import com.ivanherboch.chessduck.content.LessonKind
-import com.ivanherboch.chessduck.ui.icons.SportsScore
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.clickable
 import com.ivanherboch.chessduck.chess.Position
@@ -28,7 +26,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -83,7 +80,7 @@ internal fun VariantMenu(l: Lesson, selected: Int, onSelect: (Int) -> Unit, done
                 DropdownMenuItem(
                     text = { Text(variantLabel(l, v), style = MaterialTheme.typography.bodyMedium, color = c.text) },
                     trailingIcon = if (v > 0 && "${l.id}:$v" in done) {
-                        { Icon(Icons.Rounded.CheckCircle, contentDescription = "réussie en Défi", tint = c.greenText) }
+                        { Icon(Icons.Rounded.CheckCircle, contentDescription = "réussie en pratique", tint = c.greenText) }
                     } else null,
                     onClick = { open = false; onSelect(v) },
                     leadingIcon = { if (v == selected) Icon(Icons.Rounded.Check, contentDescription = "sélectionnée", tint = c.blueText) else Spacer(Modifier.size(24.dp)) },
@@ -169,18 +166,21 @@ internal const val NOTATION_LESSON = 115
 @Composable
 internal fun LessonBridges(
     l: Lesson, endFen: String?, onTrainTheme: (String, Int) -> Unit, onPlayPosition: (String, Boolean) -> Unit, onVision: () -> Unit = {},
+    /** « S'entraîner » (onglet Problèmes) : masqué quand Pratiquer est déjà une série de problèmes du thème. */
+    showTrain: Boolean = true,
 ) {
     val c = LocalDuck.current
     val vision = l.id == NOTATION_LESSON
     // Position finale de mat ou de pat : rien à jouer, le bouton n'apparaît pas (plutôt que désactivé sans raison).
-    if (l.theme.isEmpty() && endFen == null && !vision) return
+    val train = showTrain && l.theme.isNotEmpty()
+    if (!train && endFen == null && !vision) return
     Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         // « L'échiquier et la notation » : on s'entraîne aussitôt à repérer les cases (onglet Notation).
         if (vision) DuckButton(
             "Vision des cases", onVision, Modifier.weight(1f), accent = c.blue, variant = ButtonVariant.OUTLINED,
             icon = Icons.Rounded.Extension, contentDescription = "S'entraîner à trouver les cases : Vision des cases, dans l'onglet Notation",
         )
-        if (l.theme.isNotEmpty()) DuckButton(
+        if (train) DuckButton(
             "S'entraîner", { onTrainTheme(l.theme, l.level) }, Modifier.weight(1f), accent = c.blue, variant = ButtonVariant.OUTLINED,
             icon = Icons.Rounded.Extension, contentDescription = "S'entraîner sur ce thème dans l'onglet Problèmes",
         )
@@ -190,27 +190,4 @@ internal fun LessonBridges(
             contentDescription = "Jouer cette position contre l'Ordinateur dans le Jeu Libre",
         )
     }
-}
-
-/**
- * Action principale à la fin du mode Guidé : le QCM « Quel est le plan ? », la finale à jouer contre l'Ordinateur, ou
- * le passage au Défi. Renvoie toujours vrai (le bouton Lecture, inutile en fin de leçon, cède sa place).
- */
-@Composable
-internal fun RowScope.EndOfLessonAction(vm: AcademyViewModel, l: Lesson): Boolean {
-    val c = LocalDuck.current
-    val family = EndgameFamily.of(l.drill)
-    when {
-        l.quiz != null -> DuckButton("Quel est le plan ?", vm::startQuiz, Modifier.weight(1f), accent = c.gold, filled = true)
-        family != null -> DuckButton(
-            if (family.goal == EndgameGoal.WIN) "Gagnez-la" else "Tenez la nulle", { vm.startEndgame(family, fromLesson = true) }, Modifier.weight(1f),
-            accent = c.green, filled = true, icon = Icons.Rounded.SportsEsports, contentDescription = "${family.label} : jouer contre l'Ordinateur",
-        )
-        // Sans question ni finale : la suite naturelle est le Défi (ou « Devinez le coup » pour une partie modèle).
-        else -> DuckButton(
-            if (l.kind == LessonKind.MODEL_GAME) "Devinez le coup" else "Passer au Défi", { vm.setChallenge(true) }, Modifier.weight(1f),
-            accent = c.gold, filled = true, icon = Icons.Rounded.SportsScore,
-        )
-    }
-    return true
 }

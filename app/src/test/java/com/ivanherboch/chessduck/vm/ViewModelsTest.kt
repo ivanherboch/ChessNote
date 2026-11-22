@@ -12,7 +12,6 @@ import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.chess.SpokenFr
 import com.ivanherboch.chessduck.data.GameRecord
 import com.ivanherboch.chessduck.data.Settings
-import com.ivanherboch.chessduck.feature.ASK
 import com.ivanherboch.chessduck.feature.AcademyViewModel
 import com.ivanherboch.chessduck.feature.GameAnalysisService
 import com.ivanherboch.chessduck.feature.GameReviewViewModel
@@ -342,6 +341,7 @@ class ViewModelsTest {
         val game = Lessons.all.first { it.kind == com.ivanherboch.chessduck.content.LessonKind.MODEL_GAME }
         vm.open(game.id)
         vm.setChallenge(true)
+        vm.setKeyMoments(false) // « Tous les coups » : chaque coup des Blancs est à deviner
         voice.spoken.clear()
         advanceUntilIdle()
         assertTrue(vm.challengeMove(game.line.moves[0])) // le coup du maître : 3 points
@@ -366,11 +366,13 @@ class ViewModelsTest {
         advanceUntilIdle()
         val kqk = Lessons.all.first { it.drill == "KQK" }
         vm.open(kqk.id)
+        // Pratiquer : les positions de la finale contre l'Ordinateur, sous l'en-tête de la leçon.
         vm.setChallenge(true)
-        playChallenge(vm)
-        assertEquals(3, vm.state.value.stars)
+        advanceUntilIdle()
+        assertNotNull(vm.endgame.state.value)
+        assertTrue(vm.state.value.lessonPractice)
+        assertNull(vm.sessionTitle(vm.state.value, vm.endgame.state.value, null))
         assertTrue(lessons.masteredLessons().first().isEmpty())
-        assertTrue(vm.state.value.message.contains("contre l'Ordinateur"))
         // Faux moteur : la position de départ est évaluée gagnante (mat), et le coup joué la rend nulle (évaluation 0) :
         // le gain « s'envole », la position est perdue.
         vm.startEndgame(com.ivanherboch.chessduck.feature.EndgameFamily.KQK, fromLesson = true)
@@ -413,8 +415,10 @@ class ViewModelsTest {
         vm.endgame.move(p2.legalMoves.first { !p2.play(it).isCheckmate && p2.play(it).legalMoves.isNotEmpty() })
         advanceUntilIdle()
         assertEquals(listOf(false), vm.endgame.state.value!!.results) // la position rejouée ne compte pas
+        // Fermer la pratique ramène à Comprendre.
         vm.closeEndgame()
         assertNull(vm.endgame.state.value)
+        assertFalse(vm.state.value.challenge)
     }
 
     @Test
@@ -625,7 +629,7 @@ class ViewModelsTest {
         assertEquals(false, vm.trainingActive.value)
         vm.trainTopic(136, "hangingPiece"); advanceUntilIdle()
         val t = vm.sessionTitle(vm.state.value, vm.endgame.state.value, vm.reflex.state.value)!!
-        assertEquals("Validation · 5 problèmes", t.label)
+        assertEquals("Pratique · 5 problèmes", t.label)
         assertEquals("Initiation : la pièce gratuite", t.title)
         assertEquals(true, vm.trainingActive.value)
         vm.closeTraining(); advanceUntilIdle()
@@ -705,7 +709,7 @@ class ViewModelsTest {
         assertTrue(vm.state.value.message, vm.state.value.message.startsWith("Réfutation : après a3"))
         // Pause : la réfutation reste affichée et le message invite à reprendre.
         vm.holdRefutation()
-        assertTrue(vm.state.value.message, "Reprendre au coup manqué" in vm.state.value.message)
+        assertTrue(vm.state.value.message, "Réessayer" in vm.state.value.message)
         assertEquals(0L, vm.state.value.refuteUntil)
         vm.resumeAtMiss()
         assertNull(vm.state.value.refute)
@@ -764,39 +768,17 @@ class ViewModelsTest {
         assertEquals(com.ivanherboch.chessduck.chess.PAWN, com.ivanherboch.chessduck.chess.pieceType(vm.state.value.tentative!!.position[com.ivanherboch.chessduck.chess.sqFromName("d4")]))
         advanceUntilIdle()
         assertNull(vm.state.value.tentative)
-        // … mais aussi bon : pas d'erreur, et rien n'est joué à la place de l'élève. La position revient, sans flèche :
-        // le Défi teste la mémoire, l'élève retrouve lui-même le coup de la leçon.
+        // … mais aussi bon : pas d'erreur, rien n'est joué à la place de l'élève, et la flèche verte montre aussitôt
+        // le coup de la leçon.
         assertEquals(0, vm.state.value.errors)
         assertEquals(0, vm.state.value.cursor)
-        assertNull(vm.state.value.suggest)
-        assertTrue(vm.state.value.message.contains("aussi bon"))
+        assertEquals(l.line.moves[0], vm.state.value.suggest)
+        assertTrue(vm.state.value.message, vm.state.value.message.contains("Bon coup aussi"))
         assertTrue(vm.challengeMove(l.line.moves[0]))
         advanceUntilIdle()
         assertNull(vm.state.value.suggest)
         assertTrue(vm.state.value.message.contains("Réponse ${l.line.sans[1]} : ${l.texts[1]}"))
         assertEquals(2, vm.state.value.cursor)
-    }
-
-    /** Cas signalé : Rh5+ au lieu de Ra5+ (même escalier, de l'autre côté) ; la tour ne doit pas revenir pendant que l'autre joue. */
-    @Test
-    fun academyMirroredMoveIsPraisedThenTheLessonMoveIsAsked() = test {
-        val engine = FakeEngine()
-        val vm = academy(engine = engine)
-        advanceUntilIdle()
-        val l = Lessons.all.first { it.drill == "KRRK" }
-        vm.open(l.id)
-        vm.setChallenge(true)
-        advanceUntilIdle()
-        val pos = l.line.positions[0]
-        val rh5 = Move.fromUci("h1h5")
-        engine.scripted[pos.toFen().split(' ').take(4).joinToString(" ")] =
-            SearchResult(l.line.moves[0], listOf(PvLine(l.line.moves[0], com.ivanherboch.chessduck.engine.MATE - 9), PvLine(rh5, com.ivanherboch.chessduck.engine.MATE - 9)))
-        assertFalse(vm.challengeMove(rh5))
-        advanceUntilIdle()
-        assertEquals(0, vm.state.value.cursor) // la tour a1 n'a pas été jouée à la place de l'élève
-        assertEquals(0, vm.state.value.errors)
-        assertNull(vm.state.value.suggest)
-        assertTrue(vm.state.value.message.contains("retrouvez son coup"))
     }
 
     /** L'Ordinateur ne répond pas (démarrage lent, occupé) : le coup est à rejouer, sans erreur comptée. */
@@ -822,58 +804,86 @@ class ViewModelsTest {
         assertTrue(vm.challengeMove(l.line.moves[0]))
     }
 
-    /** Mode Guidé, arrêt « À vous » : indice en deux temps (pièce, puis flèche), remis à zéro au coup suivant. */
+    /** Comprendre : la lecture automatique déroule toute la leçon, sans s'arrêter aux anciens arrêts « À vous ». */
     @Test
-    fun guidedHintHasTwoStages() = test {
+    fun understandPlaysTheWholeLessonWithoutStops() = test {
         val vm = academy()
         advanceUntilIdle()
         val l = Lessons.byId(1)
-        val p = l.pauseSteps.first()
-        vm.jump(p)
-        assertTrue(vm.asking())
-        vm.guideHint()
-        assertEquals(1, vm.state.value.hintStage)
-        assertTrue(vm.state.value.note!!.startsWith("Indice 1/2"))
-        vm.guideHint()
-        assertEquals(2, vm.state.value.hintStage)
-        assertTrue(vm.state.value.note!!.startsWith("Indice 2/2"))
-        vm.guideHint()
-        assertEquals(2, vm.state.value.hintStage) // pas de troisième temps
-        vm.guideMove(l.line.moves[p]); runCurrent()
-        assertEquals(0, vm.state.value.hintStage)
+        assertTrue(l.pauseSteps.isNotEmpty())
+        assertFalse(vm.state.value.challenge)
+        vm.togglePlay()
+        advanceTimeBy(600_000); runCurrent()
+        assertEquals(l.line.size, vm.state.value.cursor)
+        assertFalse(vm.state.value.playing)
+        // ⏮ et ⏭ restent les mêmes commandes, à toute position.
+        vm.rewind(); assertEquals(0, vm.state.value.cursor)
+        vm.step(1); vm.step(1); assertEquals(2, vm.state.value.cursor)
+        vm.last(); assertEquals(l.line.size, vm.state.value.cursor)
     }
 
+    /** Pratiquer lance l'exercice adapté à la leçon : série de problèmes, finale, ou jeu des coups. */
     @Test
-    fun academyGuidedPausesAskForTheMove() = test {
-        val engine = FakeEngine()
-        val vm = academy(engine = engine)
+    fun practiseStartsTheRightActivityForEachLesson() = test {
+        val tactic = Lessons.all.first { it.theme.isNotEmpty() && it.drill.isEmpty() && it.category != com.ivanherboch.chessduck.content.LessonCategory.OPENING }
+        val set = (1..5).map { PUZZLE_0000D.copy(id = "Q$it", primaryTheme = tactic.theme, rating = 1000) }
+        val vm = academy(puzzles = FakePuzzles(set))
         advanceUntilIdle()
-        val l = Lessons.byId(1)
-        val p = l.pauseSteps.first()
-        // La lecture automatique s'arrête à l'arrêt « À vous ».
-        vm.togglePlay()
-        advanceTimeBy(60_000); runCurrent()
-        assertEquals(p, vm.state.value.cursor)
-        assertFalse(vm.state.value.playing)
-        assertTrue(vm.asking())
-        // Un coup moins bon : on peut réessayer ; le bon coup : bravo, et la leçon avance.
-        val pos = l.line.positions[p]
-        val wrong = pos.legalMoves.first { it != l.line.moves[p] }
-        engine.after(pos, wrong, 500)
-        vm.guideMove(wrong); advanceUntilIdle()
-        assertTrue(vm.asking())
-        assertTrue(vm.state.value.note!!.contains("n'est pas le coup de la leçon"))
-        vm.guideMove(l.line.moves[p]); runCurrent()
-        assertEquals(p + 1, vm.state.value.cursor)
-        assertFalse(vm.asking())
-        assertTrue(vm.state.value.note!!.startsWith("Bravo"))
-        // La leçon reprend d'elle-même après la bonne réponse, jusqu'au prochain arrêt ou à la fin.
-        assertTrue(vm.state.value.playing)
+        // Tactique : la série de 5 problèmes, sous l'en-tête de la leçon (pas d'en-tête de séance).
+        vm.open(tactic.id)
+        vm.setChallenge(true)
         advanceUntilIdle()
-        assertTrue(vm.state.value.cursor > p + 1)
-        assertTrue(vm.asking() || vm.state.value.cursor == l.line.size)
-        // Revenir sur l'arrêt déjà résolu ne redemande rien.
-        vm.pause(); vm.goTo(p); assertFalse(vm.asking())
+        assertEquals(com.ivanherboch.chessduck.feature.PracticeKind.LESSON, vm.state.value.practice?.kind)
+        assertTrue(vm.state.value.lessonPractice)
+        assertNull(vm.sessionTitle(vm.state.value, vm.endgame.state.value, vm.reflex.state.value))
+        // « Revoir les coups » (fermer la série) : retour à Comprendre, sur la leçon.
+        vm.closePractice()
+        assertFalse(vm.state.value.challenge)
+        assertNull(vm.state.value.practice)
+        // Finale avec générateur : 5 positions contre l'Ordinateur.
+        val kqk = Lessons.all.first { it.drill == "KQK" }
+        vm.open(kqk.id)
+        vm.setChallenge(true)
+        advanceUntilIdle()
+        assertEquals(com.ivanherboch.chessduck.feature.EndgameFamily.KQK, vm.endgame.state.value?.family)
+        assertEquals(5, vm.endgame.state.value?.total)
+        // Revenir à Comprendre arrête la finale.
+        vm.setChallenge(false)
+        assertNull(vm.endgame.state.value)
+        // Ouverture : la ligne se rejoue sur l'échiquier.
+        val opening = Lessons.byId(1)
+        vm.open(opening.id)
+        vm.setChallenge(true)
+        advanceUntilIdle()
+        assertNull(vm.state.value.practice)
+        assertNull(vm.endgame.state.value)
+        assertFalse(vm.state.value.lessonPractice)
+        // Bases : seuls les coups clés (arrêts de la leçon) sont à jouer.
+        val basics = Lessons.all.first { it.category == com.ivanherboch.chessduck.content.LessonCategory.BASICS && it.pauseSteps.isNotEmpty() && it.theme.isEmpty() && it.drill.isEmpty() }
+        vm.open(basics.id)
+        vm.setChallenge(true)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.message, vm.state.value.message.contains("coups clés"))
+        assertTrue(vm.state.value.cursor in basics.pauseSteps || vm.state.value.done)
+    }
+
+    /** Fin de Comprendre : la question de fin, puis la pratique. */
+    @Test
+    fun endOfLessonOffersTheQuizThenPractice() = test {
+        val vm = academy()
+        advanceUntilIdle()
+        val l = Lessons.all.first { it.quiz != null }
+        vm.open(l.id)
+        vm.last()
+        vm.startQuiz()
+        val q = vm.state.value.quiz!!
+        assertFalse(vm.state.value.quizPassed)
+        vm.answerQuiz(q.correct)
+        assertTrue(vm.state.value.quizPassed)
+        vm.closeQuiz()
+        vm.setChallenge(true)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.challenge)
     }
 
     @Test
@@ -898,14 +908,11 @@ class ViewModelsTest {
                 val msg = vm.state.value.practice!!.message
                 assertTrue(msg, "Rappel de la leçon « ${l.title} » : ${l.takeaway}" in msg)
                 com.ivanherboch.chessduck.content.PuzzleThemes.byKey[l.theme]?.let { assertTrue(msg, "À chercher : ${it.name.lowercase()}" in msg) }
-                // Cinq cœurs pour les cinq problèmes.
-                assertEquals(5, vm.state.value.practice!!.hearts)
-                // Mauvais coup : réfuté (comme dans les Problèmes), puis « Réessayer » ; il coûte un cœur, et le problème
-                // compte encore s'il est résolu ensuite.
+                // Mauvais coup : réfuté (comme dans les Problèmes), puis « Réessayer » ; le problème compte encore s'il est
+                // résolu ensuite sans la flèche de l'indice.
                 vm.practiceMove(line.positions[1].legalMoves.first { it != line.moves[1] && !line.positions[1].play(it).isCheckmate })
                 assertNotNull(vm.state.value.practice!!.refute)
                 assertTrue(vm.state.value.practice!!.hadError)
-                assertEquals(4, vm.state.value.practice!!.hearts)
                 assertFalse(vm.state.value.practice!!.failed)
                 advanceTimeBy(1_000); runCurrent()
                 assertNotNull(vm.state.value.practice!!.refute?.arrow)
@@ -919,7 +926,7 @@ class ViewModelsTest {
                 vm.practiceMove(line.moves[3]); advanceUntilIdle()
                 assertTrue(vm.state.value.practice!!.solved)
                 assertEquals(listOf(true), vm.state.value.practice!!.results)
-                assertTrue(vm.state.value.practice!!.message.contains("cœur"))
+                assertTrue(vm.state.value.practice!!.message.contains("après une erreur"))
             } else if (k == 1) {
                 // « Solution » après une erreur : le problème est compté manqué, la flèche montre le coup.
                 vm.practiceMove(line.positions[1].legalMoves.first { it != line.moves[1] && !line.positions[1].play(it).isCheckmate })
@@ -927,15 +934,13 @@ class ViewModelsTest {
                 vm.practiceSolution()
                 assertTrue(vm.state.value.practice!!.failed)
                 assertEquals(listOf(true, false), vm.state.value.practice!!.results)
-                assertEquals(3, vm.state.value.practice!!.hearts)
             } else if (k == 2) {
-                // Les trois derniers cœurs, puis une erreur sans cœur : ce problème ne compte plus, même résolu.
-                repeat(4) {
+                // Plusieurs erreurs, puis la flèche de l'indice 2/2 : ce problème ne compte pas.
+                repeat(3) {
                     vm.practiceMove(line.positions[1].legalMoves.first { it != line.moves[1] && !line.positions[1].play(it).isCheckmate })
                     vm.retryPractice()
                 }
-                assertEquals(0, vm.state.value.practice!!.hearts)
-                assertTrue(vm.state.value.practice!!.penalized)
+                vm.practiceHint(); vm.practiceHint()
                 vm.practiceMove(line.moves[1]); advanceUntilIdle()
                 vm.practiceMove(line.moves[3]); advanceUntilIdle()
                 assertTrue(vm.state.value.practice!!.solved)
@@ -949,7 +954,7 @@ class ViewModelsTest {
         }
         val pr = vm.state.value.practice!!
         assertTrue(pr.finished)
-        assertEquals(3, pr.score) // la solution montrée et l'erreur sans cœur comptent : le seuil de 4 sur 5 n'est pas atteint
+        assertEquals(3, pr.score) // la solution montrée et la flèche de l'indice comptent : le seuil de 4 sur 5 n'est pas atteint
         assertTrue(lessons.masteredLessons().first().isEmpty())
         assertEquals(3, lessons.progress(l.id)?.practicePassed)
         assertEquals(3, puzzles.solved.value.size)
@@ -958,21 +963,28 @@ class ViewModelsTest {
     }
 
     @Test
-    fun academyThemedLessonNeedsPracticeToBeMastered() = test {
+    fun academyOpeningPracticeMastersWithoutAnExtraValidation() = test {
         val lessons = FakeLessons()
         val vm = academy(lessons)
         advanceUntilIdle()
-        val l = Lessons.all.first { it.theme.isNotEmpty() }
+        // Leçon de stratégie : Pratiquer ne demande que les coups clés, puis la réussir maîtrise la leçon (pas d'étape
+        // « À valider » en plus).
+        val l = Lessons.all.first {
+            it.category == com.ivanherboch.chessduck.content.LessonCategory.STRATEGY && it.theme.isEmpty() && it.pauseSteps.isNotEmpty()
+        }
         vm.open(l.id)
         vm.setChallenge(true)
         advanceUntilIdle()
+        assertNull(vm.state.value.practice)
+        assertTrue(vm.state.value.message, vm.state.value.message.contains("coups clés"))
         while (!vm.state.value.done) {
+            assertTrue(vm.state.value.cursor in l.pauseSteps)
             assertTrue(vm.challengeMove(l.line.moves[vm.state.value.cursor]))
             advanceUntilIdle()
         }
         assertEquals(3, vm.state.value.stars)
-        assertTrue(lessons.masteredLessons().first().isEmpty()) // Défi parfait, mais exercices à valider
-        assertTrue(vm.state.value.message.contains("problèmes inédits"))
+        assertEquals(listOf(l.id), lessons.masteredLessons().first())
+        assertTrue(vm.state.value.message, vm.state.value.message.contains("Leçon maîtrisée"))
     }
 
     /** « Jouer cette position » : partie d'entraînement sans ELO, enregistrée avec sa position de départ et relue en revue. */
@@ -1078,13 +1090,14 @@ class ViewModelsTest {
         voice.finish()
         advanceTimeBy(601); runCurrent()
         assertEquals(3, vm.state.value.cursor)
-        // Arrêt « À vous » (leçon 1 : avant le 5e demi-coup) : la question est lue après le commentaire, et la lecture
-        // automatique s'arrête pour laisser l'élève chercher.
+        // Comprendre ne s'arrête plus aux anciens arrêts « À vous » : la lecture continue, coup après coup, et la
+        // voix ne lit que le commentaire.
         voice.finish()
         advanceTimeBy(601); runCurrent()
         assertEquals(4, vm.state.value.cursor)
-        assertFalse(vm.state.value.playing)
-        assertTrue(voice.spoken.last().endsWith(SpokenFr.text(ASK)))
+        assertTrue(vm.state.value.playing)
+        assertEquals(SpokenFr.text("${SpokenFr.move(l.line.sans[3])}. ${l.texts[3]}"), voice.spoken.last())
+        vm.pause()
         // Pause pendant un commentaire : la voix s'arrête, puis reprend (au début de sa phrase) avec la lecture.
         vm.goTo(6)
         voice.finish()
@@ -1106,7 +1119,7 @@ class ViewModelsTest {
         vm.silence()
         assertFalse(voice.speaking.value)
         assertFalse(vm.state.value.playing)
-        // Mode Défi : aucune lecture.
+        // Pratiquer : aucune lecture.
         voice.spoken.clear()
         vm.setChallenge(true)
         advanceUntilIdle()
@@ -1139,8 +1152,8 @@ class ViewModelsTest {
         assertTrue(l.pauseSteps.size >= 5)
         vm.open(l.id)
         vm.setChallenge(true)
-        vm.setKeyMoments(true)
-        assertTrue(vm.state.value.message.contains("moments clés"))
+        assertTrue(vm.state.value.keyMoments) // coups clés par défaut
+        assertTrue(vm.state.value.message, vm.state.value.message.contains("coups clés"))
         playChallenge(vm)
         // Seuls les moments clés sont devinés (3 points chacun) ; les autres coups se sont joués seuls.
         assertEquals(3 * l.pauseSteps.size, vm.state.value.guessMax)
@@ -1156,7 +1169,7 @@ class ViewModelsTest {
         assertTrue(vm.state.value.challenge)
         assertTrue(vm.state.value.cursor >= 2)
         assertEquals(1, vm.state.value.errors)
-        assertTrue(vm.state.value.message, vm.state.value.message.contains("Défi repris"))
+        assertTrue(vm.state.value.message, vm.state.value.message.contains("Exercice repris"))
     }
 
     @Test

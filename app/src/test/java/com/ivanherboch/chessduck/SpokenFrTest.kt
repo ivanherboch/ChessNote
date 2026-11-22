@@ -37,7 +37,7 @@ class SpokenFrTest {
 
     /** Tout ce que la voix peut lire d'une leçon : titre, résumé, règle à retenir, conditions, commentaires, question. */
     private fun spoken(l: com.ivanherboch.chessduck.content.Lesson) =
-        l.texts + l.summary + l.title + l.takeaway + l.conditions + com.ivanherboch.chessduck.feature.ASK +
+        l.texts + l.summary + l.title + l.takeaway + l.conditions +
             com.ivanherboch.chessduck.feature.objectiveText(l) + l.ideas + l.traps + l.variants.flatMap { it.texts + it.title } +
             listOfNotNull(l.quiz?.question, l.quiz?.answer, l.quiz?.explanation) + l.quiz?.wrong.orEmpty()
 

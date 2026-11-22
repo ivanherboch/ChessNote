@@ -118,7 +118,7 @@ internal fun TrainingsSheet(vm: AcademyViewModel, home: AcademyHome, s: AcademyS
         if (home.due.isNotEmpty() || cont != null || rec != null) {
             SectionTitle("À faire maintenant")
             if (home.due.isNotEmpty()) SuggestionCard(
-                "Révisions du jour : ${home.due.size}", "Rejouez en Défi les leçons à revoir aujourd'hui.", "Commencer les révisions",
+                "Révisions du jour : ${home.due.size}", "Rejouez les leçons à revoir aujourd'hui.", "Commencer les révisions",
                 c.gold, session(vm::startReviews),
             )
             cont?.let { id ->

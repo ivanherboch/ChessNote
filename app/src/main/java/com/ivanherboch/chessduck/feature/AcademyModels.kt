@@ -46,16 +46,10 @@ data class Practice(
     val refute: Refutation? = null,
     val refuteUntil: Long = 0L,
     val refuteHold: Long = 0L,
-    /** Une erreur a été commise sur ce problème. */
+    /** Flèche de l'indice 2/2 montrée pendant ce problème (même sur un coup déjà joué) : il ne compte pas. */
+    val arrowUsed: Boolean = false,
+    /** Une erreur a été commise sur ce problème (il compte encore s'il est résolu sans la flèche de l'indice). */
     val hadError: Boolean = false,
-    /**
-     * Cœurs de la série (autant que de problèmes, pour les validations, « Le seul coup » et les révisions ; aucun pour
-     * le placement et l'examen) : une erreur coûte un cœur et le problème compte encore s'il est résolu ensuite.
-     */
-    val hearts: Int = 0,
-    val heartsMax: Int = 0,
-    /** Erreur commise sans cœur restant : ce problème ne compte plus, même résolu ensuite. */
-    val penalized: Boolean = false,
     /** Demi-coups déjà joués du problème (on peut revenir en arrière et avancer jusque-là). */
     val progress: Int = 0,
 ) {
@@ -113,9 +107,7 @@ data class AcademyState(
     val message: String = "",
     val tone: Tone = Tone.INFO,
     val done: Boolean = false,
-    /** Mode Guidé : arrêts « À vous » déjà résolus (ou dévoilés) dans la leçon ouverte. */
-    val answered: Set<Int> = emptySet(),
-    /** Mode Guidé : réaction au coup proposé pendant un arrêt (null : aucun essai). */
+    /** Comprendre : précision affichée au-dessus du commentaire (null : aucune). */
     val note: String? = null,
     val noteTone: Tone = Tone.INFO,
     /** Mode Défi : erreurs et indice le plus fort utilisé, pour les étoiles. */
@@ -126,8 +118,15 @@ data class AcademyState(
     /** Partie modèle (« Devinez le coup ») : points gagnés et points possibles. */
     val guessScore: Int = 0,
     val guessMax: Int = 0,
-    /** Partie modèle, mode Deviner : seuls les moments clés sont à deviner ; les autres coups se jouent seuls. */
-    val keyMoments: Boolean = false,
+    /**
+     * Pratiquer, partie modèle : seuls les moments clés sont à deviner, les autres coups se jouent seuls (par défaut ;
+     * un interrupteur permet de deviner tous les coups).
+     */
+    val keyMoments: Boolean = true,
+    /** Pratiquer lancé depuis la leçon a ouvert sa série de problèmes ou sa finale : l'en-tête de la leçon reste affiché. */
+    val lessonPractice: Boolean = false,
+    /** La question de fin de la leçon ouverte a reçu la bonne réponse. */
+    val quizPassed: Boolean = false,
     /** L'Ordinateur juge le coup proposé : l'échiquier attend. */
     val judging: Boolean = false,
     /** Réfutation d'un mauvais coup du Défi : position après la réponse adverse, compte à rebours avant le retour. */
@@ -162,8 +161,6 @@ fun objectiveText(l: Lesson): String = buildString {
     if (l.traps.isNotEmpty()) append("\n\nLes pièges : ").append(l.traps.joinToString(" "))
 }
 
-/** Question posée à chaque arrêt du mode Guidé (lue après le commentaire précédent). */
-const val ASK = "À vous : que jouez-vous ici ?"
 
 /** Nom d'un palier pour l'affichage : « 2 · Débutant ». */
 fun levelName(level: Int): String = "${level.coerceIn(1, 5)} · ${levelLabel(level)}"

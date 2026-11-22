@@ -1,7 +1,5 @@
 package com.ivanherboch.chessduck.feature
 
-import com.ivanherboch.chessduck.content.LessonKind
-import com.ivanherboch.chessduck.ui.icons.SportsScore
 import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.ui.icons.Undo
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
@@ -60,7 +58,7 @@ import com.ivanherboch.chessduck.ui.icons.VolumeUp
 
 /** QCM de fin de leçon : question, 2 ou 3 choix, puis l'explication. */
 @Composable
-internal fun ColumnScope.QuizPanel(vm: AcademyViewModel, l: Lesson, q: QuizState, needsChallenge: Boolean = false) {
+internal fun ColumnScope.QuizPanel(vm: AcademyViewModel, l: Lesson, q: QuizState, toPractice: Boolean = true) {
     val c = LocalDuck.current
     val quiz = l.quiz ?: return
     val picked = q.picked
@@ -93,10 +91,10 @@ internal fun ColumnScope.QuizPanel(vm: AcademyViewModel, l: Lesson, q: QuizState
     }
     if (picked != null && picked == q.correct) EqualRow(Modifier.padding(vertical = 6.dp)) {
         DuckButton("Revoir la leçon", vm::closeQuiz, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
-        // Le parcours continue par le Défi tant qu'il n'est pas réussi ; ensuite seulement, la leçon suivante.
-        if (needsChallenge) DuckButton(
-            if (l.kind == LessonKind.MODEL_GAME) "Devinez le coup" else "Passer au Défi", { vm.closeQuiz(); vm.setChallenge(true) }, Modifier.weight(1f),
-            accent = c.gold, filled = true, icon = Icons.Rounded.SportsScore,
+        // Question posée à la fin de Comprendre : la suite est la pratique ; posée à la fin de Pratiquer : la leçon suivante.
+        if (toPractice) DuckButton(
+            "Passer à la pratique", { vm.closeQuiz(); vm.setChallenge(true) }, Modifier.weight(1f),
+            accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward,
         )
         else DuckButton("Leçon suivante", { vm.closeQuiz(); vm.nextLesson(guided = true) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
     }
@@ -120,10 +118,10 @@ private fun QuizChoice(text: String, right: Boolean, what: String) {
 
 /** Série de problèmes : problème en cours, bilan et commandes (aucune lecture vocale pendant les exercices). */
 @Composable
-internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, review: ReviewSession?, stuck: String? = null) {
+internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, review: ReviewSession?, stuck: String? = null, inLesson: Boolean = false) {
     val c = LocalDuck.current
     val name = when (pr.kind) {
-        PracticeKind.LESSON -> "Validation"
+        PracticeKind.LESSON -> "Pratique"
         PracticeKind.REVIEW -> "Révision"
         PracticeKind.ONLY_MOVE -> "Le seul coup"
         PracticeKind.PLACEMENT -> "Test de placement"
@@ -132,8 +130,7 @@ internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, revie
     val title = when {
         pr.finished -> "$name · bilan : ${pr.score} sur ${pr.ids.size.coerceAtLeast(1)}"
         pr.loading -> name
-        else -> "$name · problème ${pr.index + 1} sur ${pr.ids.size} · ${pr.score} réussi${if (pr.score > 1) "s" else ""}" +
-            if (pr.heartsMax > 0) " · ${pr.hearts} cœur${if (pr.hearts > 1) "s" else ""} sur ${pr.heartsMax}" else ""
+        else -> "$name · problème ${pr.index + 1} sur ${pr.ids.size} · ${pr.score} réussi${if (pr.score > 1) "s" else ""}"
     }
     FeedbackCard(stuck ?: pr.message, if (stuck != null) Tone.GOLD else pr.tone, Modifier.padding(top = 4.dp).weight(1f), title = title)
     if (pr.refute != null && pr.refuteUntil > 0) RefuteCountdown(pr.refuteUntil, pr.refuteHold, vm::holdPracticeRefutation)
@@ -145,8 +142,12 @@ internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, revie
             pr.finished && pr.kind == PracticeKind.REVIEW && review != null -> ReviewNextButton(vm, review, Modifier.weight(1f))
             pr.finished -> {
                 DuckButton(
-                    if (vm.state.value.fromDrawer) "Revenir aux entraînements" else "Revenir à la leçon", vm::closePractice, Modifier.weight(1f),
-                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                    when {
+                        inLesson -> "Revoir les coups"
+                        vm.state.value.fromDrawer -> "Revenir aux entraînements"
+                        else -> "Revenir à la leçon"
+                    },
+                    vm::closePractice, Modifier.weight(1f), icon = if (inLesson) Icons.Rounded.Visibility else Icons.AutoMirrored.Rounded.ArrowBack,
                 )
                 if (pr.kind == PracticeKind.LESSON && pr.score >= 4) DuckButton("Leçon suivante", { vm.closePractice(); vm.nextLesson(guided = true) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
                 else if (pr.kind == PracticeKind.LESSON || pr.kind == PracticeKind.ONLY_MOVE) DuckButton(
@@ -264,7 +265,7 @@ internal fun AcademyBoardInfo(s: AcademyState, l: Lesson, eg: EndgameSession?, r
 
 /** Finale jouée contre l'Ordinateur. */
 @Composable
-internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, review: ReviewSession?, stuck: String? = null, needsChallenge: Boolean = false) {
+internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, review: ReviewSession?, stuck: String? = null, inLesson: Boolean = false) {
     val c = LocalDuck.current
     val title = when {
         eg.finished -> "${eg.family.label} · bilan : ${eg.score} sur ${eg.total}"
@@ -274,12 +275,15 @@ internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, 
     EqualRow(Modifier.padding(vertical = 6.dp)) {
         when {
             eg.finished && review != null -> ReviewNextButton(vm, review, Modifier.weight(1f))
-            // Finale lancée depuis une leçon dont le Défi reste à réussir : la suite du parcours est le Défi.
-            eg.finished && needsChallenge -> {
-                DuckButton("Recommencer", { vm.startEndgame(eg.family) }, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt)
-                DuckButton(
-                    "Passer au Défi", { vm.closeEndgame(); vm.setChallenge(true) }, Modifier.weight(1f), accent = c.gold, filled = true,
-                    icon = Icons.Rounded.SportsScore,
+            // Finale de Pratiquer : relire la leçon, recommencer, ou passer à la leçon suivante une fois réussie.
+            eg.finished && inLesson -> {
+                DuckButton("Revoir les coups", vm::closeEndgame, Modifier.weight(1f), icon = Icons.Rounded.Visibility)
+                if (eg.score >= minOf(EndgameTrainer.PASS, eg.total)) DuckButton(
+                    "Leçon suivante", { vm.closeEndgame(); vm.nextLesson(guided = true) }, Modifier.weight(1f), accent = c.green, filled = true,
+                    icon = Icons.AutoMirrored.Rounded.ArrowForward,
+                )
+                else DuckButton(
+                    "Retenter", { vm.closeEndgame(); vm.setChallenge(true) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.Rounded.RestartAlt,
                 )
             }
             eg.finished -> {
@@ -290,7 +294,7 @@ internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, 
                 // Position perdue : on peut la rejouer pour s'entraîner (le score de la série ne change pas).
                 // Rejeu possible après un échec, tant que le rejeu d'entraînement n'a pas été réussi.
                 if (eg.results.lastOrNull() == false && eg.replayOk != true) DuckButton(
-                    if (eg.before != null) "Reprendre le coup" else "Rejouer", vm.endgame::retry, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt,
+                    "Réessayer", vm.endgame::retry, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.Undo,
                     contentDescription = if (eg.before != null) "Revenir juste avant l'erreur pour s'entraîner, sans changer le score"
                     else "Rejouer cette position pour s'entraîner, sans changer le score",
                 )

@@ -98,7 +98,10 @@ class AppRobolectricTest {
         )
     }
 
-    /** Leçon 9 en Défi : chaque coup se joue en touchant la pièce puis sa case d'arrivée, y compris la prise Qxd2. */
+    /**
+     * Leçon 9 en Pratiquer : seuls les coups clés (les parades) sont à jouer, en touchant la pièce puis sa case
+     * d'arrivée, y compris la prise Qxd2 ; les autres coups se jouent seuls.
+     */
     @Test
     fun challengeCaptureByTaps() {
         settle(2500)
@@ -106,7 +109,7 @@ class AppRobolectricTest {
         desc("Ouvrir le catalogue des leçons").performClick(); settle(1000)
         rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("parades"); settle(800)
         rule.onNodeWithText("L'échec et les parades").performClick(); settle(1500)
-        rule.onNodeWithText("Défi").performClick(); settle(1500)
+        rule.onNodeWithText("Pratiquer").performClick(); settle(1500)
         fun cell(name: String) = rule.onNode(
             androidx.compose.ui.test.SemanticsMatcher("case $name") {
                 it.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.ContentDescription)?.firstOrNull()?.startsWith("$name,") == true
@@ -118,7 +121,12 @@ class AppRobolectricTest {
             cell(to).performTouchInput { click() }
             settle(3500)
         }
-        play("d2", "d4"); play("c2", "c4"); play("g1", "f3"); play("c1", "d2")
+        // d4, c4 et Nf3 se jouent seuls : le premier coup clé est la parade Bd2.
+        fun bishopOnB4() = cell("b4").fetchSemanticsNode().config
+            .getOrNull(androidx.compose.ui.semantics.SemanticsProperties.ContentDescription)?.firstOrNull()?.contains("fou", ignoreCase = true) == true
+        repeat(20) { if (!bishopOnB4()) settle(500) }
+        assertTrue("le fou noir doit donner échec en b4", bishopOnB4())
+        play("c1", "d2")
         shot("2z_defi_avant_prise")
         // Comme sur la capture signalée : l'indice, puis un toucher sur le fou f1 qui ne peut pas parer l'échec.
         rule.onNodeWithText("Indice", substring = true).performClick(); settle(800)
@@ -546,7 +554,7 @@ class AppRobolectricTest {
 
     private fun desc(text: String) = rule.onNodeWithContentDescription(text, substring = true)
 
-    /** Ouvre une leçon par la recherche du catalogue (elle s'ouvre en mode Guidé). */
+    /** Ouvre une leçon par la recherche du catalogue (elle s'ouvre dans Comprendre). */
     private fun openLesson(query: String, title: String) {
         desc("Ouvrir le catalogue des leçons").performClick(); settle(1000)
         rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput(query); settle(800)
@@ -628,11 +636,16 @@ class AppRobolectricTest {
         desc("Fiche de la leçon").performClick(); settle(800); shot("2w_fiche_bases")
         rule.onNodeWithText("Les moments clés").performScrollTo().assertExists()
         close(); settle(600)
-        // Guidé actif : la leçon 1 s'arrête avant le 5e demi-coup et demande « À vous : que jouez-vous ici ? ».
+        // Comprendre : démonstration sans arrêt bloquant ; la barre du bas garde ses quatre commandes.
         repeat(4) { desc("Coup suivant").performClick(); settle(500) }
-        rule.onNodeWithText(com.ivanherboch.chessduck.feature.ASK).assertExists(); shot("2d_a_vous")
-        // Fin de la leçon : passerelle « Jouer la position » vers le Jeu Libre (partie d'entraînement).
+        rule.onAllNodesWithText("À vous", substring = true).assertCountEquals(0)
+        rule.onNodeWithText("Lecture").assertExists(); shot("2d_comprendre")
+        // Fin de la leçon : la suite du parcours (pratique) et la passerelle « Jouer la position » vers le Jeu Libre.
         desc("Aller à la fin").performClick(); settle(800); shot("2e_fin_lecon")
+        assertTrue(
+            rule.onAllNodesWithText("Passer à la pratique").fetchSemanticsNodes().isNotEmpty() ||
+                rule.onAllNodesWithText("Question de fin").fetchSemanticsNodes().isNotEmpty(),
+        )
         desc("Jouer cette position contre l'Ordinateur dans le Jeu Libre").performClick(); settle(2000)
         shot("2f_jouer_position")
         // Le Jeu Libre prépare la partie en tâche de fond : on attend son bandeau.
@@ -641,7 +654,7 @@ class AppRobolectricTest {
             rule.onAllNodesWithText("Position de la leçon", substring = true).fetchSemanticsNodes().isNotEmpty()
         }
         rule.onNodeWithText("Académie").performClick(); settle(1200)
-        rule.onNodeWithText("Défi").performClick(); settle(1500); shot("2b_defi")
+        rule.onNodeWithText("Pratiquer").performClick(); settle(1500); shot("2b_pratiquer")
         desc("Ouvrir le catalogue des leçons").performClick(); settle(1200); shot("2c_catalogue_lecons")
         close(); settle(800)
         // Étape 2 : entraînements (réflexes, finales jouables), variantes, QCM et partie modèle.
@@ -661,7 +674,7 @@ class AppRobolectricTest {
         desc("Retourner l'échiquier").assertExists() // le retournement reste offert pendant une séance
         desc("Revenir aux entraînements").performClick(); settle(1000)
         close(); settle(800)
-        rule.onNodeWithText("Guidé").performClick(); settle(800)
+        rule.onNodeWithText("Comprendre").performClick(); settle(800)
         // Après « Les trois principes » vient « Le mat du berger », puis la partie italienne (variantes et QCM).
         desc("Leçon suivante").performClick(); settle(1200)
         desc("Leçon suivante").performClick(); settle(1200)
@@ -675,22 +688,24 @@ class AppRobolectricTest {
         rule.onNodeWithText("Variante 1").performClick(); settle(500)
         rule.onNodeWithText("Ligne principale").performClick(); settle(600)
         desc("Aller à la fin").performClick(); settle(800)
-        rule.onNodeWithText("Quel est le plan ?").performClick(); settle(800); shot("2m_qcm")
+        rule.onNodeWithText("Question de fin").performClick(); settle(800); shot("2m_qcm")
         rule.onNodeWithText("Jouer c3 puis d4 pour construire un centre de deux pions").performClick(); settle(600); shot("2n_qcm_reponse")
-        // Défi pas encore réussi : la question de fin mène au Défi, pas à la leçon suivante.
-        rule.onNodeWithText("Passer au Défi").assertExists()
+        // Fin de Comprendre : la question de fin mène à la pratique, pas à la leçon suivante.
+        rule.onNodeWithText("Passer à la pratique").assertExists()
         rule.onAllNodesWithText("Leçon suivante").assertCountEquals(0)
         rule.onNodeWithText("Revoir la leçon").performClick(); settle(600)
         desc("Ouvrir le catalogue des leçons").performClick(); settle(1200)
         rule.onNodeWithText("Filtres").performClick(); settle(500)
         rule.onNodeWithText("Parties modèles 0/8").performScrollTo().performClick(); settle(1000)
         rule.onNodeWithText("La partie de l'Opéra : Morphy, Paris 1858").performScrollTo().performClick(); settle(1200)
-        rule.onNodeWithText("Deviner").performClick(); settle(1500); shot("2o_devinez")
-        // Partie modèle : « Jouer cette position » à chaque coup, avec le choix du camp.
-        desc("avec le camp de votre choix").performClick(); settle(800)
-        rule.onNodeWithText("Jouer avec les Noirs").assertExists(); shot("2v_choix_camp")
-        close(); settle(600)
-        rule.onNodeWithText("Guidé").performClick(); settle(800)
+        rule.onNodeWithText("Pratiquer").performClick(); settle(1500); shot("2o_devinez")
+        // Partie modèle : coups clés par défaut, avec un interrupteur en clair.
+        rule.onNodeWithText("Coups clés").assertExists()
+        rule.onNodeWithText("Comprendre").performClick(); settle(800)
+        // Fin de la partie de l'Opéra : mat, rien à jouer, donc pas de « Jouer cette position » (plutôt qu'un bouton
+        // désactivé sans raison).
+        desc("Aller à la fin").performClick(); settle(800); shot("2v_fin_partie_modele")
+        rule.onAllNodes(androidx.compose.ui.test.hasContentDescription("Jouer cette position contre l'Ordinateur", substring = true)).assertCountEquals(0)
         rule.onNodeWithText("Problèmes").performClick(); settle(2500); shot("3_problemes")
         desc("Catalogue des problèmes").performClick(); settle(2000); shot("3b_catalogue")
         close(); settle(800)

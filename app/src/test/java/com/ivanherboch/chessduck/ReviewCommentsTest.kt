@@ -116,7 +116,7 @@ class ReviewCommentsTest {
         assertEquals(2, p.size)
         // La leçon du clouage (3 erreurs + 3 exercices manqués) passe avant la pièce en prise vue 2 fois.
         assertEquals(41, p[0].lessonId)
-        assertTrue(p[0].reason, "3 erreurs en Défi" in p[0].reason && "3 exercices manqués" in p[0].reason)
+        assertTrue(p[0].reason, "3 erreurs en pratique" in p[0].reason && "3 exercices manqués" in p[0].reason)
         assertEquals("Pièce laissée en prise", p[1].title)
         assertTrue(p[1].reason, "2 fois" in p[1].reason)
     }

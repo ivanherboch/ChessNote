@@ -284,7 +284,7 @@ data class EndgameSession(
     val pulse: Pulse? = null,
     /** Coup qu'il fallait jouer à la place du coup perdant (flèche verte quand on reprend le coup). */
     val better: Move? = null,
-    /** Position juste avant le coup perdant, et coups déjà joués : « Reprendre le coup » y revient. */
+    /** Position juste avant le coup perdant, et coups déjà joués : « Réessayer » y revient. */
     val before: Position? = null,
     val beforeMoves: Int = 0,
     /** Positions déjà vues depuis le départ (pièces, trait, roques, prise en passant) : détection de la triple répétition. */
@@ -419,7 +419,7 @@ class EndgameTrainer(
                 message = when {
                     s.total == 1 -> if (s.score == 1) "Position réussie." else "Position manquée."
                     s.score >= PASS -> "${s.score} sur ${s.total} : vous maîtrisez cette finale."
-                    else -> "${s.score} sur ${s.total} : il en faut $PASS pour valider. Relisez la leçon, puis réessayez."
+                    else -> "${s.score} sur ${s.total} : il en faut $PASS pour réussir. Revoyez la leçon, puis réessayez."
                 },
             )
             job = scope.launch { onFinished(s.family, s.score, s.total) }
@@ -524,7 +524,7 @@ class EndgameTrainer(
                 val text = (if (f.goal == EndgameGoal.WIN) "$san laisse échapper le gain" else "$san perd la nulle") +
                     " : l'Ordinateur répond ${after.san(reply)}." +
                     (if (best != null) " Il fallait jouer ${pos.san(best)}." else "") +
-                    "\n\nMéthode : ${f.method}\n\nReprenez le coup pour vous entraîner, ou passez à la position suivante."
+                    "\n\nMéthode : ${f.method}\n\nTouchez Réessayer pour vous entraîner, ou passez à la position suivante."
                 return@launch end(false, text, ev)
             }
             if (f.goal == EndgameGoal.WIN && promoted) return@launch end(true, "Le pion devient dame et le gain est assuré !", ev)

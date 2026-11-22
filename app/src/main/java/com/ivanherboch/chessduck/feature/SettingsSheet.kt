@@ -193,7 +193,7 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
         SectionTitle("Audio, voix et retours")
         SwitchRow("Bruit des pièces", "Petit bruit de bois quand une pièce se pose.", st.sound) { v -> scope.launch { prefs.setSound(v) } }
         SwitchRow("Vibrations", "Retour haptique au toucher, aux erreurs et aux réussites.", st.haptics) { v -> scope.launch { prefs.setHaptics(v) } }
-        VoiceSwitch("Lecture vocale des leçons", "L'Académie lit à voix haute les commentaires du mode Guidé.", st.narration, voice) { v ->
+        VoiceSwitch("Lecture vocale des leçons", "L'Académie lit à voix haute les commentaires de Comprendre.", st.narration, voice) { v ->
             scope.launch { prefs.setNarration(v) }
         }
         if (voice == false) {

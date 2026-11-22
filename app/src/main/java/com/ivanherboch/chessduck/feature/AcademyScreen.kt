@@ -1,8 +1,10 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.ui.semantics.semantics
+import com.ivanherboch.chessduck.ui.DuckChip
+import com.ivanherboch.chessduck.ui.icons.Lightbulb
 import androidx.activity.compose.BackHandler
 import com.ivanherboch.chessduck.ui.HintButton
-import com.ivanherboch.chessduck.ui.HintIconButton
 import androidx.compose.foundation.layout.heightIn
 import com.ivanherboch.chessduck.ui.LocalIsTwoPane
 import com.ivanherboch.chessduck.ui.LoadingState
@@ -49,12 +51,10 @@ import com.ivanherboch.chessduck.ui.MoveStrip
 import com.ivanherboch.chessduck.ui.RefuteCountdown
 import com.ivanherboch.chessduck.ui.refuteArrow
 import com.ivanherboch.chessduck.ui.Tone
-import com.ivanherboch.chessduck.ui.icons.Extension
 import com.ivanherboch.chessduck.ui.icons.Pause
 import com.ivanherboch.chessduck.ui.icons.RestartAlt
 import com.ivanherboch.chessduck.ui.icons.SkipNext
 import com.ivanherboch.chessduck.ui.icons.SkipPrevious
-import com.ivanherboch.chessduck.ui.icons.SportsEsports
 import com.ivanherboch.chessduck.ui.icons.Undo
 import com.ivanherboch.chessduck.ui.icons.Visibility
 import com.ivanherboch.chessduck.ui.icons.VolumeOff
@@ -101,11 +101,10 @@ fun AcademyScreen(
     val total = Lessons.all.size
     val cur = s.cursor.coerceIn(0, line.size)
     val stars = progress[l.id]?.stars ?: 0
-    // Le Défi de la leçon reste à réussir (au moins 2 étoiles) : c'est l'étape suivante du parcours, avant la leçon suivante.
-    val needsChallenge = l.id !in mastered && stars < 2 && s.review == null && s.repertoire == null
     val pr = s.practice
-    val asking = vm.asking(s)
     val model = l.kind == LessonKind.MODEL_GAME
+    // Question de fin à poser avant de passer à la pratique (ou à la leçon suivante).
+    val quizPending = l.quiz != null && !s.quizPassed && s.review == null && s.repertoire == null
     // Retour haptique des coups jugés (bon coup, coup équivalent, erreur), y compris après le jugement de l'Ordinateur.
     // Les vibrations ne sont jouées qu'au moment de l'événement : en revenant sur l'onglet Académie, la dernière
     // réussite (ou erreur) déjà signalée n'est pas rejouée (seul reste le petit retour du toucher de l'onglet).
@@ -126,9 +125,10 @@ fun AcademyScreen(
     // Parties modèles : le camp se choisit avant d'ouvrir le Jeu Libre (Blancs ou Noirs).
     var playChoice by remember { mutableStateOf<String?>(null) }
     val play: (String, Boolean) -> Unit = if (model) { fen, _ -> playChoice = fen } else onPlayPosition
-    val bridges: @Composable () -> Unit = { LessonBridges(l, endFen, onTrainTheme, play, onVision) }
-    // Partie modèle : « Jouer cette position » à chaque coup (hors jugement et réfutation).
-    val modelPlay = model && endFen != null && !s.judging && s.refute == null && !s.done
+    // « S'entraîner » (onglet Problèmes) n'est pas proposé quand Pratiquer est déjà une série de problèmes du thème.
+    val bridges: @Composable () -> Unit = {
+        LessonBridges(l, endFen, onTrainTheme, play, onVision, showTrain = vm.practiceMode(l) != AcademyViewModel.PracticeMode.PUZZLES)
+    }
 
     // Explication brève quand on touche une pièce qui ne peut pas bouger ; effacée au coup suivant.
     var stuck by remember(
@@ -148,10 +148,10 @@ fun AcademyScreen(
                 TrainingHeader(session, vm::closeTraining, vm::flip, backLabel)
                 return@ModuleLayout
             }
-            // Défi réussi (2 étoiles ou plus) mais leçon pas encore validée sur problèmes ou contre l'Ordinateur.
-            val toValidate = l.id !in mastered && stars >= 2 && vm.validation(l) != Validation.NONE
-            LessonSelector(l, mastered, stars, toValidate, total, onCatalog = { catalog = true }, onPrev = vm::prevLesson, onNext = vm::nextLesson)
-            LessonModeBar(vm, s, l, model, variantsDone, modelPlay, onBrief = { brief = true }, onPlay = { playChoice = endFen })
+            LessonSelector(
+                l, mastered, stars, lessonStatus(progress[l.id]), total, onCatalog = { catalog = true }, onPrev = vm::prevLesson, onNext = vm::nextLesson,
+            )
+            LessonModeBar(vm, s, l, variantsDone, onBrief = { brief = true })
         },
         overBoard = { AcademyBoardInfo(s, l, eg, rx) },
         board = {
@@ -180,33 +180,34 @@ fun AcademyScreen(
                     val last = r?.last ?: if (cur > 0) line.moves[cur - 1] else null
                     val heroTurn = s.challenge && !s.done && !s.judging && r == null && cur < line.size && line.positions[cur].whiteToMove == l.heroWhite
                     val next = if (cur < line.size) line.moves[cur] else null
-                    // Repères du mode Guidé : cases dorées (observation) et flèches bleues (démonstration) de la leçon.
+                    // Repères de Comprendre : cases dorées (observation) et flèches bleues (démonstration) de la leçon.
                     val visuals = if (!s.challenge && s.variant == 0) l.stepVisuals[cur] else null
                     val refArrow = refuteArrow(r)
                     ChessBoard(
                         position = pos,
                         modifier = Modifier.fillMaxSize(),
                         flipped = s.flipped,
-                        interactive = heroTurn || (asking && !s.judging),
+                        // Comprendre est une démonstration : l'échiquier ne se joue qu'en Pratiquer.
+                        interactive = heroTurn,
                         lastMove = last,
                         anim = s.anim,
                         arrows = when {
                             refArrow != null -> listOf(refArrow)
-                            (heroTurn || asking) && s.suggest != null -> s.suggest!!.let { listOf(Arrow(it.from, it.to, c.green)) }
-                            (heroTurn || (asking && !s.judging)) && s.hintStage >= 2 && next != null -> listOf(Arrow(next.from, next.to, c.green))
+                            heroTurn && s.suggest != null -> s.suggest!!.let { listOf(Arrow(it.from, it.to, c.green)) }
+                            heroTurn && s.hintStage >= 2 && next != null -> listOf(Arrow(next.from, next.to, c.green))
                             // Démonstration pédagogique : flèches bleues (le dernier coup est déjà surligné).
                             !s.challenge -> (visuals?.arrows ?: emptyList()).map { (f, t) -> Arrow(f, t, c.blue) }
                             else -> emptyList()
                         },
                         marks = when {
-                            (heroTurn || (asking && !s.judging)) && s.hintStage >= 1 && next != null -> listOf(next.from to c.green)
+                            heroTurn && s.hintStage >= 1 && next != null -> listOf(next.from to c.green)
                             visuals != null -> visuals.marks.map { it to c.gold }
                             else -> emptyList()
                         },
                         onIllegalTouch = { stuck = GameLogic.whyStuck(pos, it) },
                         // Réfutation affichée : un toucher sur l'échiquier revient au coup manqué pour rejouer aussitôt.
                         onSquareTap = if (s.refute != null) { _ -> vm.resumeAtMiss() } else null,
-                        onMove = { m -> if (s.challenge) vm.challengeMove(m) else vm.guideMove(m) },
+                        onMove = { m -> vm.challengeMove(m) },
                     )
                 }
             }
@@ -216,45 +217,39 @@ fun AcademyScreen(
             val rxs = rx
             val quiz = s.quiz
             when {
-                egs != null -> EndgamePanel(vm, egs, s.review, stuck, needsChallenge && egs.family == EndgameFamily.of(l.drill))
+                egs != null -> EndgamePanel(vm, egs, s.review, stuck, s.lessonPractice)
                 rxs != null -> ReflexPanel(vm, rxs)
-                pr != null -> PracticePanel(vm, pr, s.review, stuck)
-                quiz != null -> QuizPanel(vm, l, quiz, needsChallenge)
+                pr != null -> PracticePanel(vm, pr, s.review, stuck, s.lessonPractice)
+                quiz != null -> QuizPanel(vm, l, quiz, toPractice = !s.challenge)
                 !s.challenge -> {
                     // Progression dans la leçon : chaque coup est cliquable (sur tablette, tableau complet sous le commentaire).
                     val wide = LocalIsTwoPane.current
-                    // Pas de solution en clair : les coups des questions « À vous » encore à résoudre (et la suite) sont masqués.
-                    val ownLine = s.variant == 0
-                    val hiddenFrom = if (!ownLine) Int.MAX_VALUE else l.pauseSteps.filter { it >= cur && it !in s.answered && it < line.size }.minOrNull() ?: Int.MAX_VALUE
                     if (!wide) MoveStrip(
                         line, cur, Modifier.padding(top = 4.dp), onSelect = vm::jump, onPrev = { vm.step(-1) }, onNext = { vm.step(1) },
-                        emptyText = "Les coups de la leçon s'afficheront ici.", firstTurn = 1, hiddenFrom = hiddenFrom,
+                        emptyText = "Les coups de la leçon s'afficheront ici.", firstTurn = 1,
                     )
                     // Dans une leçon, les tours sont numérotés depuis son début, quelle que soit la partie d'origine.
                     val inVariant = s.variant > 0 && cur > l.variants[s.variant - 1].from
                     val title = when {
-                        asking -> ASK
                         cur == 0 -> "Objectif de la leçon"
                         inVariant -> l.variants[s.variant - 1].title
                         else -> line.stepTitle(cur, first = 1)
                     }
                     // Position de départ : le résumé et la règle seulement ; la fiche complète s'ouvre dans un tiroir.
                     val base = if (cur == 0) {
-                        l.summary + "\n\nÀ retenir : " + l.takeaway + if (asking) "" else "\n\nTouchez Lecture pour dérouler la leçon coup par coup."
+                        l.summary + "\n\nÀ retenir : " + l.takeaway + "\n\nTouchez Lecture pour dérouler la leçon coup par coup."
                     } else texts[cur - 1]
                     val text = when {
                         // L'aide sur la voix s'ajoute au commentaire, qui reste lisible.
                         voiceTip != null -> voiceTip + "\n\n" + base
-                        stuck != null && asking -> stuck!!
                         s.note != null -> s.note + "\n\n" + base
-                        asking -> base + "\n\nJouez votre coup sur l'échiquier, ou touchez Lecture pour découvrir celui de la leçon."
+                        // Fin de la leçon : la suite du parcours est annoncée.
+                        cur == line.size -> base + if (quizPending) "\n\nUne question de fin, puis place à la pratique." else "\n\nÀ vous maintenant : touchez Passer à la pratique."
                         else -> base
                     }
                     val tone = when {
                         voiceTip != null -> Tone.GOLD
-                        stuck != null && asking -> Tone.GOLD
                         s.note != null -> s.noteTone
-                        asking -> Tone.GOLD
                         else -> Tone.INFO
                     }
                     FeedbackCard(
@@ -264,7 +259,7 @@ fun AcademyScreen(
                             else -> null
                         },
                     )
-                    if (wide) MoveTable(line, cur, emptyList(), vm::jump, Modifier.padding(top = 6.dp).weight(1f), hiddenFrom = hiddenFrom)
+                    if (wide) MoveTable(line, cur, emptyList(), vm::jump, Modifier.padding(top = 6.dp).weight(1f))
                     EqualRow(Modifier.padding(vertical = 6.dp)) {
                         // Toujours visible : relit ou arrête la voix, ou explique comment l'activer.
                         DuckIconButton(
@@ -294,33 +289,40 @@ fun AcademyScreen(
                                 }
                             },
                         )
-                        // Avec le haut-parleur, quatre boutons : Début et Fin en icônes pour que rien ne se coupe sur 360 dp.
-                        // Arrêt « À vous » : un indice (la pièce à jouer) avant de découvrir le coup avec Lecture.
-                        if (asking) HintIconButton(s.hintStage, vm::guideHint, enabled = !s.judging)
-                        else DuckIconButton(Icons.Rounded.SkipPrevious, "Revenir au début", vm::rewind, enabled = cur > 0)
-                        // Fin de leçon : le QCM ou la finale à jouer prend la place de Lecture.
+                        // Toujours les mêmes quatre commandes : voix, Début, Lecture ou Pause, Fin (icônes aux bords pour que
+                        // rien ne se coupe sur 360 dp).
+                        DuckIconButton(Icons.Rounded.SkipPrevious, "Revenir au début", vm::rewind, enabled = cur > 0)
                         // La voix qui lit (l'objectif à l'ouverture, ou un commentaire) compte comme une lecture en cours :
                         // le bouton dit alors « Pause » et la suspend ; « Lecture » reprend la voix puis déroule les coups.
+                        // À la fin de la leçon : la question de fin s'il y en a une, puis le passage à la pratique.
                         val running = s.playing || speaking
-                        if (cur < line.size || !EndOfLessonAction(vm, l)) DuckButton(
-                            if (running) "Pause" else "Lecture", { if (!s.playing && speaking) vm.pause() else vm.togglePlay() }, Modifier.weight(1f),
-                            accent = c.blue, filled = true, icon = if (running) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                            contentDescription = if (asking && !running) "Lecture : découvrir le coup de la leçon et continuer" else null,
-                        )
+                        when {
+                            cur < line.size || running -> DuckButton(
+                                if (running) "Pause" else "Lecture", { if (!s.playing && speaking) vm.pause() else vm.togglePlay() }, Modifier.weight(1f),
+                                accent = c.blue, filled = true, icon = if (running) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                            )
+                            quizPending -> DuckButton(
+                                "Question de fin", vm::startQuiz, Modifier.weight(1f), accent = c.gold, filled = true, icon = Icons.Rounded.Lightbulb,
+                            )
+                            else -> DuckButton(
+                                "Passer à la pratique", { vm.setChallenge(true) }, Modifier.weight(1f), accent = c.green, filled = true,
+                                icon = Icons.AutoMirrored.Rounded.ArrowForward,
+                            )
+                        }
                         DuckIconButton(Icons.Rounded.SkipNext, "Aller à la fin", vm::last, enabled = cur < line.size)
                     }
                 }
                 else -> {
-                    // Défi réussi : le bilan et les passerelles gardent toute la hauteur ; la leçon se relit coup par coup en
-                    // mode Guidé (aucune bande de coups ajoutée ici, qui tronquerait le bilan).
-                    // Même numérotation par tour que le mode Guidé (depuis le début de la leçon).
+                    // Pratiquer réussi : le bilan et les passerelles gardent toute la hauteur ; la leçon se relit coup par coup
+                    // dans Comprendre (aucune bande de coups ajoutée ici, qui tronquerait le bilan).
+                    // Même numérotation par tour que Comprendre (depuis le début de la leçon).
                     val turn = line.turnOf(cur.coerceAtMost(line.size - 1), first = 1)
                     val side = if (l.heroWhite) "Blancs" else "Noirs"
                     val title = when {
                         s.done && model -> "Partie terminée · ${s.guessScore} points sur ${s.guessMax}"
-                        s.done -> "Défi réussi · ${starsText(s.stars)}"
+                        s.done -> "Exercice terminé · ${starsText(s.stars)}"
                         model -> "Devinez le coup des $side · coup $turn sur ${line.turnOf(line.size - 1, first = 1)} · ${s.guessScore} points sur ${s.guessMax}"
-                        else -> "Défi : jouez les $side" + (if (s.variant > 0) " · ${variantLabel(l, s.variant)}" else "") +
+                        else -> "Jouez les $side" + (if (s.variant > 0) " · ${variantLabel(l, s.variant)}" else "") +
                             " · coup $turn sur ${line.turnOf(line.size - 1, first = 1)}"
                     }
                     FeedbackCard(
@@ -333,8 +335,8 @@ fun AcademyScreen(
                         val rep = s.repertoire
                         when {
                             s.refute != null -> DuckButton(
-                                "Reprendre au coup manqué", vm::resumeAtMiss, Modifier.weight(1f), accent = c.red, filled = true,
-                                icon = Icons.AutoMirrored.Rounded.Undo,
+                                "Réessayer", vm::resumeAtMiss, Modifier.weight(1f), accent = c.red, filled = true,
+                                icon = Icons.AutoMirrored.Rounded.Undo, contentDescription = "Réessayer : revenir avant le coup manqué",
                             )
                             s.done && review != null -> ReviewNextButton(vm, review, Modifier.weight(1f))
                             s.done && rep != null -> {
@@ -346,29 +348,32 @@ fun AcademyScreen(
                                 )
                             }
                             s.done -> {
-                                DuckIconButton(Icons.Rounded.RestartAlt, "Recommencer le Défi", vm::restartChallenge)
-                                // Relire la leçon en mode Guidé, à la position atteinte (la fin).
+                                DuckIconButton(Icons.Rounded.RestartAlt, "Recommencer l'exercice", vm::restartChallenge)
+                                // Relire la leçon dans Comprendre, à la position atteinte (la fin).
                                 DuckButton(
-                                    "Revoir", { vm.setChallenge(false) }, Modifier.weight(1f), icon = Icons.Rounded.Visibility,
-                                    contentDescription = "Revoir les coups de la leçon en mode Guidé",
+                                    "Revoir les coups", { vm.setChallenge(false) }, Modifier.weight(1f), icon = Icons.Rounded.Visibility,
+                                    contentDescription = "Revoir les coups de la leçon dans Comprendre",
                                 )
-                                val v = vm.validation(l)
-                                when {
-                                    l.id !in mastered && v == Validation.PUZZLES -> DuckButton(
-                                        "Valider : 5 problèmes", vm::startPractice, Modifier.weight(1.4f), accent = c.green, filled = true,
-                                        icon = Icons.Rounded.Extension, contentDescription = "Valider la leçon sur 5 problèmes inédits du même thème",
-                                    )
-                                    l.id !in mastered && v == Validation.ENDGAME -> DuckButton(
-                                        "Valider : 5 positions", { EndgameFamily.of(l.drill)?.let { vm.startEndgame(it, fromLesson = true) } }, Modifier.weight(1.4f),
-                                        accent = c.green, filled = true, icon = Icons.Rounded.SportsEsports,
-                                        contentDescription = "Valider la leçon contre l'Ordinateur sur 5 positions",
-                                    )
-                                    else -> DuckButton("Leçon suivante", { vm.nextLesson(guided = true) }, Modifier.weight(1.4f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
-                                }
+                                if (quizPending) DuckButton(
+                                    "Question de fin", vm::startQuiz, Modifier.weight(1.2f), accent = c.gold, filled = true, icon = Icons.Rounded.Lightbulb,
+                                )
+                                else DuckButton(
+                                    "Leçon suivante", { vm.nextLesson(guided = true) }, Modifier.weight(1.2f), accent = c.green, filled = true,
+                                    icon = Icons.AutoMirrored.Rounded.ArrowForward,
+                                )
                             }
                             model -> {
-                                DuckButton("Recommencer", vm::restartChallenge, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt)
-                                DuckButton("Passer ce coup", vm::skipGuess, Modifier.weight(1.4f), enabled = !s.judging, icon = Icons.AutoMirrored.Rounded.ArrowForward)
+                                DuckIconButton(Icons.Rounded.RestartAlt, "Recommencer l'exercice", vm::restartChallenge)
+                                // Coups clés (par défaut) ou tous les coups : un interrupteur en clair, qui relance la partie.
+                                DuckChip(
+                                    if (s.keyMoments) "Coups clés" else "Tous les coups", s.keyMoments, { vm.setKeyMoments(!s.keyMoments) },
+                                    Modifier.semantics {
+                                        contentDescription = if (s.keyMoments) "À deviner : les coups clés seulement. Toucher pour deviner tous les coups"
+                                        else "À deviner : tous les coups. Toucher pour ne deviner que les coups clés"
+                                    },
+                                    accent = c.gold,
+                                )
+                                DuckButton("Passer ce coup", vm::skipGuess, Modifier.weight(1f), enabled = !s.judging, icon = Icons.AutoMirrored.Rounded.ArrowForward)
                             }
                             else -> {
                                 DuckButton("Recommencer", vm::restartChallenge, Modifier.weight(1f), icon = Icons.Rounded.RestartAlt)

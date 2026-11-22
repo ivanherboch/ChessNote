@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `3.9.0` (`versionCode = 75`), publiée en release GitHub `v3.9.0`.
+- **Version actuelle** : `3.10.0` (`versionCode = 76`), publiée en release GitHub `v3.10.0`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -181,6 +181,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **3.8.2** : `ChessBoard.pointerInput` lit `size` à chaque toucher (la taille de case calculée au démarrage du gestionnaire devenait fausse quand l'échiquier changeait de taille sans recomposition : réserve de `ModuleLayout`) ; `MoveJudge.JUDGE_WAIT = 5 s` ; `Verdict.UNAVAILABLE` (Défi, Guidé) et `loss == null` (Deviner) : à rejouer, sans erreur ni 0 point ; tests `BoardResizeTest` (échoue sans le correctif) et `EndgameRealEngineTest` (vrai Stockfish de la machine branché dans `AppContainer.engineLazy`, finales Blancs/Noirs et réflexes ; ignoré sans /usr/games/stockfish).
 - **3.8.3** : `guideHint` en deux temps (pièce, puis flèche ; bouton actif jusqu'à 2/2) ; flèche verte aussi à l'arrêt « À vous » du Guidé ; test `guidedHintHasTwoStages`.
 - **3.9.0** : cœurs des séries (`Practice.hearts/heartsMax/penalized`, `PracticeSeries.HEARTS_KINDS` = LESSON, ONLY_MOVE, REVIEW ; autant de cœurs que de problèmes) : une erreur coûte un cœur, le problème compte si `!penalized && hintStage < 2` ; `heartsText` ; titre de la série « N cœurs sur M ».
+- **3.10.0** : refonte UX Académie, étape 1 sur 3 (plan `plan_simplification_academie_claude.md`) : `Comprendre | Pratiquer` (`LessonModeBar`), `LessonSelector` à statut unique (`lessonStatus`), Comprendre sans arrêts (`asking`/`guideMove`/`guideHint`/`hiddenFrom` supprimés), Pratiquer routé par `practiceMode()`, `EQUIVALENT` avec `suggest`, cœurs supprimés (`Practice.arrowUsed`), bouton « Réessayer » partout.
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.
@@ -209,6 +210,14 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
   qui passe à la ligne au lieu de défiler sous « Entraînements » avec une grande police).
 - **2.6.0** : refonte de l'Académie, étape 1 sur 3 (plan `plan_academie_claude_etapes.md`) : identifiants fixes,
   Room v4, juge de coups, Guidé actif, Défi intelligent avec étoiles, validation sur 5 problèmes, passerelles.
+
+### Relais refonte UX Académie (état après l'étape 1, v3.10.0)
+- `AcademyLessonHeader.kt` : `LessonSelector(l, mastered, stars, status, …)` + `lessonStatus(LessonProgress?)` (« À faire » / « En cours » / « Maîtrisée ») ; `LessonModeBar(vm, s, l, variantsDone, onBrief)` = segments « Comprendre » | « Pratiquer », `VariantMenu`, bouton « Fiche », ⇅.
+- `AcademyState` : `challenge` = Pratiquer ; `keyMoments = true` par défaut ; `lessonPractice` (série ou finale lancée depuis la leçon : en-tête de leçon gardé, `sessionTitle` nul) ; `quizPassed`. Champs `answered`/`ASK` supprimés.
+- `AcademyViewModel` : `PracticeMode { PUZZLES, ENDGAME, MOVES }`, `practiceMode(l)`, `startPractising()` (appelé par `open`/`setChallenge(true)`), `keyMovesOnly(l)` (modèles selon `keyMoments`, bases, stratégie, finales sans générateur), `backToLesson()` dans `closePractice`/`closeEndgame` ; maîtrise : Pratiquer ≥ 2 étoiles, série ≥ 4/5 (`lessonPracticeDone`), finale ≥ 3/5 (`endgameFinished`).
+- `Practice` : `hearts`/`heartsMax`/`penalized`/`HEARTS_KINDS` supprimés ; compte si `hintStage < 2 && !arrowUsed`.
+- `AcademyScreen` : barre du bas Comprendre = 🔊 ⏮ [Lecture/Pause | « Question de fin » | « Passer à la pratique »] ⏭ ; `LessonBridges(showTrain = practiceMode != PUZZLES)` ; `QuizPanel(toPractice)`, `PracticePanel(inLesson)`, `EndgamePanel(inLesson)` (« Revoir les coups »).
+- Reste en place pour l'étape 2 : tiroir `Entraînements · N` (`AcademyTrainings`), `AcademyOverview`, `LessonBriefSheet` ; révisions et répertoire passent encore par `startChallenge`.
 
 ### Relais refonte Académie (état après l'étape 2, v2.7.0)
 - Sources (étape 2) : en-tête `… | id=N level=2..5 order=level*1000+id theme= kind=line|model_game drill=FAMILLE` ;

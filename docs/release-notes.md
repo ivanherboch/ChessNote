@@ -1,3 +1,28 @@
+## ChessDuck 3.10.0 — des leçons plus lisibles : Comprendre, puis Pratiquer
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Chaque leçon a deux onglets clairs : « Comprendre » et « Pratiquer », à la place de Guidé, Défi et Deviner.
+- En-tête allégé au-dessus de l'échiquier :
+  - titre, catégorie, palier et un seul statut (À faire, En cours ou Maîtrisée), avec les étoiles ;
+  - un bouton « Fiche » lisible à la place de la petite icône, le menu Variantes si l'ouverture en a, et le retournement de l'échiquier ;
+  - les icônes « Moments clés » et « Jouer avec le camp de votre choix » quittent le haut de l'écran.
+- Comprendre : la leçon se déroule sans arrêt bloquant, avec ses flèches et repères, à lire ou à écouter.
+  - Barre du bas fixe : voix, retour au début, Lecture/Pause, aller à la fin.
+  - À la fin : « Question de fin » s'il y en a une, puis « Passer à la pratique ».
+  - « S'entraîner » (onglet Problèmes) n'est plus proposé quand Pratiquer est déjà une série de problèmes du thème.
+- Pratiquer lance directement le bon exercice selon la leçon :
+  - tactique et méthode : 5 problèmes inédits du thème (4 sur 5 pour maîtriser la leçon), avec « Revoir les coups » pour revenir à Comprendre ;
+  - finales avec positions générées : 5 positions contre l'Ordinateur (3 sur 5 pour maîtriser la leçon) ;
+  - ouvertures : la ligne et ses variantes à rejouer ;
+  - bases, stratégie et autres finales : seulement les coups clés de la leçon, les autres se jouent seuls ;
+  - parties modèles : les coups clés à deviner par défaut, avec une puce « Coups clés » / « Tous les coups ».
+- Plus d'étape « À valider » : une leçon réussie dans Pratiquer est maîtrisée.
+- Un coup aussi bon que celui de la leçon est félicité (« Bon coup aussi ! ») et la flèche verte montre aussitôt le coup du répertoire, sans pénalité.
+- Les cœurs disparaissent : un problème résolu sans la flèche de l'indice 2/2 compte, même après une erreur.
+- Correctif : la flèche de l'indice 2/2 montrée sur un coup intermédiaire d'un problème est désormais bien prise en compte (le problème ne compte pas).
+- Après une erreur, un seul bouton partout : « Réessayer » (un toucher sur l'échiquier reprend aussi tout de suite).
+
 ## ChessDuck 3.9.0 — des cœurs pour les entraînements
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

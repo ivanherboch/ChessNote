@@ -75,7 +75,7 @@ object WeakTopics {
             if (score < 2) return@mapNotNull null
             val l = Lessons.byId(p.lessonId).takeIf { it.id == p.lessonId } ?: return@mapNotNull null
             val why = buildList {
-                if (p.errors > 0) add("${p.errors} erreur${if (p.errors > 1) "s" else ""} en Défi")
+                if (p.errors > 0) add("${p.errors} erreur${if (p.errors > 1) "s" else ""} en pratique")
                 if (failedPractice > 0) add("$failedPractice exercice${if (failedPractice > 1) "s" else ""} manqué${if (failedPractice > 1) "s" else ""}")
             }.joinToString(" et ")
             Priority("Leçon : ${l.title}", "Dans l'Académie : $why.", l.id, l.theme, score)

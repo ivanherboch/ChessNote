@@ -46,7 +46,7 @@ data class Puzzle(
 data class PuzzleProgress(@PrimaryKey val puzzleId: String, val solvedAt: Long)
 
 /**
- * Progression d'une leçon de l'Académie (v4). [masteredAt] > 0 : leçon maîtrisée (0 : Défi réussi, maîtrise à valider).
+ * Progression d'une leçon de l'Académie (v4). [masteredAt] > 0 : leçon maîtrisée (0 : pas encore maîtrisée).
  * [stars] : meilleur résultat du Défi (1 à 3). [practicePassed]/[practiceTotal] : meilleure série d'exercices inédits.
  * Les champs de révision espacée ([srsStage], [nextReviewAt], [lastReviewedAt]) sont préparés pour les révisions.
  */
