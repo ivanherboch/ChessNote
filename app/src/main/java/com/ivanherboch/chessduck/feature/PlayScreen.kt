@@ -277,7 +277,8 @@ private fun liveStatus(s: PlayState, p1: String, p2: String): Pair<String, Tone>
             (if (s.lastRecord != null) " Touchez « Analyser la partie » pour la revue commentée." else "") to r.tone
     }
     s.warning?.let { return (if (it.showWhy && it.why != null) "${it.why}\n\nChangez de coup, ou jouez-le quand même." else it.text) to Tone.GOLD }
-    if (s.checking) return "Vérification de votre coup…" to Tone.NEUTRAL
+    // Vérification du filet : elle se fond dans la réflexion de l'Ordinateur.
+    if (s.checking) return "L'ordinateur (${s.aiElo} ELO) réfléchit…" to Tone.NEUTRAL
     if (s.thinking) return "L'ordinateur (${s.aiElo} ELO) réfléchit…" to Tone.NEUTRAL
     if (s.canPlay && s.hintStage > 0) {
         val h = s.hint ?: return "Calcul en cours, l'indice s'affiche dans un instant…" to Tone.GOLD

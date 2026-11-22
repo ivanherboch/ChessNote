@@ -1169,7 +1169,13 @@ class ViewModelsTest {
         val after = start.play(blunder)
         val reply = after.legalMoves.first()
         engine.scripted[after.toFen().split(' ').take(4).joinToString(" ")] = SearchResult(reply, listOf(PvLine(reply, 600)))
-        vm.playerMove(blunder); advanceUntilIdle()
+        vm.playerMove(blunder)
+        // Fluidité : le coup s'affiche aussitôt, pendant la vérification…
+        assertEquals(1, vm.state.value.line.size)
+        assertTrue(vm.state.value.checking)
+        advanceUntilIdle()
+        // … puis la gaffe est retirée de l'échiquier, avec l'arrêt.
+        assertEquals(0, vm.state.value.line.size)
         val w = vm.state.value.warning!!
         assertTrue(w.text, w.text.startsWith("Filet de sécurité"))
         assertNotNull(w.why)
@@ -1177,6 +1183,15 @@ class ViewModelsTest {
         vm.showWhy()
         assertTrue(vm.state.value.warning!!.showWhy)
         vm.playAnyway(); advanceUntilIdle()
+        assertEquals(blunder, vm.state.value.line.moves[0])
+        // Un bon coup ensuite : affiché aussitôt, et l'Ordinateur répond sans arrêt.
+        val ply = vm.state.value.line.size
+        val good = vm.state.value.position.legalMoves.first()
+        vm.playerMove(good)
+        assertEquals(ply + 1, vm.state.value.line.size)
+        advanceUntilIdle()
+        assertNull(vm.state.value.warning)
+        assertTrue(vm.state.value.line.size >= ply + 2)
         val elo = prefs.settings.first().elo
         vm.resign(); advanceUntilIdle()
         assertEquals(elo, prefs.settings.first().elo)

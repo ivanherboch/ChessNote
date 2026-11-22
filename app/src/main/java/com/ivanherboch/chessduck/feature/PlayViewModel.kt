@@ -19,6 +19,7 @@ import com.ivanherboch.chessduck.ui.BoardAnim
 import com.ivanherboch.chessduck.ui.LinePlaybackController
 import com.ivanherboch.chessduck.ui.Tone
 import com.ivanherboch.chessduck.ui.moveAnim
+import com.ivanherboch.chessduck.ui.undoAnim
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
@@ -184,10 +185,11 @@ class PlayViewModel(
     fun toggleCoach() {
         val s = state.value
         if (s.twoPlayers) return
-        // Une vérification en cours est abandonnée : le coup n'est pas joué, l'élève le rejoue.
+        // Une vérification en cours est abandonnée : le coup (déjà affiché) est gardé et l'Ordinateur répond.
         coachJob?.cancel()
         val on = !s.coached
         _state.update { it.copy(coached = on, coachLeft = if (it.fromPosition) it.coachLeft else Int.MAX_VALUE, warning = null, checking = false) }
+        if (s.checking) afterMove()
         if (!s.fromPosition) viewModelScope.launch { prefs.setSafetyNet(on) }
     }
 
@@ -225,22 +227,37 @@ class PlayViewModel(
     private var stopPly = -1
     private var stopLine: Line? = null
 
+    /**
+     * Instant où le coup vérifié par le filet a été affiché : la pause minimale de la réponse de l'Ordinateur part de là
+     * (la vérification compte dans son « temps de réflexion », sans s'y ajouter).
+     */
+    private var replySince: Long? = null
+
     private fun coach(s: PlayState, m: Move) {
         analysisJob?.cancel()
         val gen = gameGeneration
         val pos = s.position
-        _state.update { it.copy(checking = true) }
+        val cur = s.cursor
+        // Fluidité : le coup s'affiche aussitôt, comme sans filet ; seule la réponse de l'Ordinateur attend la
+        // vérification (courte), qui se fond dans son temps de réflexion. Une gaffe est retirée de l'échiquier.
+        val nl = s.line.copy(cur)
+        nl.push(m)
+        replySince = System.currentTimeMillis()
+        _state.update {
+            it.copy(line = nl, cursor = nl.size, anim = moveAnim(pos, m), hintStage = 0, checking = true, analysis = it.analysis.filterKeys { k -> k <= cur })
+        }
         coachJob?.cancel()
         coachJob = viewModelScope.launch {
-            val before = s.analysis[s.cursor] ?: analyse(pos, 350)
+            val before = s.analysis[cur] ?: analyse(pos, CHECK_MS)
             val after = pos.play(m)
-            val res = if (before == null) null else analyse(after, 350)
-            if (gen != gameGeneration) return@launch
+            val res = if (before == null) null else analyse(after, CHECK_MS)
+            // Partie changée entre-temps (nouvelle partie, coup annulé, navigation) : cette vérification ne la concerne plus.
+            if (gen != gameGeneration || state.value.line !== nl) return@launch
             val sign = if (s.playerWhite) 1 else -1
             val warn = before != null && res != null && sign * before.eval > -LOST_CP && sign * (before.eval - res.eval) >= BLUNDER_CP
             if (!warn) {
-                _state.update { it.copy(checking = false) }
-                return@launch commit(m)
+                _state.update { it.copy(checking = false, analysis = if (res != null) it.analysis + (nl.size to res) else it.analysis) }
+                return@launch afterMove()
             }
             val reply = res.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { after.isLegal(it) }
             // L'explication de la revue de partie, montrée à la demande (« Pourquoi ? »), et le point faible révélé.
@@ -253,6 +270,8 @@ class PlayViewModel(
             stopPly = s.cursor; stopLine = s.line
             _state.update {
                 it.copy(
+                    // La gaffe est retirée : la pièce revient (animation inverse), la position d'avant est rejouable.
+                    line = s.line, cursor = cur, anim = undoAnim(pos, m), analysis = it.analysis.filterKeys { k -> k <= cur },
                     checking = false, coachLeft = it.coachLeft - 1, netUsed = it.netUsed || net,
                     warning = CoachWarning(m, coachText(pos.san(m), after, reply, net), reason?.text, reply, showWhy = again && reason != null, best = reason?.best),
                 )
@@ -289,7 +308,8 @@ class PlayViewModel(
         _state.update { it.copy(thinking = true) }
         val gen = gameGeneration
         aiJob = viewModelScope.launch {
-            val t0 = System.currentTimeMillis()
+            val t0 = replySince ?: System.currentTimeMillis()
+            replySince = null
             val s = state.value
             val pos = s.line.last
             val elo = s.aiElo
@@ -490,6 +510,8 @@ data class CoachWarning(
 /** Arrêts de la partie accompagnée (une ou deux fois par partie), et seuils (centipions). */
 const val COACH_STOPS = 2
 const val BLUNDER_CP = 200
+/** Temps d'analyse de chaque position vérifiée par le filet (le coup est déjà affiché pendant ce temps). */
+private const val CHECK_MS = 250
 private const val LOST_CP = 300
 
 /** La question réflexe adaptée à la réponse adverse qui punirait le coup [san] (sans la dévoiler). */

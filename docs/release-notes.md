@@ -1,3 +1,10 @@
+## ChessDuck 4.2.3 — filet de sécurité fluide
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Avec le filet de sécurité, votre coup s'affiche aussitôt, comme sans filet : la vérification (plus courte) se fait pendant la réflexion de l'Ordinateur et ne s'y ajoute plus.
+- Une gaffe est retirée de l'échiquier (la pièce revient) au moment de l'arrêt ; un bon coup enchaîne directement sur la réponse de l'Ordinateur.
+
 ## ChessDuck 4.2.2 — Séance du jour bien visible, filet de sécurité plus juste
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
