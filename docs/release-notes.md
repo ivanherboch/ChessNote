@@ -1,3 +1,13 @@
+## ChessDuck 4.0.1 — un échiquier plus grand dans les séances
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Finales, séries de problèmes et réflexes : l'échiquier occupe presque toute la largeur du téléphone (environ 96 % au lieu de 80 % sur un écran courant).
+- Plus d'échiquier qui s'affiche petit puis grandit quelques secondes plus tard :
+  - la ligne au-dessus de l'échiquier (« Ordinateur · vous jouez les Blancs », pastilles) garde toute la largeur de l'écran et ne passe plus à la ligne quand l'échiquier rétrécit ;
+  - la place réservée aux textes du bas repart de zéro en changeant d'écran, au lieu de garder quelques secondes celle de l'écran précédent.
+- Finales : titre de la carte sur une ligne (la position en cours est donnée par les pastilles), consigne et méthode sans ligne vide.
+
 ## ChessDuck 4.0.0 — l'Académie simplifiée
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

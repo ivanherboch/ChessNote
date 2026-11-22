@@ -7,6 +7,7 @@ import android.content.pm.ApplicationInfo
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.snap
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -279,20 +280,28 @@ fun ModuleLayout(
     overBoard: @Composable () -> Unit = {},
     adaptive: Boolean = true,
     underBoardFullWidth: Boolean = false,
+    /**
+     * Change quand l'écran change de nature (leçon, finale, série…) : la place réservée aux textes du bas repart alors de
+     * zéro aussitôt, au lieu de garder quelques secondes celle de l'écran précédent (échiquier trop petit qui regrandit).
+     */
+    reserveKey: Any? = null,
     bottom: @Composable ColumnScope.() -> Unit,
 ) {
     // Place supplémentaire prise à l'échiquier pour que les textes du bas tiennent sans défilement.
     // Elle grandit aussitôt qu'un texte en a besoin, et ne se relâche que si au moins RESERVE_RELEASE se libère
     // durablement : la grille ne « respire » pas à chaque coup, mais retrouve sa taille après un long message.
     val twoPane = LocalIsTwoPane.current
-    var reserve by remember { mutableIntStateOf(0) }
-    var target by remember { mutableIntStateOf(0) }
+    var reserve by remember(reserveKey) { mutableIntStateOf(0) }
+    var target by remember(reserveKey) { mutableIntStateOf(0) }
     val releasePx = with(LocalDensity.current) { RESERVE_RELEASE.roundToPx() }
-    LaunchedEffect(target) {
+    LaunchedEffect(target, reserveKey) {
         if (target > reserve) reserve = target
         else if (reserve - target >= releasePx) { delay(RESERVE_RELEASE_DELAY_MS); reserve = target }
     }
-    val animReserve by animateIntAsState(reserve, tween(260), label = "reserve")
+    // Nouvel écran : la réserve s'applique d'emblée (sans animation depuis celle de l'écran précédent).
+    var lastKey by remember { mutableStateOf(reserveKey) }
+    val animReserve by animateIntAsState(reserve, if (lastKey == reserveKey) tween(260) else snap(), label = "reserve")
+    LaunchedEffect(reserveKey) { lastKey = reserveKey }
     // Besoin calculé pendant la mesure (sans écriture d'état), publié après le placement.
     val wanted = remember { IntArray(1) }
     // Version de débogage (tests compris) : une zone basse qui ne sait pas annoncer sa hauteur fait échouer la mesure
@@ -338,7 +347,7 @@ fun ModuleLayout(
         }
         val topP = measurables[0].measure(Constraints(minWidth = w, maxWidth = w, minHeight = 0, maxHeight = h))
         val underH = measurables[3].minIntrinsicHeight(w)
-        val overH = measurables[4].minIntrinsicHeight(w)
+        val overH = measurables[4].minIntrinsicHeight(maxOf(0, w - 16.dp.roundToPx()))
         val baseSide = minOf(w, h - topP.height - underH - overH - bottomMin.roundToPx()).coerceAtLeast(0)
         if (adaptive) {
             val avail = h - topP.height - underH - overH - baseSide
@@ -353,21 +362,20 @@ fun ModuleLayout(
             }
             wanted[0] = (needed - avail).coerceIn(0, (baseSide * 0.22f).toInt())
         }
-        var side = (baseSide - if (adaptive) animReserve else 0).coerceAtLeast(0)
-        // La ligne au-dessus de l'échiquier a la largeur de l'échiquier : plus étroite que l'écran, son texte peut passer à
-        // la ligne. On mesure donc sa hauteur à cette largeur, et l'échiquier cède la différence (jamais de texte rogné).
-        val overAtSide = measurables[4].minIntrinsicHeight(side)
-        if (overAtSide > overH) side = (side - (overAtSide - overH)).coerceAtLeast(0)
-        val overH1 = maxOf(overH, measurables[4].minIntrinsicHeight(side))
+        val side = (baseSide - if (adaptive) animReserve else 0).coerceAtLeast(0)
+        // La ligne au-dessus de l'échiquier garde toute la largeur de l'écran (marges comprises), quelle que soit la taille
+        // de l'échiquier : sa hauteur ne dépend pas de la grille, si bien qu'elle ne passe pas à la ligne quand l'échiquier
+        // rétrécit (ce qui le ferait rétrécir encore, puis regrandir quelques secondes plus tard).
+        val overW = (w - 16.dp.roundToPx()).coerceAtLeast(0)
         val boardP = measurables[1].measure(Constraints.fixed(side, side))
         val underW = if (underBoardFullWidth) w else side
         val underP = measurables[3].measure(Constraints(minWidth = underW, maxWidth = underW, minHeight = 0, maxHeight = underH))
-        val overP = measurables[4].measure(Constraints(minWidth = side, maxWidth = side, minHeight = 0, maxHeight = overH1))
+        val overP = measurables[4].measure(Constraints(minWidth = overW, maxWidth = overW, minHeight = 0, maxHeight = overH))
         val rest = (h - topP.height - side - underP.height - overP.height).coerceAtLeast(0)
         val bottomP = measurables[2].measure(Constraints.fixed(w, rest))
         layout(w, h) {
             topP.place(0, 0)
-            overP.place((w - side) / 2, topP.height)
+            overP.place((w - overP.width) / 2, topP.height)
             boardP.place((w - side) / 2, topP.height + overP.height)
             underP.place((w - underP.width) / 2, topP.height + overP.height + side)
             bottomP.place(0, topP.height + overP.height + side + underP.height)

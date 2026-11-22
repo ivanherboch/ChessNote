@@ -12,6 +12,7 @@ import com.ivanherboch.chessduck.ui.SideDot
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -242,7 +243,8 @@ internal fun AcademyBoardInfo(s: AcademyState, l: Lesson, eg: EndgameSession?, r
             )
             if (eg.thinking) CircularProgressIndicator(Modifier.padding(start = 8.dp).size(14.dp), color = c.goldRole.fill, strokeWidth = 2.dp)
             else if (toMove) Box(Modifier.padding(start = 8.dp).size(8.dp).clip(CircleShape).background(c.greenRole.fill))
-            Spacer(Modifier.weight(1f))
+            // Le texte prend toute la place libre avant les pastilles (pas de moitié réservée à un espace vide).
+            Spacer(Modifier.width(8.dp))
             StepDots(eg.results, eg.total, if (eg.finished) -1 else eg.index, Modifier.padding(end = 4.dp))
         }
         return
@@ -269,7 +271,8 @@ internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, 
     val c = LocalDuck.current
     val title = when {
         eg.finished -> "${eg.family.label} · bilan : ${eg.score} sur ${eg.total}"
-        else -> "${eg.family.label} · position ${eg.index + 1} sur ${eg.total} · coup ${eg.moves} sur ${eg.family.maxMoves}"
+        // La position (1 sur 5) est donnée par les pastilles au-dessus de l'échiquier : le titre tient sur une ligne.
+        else -> "${eg.family.label} · coup ${eg.moves} sur ${eg.family.maxMoves}"
     }
     FeedbackCard(stuck ?: eg.message, if (stuck != null) Tone.GOLD else eg.tone, Modifier.padding(top = 4.dp).weight(1f), title = title)
     EqualRow(Modifier.padding(vertical = 6.dp)) {

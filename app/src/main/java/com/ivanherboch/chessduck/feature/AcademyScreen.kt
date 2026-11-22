@@ -155,7 +155,9 @@ fun AcademyScreen(
         }
     }
     ModuleLayout(
-        bottomMin = 190.dp,
+        // Séance (finale, série, réflexes) : une carte et une rangée de boutons, sans bande de coups ; l'échiquier prend le reste.
+        bottomMin = if (eg != null || pr != null || rx != null) 150.dp else 190.dp,
+        reserveKey = listOf(s.lessonId, s.challenge, s.variant, pr?.kind, eg?.family, rx?.kind),
         top = {
             val session = vm.sessionTitle(s, eg, rx)
             if (session != null) {

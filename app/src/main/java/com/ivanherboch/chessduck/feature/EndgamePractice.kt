@@ -381,7 +381,7 @@ class EndgameTrainer(
             index = index, position = p, start = p, last = null, anim = null, moves = 0, thinking = false, hint = null, hintStage = 0, hinting = false,
             over = false, evalWhite = null, punish = null, replay = false, replayOk = null,
             better = null, before = null, beforeMoves = 0, history = listOf(p.key),
-            tone = Tone.INFO, message = "Position ${index + 1} sur ${s.total} : ${s.family.instruction}\n\nMéthode : ${s.family.method}",
+            tone = Tone.INFO, message = "${s.family.instruction}\nMéthode : ${s.family.method}",
         )
         prepare(p.takeIf { it.whiteToMove == s.family.heroWhite })
     }

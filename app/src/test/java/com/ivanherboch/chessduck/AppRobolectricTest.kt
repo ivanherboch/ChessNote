@@ -565,6 +565,42 @@ class AppRobolectricTest {
     }
     private fun close() = rule.onAllNodesWithContentDescription("Fermer").onLast().performClick()
 
+    /**
+     * Finale de Pratiquer (deux tours, l'escalier) sur un téléphone courant : l'échiquier occupe presque toute la largeur,
+     * la ligne de l'Ordinateur tient sur une ligne, et la grille garde sa taille d'un bout à l'autre (pas de petit
+     * échiquier qui grandit quelques secondes plus tard).
+     */
+    @Test
+    @Config(qualifiers = "w393dp-h780dp-xxhdpi")
+    fun endgameBoardFillsThePhoneWidth() {
+        settle(2500)
+        rule.onNodeWithText("Académie").performClick(); settle(1500)
+        openLesson("escalier", "Le mat avec deux tours : l'escalier")
+        rule.onNodeWithText("Pratiquer").performClick()
+        fun cell(name: String) = rule.onNode(
+            androidx.compose.ui.test.SemanticsMatcher("case $name") {
+                it.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.ContentDescription)?.firstOrNull()?.startsWith("$name,") == true
+            },
+            useUnmergedTree = true,
+        )
+        fun boardWidth() = runCatching { cell("h1").fetchSemanticsNode().boundsInRoot.right - cell("a1").fetchSemanticsNode().boundsInRoot.left }.getOrDefault(0f)
+        val root = rule.onRoot().fetchSemanticsNode().boundsInRoot.width
+        // Taille de la grille dès que la position apparaît, puis une fois tout stabilisé.
+        rule.waitUntil(20_000) {
+            shadowOf(Looper.getMainLooper()).idle()
+            rule.onAllNodesWithText("Ordinateur · vous jouez", substring = true).fetchSemanticsNodes().isNotEmpty() && boardWidth() > 0f
+        }
+        rule.waitForIdle()
+        val first = boardWidth()
+        settle(4000); shot("2y_finale_largeur")
+        val last = boardWidth()
+        println("Échiquier : premier ${first / root}, final ${last / root} (écran $root)")
+        assertTrue("échiquier trop petit : ${last / root} de la largeur", last >= 0.92f * root)
+        assertTrue("l'échiquier change de taille après l'affichage : $first → $last", kotlin.math.abs(last - first) <= 0.02f * root)
+        val line = rule.onNodeWithText("Ordinateur · vous jouez", substring = true).fetchSemanticsNode().boundsInRoot.height
+        assertTrue("la ligne de l'Ordinateur passe à la ligne ($line px)", line <= 40f * rule.activity.resources.displayMetrics.density)
+    }
+
     /** Clavier de Notation : touches assez grandes pour le doigt (hauteurs 44 et 48 dp) sur un téléphone de 360 dp. */
     @Test
     fun notationKeysStayLargeEnough() {
