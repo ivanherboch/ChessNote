@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Search
 import com.ivanherboch.chessduck.ui.icons.SearchOff
@@ -54,7 +53,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.ui.DuckChip
-import com.ivanherboch.chessduck.ui.InfoPill
 import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.SectionTitle
 
@@ -172,42 +170,45 @@ internal fun LessonCatalog(
         }
         items(items, key = { it.id }) { item ->
             val current = item.id == s.lessonId
-            val advised = item.id == home.recommended && !current
-            val done = item.id in mastered
-            val stars = progress[item.id]?.stars ?: 0
-            // Révision espacée : « À revoir » aujourd'hui, ou dans combien de jours.
-            val days = vm.srs.daysUntil(progress[item.id])
-            val srsText = when (days) {
-                null -> null
-                0 -> "À revoir aujourd'hui"
-                else -> "Révision dans $days jour${if (days > 1) "s" else ""}"
+            val p = progress[item.id]
+            val stars = p?.stars ?: 0
+            // Un seul indicateur d'état par carte : à revoir aujourd'hui, maîtrisée (avec ses étoiles), en cours, ou conseillée.
+            val state = when {
+                p != null && vm.srs.isDue(p) -> "À revoir"
+                item.id in mastered -> STATUS_MASTERED
+                lessonStatus(p) == STATUS_STARTED -> STATUS_STARTED
+                item.id == home.recommended -> "Conseillée"
+                else -> null
+            }
+            val accent = when (state) {
+                "À revoir" -> c.goldText
+                STATUS_MASTERED -> c.greenText
+                STATUS_STARTED -> c.blueText
+                else -> c.greenText
             }
             Row(
                 Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(DuckRadius.M))
                     .background(if (current) c.surfaceHi else c.surface)
                     .clickable(role = Role.Button) { vm.open(item.id, guided = true); onClose() }
                     .semantics {
-                        stateDescription = (if (done) "maîtrisée" else "à maîtriser") +
-                            (if (stars > 0) ", $stars étoile${if (stars > 1) "s" else ""} sur 3" else "") + ", palier ${levelSpoken(item.level)}" +
-                            (if (srsText != null) ", ${srsText.lowercase()}" else "") + (if (current) ", leçon ouverte" else "") +
-                            if (advised) ", leçon conseillée" else ""
+                        stateDescription = listOfNotNull(
+                            state?.lowercase()?.plus(if (state == STATUS_MASTERED && stars > 0) ", ${starsText(stars)}" else ""),
+                            "palier ${levelSpoken(item.level)}", if (current) "dernière leçon ouverte" else null,
+                        ).joinToString(", ")
                     }
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.size(32.dp), contentAlignment = Alignment.Center) {
-                    if (done) Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = c.greenText)
-                    else Text("${Lessons.number(item.id)}", color = c.goldText, style = MaterialTheme.typography.labelLarge)
+                Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) {
+                    Text("${Lessons.number(item.id)}", color = c.goldText, style = MaterialTheme.typography.labelLarge)
                 }
                 Column(Modifier.padding(start = 8.dp).weight(1f)) {
-                    if (current || advised || stars > 0 || srsText != null) Row(Modifier.padding(bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                        if (current) InfoPill("Ouverte", accent = c.blue, modifier = Modifier.padding(end = 6.dp))
-                        if (advised) InfoPill("Conseillée", accent = c.green, modifier = Modifier.padding(end = 6.dp))
-                        if (stars > 0) StarRow(stars, size = 14.dp)
-                        if (srsText != null) Text("  $srsText", color = if (days == 0) c.goldText else c.muted, style = MaterialTheme.typography.labelSmall)
-                    }
                     Text(item.title, color = c.text, style = MaterialTheme.typography.titleSmall)
                     Text(item.summary, color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    if (state != null) Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(state, color = accent, style = MaterialTheme.typography.labelMedium)
+                        if (state == STATUS_MASTERED && stars > 0) StarRow(stars, Modifier.padding(start = 6.dp), size = 14.dp)
+                    }
                 }
                 Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = c.muted)
             }

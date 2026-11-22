@@ -1,3 +1,20 @@
+## ChessDuck 3.11.0 — un vrai accueil pour l'Académie
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- L'onglet Académie s'ouvre sur un accueil, sans échiquier :
+  - « Mon parcours » : votre palier, sa progression, « Changer de palier » (et le test de placement s'il reste à faire), puis une seule action principale, « Continuer » la leçon commencée ou « Prochaine leçon » ;
+  - « Révisions du jour (N) » dès qu'il y en a ;
+  - « À travailler » : vos points faibles du moment, seulement s'il y en a, avec « Travailler ce point » ;
+  - « Leçons (211) » : le catalogue, avec des raccourcis vers votre palier et chaque catégorie ;
+  - « Atelier » : 4 tuiles, Finales contre l'Ordinateur, Réflexes & Calcul, Mon répertoire, Tests de niveau.
+- Le bouton « Entraînements · N » et son long tiroir disparaissent : l'en-tête est le même dans les 4 onglets (mascotte, titre, Paramètres).
+- Navigation claire : la flèche ← (et le retour Android) d'une séance ramène à l'écran qui l'a lancée (leçon, accueil ou Atelier) ; une leçon revient à l'accueil.
+- Le pont « Travailler ce point dans l'Académie » depuis la revue de partie ouvre toujours la séance directement.
+- Catalogue allégé : numéro, titre, résumé et un seul état (À revoir, Maîtrisée avec ses étoiles, En cours ou Conseillée).
+- Sur tablette, l'accueil se présente en deux colonnes.
+- Bouton « Fiche » de la leçon : même hauteur que les onglets Comprendre et Pratiquer.
+
 ## ChessDuck 3.10.0 — des leçons plus lisibles : Comprendre, puis Pratiquer
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

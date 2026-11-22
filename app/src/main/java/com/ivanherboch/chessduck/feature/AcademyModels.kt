@@ -81,10 +81,16 @@ data class AcademyHome(
     val examsPassed: Set<Int> = emptySet(),
     /** Finales jouables validées (une leçon qui les entraîne est maîtrisée). */
     val endgamesDone: Set<EndgameFamily> = emptySet(),
-    /** Leçons du palier en cours : maîtrisées, et au total (barre de progression du tiroir). */
+    /** Leçons du palier en cours : maîtrisées, et au total (barre de progression de l'accueil). */
     val levelMastered: Int = 0,
     val levelTotal: Int = 0,
 )
+
+/**
+ * Écran de l'onglet Académie : l'accueil, une leçon (ou une séance : finale, réflexes, série, révision, répertoire,
+ * test), ou une sous-liste de l'Atelier.
+ */
+enum class AcademyRoute { HOME, LESSON, WORKSHOP_ENDGAMES, WORKSHOP_REFLEX, WORKSHOP_REPERTOIRE, WORKSHOP_TESTS }
 
 /** Comment une leçon se valide après le Défi. */
 enum class Validation { NONE, PUZZLES, ENDGAME }
@@ -146,11 +152,18 @@ data class AcademyState(
     val quiz: QuizState? = null,
     val review: ReviewSession? = null,
     val repertoire: RepertoireSession? = null,
-    /** La séance en cours a été lancée depuis le tiroir « Entraînements » : en la quittant, on y revient. */
-    val fromDrawer: Boolean = false,
-    /** Incrémenté quand une séance du tiroir se termine : l'écran rouvre alors le tiroir. */
-    val drawerReturn: Int = 0,
+    /** Écran affiché : l'accueil de l'Académie à l'ouverture de l'application. */
+    val route: AcademyRoute = AcademyRoute.HOME,
+    /** Écran d'où la séance en cours a été lancée (accueil ou Atelier) : on y revient en la quittant ; null : la leçon. */
+    val sessionFrom: AcademyRoute? = null,
 )
+
+/** Libellé (TalkBack) de la flèche de retour d'une séance : vers l'écran qui l'a lancée. */
+internal fun backLabel(s: AcademyState): String = when (s.sessionFrom) {
+    null -> "Revenir à la leçon"
+    AcademyRoute.HOME, AcademyRoute.LESSON -> "Revenir à l'accueil de l'Académie"
+    else -> "Revenir à l'Atelier"
+}
 
 /** Fiche de la leçon, affichée et lue à son ouverture : objectif, règle, conditions, idées et pièges. */
 fun objectiveText(l: Lesson): String = buildString {
@@ -176,6 +189,6 @@ private fun levelLabel(level: Int) = when (level) {
     else -> "Confirmé"
 }
 
-/** En-tête d'une séance : nature (« Validation · 5 problèmes ») et sujet (titre de la leçon ou de l'exercice). */
+/** En-tête d'une séance : nature (« Pratique · 5 problèmes ») et sujet (titre de la leçon ou de l'exercice). */
 @Immutable
 data class SessionTitle(val label: String, val title: String)

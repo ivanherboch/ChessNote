@@ -36,7 +36,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
@@ -88,7 +87,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ivanherboch.chessduck.data.Settings
 import com.ivanherboch.chessduck.feature.AcademyScreen
 import com.ivanherboch.chessduck.feature.AcademyViewModel
-import com.ivanherboch.chessduck.feature.AcademyTrainingsButton
 import com.ivanherboch.chessduck.feature.ReviewTopic
 import com.ivanherboch.chessduck.feature.KidScreen
 import com.ivanherboch.chessduck.feature.KidViewModel
@@ -241,30 +239,21 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
         }
     }
 
-    var academyTrainings by rememberSaveable { mutableStateOf(false) }
-    // ViewModel de l'Académie, partagé par l'en-tête (bouton « Entraînements ») et l'onglet : une seule obtention,
-    // à la première visite de l'onglet, puis gardé pour l'animation de sortie et les retours.
+    // ViewModel de l'Académie : une seule obtention, à la première visite de l'onglet, puis gardé pour l'animation de
+    // sortie et les retours.
     var academyUsed by rememberSaveable { mutableStateOf(tab == 1) }
     LaunchedEffect(tab) { if (tab == 1) academyUsed = true }
     val academy: AcademyViewModel? = if (tab == 1 || academyUsed) viewModel(factory = DuckViewModels.Factory) else null
     val header: @Composable (Modifier) -> Unit = { m ->
         Row(m.fillMaxWidth().height(50.dp).padding(start = 12.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Image(painterResource(R.drawable.mascot), contentDescription = null, modifier = Modifier.size(34.dp))
-            // Le titre se réduit si la place manque (bouton « Entraînements · N », grande police), sans toucher les boutons.
+            // En-tête identique pour les 4 onglets : mascotte, titre (réduit si la place manque), Paramètres.
             val titleStyle = MaterialTheme.typography.titleLarge
             BasicText(
                 "ChessDuck", style = titleStyle, color = { c.text }, maxLines = 1,
                 autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = titleStyle.fontSize, stepSize = 0.5.sp),
                 modifier = Modifier.padding(start = 8.dp, end = 8.dp).weight(1f).semantics { heading() },
             )
-            // Académie : le tiroir « Entraînements » s'ouvre depuis l'en-tête, sans prendre de place au-dessus de l'échiquier.
-            if (tab == 1 && academy != null) {
-                val avm = academy
-                val active by avm.trainingActive.collectAsStateWithLifecycle()
-                val suggestions by avm.suggestions.collectAsStateWithLifecycle()
-                AcademyTrainingsButton(academyTrainings, active, suggestions) { academyTrainings = true }
-                Spacer(Modifier.width(4.dp))
-            }
             DuckIconButton(Icons.Rounded.Settings, "Paramètres", { showSettings = true })
         }
     }
@@ -292,7 +281,6 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                             onTrainTheme = { theme, level -> bridges.trainTheme = theme to level; select(2) },
                             onPlayPosition = { fen, white -> bridges.playPosition = fen to white; select(3) },
                             onVision = { bridges.vision = true; select(0) },
-                            trainingsOpen = academyTrainings, onTrainings = { academyTrainings = it },
                         )
                     }
                     2 -> {

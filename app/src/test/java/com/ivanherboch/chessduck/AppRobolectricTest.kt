@@ -145,7 +145,7 @@ class AppRobolectricTest {
     fun endgameKingTapShowsTargets() {
         settle(2500)
         rule.onNodeWithText("Académie").performClick(); settle(1500)
-        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000)
+        rule.onNodeWithText("Finales contre l'Ordinateur").performScrollTo().performClick(); settle(1000)
         rule.onNodeWithText("Gagnez : Roi et pion contre roi").performScrollTo().performClick(); settle(2000)
         shot("2x_finale_depart")
         val king = rule.onNode(androidx.compose.ui.test.hasContentDescription("roi blanc", substring = true, ignoreCase = true), useUnmergedTree = true)
@@ -196,9 +196,11 @@ class AppRobolectricTest {
         shot("2q_pont_academie")
         // Le titre de la leçon figure dans l'en-tête de séance et dans le rappel de l'énoncé.
         assertTrue(rule.onAllNodesWithText("Méthode : le contrôle anti-gaffe", substring = true, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
-        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1500)
+        // Retour à la leçon, puis à l'accueil : le bloc « À travailler » y montre les priorités.
+        desc("Revenir à la leçon").performClick(); settle(1000)
+        desc("Revenir à l'accueil de l'Académie").performClick(); settle(1500)
         // Le bilan relit les parties en tâche de fond : on attend qu'il soit publié. S'il tarde (invalidation Room
-        // sous Robolectric), on referme le tiroir plus de 5 s pour que le bilan soit recalculé à la réouverture.
+        // sous Robolectric), on quitte l'accueil plus de 5 s pour que le bilan soit recalculé au retour.
         fun prioritiesShown(ms: Long) = runCatching {
             rule.waitUntil(ms) {
                 shadowOf(Looper.getMainLooper()).idle()
@@ -207,22 +209,23 @@ class AppRobolectricTest {
         }.isSuccess
         if (!prioritiesShown(15_000)) {
             shot("2r_priorites_echec")
-            rule.onNodeWithContentDescription("Fermer").performClick(); settle(6000)
-            rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1500)
+            rule.onNodeWithText("Tests de niveau").performScrollTo().performClick(); settle(6000)
+            desc("Revenir à l'accueil de l'Académie").performClick(); settle(1500)
             check(prioritiesShown(30_000)) { "Bilan des priorités absent" }
         }
         settle(500); shot("2r_priorites")
-        rule.onNodeWithText("Calcul à l'aveugle (palier 5)").performScrollTo().performClick(); settle(1500)
+        rule.onNodeWithText("Travailler ce point").assertExists()
+        rule.onNodeWithText("Réflexes & Calcul").performScrollTo().performClick(); settle(1000)
+        rule.onNodeWithText("Calcul à l'aveugle").performScrollTo().performClick(); settle(1500)
         rule.waitUntil(30_000) {
             shadowOf(Looper.getMainLooper()).idle()
             rule.onAllNodesWithText("Coups annoncés", substring = true).fetchSemanticsNodes().isNotEmpty()
         }
         settle(800); shot("2s_aveugle")
-        // Tiroir rouvert pendant la séance : l'exercice en cours est surligné et annoncé « En cours ».
-        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000)
-        rule.onNodeWithText("Calcul à l'aveugle (palier 5) · En cours").performScrollTo()
-            .assert(androidx.compose.ui.test.SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Selected, true))
-        settle(400); shot("2t_entrainement_en_cours")
+        // Retour Android pendant la séance : on revient à la sous-liste de l'Atelier qui l'a lancée, puis à l'accueil.
+        val back = { rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1200) }
+        back(); rule.onNodeWithText("Calcul à l'aveugle").assertExists(); shot("2t_atelier_reflexes")
+        back(); rule.onNodeWithText("Mon parcours").assertExists()
     }
 
     private fun seedGame() = runBlocking {
@@ -592,8 +595,8 @@ class AppRobolectricTest {
     }
 
     /**
-     * Grande police : « Entraînements » devient une icône de l'en-tête, sans chevaucher le titre ChessDuck ni sortir de
-     * l'écran ; aucune puce n'est posée entre la leçon et l'échiquier, la leçon conseillée est dans le tiroir.
+     * Grande police : l'en-tête ne garde que le titre et Paramètres (plus de bouton « Entraînements ») ; aucune puce
+     * entre la leçon et l'échiquier ; l'accueil reste lisible, sa leçon conseillée en action principale.
      */
     @Test
     @Config(fontScale = 1.6f)
@@ -608,17 +611,17 @@ class AppRobolectricTest {
         }; settle(600)
         rule.onAllNodes(opera)[0].performClick(); settle(1200)
         shot("2p_bandeau_grande_police")
-        val trainings = rule.onNodeWithContentDescription("Entraînements", substring = true).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        assertTrue(rule.onAllNodesWithText("Entraînements", substring = true).fetchSemanticsNodes().isEmpty())
         val root = rule.onRoot().fetchSemanticsNode().boundsInRoot
+        val settings = rule.onNodeWithContentDescription("Paramètres").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
         val title = rule.onNodeWithText("ChessDuck").fetchSemanticsNode().boundsInRoot
-        assertTrue("« Entraînements » dépasse de l'écran", trainings.right <= root.right + 0.5f)
-        assertTrue("« Entraînements » chevauche le titre", !trainings.overlaps(title))
-        // Plus aucun bandeau entre la leçon et l'échiquier : la leçon conseillée est proposée dans le tiroir.
+        assertTrue("« Paramètres » dépasse de l'écran", settings.right <= root.right + 0.5f)
+        assertTrue("« Paramètres » chevauche le titre", !settings.overlaps(title))
+        // Plus aucun bandeau entre la leçon et l'échiquier.
         assertTrue(rule.onAllNodesWithText("Conseillée", substring = true).fetchSemanticsNodes().isEmpty())
-        rule.onNodeWithContentDescription("Entraînements", substring = true).performClick(); settle(1200)
-        shot("2p_suggestions_grande_police")
-        // On revient à la leçon conseillée (la leçon 1) : la leçon ouverte est mémorisée pour les tests suivants.
-        rule.onNodeWithText("Ouvrir la leçon conseillée").performScrollTo().performClick(); settle(1200)
+        desc("Revenir à l'accueil de l'Académie").performClick(); settle(1200)
+        shot("2p_accueil_grande_police")
+        rule.onNodeWithText("Mon parcours").assertExists()
     }
 
     @Test
@@ -657,24 +660,30 @@ class AppRobolectricTest {
         rule.onNodeWithText("Pratiquer").performClick(); settle(1500); shot("2b_pratiquer")
         desc("Ouvrir le catalogue des leçons").performClick(); settle(1200); shot("2c_catalogue_lecons")
         close(); settle(800)
-        // Étape 2 : entraînements (réflexes, finales jouables), variantes, QCM et partie modèle.
-        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000); shot("2g_entrainements")
+        // Accueil de l'Académie (← de la leçon), puis l'Atelier : réflexes, finales jouables ; variantes, QCM et partie modèle.
+        desc("Revenir à l'accueil de l'Académie").performClick(); settle(1200); shot("2g_accueil")
+        rule.onNodeWithText("Mon parcours").assertExists()
+        rule.onAllNodesWithText("Entraînements", substring = true).assertCountEquals(0)
+        rule.onNodeWithText("Tests de niveau").performScrollTo(); settle(400); shot("2g_accueil_atelier")
+        rule.onNodeWithText("Réflexes & Calcul").performScrollTo().performClick(); settle(1000); shot("2g_atelier_reflexes")
         rule.onNodeWithText("Quelle est la menace ?").performClick(); settle(1000)
         rule.waitUntil(20_000) { rule.onAllNodesWithText("Question 1 sur", substring = true).fetchSemanticsNodes().isNotEmpty() }
         settle(500); shot("2h_menace")
-        // Séance du tiroir : on y revient en la quittant (le tiroir se rouvre seul).
-        desc("Revenir aux entraînements").performClick(); settle(1000)
+        // Séance de l'Atelier : on revient à sa sous-liste en la quittant.
+        desc("Revenir à l'Atelier").performClick(); settle(1000)
         rule.onNodeWithText("Puis-je prendre ?").performScrollTo().assertExists()
         rule.onNodeWithText("Puis-je prendre ?").performClick(); settle(1000)
         rule.waitUntil(20_000) { rule.onAllNodesWithText("Oui, je prends").fetchSemanticsNodes().isNotEmpty() }
         settle(500); shot("2i_prise")
         rule.onNodeWithText("Oui, je prends").performClick(); settle(600); shot("2j_prise_reponse")
-        desc("Revenir aux entraînements").performClick(); settle(1000)
+        desc("Revenir à l'Atelier").performClick(); settle(1000)
+        desc("Revenir à l'accueil de l'Académie").performClick(); settle(1000)
+        rule.onNodeWithText("Finales contre l'Ordinateur").performScrollTo().performClick(); settle(1000); shot("2k_atelier_finales")
         rule.onNodeWithText("Gagnez : Roi et tour contre roi").performScrollTo().performClick(); settle(1500); shot("2k_finale")
         desc("Retourner l'échiquier").assertExists() // le retournement reste offert pendant une séance
-        desc("Revenir aux entraînements").performClick(); settle(1000)
-        close(); settle(800)
-        rule.onNodeWithText("Comprendre").performClick(); settle(800)
+        desc("Revenir à l'Atelier").performClick(); settle(1000)
+        desc("Revenir à l'accueil de l'Académie").performClick(); settle(1000)
+        openLesson("trois principes", "Les trois principes de l'ouverture")
         // Après « Les trois principes » vient « Le mat du berger », puis la partie italienne (variantes et QCM).
         desc("Leçon suivante").performClick(); settle(1200)
         desc("Leçon suivante").performClick(); settle(1200)
@@ -713,7 +722,8 @@ class AppRobolectricTest {
         // Retour Android : on remonte les onglets visités (Problèmes, Académie, puis Notation).
         val back = { rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1200) }
         back(); desc("Catalogue des problèmes").assertExists()
-        back(); desc("Ouvrir le catalogue des leçons").assertExists()
+        back(); desc("Leçon suivante").assertExists() // la leçon laissée ouverte
+        back(); rule.onNodeWithText("Mon parcours").assertExists() // puis l'accueil de l'Académie
         back(); desc("Historique des parties").assertExists() // Jeu Libre, ouvert depuis l'Académie
         back(); desc("Mémo anglais").assertExists()
         rule.onNodeWithText("Jeu Libre").performClick(); settle(1500)

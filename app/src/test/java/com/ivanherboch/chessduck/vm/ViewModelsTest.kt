@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.vm
 
+import com.ivanherboch.chessduck.feature.AcademyRoute
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
 import kotlinx.coroutines.cancelAndJoin
@@ -257,28 +258,65 @@ class ViewModelsTest {
         vm.setLevel(3); advanceUntilIdle()
     }
 
+    /** Retour à l'accueil depuis une leçon lue à voix haute : la voix se tait aussitôt. */
     @Test
-    fun academyCatalogOpensGuidedAndDrawerSessionsReturnToTheDrawer() = test {
+    fun goingHomeSilencesTheVoice() = test {
+        val voice = FakeNarrator()
+        val prefs = FakeSettings()
+        val vm = academy(voice = voice, prefs = prefs)
+        advanceUntilIdle()
+        prefs.setNarration(true); runCurrent()
+        vm.open(5, guided = true); runCurrent()
+        assertTrue(voice.speaking.value)
+        vm.goHome(); runCurrent()
+        assertFalse(voice.speaking.value)
+        assertEquals(AcademyRoute.HOME, vm.state.value.route)
+    }
+
+    @Test
+    fun academyRoutesBetweenHomeWorkshopAndSessions() = test {
         val vm = academy()
         advanceUntilIdle()
-        // Une leçon choisie dans le catalogue commence en mode Guidé, même si l'on était en Défi.
+        // À l'ouverture, l'accueil ; le retour Android n'y fait rien (il quitte l'onglet).
+        assertEquals(AcademyRoute.HOME, vm.state.value.route)
+        assertFalse(vm.back())
+        // Une séance lancée depuis une sous-liste de l'Atelier y ramène en la quittant (← ou retour Android).
+        vm.openRoute(AcademyRoute.WORKSHOP_REFLEX)
+        vm.startReflex(com.ivanherboch.chessduck.feature.ReflexKind.THREAT); advanceUntilIdle()
+        assertEquals(AcademyRoute.LESSON, vm.state.value.route)
+        assertEquals(AcademyRoute.WORKSHOP_REFLEX, vm.state.value.sessionFrom)
+        assertTrue(vm.back())
+        assertNull(vm.reflex.state.value)
+        assertEquals(AcademyRoute.WORKSHOP_REFLEX, vm.state.value.route)
+        assertNull(vm.state.value.sessionFrom)
+        // Sous-liste → accueil.
+        assertTrue(vm.back())
+        assertEquals(AcademyRoute.HOME, vm.state.value.route)
+        // Finale lancée depuis l'Atelier, puis retour à l'Atelier ; une leçon ouverte revient à l'accueil.
+        vm.openRoute(AcademyRoute.WORKSHOP_ENDGAMES)
+        vm.startEndgame(com.ivanherboch.chessduck.feature.EndgameFamily.KQK); advanceUntilIdle()
+        vm.closeTraining()
+        assertEquals(AcademyRoute.WORKSHOP_ENDGAMES, vm.state.value.route)
+        vm.open(5, guided = true)
+        assertEquals(AcademyRoute.LESSON, vm.state.value.route)
+        assertTrue(vm.back())
+        assertEquals(AcademyRoute.HOME, vm.state.value.route)
+        // Une leçon choisie dans le catalogue commence par Comprendre, même si l'on était en Pratiquer.
         vm.setChallenge(true)
         vm.open(Lessons.all[3].id, guided = true)
         assertFalse(vm.state.value.challenge)
         // Les flèches gardent le mode en cours.
         vm.setChallenge(true); vm.nextLesson()
         assertTrue(vm.state.value.challenge)
-        // Séance lancée depuis le tiroir : en la quittant, l'écran est invité à rouvrir le tiroir.
-        val before = vm.state.value.drawerReturn
-        vm.markFromDrawer()
+        // Une séance lancée depuis la leçon y reste ; « Accueil » arrête tout, voix comprise.
         vm.startReflex(com.ivanherboch.chessduck.feature.ReflexKind.THREAT); advanceUntilIdle()
-        assertTrue(vm.state.value.fromDrawer)
+        assertNull(vm.state.value.sessionFrom)
         vm.closeTraining()
-        assertEquals(before + 1, vm.state.value.drawerReturn)
-        assertFalse(vm.state.value.fromDrawer)
-        // Une séance liée à la leçon (validation) ne renvoie pas au tiroir.
-        vm.closePractice()
-        assertEquals(before + 1, vm.state.value.drawerReturn)
+        assertEquals(AcademyRoute.LESSON, vm.state.value.route)
+        vm.goHome()
+        assertEquals(AcademyRoute.HOME, vm.state.value.route)
+        assertFalse(vm.state.value.challenge)
+        assertNull(vm.endgame.state.value)
     }
 
     @Test
@@ -624,36 +662,32 @@ class ViewModelsTest {
     fun academySessionHeadersAndFilter() = test {
         val vm = academy(puzzles = FakePuzzles(puzzleSet.map { it.copy(primaryTheme = "hangingPiece") }))
         advanceUntilIdle()
-        val active = backgroundScope.launch { vm.trainingActive.collect {} }
         assertNull(vm.sessionTitle(vm.state.value, null, null))
-        assertEquals(false, vm.trainingActive.value)
+        // Pont depuis la revue de partie : la séance s'ouvre directement, sans passer par l'accueil.
         vm.trainTopic(136, "hangingPiece"); advanceUntilIdle()
         val t = vm.sessionTitle(vm.state.value, vm.endgame.state.value, vm.reflex.state.value)!!
         assertEquals("Pratique · 5 problèmes", t.label)
         assertEquals("Initiation : la pièce gratuite", t.title)
-        assertEquals(true, vm.trainingActive.value)
+        assertEquals(AcademyRoute.LESSON, vm.state.value.route)
         vm.closeTraining(); advanceUntilIdle()
         assertNull(vm.state.value.practice)
-        assertEquals(false, vm.trainingActive.value)
+        assertEquals(AcademyRoute.LESSON, vm.state.value.route)
         // Le QCM de fin de leçon a lui aussi son en-tête, et « Revenir à la leçon » le ferme.
         vm.open(2); vm.startQuiz()
         assertEquals("Question de fin de leçon", vm.sessionTitle(vm.state.value, null, null)!!.label)
         vm.closeTraining()
         assertNull(vm.state.value.quiz)
-        // La leçon conseillée (la leçon 1) n'est plus au-dessus de l'échiquier : elle compte comme suggestion du tiroir.
-        val sugg = backgroundScope.launch { vm.suggestions.collect {} }
+        // Accueil : la leçon conseillée (la leçon 1) est la « Prochaine leçon » ; une leçon commencée devient « Continuer ».
+        val home = backgroundScope.launch { vm.home.collect {} }
         advanceUntilIdle()
-        assertEquals(1, vm.suggestions.value)
-        vm.open(1); advanceUntilIdle()
-        assertEquals(0, vm.suggestions.value)
-        vm.open(2); advanceUntilIdle()
-        sugg.cancel()
+        assertEquals(1, vm.home.value.recommended)
+        assertNull(vm.home.value.continueId)
+        home.cancel()
         // Filtrer une catégorie ne change pas la leçon ouverte.
         vm.setFilter(com.ivanherboch.chessduck.content.LessonCategory.ENDGAME)
         assertEquals(2, vm.state.value.lessonId)
         assertEquals("2 · Débutant", com.ivanherboch.chessduck.feature.levelName(2))
         assertEquals("2, Débutant", com.ivanherboch.chessduck.feature.levelSpoken(2))
-        active.cancel()
     }
 
     /** Calcul à l'aveugle : la case de départ est écrite, « Réécouter » explique la voix coupée. */
@@ -1135,13 +1169,17 @@ class ViewModelsTest {
 
     @Test
     fun academyRestoresFromSavedState() = test {
-        val saved = SavedStateHandle(mapOf("academy_lesson" to 5, "academy_challenge" to false, "academy_cursor" to 3))
+        val saved = SavedStateHandle(mapOf("academy_lesson" to 5, "academy_challenge" to false, "academy_cursor" to 3, "academy_route" to "LESSON"))
         val vm = academy(saved = saved)
         runCurrent()
         assertEquals(5, vm.state.value.lessonId)
         assertEquals(3, vm.state.value.cursor)
         vm.goTo(4); runCurrent()
         assertEquals(4, saved.get<Int>("academy_cursor"))
+        // La leçon en cours est restaurée à l'écran (pas l'accueil), et l'écran affiché est mémorisé.
+        assertEquals(AcademyRoute.LESSON, vm.state.value.route)
+        vm.goHome(); runCurrent()
+        assertEquals("HOME", saved.get<String>("academy_route"))
     }
 
     @Test
@@ -1163,7 +1201,7 @@ class ViewModelsTest {
     @Test
     fun academyResumesAnInterruptedChallenge() = test {
         // Défi de la leçon 1 interrompu par Android au 3e demi-coup, avec une erreur déjà commise.
-        val saved = SavedStateHandle(mapOf("academy_lesson" to 1, "academy_challenge" to true, "academy_cursor" to 2, "academy_errors" to 1))
+        val saved = SavedStateHandle(mapOf("academy_lesson" to 1, "academy_challenge" to true, "academy_cursor" to 2, "academy_errors" to 1, "academy_route" to "LESSON"))
         val vm = academy(saved = saved)
         advanceUntilIdle()
         assertTrue(vm.state.value.challenge)

@@ -144,7 +144,7 @@ internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, revie
                 DuckButton(
                     when {
                         inLesson -> "Revoir les coups"
-                        vm.state.value.fromDrawer -> "Revenir aux entraînements"
+                        vm.state.value.sessionFrom != null -> "Retour"
                         else -> "Revenir à la leçon"
                     },
                     vm::closePractice, Modifier.weight(1f), icon = if (inLesson) Icons.Rounded.Visibility else Icons.AutoMirrored.Rounded.ArrowBack,

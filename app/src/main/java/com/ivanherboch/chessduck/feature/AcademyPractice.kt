@@ -42,7 +42,8 @@ internal interface PracticeHost {
     fun pulse(good: Boolean)
     fun warmEngine()
     fun cancelAll()
-    fun backToDrawer()
+    /** Fin d'une séance lancée depuis l'accueil ou l'Atelier : retour à cet écran. */
+    fun backToCaller()
     suspend fun saveProgress(id: Int, update: (LessonProgress) -> LessonProgress): LessonProgress
     suspend fun completeReview(success: Boolean, fluent: Boolean)
 }
@@ -382,7 +383,7 @@ internal class PracticeSeries(
     fun closePractice() {
         practiceJob?.cancel()
         _state.update { it.copy(practice = null) }
-        host.backToDrawer()
+        host.backToCaller()
     }
 
     companion object {

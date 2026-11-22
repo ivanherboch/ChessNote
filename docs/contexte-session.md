@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `3.10.0` (`versionCode = 76`), publiée en release GitHub `v3.10.0`.
+- **Version actuelle** : `3.11.0` (`versionCode = 77`), publiée en release GitHub `v3.11.0`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -182,6 +182,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **3.8.3** : `guideHint` en deux temps (pièce, puis flèche ; bouton actif jusqu'à 2/2) ; flèche verte aussi à l'arrêt « À vous » du Guidé ; test `guidedHintHasTwoStages`.
 - **3.9.0** : cœurs des séries (`Practice.hearts/heartsMax/penalized`, `PracticeSeries.HEARTS_KINDS` = LESSON, ONLY_MOVE, REVIEW ; autant de cœurs que de problèmes) : une erreur coûte un cœur, le problème compte si `!penalized && hintStage < 2` ; `heartsText` ; titre de la série « N cœurs sur M ».
 - **3.10.0** : refonte UX Académie, étape 1 sur 3 (plan `plan_simplification_academie_claude.md`) : `Comprendre | Pratiquer` (`LessonModeBar`), `LessonSelector` à statut unique (`lessonStatus`), Comprendre sans arrêts (`asking`/`guideMove`/`guideHint`/`hiddenFrom` supprimés), Pratiquer routé par `practiceMode()`, `EQUIVALENT` avec `suggest`, cœurs supprimés (`Practice.arrowUsed`), bouton « Réessayer » partout.
+- **3.11.0** : refonte UX Académie, étape 2 sur 3 : `AcademyRoute` (HOME, LESSON, WORKSHOP_*), `AcademyHomeScreen` + `WorkshopScreen`, tiroir `TrainingsSheet`/`AcademyTrainingsButton`/`fromDrawer`/`drawerReturn`/`suggestions`/`trainingActive` supprimés, catalogue à un seul état, Fiche à 40 dp.
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.
@@ -210,6 +211,15 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
   qui passe à la ligne au lieu de défiler sous « Entraînements » avec une grande police).
 - **2.6.0** : refonte de l'Académie, étape 1 sur 3 (plan `plan_academie_claude_etapes.md`) : identifiants fixes,
   Room v4, juge de coups, Guidé actif, Défi intelligent avec étoiles, validation sur 5 problèmes, passerelles.
+
+### Relais refonte UX Académie (état après l'étape 2, v3.11.0)
+- `AcademyModels.kt` : `enum class AcademyRoute { HOME, LESSON, WORKSHOP_ENDGAMES, WORKSHOP_REFLEX, WORKSHOP_REPERTOIRE, WORKSHOP_TESTS }` ; `AcademyState.route` (HOME par défaut, sauvegardée sous `academy_route`) et `sessionFrom` (écran d'origine d'une séance) ; `backLabel(s)`.
+- `AcademyViewModel` : `openRoute(r)`, `goHome()` (arrête tout, voix comprise), `back()` (retour Android et ←), `enterSession()` dans les `start*` publics (sauf `startEndgame(fromLesson = true)`), `backToCaller()` dans les `close*` (remplace `backToDrawer`). `open(save/session)` passe en LESSON ; la restauration au lancement garde l'accueil.
+- `AcademyOverview.home.continueId` : la dernière leçon ouverte si commencée sans être maîtrisée, sinon une autre commencée ; `suggestions` supprimé.
+- `AcademyHomeScreen.kt` : `AcademyHomeScreen(vm, onCatalog(level, category))` (JourneyCard, PrioritiesCard, LessonsCard, WorkshopTiles, LevelSheet ; deux colonnes si `LocalIsTwoPane`) et `WorkshopScreen(vm, route)`. `AcademyTrainings.kt` supprimé.
+- `AcademyScreen` : `when (s.route)` → accueil, Atelier ou `ModuleLayout` de la leçon ; `BackHandler(route != HOME) { vm.back() }`. `LessonSelector(…, onHome, onNext)` : ← Accueil à gauche.
+- `LessonCatalog` : un seul état par carte (À revoir / Maîtrisée + étoiles / En cours / Conseillée).
+- Reste pour l'étape 3 : révisions du jour (`startReviews` rejoue encore la ligne puis 2 problèmes), répertoire (`startRepertoire` tire 5 ouvertures du camp), `LessonBriefSheet`.
 
 ### Relais refonte UX Académie (état après l'étape 1, v3.10.0)
 - `AcademyLessonHeader.kt` : `LessonSelector(l, mastered, stars, status, …)` + `lessonStatus(LessonProgress?)` (« À faire » / « En cours » / « Maîtrisée ») ; `LessonModeBar(vm, s, l, variantsDone, onBrief)` = segments « Comprendre » | « Pratiquer », `VariantMenu`, bouton « Fiche », ⇅.

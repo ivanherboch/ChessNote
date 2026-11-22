@@ -71,23 +71,18 @@ fun AcademyScreen(
     onPlayPosition: (fen: String, playerWhite: Boolean) -> Unit = { _, _ -> },
     /** « Vision des cases » : ouvre l'exercice dans l'onglet Notation (passerelle de la leçon sur la notation). */
     onVision: () -> Unit = {},
-    /** Tiroir « Entraînements », ouvert depuis le bouton de l'en-tête de l'application. */
-    trainingsOpen: Boolean = false,
-    onTrainings: (Boolean) -> Unit = {},
 ) {
     val s by vm.state.collectAsStateWithLifecycle()
     val mastered by vm.mastered.collectAsStateWithLifecycle()
     val progress by vm.progress.collectAsStateWithLifecycle()
-    val home by vm.home.collectAsStateWithLifecycle()
     val variantsDone by vm.variantsDone.collectAsStateWithLifecycle()
     val eg by vm.endgame.state.collectAsStateWithLifecycle()
     val rx by vm.reflex.state.collectAsStateWithLifecycle()
     val narration by vm.narration.collectAsStateWithLifecycle()
     val speaking by vm.speaking.collectAsStateWithLifecycle()
-    // Retour Android pendant une séance (finale, réflexes, série, question, révision, répertoire) : on la quitte, on ne
-    // quitte pas l'Académie.
-    val inSession = eg != null || rx != null || s.practice != null || s.quiz != null || s.review != null || s.repertoire != null
-    BackHandler(enabled = inSession) { vm.closeTraining() }
+    // Retour Android : une séance revient à l'écran qui l'a lancée (leçon, accueil ou Atelier), une leçon ou une
+    // sous-liste de l'Atelier revient à l'accueil ; sur l'accueil, le retour quitte l'onglet.
+    BackHandler(enabled = s.route != AcademyRoute.HOME) { vm.back() }
     // La voix se tait dès que l'Académie n'est plus à l'écran (autre onglet, application en arrière-plan).
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { vm.silence() }
     DisposableEffect(vm) { onDispose { vm.silence() } }
@@ -115,10 +110,8 @@ fun AcademyScreen(
         if (p.good) fb?.success() else fb?.error()
     }
     LaunchedEffect(s.pulse?.id) { buzz(0, s.pulse) }
-    // Séance lancée depuis le tiroir « Entraînements » : on y revient quand elle se termine.
-    val backLabel = if (s.fromDrawer) "Revenir aux entraînements" else "Revenir à la leçon"
-    var drawerSeen by remember { mutableIntStateOf(s.drawerReturn) }
-    LaunchedEffect(s.drawerReturn) { if (s.drawerReturn != drawerSeen) { drawerSeen = s.drawerReturn; onTrainings(true) } }
+    // Séance lancée depuis l'accueil ou l'Atelier : sa flèche de retour y ramène.
+    val backLabel = backLabel(s)
     LaunchedEffect(eg?.pulse?.id) { buzz(1, eg?.pulse) }
     LaunchedEffect(rx?.pulse?.id) { buzz(2, rx?.pulse) }
     val endFen = line.positions[cur].takeIf { it.legalMoves.isNotEmpty() }?.toFen()
@@ -140,6 +133,23 @@ fun AcademyScreen(
     var catalogStatus by rememberSaveable { mutableIntStateOf(0) }
     var catalogLevel by rememberSaveable { mutableIntStateOf(0) }
     val context = LocalContext.current
+    val sheets: @Composable () -> Unit = {
+        if (catalog) LessonCatalog(vm, s, mastered, catalogStatus, { catalogStatus = it }, catalogLevel, { catalogLevel = it }) { catalog = false }
+        if (brief) LessonBriefSheet(l) { brief = false }
+        playChoice?.let { fen -> ChooseColorSheet(fen, l, { white -> playChoice = null; onPlayPosition(fen, white) }) { playChoice = null } }
+    }
+    // Accueil et Atelier : pas d'échiquier ; le catalogue s'ouvre depuis l'accueil, filtré au besoin.
+    when (s.route) {
+        AcademyRoute.HOME -> {
+            AcademyHomeScreen(vm) { level, category -> catalogStatus = 0; catalogLevel = level; vm.setFilter(category); catalog = true }
+            return sheets()
+        }
+        AcademyRoute.LESSON -> Unit
+        else -> {
+            WorkshopScreen(vm, s.route)
+            return sheets()
+        }
+    }
     ModuleLayout(
         bottomMin = 190.dp,
         top = {
@@ -149,7 +159,7 @@ fun AcademyScreen(
                 return@ModuleLayout
             }
             LessonSelector(
-                l, mastered, stars, lessonStatus(progress[l.id]), total, onCatalog = { catalog = true }, onPrev = vm::prevLesson, onNext = vm::nextLesson,
+                l, mastered, stars, lessonStatus(progress[l.id]), total, onCatalog = { catalog = true }, onHome = vm::goHome, onNext = vm::nextLesson,
             )
             LessonModeBar(vm, s, l, variantsDone, onBrief = { brief = true })
         },
@@ -386,8 +396,5 @@ fun AcademyScreen(
         },
     )
 
-    if (catalog) LessonCatalog(vm, s, mastered, catalogStatus, { catalogStatus = it }, catalogLevel, { catalogLevel = it }) { catalog = false }
-    if (brief) LessonBriefSheet(l) { brief = false }
-    playChoice?.let { fen -> ChooseColorSheet(fen, l, { white -> playChoice = null; onPlayPosition(fen, white) }) { playChoice = null } }
-    if (trainingsOpen) TrainingsSheet(vm, home, s, eg, rx) { onTrainings(false) }
+    sheets()
 }

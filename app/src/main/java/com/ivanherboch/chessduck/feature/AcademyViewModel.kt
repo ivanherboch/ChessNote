@@ -34,7 +34,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -62,7 +61,7 @@ class AcademyViewModel(
     private val _state = MutableStateFlow(AcademyState())
     val state: StateFlow<AcademyState> = _state.asStateFlow()
     val srs = SrsScheduler(clock)
-    /** Progression, accueil, bilan et suggestions du tiroir (voir AcademyOverview). */
+    /** Progression, accueil et bilan (voir AcademyOverview). */
     private val overview = AcademyOverview(
         viewModelScope, prefs, lessons, games, srs, state.map { it.lessonId }.distinctUntilChanged(), work,
     )
@@ -104,7 +103,7 @@ class AcademyViewModel(
             override fun pulse(good: Boolean) = this@AcademyViewModel.pulse(good)
             override fun warmEngine() = this@AcademyViewModel.warmEngine()
             override fun cancelAll() = this@AcademyViewModel.cancelAll()
-            override fun backToDrawer() = this@AcademyViewModel.backToDrawer()
+            override fun backToCaller() = this@AcademyViewModel.backToCaller()
             override suspend fun saveProgress(id: Int, update: (LessonProgress) -> LessonProgress) = this@AcademyViewModel.saveProgress(id, update)
             override suspend fun completeReview(success: Boolean, fluent: Boolean) = this@AcademyViewModel.completeReview(success, fluent)
         },
@@ -159,10 +158,15 @@ class AcademyViewModel(
             val restoredChallenge = saved.get<Boolean>(KEY_CHALLENGE) ?: false
             val restoredCursor = saved.get<Int>(KEY_CURSOR) ?: 0
             val restoredVariant = saved.get<Int>(KEY_VARIANT) ?: 0
+            // Écran affiché avant l'arrêt du processus (une leçon en cours) ; sinon l'accueil.
+            val restoredRoute = saved.get<String>(KEY_ROUTE)?.let { r -> AcademyRoute.entries.firstOrNull { it.name == r } }
             val stored = restoredId ?: prefs.settings.first().lessonId
             // Une leçon ouverte entre-temps (pont depuis la revue de partie, bilan) garde la priorité.
-            if (!openedExplicitly) open(stored, save = false, variant = restoredVariant)
-            if (restoredId != null && !openedExplicitly) {
+            if (!openedExplicitly) {
+                open(stored, save = false, variant = restoredVariant)
+                if (restoredRoute != null) _state.update { it.copy(route = restoredRoute) }
+            }
+            if (restoredId != null && !openedExplicitly && restoredRoute == AcademyRoute.LESSON) {
                 if (restoredChallenge) resumeChallenge(restoredCursor, saved.get<Int>(KEY_ERRORS) ?: 0, saved.get<Int>(KEY_HINTS) ?: 0)
                 else if (restoredCursor > 0) goTo(restoredCursor)
             }
@@ -173,6 +177,7 @@ class AcademyViewModel(
                 saved[KEY_VARIANT] = st.variant
                 saved[KEY_ERRORS] = st.errors
                 saved[KEY_HINTS] = st.maxHint
+                saved[KEY_ROUTE] = st.route.name
             }
         }
     }
@@ -184,6 +189,7 @@ class AcademyViewModel(
         const val KEY_VARIANT = "academy_variant"
         const val KEY_ERRORS = "academy_errors"
         const val KEY_HINTS = "academy_hints"
+        const val KEY_ROUTE = "academy_route"
         const val PRACTICE_SIZE = PracticeSeries.SIZE
         const val PRACTICE_PASS = PracticeSeries.PASS
         const val REVIEW_SIZE = 2
@@ -251,7 +257,9 @@ class AcademyViewModel(
                 note = null, judging = false, refute = null, refuteUntil = 0L, tentative = null, suggest = null, practice = null, quiz = null,
                 errors = 0, maxHint = 0, stars = 0, guessScore = 0, guessMax = 0, lessonPractice = false, quizPassed = false,
                 review = if (session) it.review else null, repertoire = if (session) it.repertoire else null,
-                fromDrawer = session && it.fromDrawer,
+                // Une leçon choisie (ou une étape de révision) s'affiche ; la restauration au lancement garde l'accueil.
+                route = if (save || session) AcademyRoute.LESSON else it.route,
+                sessionFrom = if (session) it.sessionFrom else null,
             )
         }
         if (save) viewModelScope.launch { prefs.setLesson(l.id) }
@@ -266,7 +274,7 @@ class AcademyViewModel(
      */
     fun setFilter(cat: LessonCategory?) = _state.update { it.copy(filter = cat) }
 
-    /** Choix manuel du palier (tiroir « Entraînements ») : les leçons conseillées et les exercices suivent ce palier. */
+    /** Choix manuel du palier (carte « Mon parcours » de l'accueil) : les leçons conseillées et les exercices suivent ce palier. */
     fun setLevel(level: Int) {
         viewModelScope.launch { prefs.setAcademyLevel(level.coerceIn(1, 5)) }
     }
@@ -807,11 +815,11 @@ class AcademyViewModel(
     }
 
     /** « Le seul coup » : 5 positions où une seule défense tient. */
-    fun startOnlyMove() = practice.startOnlyMove()
+    fun startOnlyMove() { enterSession(); practice.startOnlyMove() }
     /** Test de placement facultatif (12 positions, paliers 2 à 5). */
-    fun startPlacement() = practice.startPlacement()
+    fun startPlacement() { enterSession(); practice.startPlacement() }
     /** Examen du palier en cours (10 positions mélangées, réussite à 8). */
-    fun startExam() = practice.startExam()
+    fun startExam() { enterSession(); practice.startExam() }
     private fun startSeries(kind: PracticeKind, specs: List<PuzzleSpec>, level: Int = 2) = practice.startSeries(kind, specs, level)
     fun practiceMove(m: Move) = practice.practiceMove(m)
     fun retryPractice() = practice.retryPractice()
@@ -831,17 +839,60 @@ class AcademyViewModel(
         if (state.value.lessonPractice) setChallenge(false)
     }
 
-    /** Marque la séance qui va commencer comme lancée depuis le tiroir « Entraînements ». */
-    fun markFromDrawer() = _state.update { it.copy(fromDrawer = true) }
+    // ---- Navigation entre l'accueil, l'Atelier et les séances ----
 
-    /** Fin d'une séance lancée depuis le tiroir : on y revient (au lieu de laisser la dernière leçon ouverte à l'écran). */
-    private fun backToDrawer() = _state.update { if (it.fromDrawer) it.copy(fromDrawer = false, drawerReturn = it.drawerReturn + 1) else it }
+    /** Une séance commence depuis l'accueil ou l'Atelier : on retient cet écran pour y revenir en la quittant. */
+    private fun enterSession() = _state.update {
+        if (it.route != AcademyRoute.LESSON) it.copy(sessionFrom = it.route, route = AcademyRoute.LESSON) else it
+    }
+
+    /** Fin d'une séance lancée depuis l'accueil ou l'Atelier : on revient à cet écran (jamais à un tiroir). */
+    private fun backToCaller() = _state.update { st -> st.sessionFrom?.let { st.copy(sessionFrom = null, route = it) } ?: st }
+
+    /** Ouvre une sous-liste de l'Atelier, ou revient à l'accueil depuis l'une d'elles. */
+    fun openRoute(route: AcademyRoute) = _state.update { it.copy(route = route) }
+
+    /**
+     * Retour à l'accueil de l'Académie depuis une leçon ou une séance : tout s'arrête (voix, lecture, exercices,
+     * Ordinateur), la leçon reste la dernière ouverte (proposée à « Continuer »).
+     */
+    fun goHome() {
+        cancelAll()
+        narrator.stop()
+        endgameLesson = null
+        endgameReview = false
+        _state.update {
+            it.copy(
+                route = AcademyRoute.HOME, sessionFrom = null, playing = false, challenge = false, lessonPractice = false, practice = null,
+                quiz = null, review = null, repertoire = null, refute = null, refuteUntil = 0L, tentative = null, judging = false, anim = null,
+                suggest = null, done = false, message = "", note = null,
+            )
+        }
+    }
+
+    /**
+     * Retour Android (et flèche ←) : une séance se ferme vers l'écran qui l'a lancée ; une leçon et une sous-liste de
+     * l'Atelier reviennent à l'accueil. Faux sur l'accueil (le retour quitte alors l'onglet).
+     */
+    fun back(): Boolean {
+        val s = state.value
+        val session = endgame.state.value != null || reflex.state.value != null || s.practice != null || s.quiz != null ||
+            s.review != null || s.repertoire != null
+        when {
+            s.route == AcademyRoute.HOME -> return false
+            s.route != AcademyRoute.LESSON -> openRoute(AcademyRoute.HOME)
+            session -> closeTraining()
+            else -> goHome()
+        }
+        return true
+    }
 
     // ---- Finales jouées contre l'Ordinateur ----
 
     /** Lance la finale [family] ; depuis une leçon, la réussite (3 positions sur 5) valide sa maîtrise. */
     fun startEndgame(family: EndgameFamily, fromLesson: Boolean = false, total: Int = 5) {
         warmEngine()
+        if (!fromLesson) enterSession()
         cancelAll()
         narrator.stop()
         endgameLesson = if (fromLesson) lesson.id else null
@@ -854,7 +905,7 @@ class AcademyViewModel(
         endgame.stop()
         endgameLesson = null
         endgameReview = false
-        backToDrawer()
+        backToCaller()
         backToLesson()
     }
 
@@ -869,10 +920,6 @@ class AcademyViewModel(
         }
     }
 
-    /**
-     * Titre de l'entraînement en cours s'il ne dépend pas de la leçon ouverte (réflexes, finale lancée depuis le
-     * tiroir, « Le seul coup », placement, examen) ; null quand on travaille la leçon elle-même.
-     */
     /**
      * En-tête d'une séance en cours (entraînement, validation, révision, finale, question de fin de leçon) : il
      * remplace le sélecteur de leçon et les modes Guidé/Défi, pour qu'on sache toujours ce que montre l'échiquier.
@@ -906,15 +953,7 @@ class AcademyViewModel(
     /** Titre de l'entraînement en cours (voir [sessionTitle]). */
     fun trainingTitle(s: AcademyState, eg: EndgameSession?, rx: ReflexSession?): String? = sessionTitle(s, eg, rx)?.title
 
-    /** Nombre de suggestions « À faire maintenant » du tiroir, affiché sur le bouton « Entraînements ». */
-    val suggestions: StateFlow<Int> = overview.suggestions
-
-    /** Une séance lancée depuis le tiroir « Entraînements » (ou une révision) est en cours : le bouton est surligné. */
-    val trainingActive: StateFlow<Boolean> = combine(state, endgame.state, reflex.state) { s, eg, rx ->
-        eg != null || rx != null || s.practice != null || s.review != null || s.repertoire != null
-    }.distinctUntilChanged().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-
-    /** Quitte l'entraînement en cours et revient à la leçon. */
+    /** Quitte la séance en cours : retour à la leçon, ou à l'écran qui l'a lancée (accueil, Atelier). */
     fun closeTraining() {
         closeEndgame()
         closeReflex()
@@ -928,6 +967,7 @@ class AcademyViewModel(
 
     fun startReflex(kind: ReflexKind) {
         warmEngine()
+        enterSession()
         cancelAll()
         narrator.stop()
         _state.update { it.copy(quiz = null, practice = null, sessionFlipped = false) }
@@ -953,7 +993,7 @@ class AcademyViewModel(
     fun closeReflex() {
         narrator.stop()
         reflex.stop()
-        backToDrawer()
+        backToCaller()
     }
 
     // ---- Révisions du jour (répétition espacée) ----
@@ -967,6 +1007,7 @@ class AcademyViewModel(
         viewModelScope.launch {
             val due = srs.due(lessons.progress().first())
             if (due.isEmpty()) return@launch
+            enterSession()
             _state.update { it.copy(review = ReviewSession(due), repertoire = null, challenge = true) }
             openReview(0)
         }
@@ -1015,7 +1056,7 @@ class AcademyViewModel(
     /** Révision suivante, ou fin de la séance. */
     fun nextReview() {
         val r = state.value.review ?: return
-        // Passage à la révision suivante : la finale se ferme sans renvoyer au tiroir (la séance continue).
+        // Passage à la révision suivante : la finale se ferme sans quitter la séance (la séance continue).
         endgame.stop()
         endgameLesson = null
         endgameReview = false
@@ -1026,7 +1067,7 @@ class AcademyViewModel(
 
     fun closeReviews() {
         _state.update { it.copy(review = null) }
-        backToDrawer()
+        backToCaller()
     }
 
     // ---- Répertoire ----
@@ -1035,6 +1076,7 @@ class AcademyViewModel(
     fun startRepertoire(white: Boolean) {
         val pool = Lessons.all.filter { it.category == LessonCategory.OPENING && it.heroWhite == white }
         if (pool.isEmpty()) return
+        enterSession()
         viewModelScope.launch {
             val dueIds = srs.due(lessons.progress().first()).toSet()
             val ordered = pool.filter { it.id in dueIds } + pool.filter { it.id !in dueIds }.shuffled(random)
@@ -1067,7 +1109,7 @@ class AcademyViewModel(
 
     fun closeRepertoire() {
         _state.update { it.copy(repertoire = null) }
-        backToDrawer()
+        backToCaller()
     }
 
     // ---- Navigation ----

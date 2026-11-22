@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -47,12 +47,12 @@ import com.ivanherboch.chessduck.ui.icons.SwapVert
 @Composable
 internal fun LessonSelector(
     l: Lesson, mastered: Set<Int>, stars: Int, status: String, total: Int,
-    onCatalog: () -> Unit, onPrev: () -> Unit, onNext: () -> Unit,
+    onCatalog: () -> Unit, onHome: () -> Unit, onNext: () -> Unit,
 ) {
     val c = LocalDuck.current
-    // Sélecteur de leçon : précédente / leçon courante (ouvre le catalogue) / suivante.
+    // ← Accueil / leçon courante (ouvre le catalogue) / leçon suivante.
     Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-        DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Leçon précédente", onPrev)
+        DuckIconButton(Icons.AutoMirrored.Rounded.ArrowBack, "Revenir à l'accueil de l'Académie", onHome)
         Column(
             Modifier.weight(1f).heightIn(min = 48.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
                 .border(1.dp, c.outline, RoundedCornerShape(DuckRadius.M))
@@ -120,8 +120,9 @@ internal fun LessonModeBar(
     val tools: @Composable () -> Unit = {
         // Les variantes d'une ouverture se choisissent ici (dans les deux modes) ; hors répertoire et révision.
         if (variants) VariantMenu(l, s.variant, vm::setVariant, variantsDone)
+        // Même hauteur visible que les segments Comprendre | Pratiquer (40 dp) ; la cible tactile reste de 48 dp.
         DuckButton(
-            "Fiche", onBrief, accent = c.blue, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Info,
+            "Fiche", onBrief, accent = c.blue, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Info, height = 40.dp,
             contentDescription = "Fiche de la leçon : objectif, règle, idées et moments clés",
         )
         DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)

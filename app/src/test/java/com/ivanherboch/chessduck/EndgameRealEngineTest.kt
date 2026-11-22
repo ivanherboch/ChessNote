@@ -93,7 +93,7 @@ class EndgameRealEngineTest {
     fun kingAndPawnStaysPlayableAfterEachReply() {
         settle(2500)
         rule.onNodeWithText("Académie").performClick(); settle(1500)
-        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000)
+        rule.onNodeWithText("Finales contre l'Ordinateur").performScrollTo().performClick(); settle(1000)
         rule.onNodeWithText("Gagnez : Roi et pion contre roi").performScrollTo().performClick(); settle(1500)
         waitFor { rule.onAllNodes(hasContentDescription("roi blanc", substring = true, ignoreCase = true), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
         for (n in 1..4) {
@@ -111,18 +111,18 @@ class EndgameRealEngineTest {
         }
     }
 
-    /** Ouvre une séance du tiroir « Entraînements » par son libellé. */
-    private fun openTraining(label: String) {
+    /** Ouvre une séance de l'Atelier par sa tuile de l'accueil puis son libellé. */
+    private fun openTraining(label: String, tile: String = "Réflexes & Calcul") {
         settle(2500)
         rule.onNodeWithText("Académie").performClick(); settle(1500)
-        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000)
+        rule.onNodeWithText(tile).performScrollTo().performClick(); settle(1000)
         rule.onNodeWithText(label).performScrollTo().performClick(); settle(1000)
     }
 
     /** Nulle à tenir avec les Noirs (échiquier retourné) : chaque coup reste jouable après la réponse. */
     @Test
     fun drawWithBlackStaysPlayable() {
-        openTraining("Tenez la nulle : Défense de Philidor")
+        openTraining("Tenez la nulle : Défense de Philidor", tile = "Finales contre l'Ordinateur")
         waitFor { rule.onAllNodes(hasContentDescription("roi noir", substring = true, ignoreCase = true), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
         for (n in 1..3) {
             if (text("nulle est acquise") || text("perd la nulle") || text("vous maîtrisez")) break

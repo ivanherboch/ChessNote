@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck
 
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onAllNodesWithText
 import android.os.Looper
@@ -103,17 +104,23 @@ class TabletRobolectricTest {
         settle(2500)
         rule.onNodeWithText("Notation").performClick(); settle(1500); shot("o3_tablette_portrait_notation")
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("o4_tablette_portrait_academie")
+        rule.onNodeWithText("Mon parcours").assertExists()
     }
 
     @Test
     fun tabletLandscape() {
         settle(2500)
         rule.onNodeWithText("Notation").performClick(); settle(1500); shot("t1_notation")
-        rule.onNodeWithText("Académie").performClick(); settle(1500); shot("t2_academie")
-        rule.onNodeWithText("Entraînements", substring = true).performClick(); settle(1000); shot("t9_entrainements")
+        // Accueil de l'Académie en deux colonnes, puis une leçon, l'Atelier et une finale.
+        rule.onNodeWithText("Académie").performClick(); settle(1500); shot("t0_accueil")
+        rule.onNodeWithContentDescription("Ouvrir le catalogue des leçons").performClick(); settle(1000)
+        rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("trois principes"); settle(800)
+        rule.onNodeWithText("Les trois principes de l'ouverture").performClick(); settle(1500); shot("t2_academie")
+        rule.onNodeWithContentDescription("Revenir à l'accueil de l'Académie").performClick(); settle(1000)
+        rule.onNodeWithText("Finales contre l'Ordinateur").performClick(); settle(1000); shot("t9_atelier_finales")
         rule.onNodeWithText("Gagnez : Roi et dame contre roi").performScrollTo().performClick(); settle(1500); shot("t10_finale")
-        rule.onNodeWithContentDescription("Revenir aux entraînements").performClick(); settle(1000)
-        rule.onAllNodesWithContentDescription("Fermer").onLast().performClick(); settle(800)
+        rule.onNodeWithContentDescription("Revenir à l'Atelier").performClick(); settle(1000)
+        rule.onNodeWithContentDescription("Revenir à l'accueil de l'Académie").performClick(); settle(800)
         rule.onNodeWithText("Problèmes").performClick(); settle(2500); shot("t3_problemes")
         rule.onNodeWithText("Jeu Libre").performClick(); settle(2000); shot("t4_jeu")
         seedGame()
