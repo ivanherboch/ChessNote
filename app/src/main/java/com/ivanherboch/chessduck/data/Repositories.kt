@@ -25,6 +25,8 @@ interface SettingsRepository {
     suspend fun toggleRepertoire(lessonId: Int)
     /** Note une pratique réussie de la leçon [lessonId] (le point faible qu'elle enseigne recule dans le bilan). */
     suspend fun markLessonWorked(lessonId: Int, at: Long)
+    /** Note que la démonstration « Comprendre » de la leçon [lessonId] a été suivie jusqu'au bout. */
+    suspend fun markUnderstood(lessonId: Int)
 
     // Réglages globaux (tiroir Paramètres, mode enfant, style des images partagées).
     /** 0 = suivre le système, 1 = Jour, 2 = Nuit. */

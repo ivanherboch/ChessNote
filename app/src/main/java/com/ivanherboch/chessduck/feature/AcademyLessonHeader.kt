@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ivanherboch.chessduck.content.LessonCategory
 import com.ivanherboch.chessduck.ui.icons.Bookmark
@@ -99,9 +102,10 @@ internal const val STATUS_STARTED = "En cours"
 internal const val STATUS_MASTERED = "Maîtrisée"
 
 /** Statut d'une leçon d'après sa progression : maîtrisée, commencée (exercice tenté), ou à faire. */
-internal fun lessonStatus(p: com.ivanherboch.chessduck.data.LessonProgress?): String = when {
+internal fun lessonStatus(p: com.ivanherboch.chessduck.data.LessonProgress?, understood: Boolean = false): String = when {
+    p?.mastered == true -> STATUS_MASTERED
+    understood -> STATUS_STARTED
     p == null -> STATUS_TODO
-    p.mastered -> STATUS_MASTERED
     p.stars > 0 || p.practiceTotal > 0 || p.errors > 0 -> STATUS_STARTED
     else -> STATUS_TODO
 }
@@ -123,7 +127,13 @@ internal fun LessonModeBar(
     val inRepertoire = l.id in vm.repertoireIds.collectAsStateWithLifecycle().value
     val twoRows = LocalDensity.current.fontScale > 1.3f || variants || opening
     val modes: @Composable (Modifier) -> Unit = { m ->
-        DuckSegmentedRow(listOf("Comprendre", "Pratiquer"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) }, m)
+        // « Comprendre » suivi jusqu'au bout : une coche verte le signale sur l'onglet, même quand Pratiquer est ouvert.
+        val done = l.id in vm.understood.collectAsStateWithLifecycle().value
+        DuckSegmentedRow(
+            listOf("Comprendre", "Pratiquer"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) },
+            m.semantics { if (done) stateDescription = "Comprendre terminé" },
+            icons = listOf(if (done) Icons.Rounded.CheckCircle else null, null),
+        )
     }
     val tools: @Composable () -> Unit = {
         // Les variantes d'une ouverture se choisissent ici (dans les deux modes) ; hors répertoire et révision.

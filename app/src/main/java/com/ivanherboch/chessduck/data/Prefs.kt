@@ -62,6 +62,8 @@ data class Settings(
     val repertoireIds: Set<Int> = emptySet(),
     /** Dernière pratique réussie de chaque leçon (identifiant → horodatage) : un point faible travaillé recule. */
     val lessonWorkedAt: Map<Int, Long> = emptyMap(),
+    /** Leçons dont la démonstration « Comprendre » a été suivie jusqu'au bout. */
+    val understoodIds: Set<Int> = emptySet(),
     val pseudo: String = "Joueur",
     /** Second joueur humain du mode 2 joueurs. */
     val pseudo2: String = "Joueur 2",
@@ -112,6 +114,7 @@ class Prefs(private val context: Context) : SettingsRepository {
         val variantsDone = stringPreferencesKey("variants_done")
         val repertoireIds = stringPreferencesKey("academy_repertoire_ids")
         val workedAt = stringPreferencesKey("academy_lesson_worked_at")
+        val understood = stringPreferencesKey("academy_understood_ids")
         val pseudo = stringPreferencesKey("pseudo")
         val pseudo2 = stringPreferencesKey("pseudo2")
         val elo = intPreferencesKey("elo")
@@ -145,6 +148,7 @@ class Prefs(private val context: Context) : SettingsRepository {
             variantsDone = (p[K.variantsDone] ?: "").split(',').filter { it.isNotBlank() }.toSet(),
             repertoireIds = (p[K.repertoireIds] ?: "").split(',').mapNotNull { it.trim().toIntOrNull() }.toSet(),
             lessonWorkedAt = decodeWorked(p[K.workedAt]),
+            understoodIds = (p[K.understood] ?: "").split(',').mapNotNull { it.trim().toIntOrNull() }.toSet(),
             pseudo = p[K.pseudo] ?: "Joueur",
             pseudo2 = p[K.pseudo2] ?: "Joueur 2",
             elo = p[K.elo] ?: DEFAULT_ELO,
@@ -198,6 +202,10 @@ class Prefs(private val context: Context) : SettingsRepository {
     override suspend fun markVariantDone(key: String) { context.store.edit { p ->
         val done = (p[K.variantsDone] ?: "").split(',').filter { it.isNotBlank() }.toMutableSet()
         if (done.add(key)) p[K.variantsDone] = done.joinToString(",")
+    } }
+    override suspend fun markUnderstood(lessonId: Int) { context.store.edit { p ->
+        val ids = (p[K.understood] ?: "").split(',').mapNotNull { it.trim().toIntOrNull() }.toMutableSet()
+        if (ids.add(lessonId)) p[K.understood] = ids.sorted().joinToString(",")
     } }
     override suspend fun markLessonWorked(lessonId: Int, at: Long) { context.store.edit { p ->
         p[K.workedAt] = (decodeWorked(p[K.workedAt]) + (lessonId to at)).entries.joinToString(",") { "${it.key}:${it.value}" }

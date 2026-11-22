@@ -711,6 +711,9 @@ class AppRobolectricTest {
         rule.onNodeWithText("Lecture").assertExists(); shot("2d_comprendre")
         // Fin de la leçon : la suite du parcours (pratique) et la passerelle « Jouer la position » vers le Jeu Libre.
         desc("Aller à la fin").performClick(); settle(800); shot("2e_fin_lecon")
+        // Fin de Comprendre : la carte le dit en vert, l'onglet porte une coche.
+        rule.onNodeWithText("Comprendre terminé", substring = true).assertExists()
+        rule.onNode(androidx.compose.ui.test.hasStateDescription("Comprendre terminé")).assertExists()
         assertTrue(
             rule.onAllNodesWithText("Passer à la pratique").fetchSemanticsNodes().isNotEmpty() ||
                 rule.onAllNodesWithText("Question de fin").fetchSemanticsNodes().isNotEmpty(),

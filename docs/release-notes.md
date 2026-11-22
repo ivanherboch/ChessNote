@@ -1,3 +1,11 @@
+## ChessDuck 4.1.3 — fin de « Comprendre » bien signalée
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- À la fin de la démonstration, la carte devient verte avec « Comprendre terminé ✓ ».
+- Le bouton principal propose aussitôt la suite (« Question de fin » s'il y en a une, sinon « Passer à la pratique »), même pendant que la voix lit le dernier commentaire.
+- L'onglet « Comprendre » d'une leçon déjà suivie jusqu'au bout porte une coche, aussi en Pratiquer et lors des visites suivantes ; la leçon passe en « En cours » dans son en-tête.
+
 ## ChessDuck 4.1.2 — l'accueil de l'Académie tient sur un écran
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

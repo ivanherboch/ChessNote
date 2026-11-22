@@ -258,6 +258,24 @@ class ViewModelsTest {
         vm.setLevel(3); advanceUntilIdle()
     }
 
+    /** Comprendre suivi jusqu'au bout : la leçon est notée « comprise » (coche, statut « En cours »), pas avant. */
+    @Test
+    fun understandIsMarkedDoneAtTheEnd() = test {
+        val prefs = FakeSettings()
+        val vm = academy(prefs = prefs)
+        advanceUntilIdle()
+        val active = backgroundScope.launch { vm.understood.collect {} }
+        vm.open(5, guided = true); advanceUntilIdle()
+        vm.step(1); advanceUntilIdle()
+        assertFalse(5 in prefs.settings.first().understoodIds)
+        vm.last(); advanceUntilIdle()
+        assertTrue(5 in prefs.settings.first().understoodIds)
+        assertTrue(5 in vm.understood.value)
+        assertEquals("En cours", com.ivanherboch.chessduck.feature.lessonStatus(null, understood = true))
+        assertEquals("À faire", com.ivanherboch.chessduck.feature.lessonStatus(null))
+        active.cancel()
+    }
+
     /** Retour à l'accueil depuis une leçon lue à voix haute : la voix se tait aussitôt. */
     @Test
     fun goingHomeSilencesTheVoice() = test {

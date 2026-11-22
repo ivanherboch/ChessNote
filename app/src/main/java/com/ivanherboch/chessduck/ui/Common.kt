@@ -372,7 +372,7 @@ fun DuckSegmentedRow(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    icons: List<ImageVector>? = null,
+    icons: List<ImageVector?>? = null,
 ) {
     val c = LocalDuck.current
     SingleChoiceSegmentedButtonRow(modifier) {

@@ -44,6 +44,7 @@ class FakeSettings(initial: Settings = Settings(lessonId = 1, academyLevel = 2))
     }
     override suspend fun markThemeKnown(id: String) = flow.update { it.copy(knownThemePuzzles = it.knownThemePuzzles + id) }
     override suspend fun markVariantDone(key: String) = flow.update { it.copy(variantsDone = it.variantsDone + key) }
+    override suspend fun markUnderstood(lessonId: Int) = flow.update { it.copy(understoodIds = it.understoodIds + lessonId) }
     override suspend fun markLessonWorked(lessonId: Int, at: Long) = flow.update { it.copy(lessonWorkedAt = it.lessonWorkedAt + (lessonId to at)) }
     override suspend fun toggleRepertoire(lessonId: Int) = flow.update {
         it.copy(repertoireIds = if (lessonId in it.repertoireIds) it.repertoireIds - lessonId else it.repertoireIds + lessonId)

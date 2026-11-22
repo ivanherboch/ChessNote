@@ -76,6 +76,7 @@ fun AcademyScreen(
     val mastered by vm.mastered.collectAsStateWithLifecycle()
     val progress by vm.progress.collectAsStateWithLifecycle()
     val variantsDone by vm.variantsDone.collectAsStateWithLifecycle()
+    val understood by vm.understood.collectAsStateWithLifecycle()
     val eg by vm.endgame.state.collectAsStateWithLifecycle()
     val rx by vm.reflex.state.collectAsStateWithLifecycle()
     val narration by vm.narration.collectAsStateWithLifecycle()
@@ -165,7 +166,7 @@ fun AcademyScreen(
                 return@ModuleLayout
             }
             LessonSelector(
-                l, mastered, stars, lessonStatus(progress[l.id]), total, onCatalog = { catalog = true }, onHome = vm::goHome, onNext = vm::nextLesson,
+                l, mastered, stars, lessonStatus(progress[l.id], l.id in understood), total, onCatalog = { catalog = true }, onHome = vm::goHome, onNext = vm::nextLesson,
             )
             LessonModeBar(vm, s, l, variantsDone, onBrief = { brief = true })
         },
@@ -246,7 +247,10 @@ fun AcademyScreen(
                     )
                     // Dans une leçon, les tours sont numérotés depuis son début, quelle que soit la partie d'origine.
                     val inVariant = s.variant > 0 && cur > l.variants[s.variant - 1].from
+                    // Fin de la démonstration (ligne principale) : « Comprendre » est terminé, la carte le dit en vert.
+                    val finished = cur == line.size && s.variant == 0
                     val title = when {
+                        finished -> "Comprendre terminé ✓"
                         cur == 0 -> "Objectif de la leçon"
                         inVariant -> l.variants[s.variant - 1].title
                         else -> line.stepTitle(cur, first = 1)
@@ -260,12 +264,13 @@ fun AcademyScreen(
                         voiceTip != null -> voiceTip + "\n\n" + base
                         s.note != null -> s.note + "\n\n" + base
                         // Fin de la leçon : la suite du parcours est annoncée.
-                        cur == line.size -> base + if (quizPending) "\n\nUne question de fin, puis place à la pratique." else "\n\nÀ vous maintenant : touchez Passer à la pratique."
+                        cur == line.size -> base + if (quizPending) "\n\nUne question de fin, puis place à la pratique." else "\n\nÀ vous maintenant : touchez « Passer à la pratique »."
                         else -> base
                     }
                     val tone = when {
                         voiceTip != null -> Tone.GOLD
                         s.note != null -> s.noteTone
+                        finished -> Tone.GOOD
                         else -> Tone.INFO
                     }
                     FeedbackCard(
@@ -310,10 +315,11 @@ fun AcademyScreen(
                         DuckIconButton(Icons.Rounded.SkipPrevious, "Revenir au début", vm::rewind, enabled = cur > 0)
                         // La voix qui lit (l'objectif à l'ouverture, ou un commentaire) compte comme une lecture en cours :
                         // le bouton dit alors « Pause » et la suspend ; « Lecture » reprend la voix puis déroule les coups.
-                        // À la fin de la leçon : la question de fin s'il y en a une, puis le passage à la pratique.
+                        // À la fin de la leçon : la question de fin s'il y en a une, puis le passage à la pratique, proposé aussitôt
+                        // (même pendant que la voix lit le dernier commentaire ; le haut-parleur l'arrête).
                         val running = s.playing || speaking
                         when {
-                            cur < line.size || running -> DuckButton(
+                            cur < line.size -> DuckButton(
                                 if (running) "Pause" else "Lecture", { if (!s.playing && speaking) vm.pause() else vm.togglePlay() }, Modifier.weight(1f),
                                 accent = c.blue, filled = true, icon = if (running) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                             )

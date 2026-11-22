@@ -119,6 +119,10 @@ class AcademyViewModel(
     /** Variantes d'ouverture réussies en Défi (« leçon:variante ») : badge ✓ du menu Variantes. */
     val variantsDone: StateFlow<Set<String>> = prefs.settings.map { it.variantsDone }.distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+    /** Leçons dont « Comprendre » a été suivi jusqu'au bout (coche sur l'onglet, statut « En cours »). */
+    val understood: StateFlow<Set<Int>> = prefs.settings.map { it.understoodIds }.distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
     /** Ouvertures choisies par l'élève pour « Mon répertoire ». */
     val repertoireIds: StateFlow<Set<Int>> = prefs.settings.map { it.repertoireIds }.distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
@@ -380,6 +384,11 @@ class AcademyViewModel(
         val anim = LinePlaybackController.transition(ln, s.cursor, t)
         _state.update { it.copy(cursor = t, anim = anim, note = null, suggest = null, hintStage = if (it.challenge) it.hintStage else 0) }
         narrate()
+        // Fin de la démonstration (ligne principale, dans Comprendre) : la leçon est « comprise ».
+        if (t == ln.size && !s.challenge && s.variant == 0 && s.review == null && s.repertoire == null && lesson.id !in understood.value) {
+            val id = lesson.id
+            viewModelScope.launch { prefs.markUnderstood(id) }
+        }
     }
 
     // ---- QCM de fin de leçon ----
