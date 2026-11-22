@@ -190,6 +190,19 @@ data class DailyPlan(
         DailyStep.PUZZLES -> "Point faible"
     }
 
+    /** Détail de l'étape [st] : ce qui sera travaillé. */
+    fun stepDetail(st: DailyStep): String = when (st) {
+        DailyStep.REVIEWS -> "révisions ($dueCount)"
+        DailyStep.LESSON -> "leçon « ${lessonId?.let { Lessons.byId(it).title }} »"
+        DailyStep.PUZZLES -> "point faible « ${weak?.title} »"
+    }
+
+    /** Libellé du gros bouton : commencer la séance, la poursuivre, ou (terminée) continuer la leçon en cours. */
+    fun buttonLabel(): String? {
+        val n = next ?: return lessonId?.let { "Séance terminée ✓ · Continuer : ${Lessons.byId(it).title}" }
+        return (if (done.isEmpty()) "Commencer la séance" else "Suite de la séance") + " : " + stepDetail(n)
+    }
+
     /** Libellé du bouton de la séance : l'étape suivante, ou la leçon à continuer une fois la séance terminée. */
     fun actionLabel(): String? {
         val title = lessonId?.let { Lessons.byId(it).title }

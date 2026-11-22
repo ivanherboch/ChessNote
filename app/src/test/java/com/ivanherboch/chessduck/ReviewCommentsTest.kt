@@ -162,6 +162,24 @@ class ReviewCommentsTest {
         assertEquals(log, com.ivanherboch.chessduck.data.DailyLog.decode(log.encode()))
     }
 
+    /**
+     * Cas signalé : dame attaquée par la dame adverse (mais défendue) et cavalier attaqué par un pion. Qe2 « sauve » la
+     * dame mais perd le cavalier : le filet dit que la dame n'était pas en danger et conseille Qxd8+, qui ne perd rien.
+     */
+    @Test
+    fun netReasonExplainsTheRealDangerAndTheBestMove() {
+        // La partie de la capture : 1.e4 e5 2.Nf3 d5 3.d4 Nf6 4.Nc3 dxe4 5.dxe5 Be6.
+        val line = Line.fromSan(START_FEN, "e4 e5 Nf3 d5 d4 Nf6 Nc3 dxe4 dxe5 Be6".split(" "))
+        val p = line.last
+        val qe2 = com.ivanherboch.chessduck.chess.Move.fromUci("d1e2")
+        val r = ReviewComments.netReason(p, qe2, Analysis(0, 0, "d1d8"), Analysis(-300, null, "e4f3"))
+        assertTrue(r.text, "était attaquée, mais pas en danger" in r.text)
+        assertTrue(r.text, "exf3" in r.text)
+        assertTrue(r.text, "Coup conseillé : Qxd8+" in r.text)
+        assertEquals(com.ivanherboch.chessduck.chess.Move.fromUci("d1d8"), r.best)
+        assertEquals(com.ivanherboch.chessduck.feature.ReviewTopic.HANGING_PIECE, r.topic)
+    }
+
     /** Filet de sécurité : une gaffe arrêtée compte dans « À travailler », même sans partie enregistrée. */
     @Test
     fun netEventsFeedWeakTopics() {

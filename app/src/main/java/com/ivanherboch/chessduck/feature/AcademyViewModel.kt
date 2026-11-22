@@ -291,7 +291,7 @@ class AcademyViewModel(
      */
     fun setFilter(cat: LessonCategory?) = _state.update { it.copy(filter = cat) }
 
-    /** Choix manuel du palier (carte « Mon parcours » de l'accueil) : les leçons conseillées et les exercices suivent ce palier. */
+    /** Choix manuel du palier (carte « Séance du jour » de l'accueil) : les leçons conseillées et les exercices suivent ce palier. */
     fun setLevel(level: Int) {
         viewModelScope.launch { prefs.setAcademyLevel(level.coerceIn(1, 5)) }
     }

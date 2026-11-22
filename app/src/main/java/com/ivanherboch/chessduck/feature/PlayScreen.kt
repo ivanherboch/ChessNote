@@ -175,8 +175,11 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                     anim = s.anim,
                     arrows = when {
                         // « Pourquoi ? » : le coup envisagé (or) et la réponse adverse qui le punirait (rouge).
+                        // « Pourquoi ? » : le coup envisagé (or), la réponse qui le punit (rouge) et le coup conseillé (vert).
                         s.warning?.showWhy == true -> s.warning!!.let { w ->
-                            listOfNotNull(Arrow(w.move.from, w.move.to, c.gold), w.reply?.let { Arrow(it.from, it.to, c.red) })
+                            listOfNotNull(
+                                Arrow(w.move.from, w.move.to, c.gold), w.reply?.let { Arrow(it.from, it.to, c.red) }, w.best?.let { Arrow(it.from, it.to, c.green) },
+                            )
                         }
                         hint != null && s.hintStage >= 2 -> listOf(Arrow(hint.from, hint.to, c.green))
                         else -> emptyList()

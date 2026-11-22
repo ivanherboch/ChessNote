@@ -225,7 +225,7 @@ class AppRobolectricTest {
         // Retour Android pendant la séance : on revient à la sous-liste de l'Atelier qui l'a lancée, puis à l'accueil.
         val back = { rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1200) }
         back(); rule.onNodeWithText("Calcul à l'aveugle").assertExists(); shot("2t_atelier_reflexes")
-        back(); rule.onNodeWithText("Mon parcours").assertExists()
+        back(); rule.onNodeWithText("Séance du jour").assertExists()
     }
 
     private fun seedGame() = runBlocking {
@@ -619,7 +619,7 @@ class AppRobolectricTest {
             rule.onAllNodesWithContentDescription("Travailler ce point", substring = true).fetchSemanticsNodes().size == 3
         }
         settle(500); shot("2g_accueil_charge")
-        rule.onNodeWithText("Révisions du jour (", substring = true).assertExists()
+        rule.onNodeWithText("la séance : révisions (1)", substring = true).assertExists()
         val navTop = rule.onAllNodesWithText("Problèmes").onFirst().fetchSemanticsNode().boundsInRoot.top
         // Position réelle (non rognée par la zone visible) du bas de la dernière carte.
         val lastTile = rule.onNodeWithText("Tests de niveau").fetchSemanticsNode().let { it.positionInRoot.y + it.size.height }
@@ -700,7 +700,7 @@ class AppRobolectricTest {
         assertTrue(rule.onAllNodesWithText("Conseillée", substring = true).fetchSemanticsNodes().isEmpty())
         desc("Revenir à l'accueil de l'Académie").performClick(); settle(1200)
         shot("2p_accueil_grande_police")
-        rule.onNodeWithText("Mon parcours").assertExists()
+        rule.onNodeWithText("Séance du jour").assertExists()
     }
 
     @Test
@@ -749,7 +749,7 @@ class AppRobolectricTest {
         close(); settle(800)
         // Accueil de l'Académie (← de la leçon), puis l'Atelier : réflexes, finales jouables ; variantes, QCM et partie modèle.
         desc("Revenir à l'accueil de l'Académie").performClick(); settle(1200); shot("2g_accueil")
-        rule.onNodeWithText("Mon parcours").assertExists()
+        rule.onNodeWithText("Séance du jour").assertExists()
         rule.onAllNodesWithText("Entraînements", substring = true).assertCountEquals(0)
         rule.onNodeWithText("Tests de niveau").performScrollTo(); settle(400); shot("2g_accueil_atelier")
         rule.onNodeWithText("Réflexes & Calcul").performScrollTo().performClick(); settle(1000); shot("2g_atelier_reflexes")
@@ -818,7 +818,7 @@ class AppRobolectricTest {
         val back = { rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }; settle(1200) }
         back(); desc("Catalogue des problèmes").assertExists()
         back(); desc("Leçon suivante").assertExists() // la leçon laissée ouverte
-        back(); rule.onNodeWithText("Mon parcours").assertExists() // puis l'accueil de l'Académie
+        back(); rule.onNodeWithText("Séance du jour").assertExists() // puis l'accueil de l'Académie
         back(); desc("Historique des parties").assertExists() // Jeu Libre, ouvert depuis l'Académie
         back(); desc("Mémo anglais").assertExists()
         rule.onNodeWithText("Jeu Libre").performClick(); settle(1500)

@@ -74,7 +74,7 @@ import com.ivanherboch.chessduck.ui.icons.LocalFireDepartment
 import com.ivanherboch.chessduck.ui.icons.MenuBook
 import com.ivanherboch.chessduck.ui.icons.SportsScore
 
-// Accueil de l'Académie (« Mon parcours », « À travailler », « Leçons », « Atelier ») et sous-listes de l'Atelier.
+// Accueil de l'Académie (« Séance du jour », « À travailler », « Leçons », « Atelier ») et sous-listes de l'Atelier.
 
 /**
  * Accueil de l'Académie, ouvert à chaque arrivée sur l'onglet : le palier et sa progression avec une seule action
@@ -127,20 +127,28 @@ private fun HomeCard(title: String?, accent: Color? = null, content: @Composable
 }
 
 /**
- * « Mon parcours » : palier et « Changer de palier » sur une ligne, la progression du palier, puis la « Séance du jour »
- * (révisions, leçon, point faible, cochés une fois faits, et la série de jours) avec un seul bouton pour l'étape suivante.
+ * « Séance du jour » : titre, série de jours, palier et « Changer de palier », progression du palier, étapes numérotées
+ * (révisions, leçon, point faible, cochées une fois faites) et un seul bouton pour commencer ou poursuivre la séance.
  * Compacte, pour que tout l'accueil tienne sur un écran de téléphone sans défilement.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun JourneyCard(vm: AcademyViewModel, home: AcademyHome, onLevels: () -> Unit) {
     val c = LocalDuck.current
-    HomeCard(null) {
+    val plan by vm.daily.collectAsStateWithLifecycle()
+    // Carte principale de l'accueil : la « Séance du jour » (bord vert), avec le palier et sa progression en sous-titre.
+    HomeCard(null, accent = c.greenRole.fill) {
         val heading: @Composable (Modifier) -> Unit = { m ->
             Column(m) {
-                Text("Mon parcours", color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Séance du jour", color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+                    if (plan.streak > 0) Text(
+                        "  🔥 ${plan.streak} jour${if (plan.streak > 1) "s" else ""}", color = c.goldText, style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.semantics { contentDescription = "Série : ${plan.streak} jour${if (plan.streak > 1) "s" else ""} d'affilée" },
+                    )
+                }
                 Text(
-                    "Palier ${levelName(home.level)}", color = c.blueText, style = MaterialTheme.typography.titleSmall,
+                    "Palier ${levelName(home.level)}", color = c.blueText, style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.semantics { contentDescription = "Palier ${levelSpoken(home.level)}" },
                 )
             }
@@ -157,7 +165,7 @@ private fun JourneyCard(vm: AcademyViewModel, home: AcademyHome, onLevels: () ->
             val exam = home.level in home.examsPassed
             val text = "${home.levelMastered}/${home.levelTotal} maîtrisée${if (home.levelMastered > 1) "s" else ""}" + if (exam) " · examen réussi" else ""
             Row(
-                Modifier.fillMaxWidth().padding(top = 6.dp).semantics(mergeDescendants = true) {
+                Modifier.fillMaxWidth().padding(top = 4.dp).semantics(mergeDescendants = true) {
                     contentDescription = "Palier ${home.level} : ${home.levelMastered} leçons maîtrisées sur ${home.levelTotal}" + if (exam) ", examen réussi" else ""
                 },
                 verticalAlignment = Alignment.CenterVertically,
@@ -171,28 +179,32 @@ private fun JourneyCard(vm: AcademyViewModel, home: AcademyHome, onLevels: () ->
                 Text(text, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp))
             }
         }
-        // Séance du jour : les étapes (cochées une fois faites) et un seul bouton qui lance la suivante.
-        val plan by vm.daily.collectAsStateWithLifecycle()
+        // Les étapes du jour, numérotées, en pastilles : cochées en vert une fois faites.
         if (plan.steps.isNotEmpty()) FlowRow(
-            Modifier.fillMaxWidth().padding(top = 6.dp).semantics(mergeDescendants = true) {
-                contentDescription = "Séance du jour : " + plan.steps.joinToString(", ") { st ->
+            Modifier.fillMaxWidth().padding(top = 8.dp).semantics(mergeDescendants = true) {
+                contentDescription = "Étapes de la séance : " + plan.steps.joinToString(", ") { st ->
                     plan.stepName(st) + if (st in plan.done) " faite" else " à faire"
-                } + if (plan.streak > 0) ". Série : ${plan.streak} jour${if (plan.streak > 1) "s" else ""}" else ""
+                }
             },
-            horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text("Séance du jour", color = c.text, style = MaterialTheme.typography.labelLarge)
-            for (st in plan.steps) {
+            plan.steps.forEachIndexed { i, st ->
                 val ok = st in plan.done
-                Text((if (ok) "✓ " else "○ ") + plan.stepName(st), color = if (ok) c.greenText else c.muted, style = MaterialTheme.typography.labelMedium)
+                val current = st == plan.next
+                Text(
+                    (if (ok) "✓ " else "${i + 1}. ") + plan.stepName(st),
+                    color = when { ok -> c.greenText; current -> c.text; else -> c.muted },
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.clip(RoundedCornerShape(DuckRadius.S))
+                        .background(if (current) c.greenRole.fill.copy(alpha = 0.18f) else c.surfaceHi)
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                )
             }
-            if (plan.streak > 0) Text("🔥 ${plan.streak} j", color = c.goldText, style = MaterialTheme.typography.labelMedium)
         }
-        plan.actionLabel()?.let { label ->
+        plan.buttonLabel()?.let { label ->
             DuckButton(
-                if (plan.finished) "Séance terminée ✓ · $label" else label, vm::startDaily, Modifier.fillMaxWidth().padding(top = 6.dp),
+                label, vm::startDaily, Modifier.fillMaxWidth().padding(top = 8.dp),
                 accent = c.green, filled = true, icon = if (plan.finished) Icons.AutoMirrored.Rounded.ArrowForward else Icons.Rounded.PlayArrow,
-                contentDescription = if (plan.finished) "Séance du jour terminée. $label" else "Séance du jour, étape suivante : $label",
             )
         }
     }

@@ -1,3 +1,13 @@
+## ChessDuck 4.2.2 — Séance du jour bien visible, filet de sécurité plus juste
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Accueil de l'Académie : la première carte s'appelle désormais « Séance du jour » (bord vert), avec la série de jours, le palier, les étapes numérotées en pastilles (l'étape en cours surlignée, ✓ une fois faite) et un gros bouton « Commencer la séance : … » puis « Suite de la séance : … ».
+- Filet de sécurité :
+  - quand la pièce que vous déplacez était attaquée mais pas en danger (défendue, un échange ne vous ferait rien perdre), il le dit, puis nomme le vrai problème (« Le vrai problème : Qe2 laisse votre cavalier en f3… ») ;
+  - « Pourquoi ? » donne aussi le coup conseillé (flèche verte), qui ne perd rien ;
+  - deuxième arrêt dans la même position : l'explication et le coup conseillé s'affichent d'emblée, pour ne plus tourner en rond quand presque tous les coups perdent du matériel.
+
 ## ChessDuck 4.2.0 — Séance du jour et filet de sécurité
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

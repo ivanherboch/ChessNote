@@ -221,6 +221,10 @@ class PlayViewModel(
      * Vérifie le coup avant de le jouer : s'il fait perdre au moins [BLUNDER_CP] centipions (sans que la partie soit
      * déjà perdue), le coup est arrêté et la question réflexe s'affiche, sans dévoiler la réponse adverse.
      */
+    /** Position (demi-coup et ligne) du dernier arrêt : un deuxième arrêt au même endroit montre la solution. */
+    private var stopPly = -1
+    private var stopLine: Line? = null
+
     private fun coach(s: PlayState, m: Move) {
         analysisJob?.cancel()
         val gen = gameGeneration
@@ -240,13 +244,17 @@ class PlayViewModel(
             }
             val reply = res.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { after.isLegal(it) }
             // L'explication de la revue de partie, montrée à la demande (« Pourquoi ? »), et le point faible révélé.
-            val (why, topic) = runCatching { ReviewComments.netReason(pos, m, before, res) }.getOrDefault(null to null)
+            val reason = runCatching { ReviewComments.netReason(pos, m, before, res) }.getOrNull()
             val net = !s.fromPosition
-            if (net && topic != null) launch { prefs.addNetEvent(topic.name, System.currentTimeMillis()) }
+            reason?.topic?.let { t -> if (net) launch { prefs.addNetEvent(t.name, System.currentTimeMillis()) } }
+            // Deuxième arrêt dans la même position : l'explication et le coup conseillé s'affichent d'emblée (on ne tourne
+            // pas en rond quand presque tous les coups perdent du matériel).
+            val again = stopPly == s.cursor && stopLine === s.line
+            stopPly = s.cursor; stopLine = s.line
             _state.update {
                 it.copy(
                     checking = false, coachLeft = it.coachLeft - 1, netUsed = it.netUsed || net,
-                    warning = CoachWarning(m, coachText(pos.san(m), after, reply, net), why, reply),
+                    warning = CoachWarning(m, coachText(pos.san(m), after, reply, net), reason?.text, reply, showWhy = again && reason != null, best = reason?.best),
                 )
             }
         }
@@ -475,6 +483,8 @@ data class CoachWarning(
     /** Réponse adverse qui punirait le coup (flèche rouge une fois l'explication montrée). */
     val reply: Move? = null,
     val showWhy: Boolean = false,
+    /** Coup conseillé (flèche verte une fois l'explication montrée). */
+    val best: Move? = null,
 )
 
 /** Arrêts de la partie accompagnée (une ou deux fois par partie), et seuils (centipions). */

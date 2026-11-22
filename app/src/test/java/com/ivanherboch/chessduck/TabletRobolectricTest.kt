@@ -104,7 +104,7 @@ class TabletRobolectricTest {
         settle(2500)
         rule.onNodeWithText("Notation").performClick(); settle(1500); shot("o3_tablette_portrait_notation")
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("o4_tablette_portrait_academie")
-        rule.onNodeWithText("Mon parcours").assertExists()
+        rule.onNodeWithText("Séance du jour").assertExists()
         // Une leçon (Comprendre | Pratiquer) et une sous-liste de l'Atelier en portrait.
         rule.onNodeWithContentDescription("Ouvrir le catalogue des leçons").performClick(); settle(1000)
         rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("trois principes"); settle(800)

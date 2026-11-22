@@ -1201,7 +1201,7 @@ class ViewModelsTest {
         advanceUntilIdle()
         val plan = vm.daily.value
         assertEquals(listOf(com.ivanherboch.chessduck.feature.DailyStep.REVIEWS, com.ivanherboch.chessduck.feature.DailyStep.LESSON), plan.steps)
-        assertEquals("Révisions du jour (1)", plan.actionLabel())
+        assertEquals("Commencer la séance : révisions (1)", plan.buttonLabel())
         // Le bouton lance la première étape : les révisions.
         vm.startDaily(); advanceUntilIdle()
         assertNotNull(vm.state.value.review)
@@ -1219,6 +1219,7 @@ class ViewModelsTest {
         advanceUntilIdle()
         assertTrue(vm.daily.value.finished)
         assertEquals(1, vm.daily.value.streak)
+        assertTrue(vm.daily.value.buttonLabel()!!.startsWith("Séance terminée ✓"))
         sub.cancel()
     }
 

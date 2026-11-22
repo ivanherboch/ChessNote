@@ -441,7 +441,7 @@ private fun DailyBanner(vm: AcademyViewModel, modifier: Modifier) {
     ) {
         Text(
             if (plan.finished) "Séance du jour terminée ✓" + (if (plan.streak > 0) " · 🔥 ${plan.streak} jour${if (plan.streak > 1) "s" else ""}" else "")
-            else "Étape terminée ✓ · Suite : ${label.orEmpty()}",
+            else "Étape terminée ✓ · Suite : ${plan.next?.let { plan.stepDetail(it) }.orEmpty()}",
             color = c.text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f),
         )
         if (!plan.finished && label != null) DuckButton(

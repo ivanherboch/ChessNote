@@ -108,10 +108,26 @@ object ReviewComments {
      * Filet de sécurité du Jeu Libre : pourquoi le coup [m] du joueur humain serait une gaffe (phrase complète) et le
      * point faible qu'il révèle (null s'il ne relève d'aucun thème de l'Académie).
      */
-    fun netReason(p: Position, m: Move, a0: Analysis, a1: Analysis): Pair<String, ReviewTopic?> {
-        val (text, topic) = diagnose(Voice("", true, p.whiteToMove), p, m, p.san(m), a0, a1)
-        return text.replaceFirstChar { it.uppercase() } to topic
+    fun netReason(p: Position, m: Move, a0: Analysis, a1: Analysis): NetReason {
+        val v = Voice("", true, p.whiteToMove)
+        val (text, topic) = diagnose(v, p, m, p.san(m), a0, a1)
+        // La pièce jouée était attaquée : le joueur croit souvent devoir la sauver. On dit si elle l'était vraiment.
+        val moved = pieceType(p[m.from])
+        val e = if (PieceLexiconFr.isFeminine(moved)) "e" else ""
+        val pre = when {
+            moved == KING || moved == PAWN || p.attackers(m.from, !p.whiteToMove).isEmpty() -> ""
+            attackedCheaply(p, m.from) -> "Mettre ${poss(v, moved)} à l'abri était nécessaire, mais "
+            else -> "${poss(v, moved).replaceFirstChar { it.uppercase() }} en ${sqName(m.from)} était attaqué$e, mais pas en danger : " +
+                "${if (e.isEmpty()) "il" else "elle"} est défendu$e, et un échange ne vous ferait rien perdre. Le vrai problème : "
+        }
+        val body = if (pre.isEmpty()) text.replaceFirstChar { it.uppercase() } else pre + text
+        // Le coup conseillé : il évite la perte (souvent, il règle les deux problèmes à la fois).
+        val best = a0.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { p.isLegal(it) && it != m }
+        return NetReason(body + (best?.let { "\n\nCoup conseillé : ${p.san(it)}, qui ne perd rien." } ?: ""), topic, best)
     }
+
+    /** Explication du filet de sécurité : texte, point faible révélé, coup conseillé (flèche verte). */
+    data class NetReason(val text: String, val topic: ReviewTopic?, val best: Move?)
 
     internal fun isFork(p: Position, m: Move): Boolean {
         val white = p.whiteToMove
