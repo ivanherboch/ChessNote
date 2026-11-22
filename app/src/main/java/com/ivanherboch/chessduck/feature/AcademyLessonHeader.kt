@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ivanherboch.chessduck.content.LessonCategory
+import com.ivanherboch.chessduck.ui.icons.Bookmark
+import com.ivanherboch.chessduck.ui.icons.BookmarkBorder
 import com.ivanherboch.chessduck.content.Lesson
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material.icons.rounded.Info
@@ -113,13 +117,21 @@ internal fun LessonModeBar(
 ) {
     val c = LocalDuck.current
     val variants = l.variants.isNotEmpty() && s.repertoire == null && s.review == null
-    val twoRows = LocalDensity.current.fontScale > 1.3f || variants
+    // Ouverture : signet « Dans mon répertoire » (hors séances de révision et de répertoire).
+    val opening = l.category == LessonCategory.OPENING && s.repertoire == null && s.review == null
+    val inRepertoire = l.id in vm.repertoireIds.collectAsStateWithLifecycle().value
+    val twoRows = LocalDensity.current.fontScale > 1.3f || variants || opening
     val modes: @Composable (Modifier) -> Unit = { m ->
         DuckSegmentedRow(listOf("Comprendre", "Pratiquer"), if (s.challenge) 1 else 0, { i -> vm.setChallenge(i == 1) }, m)
     }
     val tools: @Composable () -> Unit = {
         // Les variantes d'une ouverture se choisissent ici (dans les deux modes) ; hors répertoire et révision.
         if (variants) VariantMenu(l, s.variant, vm::setVariant, variantsDone)
+        if (opening) DuckIconButton(
+            if (inRepertoire) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
+            if (inRepertoire) "Dans mon répertoire : toucher pour la retirer" else "Ajouter cette ouverture à mon répertoire",
+            { vm.toggleRepertoire(l.id) }, selected = inRepertoire, accent = c.gold,
+        )
         // Même hauteur visible que les segments Comprendre | Pratiquer (40 dp) ; la cible tactile reste de 48 dp.
         DuckButton(
             "Fiche", onBrief, accent = c.blue, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Info, height = 40.dp,

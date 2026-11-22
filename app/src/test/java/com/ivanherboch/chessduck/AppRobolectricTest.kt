@@ -635,9 +635,14 @@ class AppRobolectricTest {
         close(); settle(800)
         rule.onNodeWithText("Académie").performClick(); settle(1500)
         openLesson("trois principes", "Les trois principes de l'ouverture"); shot("2_academie")
-        // Toute leçon a sa fiche (ici une leçon des bases, sans idées ni pièges rédigés) : objectif, règle, moments clés.
+        // Ouverture : le signet l'ajoute à « Mon répertoire ».
+        desc("Ajouter cette ouverture à mon répertoire").performClick(); settle(600)
+        desc("Dans mon répertoire").assertExists()
+        // Toute leçon a sa fiche en 3 sections : l'essentiel, idées et pièges, moments clés.
         desc("Fiche de la leçon").performClick(); settle(800); shot("2w_fiche_bases")
-        rule.onNodeWithText("Les moments clés").performScrollTo().assertExists()
+        rule.onNodeWithText("L'essentiel").assertExists()
+        rule.onNodeWithText("Dans mon répertoire").assertExists()
+        rule.onNodeWithText("Moments clés").performScrollTo().assertExists()
         close(); settle(600)
         // Comprendre : démonstration sans arrêt bloquant ; la barre du bas garde ses quatre commandes.
         repeat(4) { desc("Coup suivant").performClick(); settle(500) }
@@ -683,13 +688,21 @@ class AppRobolectricTest {
         desc("Retourner l'échiquier").assertExists() // le retournement reste offert pendant une séance
         desc("Revenir à l'Atelier").performClick(); settle(1000)
         desc("Revenir à l'accueil de l'Académie").performClick(); settle(1000)
+        // Mon répertoire : l'ouverture ajoutée par le signet, et la liste des ouvertures à choisir.
+        rule.onNodeWithText("Mon répertoire").performScrollTo().performClick(); settle(1000)
+        rule.onNodeWithText("1 ouverture dans votre répertoire", substring = true).assertExists(); shot("2k_atelier_repertoire")
+        rule.onAllNodesWithText("Choisir mes ouvertures")[0].performClick(); settle(800); shot("2k_atelier_repertoire_choix")
+        desc("Revenir à l'accueil de l'Académie").performClick(); settle(1000)
+        rule.onNodeWithText("Tests de niveau").performScrollTo().performClick(); settle(1000); shot("2k_atelier_tests")
+        rule.onNodeWithText("Test de placement").assertExists()
+        desc("Revenir à l'accueil de l'Académie").performClick(); settle(1000)
         openLesson("trois principes", "Les trois principes de l'ouverture")
         // Après « Les trois principes » vient « Le mat du berger », puis la partie italienne (variantes et QCM).
         desc("Leçon suivante").performClick(); settle(1200)
         desc("Leçon suivante").performClick(); settle(1200)
         // Position de départ : résumé seul ; la fiche complète (idées, pièges) s'ouvre dans un tiroir.
         desc("Fiche de la leçon").performClick(); settle(800); shot("2u_fiche")
-        rule.onNodeWithText("Les pièges").performScrollTo().assertExists()
+        rule.onNodeWithText("Idées et pièges").performScrollTo().assertExists()
         close(); settle(600)
         rule.onNodeWithText("Variantes").performClick(); settle(500)
         rule.onNodeWithText("Si 3… Nf6").performClick(); settle(1000); shot("2l_variante")

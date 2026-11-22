@@ -337,7 +337,7 @@ internal class PracticeSeries(
         val total = pr.ids.size
         val text = when (pr.kind) {
             PracticeKind.LESSON -> lessonPracticeDone(score, total)
-            PracticeKind.REVIEW -> { host.completeReview(score >= 1, host.reviewFluent && score == total); "$score sur $total." + if (score >= 1) " Révision réussie." else " Révision à refaire demain." }
+            PracticeKind.REVIEW -> { host.completeReview(score >= 1, host.reviewFluent && score == total && !pr.hadError && !pr.arrowUsed); "$score sur $total." + if (score >= 1) " Révision réussie." else " Révision à refaire demain." }
             PracticeKind.ONLY_MOVE -> "$score sur $total. " + if (score >= PASS) "Vous savez repérer la menace et la parer." else "Cherchez d'abord la menace adverse, puis la seule parade."
             PracticeKind.PLACEMENT -> {
                 val level = AcademyAssessments.placementLevel(pr.results)

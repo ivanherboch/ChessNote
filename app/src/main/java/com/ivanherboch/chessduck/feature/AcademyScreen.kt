@@ -135,7 +135,11 @@ fun AcademyScreen(
     val context = LocalContext.current
     val sheets: @Composable () -> Unit = {
         if (catalog) LessonCatalog(vm, s, mastered, catalogStatus, { catalogStatus = it }, catalogLevel, { catalogLevel = it }) { catalog = false }
-        if (brief) LessonBriefSheet(l) { brief = false }
+        val repertoire by vm.repertoireIds.collectAsStateWithLifecycle()
+        if (brief) LessonBriefSheet(
+            l, { brief = false }, inRepertoire = (l.id in repertoire).takeIf { l.category == com.ivanherboch.chessduck.content.LessonCategory.OPENING },
+            onToggleRepertoire = { vm.toggleRepertoire(l.id) },
+        )
         playChoice?.let { fen -> ChooseColorSheet(fen, l, { white -> playChoice = null; onPlayPosition(fen, white) }) { playChoice = null } }
     }
     // Accueil et Atelier : pas d'échiquier ; le catalogue s'ouvre depuis l'accueil, filtré au besoin.

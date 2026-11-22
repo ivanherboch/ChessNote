@@ -1,5 +1,10 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.background
+import com.ivanherboch.chessduck.ui.icons.BookmarkBorder
+import com.ivanherboch.chessduck.ui.icons.Bookmark
+import androidx.compose.ui.semantics.stateDescription
 import com.ivanherboch.chessduck.ui.moveLabel
 import com.ivanherboch.chessduck.content.PuzzleThemes
 import androidx.compose.ui.semantics.Role
@@ -118,43 +123,53 @@ internal fun ChooseColorSheet(fen: String, l: Lesson, onPick: (Boolean) -> Unit,
 }
 
 /**
- * Fiche de la leçon dans un tiroir, pour toutes les leçons : objectif, règle, thème tactique, moments clés (coups des arrêts
- * « À vous »), et, quand la leçon en a, conditions, idées et pièges. L'échiquier garde toute sa taille.
+ * Fiche de la leçon dans un tiroir, en 3 sections : l'essentiel (objectif, règle à retenir, conditions), les idées et
+ * pièges (avec le conseil du thème), les moments clés. Une ouverture s'y ajoute (ou s'y retire) de « Mon répertoire ».
  */
 @Composable
-internal fun LessonBriefSheet(l: Lesson, onClose: () -> Unit) {
+internal fun LessonBriefSheet(
+    l: Lesson, onClose: () -> Unit,
+    /** Ouverture : dans « Mon répertoire » (null : leçon qui n'est pas une ouverture). */
+    inRepertoire: Boolean? = null, onToggleRepertoire: () -> Unit = {},
+) {
     val c = LocalDuck.current
+    val body = MaterialTheme.typography.bodyMedium
     DuckSheet("Fiche de la leçon", onClose) {
         Text(l.title, color = c.text, style = MaterialTheme.typography.titleMedium)
-        SectionTitle("Objectif")
-        Text(l.summary, color = c.text, style = MaterialTheme.typography.bodyMedium)
-        SectionTitle("À retenir")
-        Text(l.takeaway, color = c.text, style = MaterialTheme.typography.bodyMedium)
-        // Thème tactique de la leçon : son but et le conseil des Problèmes.
-        PuzzleThemes.byKey[l.theme]?.let { t ->
-            SectionTitle("Thème : ${t.name}")
-            Text(t.goal + if (t.tip.isNotEmpty()) " ${t.tip}" else "", color = c.text, style = MaterialTheme.typography.bodyMedium)
+        if (inRepertoire != null) DuckButton(
+            if (inRepertoire) "Dans mon répertoire" else "Ajouter à mon répertoire", onToggleRepertoire,
+            Modifier.fillMaxWidth().padding(top = 6.dp).semantics { stateDescription = if (inRepertoire) "ajoutée" else "non ajoutée" },
+            accent = c.gold, variant = if (inRepertoire) ButtonVariant.PRIMARY else ButtonVariant.OUTLINED,
+            icon = if (inRepertoire) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
+        )
+        // 1. L'essentiel : l'objectif, la règle à retenir mise en avant, et les conditions s'il y en a.
+        SectionTitle("L'essentiel")
+        Text(l.summary, color = c.text, style = body)
+        Column(
+            Modifier.fillMaxWidth().padding(vertical = 8.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surfaceHi)
+                .border(1.dp, c.goldRole.fill, RoundedCornerShape(DuckRadius.M)).padding(12.dp)
+                .semantics(mergeDescendants = true) {},
+        ) {
+            Text("À retenir", color = c.goldText, style = MaterialTheme.typography.labelLarge)
+            Text(l.takeaway, color = c.text, style = body)
         }
-        // Moments clés : les coups à trouver aux arrêts « À vous », avec leur commentaire.
+        if (l.conditions.isNotEmpty()) Text("Conditions : ${l.conditions}", color = c.text, style = body)
+        // 2. Idées et pièges (« Pour vous » / « Contre vous »), puis le conseil du thème tactique.
+        val theme = PuzzleThemes.byKey[l.theme]
+        if (l.ideas.isNotEmpty() || l.traps.isNotEmpty() || theme != null) {
+            SectionTitle("Idées et pièges")
+            for (t in l.ideas) Text("• $t", color = c.text, style = body, modifier = Modifier.padding(bottom = 4.dp))
+            for (t in l.traps) Text("• $t", color = c.text, style = body, modifier = Modifier.padding(bottom = 4.dp))
+            theme?.let { t -> Text("Thème « ${t.name} » : ${t.goal}" + if (t.tip.isNotEmpty()) " ${t.tip}" else "", color = c.muted, style = body) }
+        }
+        // 3. Moments clés : les coups clés de la leçon (ceux de Pratiquer), avec leur explication.
         val key = l.pauseSteps.filter { it < l.line.size }.sorted()
         if (key.isNotEmpty()) {
-            SectionTitle("Les moments clés")
+            SectionTitle("Moments clés")
             for (i in key) {
                 val label = moveLabel(l.line.turnOf(i, first = 1), l.line.positions[i].whiteToMove, l.line.sans[i])
-                Text("• $label : ${l.texts[i]}", color = c.text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 4.dp))
+                Text("• $label : ${l.texts[i]}", color = c.text, style = body, modifier = Modifier.padding(bottom = 4.dp))
             }
-        }
-        if (l.conditions.isNotEmpty()) {
-            SectionTitle("Conditions")
-            Text(l.conditions, color = c.text, style = MaterialTheme.typography.bodyMedium)
-        }
-        if (l.ideas.isNotEmpty()) {
-            SectionTitle("Les idées")
-            for (t in l.ideas) Text("• $t", color = c.text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 4.dp))
-        }
-        if (l.traps.isNotEmpty()) {
-            SectionTitle("Les pièges")
-            for (t in l.traps) Text("• $t", color = c.text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 4.dp))
         }
     }
 }

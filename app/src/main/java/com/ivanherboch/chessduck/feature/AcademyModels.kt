@@ -92,8 +92,6 @@ data class AcademyHome(
  */
 enum class AcademyRoute { HOME, LESSON, WORKSHOP_ENDGAMES, WORKSHOP_REFLEX, WORKSHOP_REPERTOIRE, WORKSHOP_TESTS }
 
-/** Comment une leçon se valide après le Défi. */
-enum class Validation { NONE, PUZZLES, ENDGAME }
 
 @Immutable
 data class AcademyState(

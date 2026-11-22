@@ -21,6 +21,8 @@ interface SettingsRepository {
     /** Mémorise que le thème de ce problème récent était visible quand il a été joué (anti-spoiler levé). */
     suspend fun markThemeKnown(id: String)
     suspend fun markVariantDone(key: String)
+    /** Ajoute l'ouverture [lessonId] à « Mon répertoire », ou l'en retire si elle y est déjà. */
+    suspend fun toggleRepertoire(lessonId: Int)
 
     // Réglages globaux (tiroir Paramètres, mode enfant, style des images partagées).
     /** 0 = suivre le système, 1 = Jour, 2 = Nuit. */

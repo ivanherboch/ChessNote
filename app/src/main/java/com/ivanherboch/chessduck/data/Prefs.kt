@@ -58,6 +58,8 @@ data class Settings(
     val knownThemePuzzles: Set<String> = emptySet(),
     /** Variantes d'ouverture réussies en Défi (« leçon:variante »). */
     val variantsDone: Set<String> = emptySet(),
+    /** Ouvertures (identifiants de leçon) que l'élève a mises dans « Mon répertoire ». */
+    val repertoireIds: Set<Int> = emptySet(),
     val pseudo: String = "Joueur",
     /** Second joueur humain du mode 2 joueurs. */
     val pseudo2: String = "Joueur 2",
@@ -106,6 +108,7 @@ class Prefs(private val context: Context) : SettingsRepository {
         val recent = stringPreferencesKey("recent_puzzles")
         val knownThemes = stringPreferencesKey("recent_known_themes")
         val variantsDone = stringPreferencesKey("variants_done")
+        val repertoireIds = stringPreferencesKey("academy_repertoire_ids")
         val pseudo = stringPreferencesKey("pseudo")
         val pseudo2 = stringPreferencesKey("pseudo2")
         val elo = intPreferencesKey("elo")
@@ -137,6 +140,7 @@ class Prefs(private val context: Context) : SettingsRepository {
             recentPuzzles = (p[K.recent] ?: "").split(',').filter { it.isNotBlank() },
             knownThemePuzzles = (p[K.knownThemes] ?: "").split(',').filter { it.isNotBlank() }.toSet(),
             variantsDone = (p[K.variantsDone] ?: "").split(',').filter { it.isNotBlank() }.toSet(),
+            repertoireIds = (p[K.repertoireIds] ?: "").split(',').mapNotNull { it.trim().toIntOrNull() }.toSet(),
             pseudo = p[K.pseudo] ?: "Joueur",
             pseudo2 = p[K.pseudo2] ?: "Joueur 2",
             elo = p[K.elo] ?: DEFAULT_ELO,
@@ -190,6 +194,11 @@ class Prefs(private val context: Context) : SettingsRepository {
     override suspend fun markVariantDone(key: String) { context.store.edit { p ->
         val done = (p[K.variantsDone] ?: "").split(',').filter { it.isNotBlank() }.toMutableSet()
         if (done.add(key)) p[K.variantsDone] = done.joinToString(",")
+    } }
+    override suspend fun toggleRepertoire(lessonId: Int) { context.store.edit { p ->
+        val ids = (p[K.repertoireIds] ?: "").split(',').mapNotNull { it.trim().toIntOrNull() }.toMutableSet()
+        if (!ids.remove(lessonId)) ids.add(lessonId)
+        p[K.repertoireIds] = ids.sorted().joinToString(",")
     } }
     override suspend fun setPseudo(v: String) { context.store.edit { it[K.pseudo] = v } }
     override suspend fun setPseudo2(v: String) { context.store.edit { it[K.pseudo2] = v } }

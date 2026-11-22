@@ -1,5 +1,11 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.runtime.remember
+import com.ivanherboch.chessduck.ui.icons.ExpandMore
+import com.ivanherboch.chessduck.ui.icons.ExpandLess
+import com.ivanherboch.chessduck.ui.icons.BookmarkBorder
+import com.ivanherboch.chessduck.ui.icons.Bookmark
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -60,7 +66,6 @@ import com.ivanherboch.chessduck.ui.icons.History
 import com.ivanherboch.chessduck.ui.icons.Insights
 import com.ivanherboch.chessduck.ui.icons.LocalFireDepartment
 import com.ivanherboch.chessduck.ui.icons.MenuBook
-import com.ivanherboch.chessduck.ui.icons.School
 import com.ivanherboch.chessduck.ui.icons.SportsScore
 
 // Accueil de l'Académie (« Mon parcours », « À travailler », « Leçons », « Atelier ») et sous-listes de l'Atelier.
@@ -305,11 +310,11 @@ internal fun WorkshopScreen(vm: AcademyViewModel, route: AcademyRoute) {
                     }
                     AcademyRoute.WORKSHOP_REPERTOIRE -> {
                         Text(
-                            "5 ouvertures de votre camp, celles à revoir aujourd'hui d'abord, ligne principale ou variante.",
+                            "Choisissez vos ouvertures : la révision en tire 5 de votre camp, celles à revoir aujourd'hui d'abord, ligne principale ou variante.",
                             color = c.muted, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp),
                         )
-                        WorkshopItem("Avec les Blancs", "Réviser mon répertoire avec les Blancs.") { vm.startRepertoire(true) }
-                        WorkshopItem("Avec les Noirs", "Réviser mon répertoire avec les Noirs.") { vm.startRepertoire(false) }
+                        RepertoireSide(vm, white = true)
+                        RepertoireSide(vm, white = false)
                     }
                     else -> {
                         WorkshopItem(
@@ -344,5 +349,53 @@ private fun WorkshopItem(title: String, detail: String, done: Boolean = false, d
         }
         if (done) Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = c.greenText, modifier = Modifier.padding(start = 8.dp))
         Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = c.muted)
+    }
+}
+
+/**
+ * « Mon répertoire » pour un camp : les ouvertures choisies (ou, à défaut, déjà travaillées), le bouton de révision, et
+ * la liste des ouvertures de ce camp à cocher (signet). Sans aucune ouverture, une invitation claire à en choisir.
+ */
+@Composable
+private fun RepertoireSide(vm: AcademyViewModel, white: Boolean) {
+    val c = LocalDuck.current
+    val chosen by vm.repertoireIds.collectAsStateWithLifecycle()
+    val progress by vm.progress.collectAsStateWithLifecycle()
+    val side = if (white) "Blancs" else "Noirs"
+    val openings = remember(white) { Lessons.all.filter { it.category == LessonCategory.OPENING && it.heroWhite == white } }
+    val mine = openings.filter { it.id in chosen }
+    val pool = vm.repertoirePool(white, chosen, progress.keys)
+    var expanded by rememberSaveable(white) { mutableStateOf(false) }
+    Text("Avec les $side", color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 14.dp).semantics { heading() })
+    Text(
+        when {
+            mine.isNotEmpty() -> "${mine.size} ouverture${if (mine.size > 1) "s" else ""} dans votre répertoire : " + mine.joinToString(", ") { it.title } + "."
+            pool.isNotEmpty() -> "Aucune ouverture choisie : la révision porte sur les ${pool.size} ouverture${if (pool.size > 1) "s" else ""} des $side déjà travaillée${if (pool.size > 1) "s" else ""}."
+            else -> "Aucune ouverture des $side choisie ni travaillée. Ajoutez vos ouvertures ci-dessous (ou avec le signet d'une leçon d'ouverture)."
+        },
+        color = c.muted, style = MaterialTheme.typography.bodyMedium,
+    )
+    Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        DuckButton(
+            "Réviser", { vm.startRepertoire(white) }, Modifier.weight(1f), enabled = pool.isNotEmpty(), accent = c.green, filled = true,
+            icon = Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = "Réviser mon répertoire avec les $side",
+        )
+        DuckButton(
+            if (expanded) "Masquer la liste" else "Choisir mes ouvertures", { expanded = !expanded }, Modifier.weight(1f), accent = c.blue,
+            variant = ButtonVariant.OUTLINED, icon = if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+            contentDescription = (if (expanded) "Masquer" else "Afficher") + " les ouvertures des $side à choisir",
+        )
+    }
+    if (expanded) for (l in openings) {
+        val on = l.id in chosen
+        Row(
+            Modifier.fillMaxWidth().padding(top = 4.dp).heightIn(min = 48.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
+                .toggleable(value = on, role = Role.Checkbox, onValueChange = { vm.toggleRepertoire(l.id) })
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(if (on) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder, contentDescription = null, tint = if (on) c.goldText else c.muted)
+            Text("${Lessons.number(l.id)}. ${l.title}", color = c.text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 10.dp).weight(1f))
+        }
     }
 }

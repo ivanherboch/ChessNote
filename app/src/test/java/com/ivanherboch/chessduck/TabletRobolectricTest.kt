@@ -105,6 +105,12 @@ class TabletRobolectricTest {
         rule.onNodeWithText("Notation").performClick(); settle(1500); shot("o3_tablette_portrait_notation")
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("o4_tablette_portrait_academie")
         rule.onNodeWithText("Mon parcours").assertExists()
+        // Une leçon (Comprendre | Pratiquer) et une sous-liste de l'Atelier en portrait.
+        rule.onNodeWithContentDescription("Ouvrir le catalogue des leçons").performClick(); settle(1000)
+        rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("trois principes"); settle(800)
+        rule.onNodeWithText("Les trois principes de l'ouverture").performClick(); settle(1500); shot("o5_tablette_portrait_lecon")
+        rule.onNodeWithContentDescription("Revenir à l'accueil de l'Académie").performClick(); settle(1000)
+        rule.onNodeWithText("Réflexes & Calcul").performScrollTo().performClick(); settle(1000); shot("o6_tablette_portrait_atelier")
     }
 
     @Test
@@ -120,6 +126,8 @@ class TabletRobolectricTest {
         rule.onNodeWithText("Finales contre l'Ordinateur").performClick(); settle(1000); shot("t9_atelier_finales")
         rule.onNodeWithText("Gagnez : Roi et dame contre roi").performScrollTo().performClick(); settle(1500); shot("t10_finale")
         rule.onNodeWithContentDescription("Revenir à l'Atelier").performClick(); settle(1000)
+        rule.onNodeWithContentDescription("Revenir à l'accueil de l'Académie").performClick(); settle(800)
+        rule.onNodeWithText("Mon répertoire").performClick(); settle(1000); shot("t11_atelier_repertoire")
         rule.onNodeWithContentDescription("Revenir à l'accueil de l'Académie").performClick(); settle(800)
         rule.onNodeWithText("Problèmes").performClick(); settle(2500); shot("t3_problemes")
         rule.onNodeWithText("Jeu Libre").performClick(); settle(2000); shot("t4_jeu")

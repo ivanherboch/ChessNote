@@ -1,3 +1,23 @@
+## ChessDuck 4.0.0 — l'Académie simplifiée
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+Cette version termine la refonte de l'Académie : leçons en deux temps (Comprendre, puis Pratiquer), un vrai accueil avec l'Atelier, et des parcours récurrents plus courts.
+
+- Révisions du jour rapides : une seule épreuve par leçon due.
+  - Tactique et méthode : 1 problème inédit du thème.
+  - Finale : 1 position contre l'Ordinateur.
+  - Ouverture : la ligne à rejouer (un coup aussi bon est accepté, flèche verte à l'appui).
+  - Bases, stratégie et autres leçons : les coups clés à rejouer.
+  - Le calendrier se met à jour dès la fin de l'épreuve ; « Révision suivante » puis « Terminer les révisions ».
+- « Mon répertoire » choisi par vous :
+  - un signet sur chaque leçon d'ouverture (et un bouton dans sa fiche) l'ajoute ou la retire ;
+  - dans l'Atelier, « Mon répertoire » liste vos ouvertures par camp, avec « Choisir mes ouvertures » ;
+  - la révision ne tire plus au hasard parmi les 53 ouvertures : vos ouvertures choisies, sinon celles déjà travaillées, sinon une invitation à les choisir.
+- Fiche de la leçon en 3 sections : L'essentiel (objectif, « À retenir » mis en avant, conditions), Idées et pièges, Moments clés.
+- Calcul à l'aveugle : les coups annoncés sont lus en français et restent écrits quand la voix est coupée.
+- Captures et vérifications complètes sur téléphone (y compris grande police) et tablette (portrait et paysage).
+
 ## ChessDuck 3.11.0 — un vrai accueil pour l'Académie
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

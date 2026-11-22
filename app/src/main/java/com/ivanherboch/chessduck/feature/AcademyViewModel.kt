@@ -119,6 +119,24 @@ class AcademyViewModel(
     /** Variantes d'ouverture réussies en Défi (« leçon:variante ») : badge ✓ du menu Variantes. */
     val variantsDone: StateFlow<Set<String>> = prefs.settings.map { it.variantsDone }.distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+    /** Ouvertures choisies par l'élève pour « Mon répertoire ». */
+    val repertoireIds: StateFlow<Set<Int>> = prefs.settings.map { it.repertoireIds }.distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
+    /** Ajoute l'ouverture [lessonId] à « Mon répertoire », ou l'en retire. */
+    fun toggleRepertoire(lessonId: Int) {
+        viewModelScope.launch { prefs.toggleRepertoire(lessonId) }
+    }
+
+    /**
+     * Ouvertures révisées par « Mon répertoire » pour ce camp : celles que l'élève a choisies ; à défaut, celles qu'il a
+     * déjà travaillées (commencées ou maîtrisées). Vide : l'écran l'invite à choisir ses ouvertures.
+     */
+    fun repertoirePool(white: Boolean, chosen: Set<Int> = repertoireIds.value, worked: Set<Int> = progress.value.keys): List<Lesson> {
+        val openings = Lessons.all.filter { it.category == LessonCategory.OPENING && it.heroWhite == white }
+        return openings.filter { it.id in chosen }.ifEmpty { openings.filter { it.id in worked } }
+    }
+
     val narration: StateFlow<Boolean> = prefs.settings.map { it.narration }.distinctUntilChanged()
         .onEach { if (!it) narrator.stop() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
@@ -192,7 +210,6 @@ class AcademyViewModel(
         const val KEY_ROUTE = "academy_route"
         const val PRACTICE_SIZE = PracticeSeries.SIZE
         const val PRACTICE_PASS = PracticeSeries.PASS
-        const val REVIEW_SIZE = 2
         const val REPERTOIRE_SIZE = 5
     }
 
@@ -222,12 +239,6 @@ class AcademyViewModel(
         practice.cancel()
         endgame.stop()
         reflex.stop()
-    }
-
-    fun validation(l: Lesson = lesson): Validation = when {
-        EndgameFamily.of(l.drill) != null -> Validation.ENDGAME
-        l.theme.isNotEmpty() -> Validation.PUZZLES
-        else -> Validation.NONE
     }
 
     /** Enregistre la progression ; une première maîtrise lance le calendrier des révisions. */
@@ -516,7 +527,8 @@ class AcademyViewModel(
      */
     private fun keyMovesOnly(l: Lesson): Boolean {
         val s = state.value
-        if (l.pauseSteps.isEmpty() || s.variant > 0 || s.review != null || s.repertoire != null) return false
+        // Révisions : les coups clés aussi (épreuve courte) ; répertoire et variantes : toute la ligne.
+        if (l.pauseSteps.isEmpty() || s.variant > 0 || s.repertoire != null) return false
         return when {
             l.kind == LessonKind.MODEL_GAME -> s.keyMoments
             l.category == LessonCategory.BASICS || l.category == LessonCategory.STRATEGY -> true
@@ -798,7 +810,7 @@ class AcademyViewModel(
     // ---- Séries de problèmes : validation, révision, « Le seul coup », placement, examen (voir PracticeSeries) ----
 
 
-    /** Validation d'une leçon de tactique : 5 problèmes inédits de son thème, au palier de la leçon. */
+    /** Pratique d'une leçon de tactique : 5 problèmes inédits de son thème, au palier de la leçon. */
     fun startPractice() = practice.startPractice()
     /**
      * Pont depuis la revue de partie ou le bilan : ouvre la leçon qui enseigne le point faible et lance 5 exercices
@@ -931,14 +943,14 @@ class AcademyViewModel(
         // Série ou finale de Pratiquer : la leçon reste à l'écran, avec ses modes Comprendre | Pratiquer.
         if (s.challenge && s.lessonPractice) return null
         return when {
-            eg != null && endgameReview -> SessionTitle("Révision", "Finale : ${eg.family.label}")
+            eg != null && endgameReview && s.review != null -> SessionTitle("Révision ${s.review.index + 1} sur ${s.review.queue.size} · 1 position", l.title)
             eg != null && endgameLesson != null -> SessionTitle("Finale de validation · ${eg.total} positions", l.title)
             eg != null -> SessionTitle("Entraînement", "Finale : ${eg.family.label}")
             rx != null -> SessionTitle("Entraînement", rx.kind.label)
             pr?.kind == PracticeKind.ONLY_MOVE -> SessionTitle("Entraînement", "Le seul coup")
             pr?.kind == PracticeKind.PLACEMENT -> SessionTitle("Test", "Test de placement")
             pr?.kind == PracticeKind.EXAM -> SessionTitle("Test", "Examen du palier ${levelName(pr.level)}")
-            pr?.kind == PracticeKind.REVIEW -> SessionTitle("Révision · problèmes", l.title)
+            pr?.kind == PracticeKind.REVIEW && s.review != null -> SessionTitle("Révision ${s.review.index + 1} sur ${s.review.queue.size} · 1 problème", l.title)
             pr != null -> SessionTitle("Pratique · ${if (pr.ids.isEmpty()) PRACTICE_SIZE else pr.ids.size} problèmes", l.title)
             s.quiz != null -> SessionTitle("Question de fin de leçon", l.title)
             // Révisions du jour et répertoire : la progression s'affiche dans l'en-tête, pas au-dessus de l'échiquier.
@@ -999,9 +1011,8 @@ class AcademyViewModel(
     // ---- Révisions du jour (répétition espacée) ----
 
     /**
-     * Révisions du jour : chaque leçon due est rejouée en Défi (au moins 2 étoiles), puis vérifiée sur 2 problèmes
-     * inédits de son thème (au moins 1 réussi) ou sur une finale jouée contre l'Ordinateur. Réussie, la prochaine
-     * révision s'éloigne (7, 30, 90 jours) ; ratée, la leçon revient demain.
+     * Révisions du jour : une seule épreuve courte par leçon due (voir [openReview]). Réussie, la prochaine révision
+     * s'éloigne (7, 30, 90 jours) ; ratée, la leçon revient demain.
      */
     fun startReviews() {
         viewModelScope.launch {
@@ -1013,29 +1024,37 @@ class AcademyViewModel(
         }
     }
 
+    /**
+     * Une seule épreuve courte par leçon due : 1 problème inédit du thème (tactique, méthode), 1 position de la finale
+     * contre l'Ordinateur, la ligne d'une ouverture à rejouer, ou les coups clés des autres leçons (bases, stratégie,
+     * finales sans générateur, parties modèles).
+     */
     private fun openReview(index: Int) {
         val r = state.value.review ?: return
-        _state.update { it.copy(review = r.copy(index = index), challenge = true) }
-        open(r.queue[index], save = false, session = true)
+        val l = Lessons.byId(r.queue[index])
+        val mode = practiceMode(l)
+        reviewFluent = true
+        endgameLesson = null
+        endgameReview = false
+        _state.update { it.copy(review = r.copy(index = index), challenge = mode == PracticeMode.MOVES) }
+        open(l.id, save = false, session = true)
+        when (mode) {
+            PracticeMode.PUZZLES -> startSeries(PracticeKind.REVIEW, listOf(PuzzleSpec(listOf(l.theme), AcademyAssessments.levelRange(l.level))), l.level)
+            PracticeMode.ENDGAME -> {
+                startEndgame(EndgameFamily.of(l.drill)!!, total = 1)
+                endgameReview = true
+            }
+            PracticeMode.MOVES -> Unit // la ligne (ou ses coups clés) se rejoue aussitôt : open() a lancé l'exercice
+        }
     }
 
     /** Révision réussie sans erreur ni indice : l'intervalle s'allonge ; avec hésitation, il reste le même. */
     private var reviewFluent = true
 
+    /** Révision rejouée (ligne ou coups clés) : l'épreuve unique est terminée, le calendrier est mis à jour aussitôt. */
     private suspend fun reviewChallengeDone(success: Boolean, fluent: Boolean) {
-        val l = lesson
         reviewFluent = fluent
-        if (!success) return completeReview(false)
-        when (validation(l)) {
-            Validation.PUZZLES -> startSeries(PracticeKind.REVIEW, List(REVIEW_SIZE) { PuzzleSpec(listOf(l.theme), AcademyAssessments.levelRange(l.level)) })
-            Validation.ENDGAME -> {
-                // Sans finale connue (donnée de leçon incohérente), la révision est validée par le Défi seul.
-                val family = EndgameFamily.of(l.drill) ?: return completeReview(true, fluent)
-                startEndgame(family, total = 1)
-                endgameReview = true
-            }
-            Validation.NONE -> completeReview(true, fluent)
-        }
+        completeReview(success, fluent)
     }
 
     private suspend fun completeReview(success: Boolean, fluent: Boolean = true) {
@@ -1074,11 +1093,13 @@ class AcademyViewModel(
 
     /** « Réviser mon répertoire » : 5 ouvertures du camp choisi (révisions dues d'abord), ligne principale ou variante. */
     fun startRepertoire(white: Boolean) {
-        val pool = Lessons.all.filter { it.category == LessonCategory.OPENING && it.heroWhite == white }
-        if (pool.isEmpty()) return
-        enterSession()
         viewModelScope.launch {
-            val dueIds = srs.due(lessons.progress().first()).toSet()
+            val progressList = lessons.progress().first()
+            val pool = repertoirePool(white, prefs.settings.first().repertoireIds, progressList.map { it.lessonId }.toSet())
+            // Rien de choisi ni de travaillé : pas de tirage au hasard parmi toutes les ouvertures.
+            if (pool.isEmpty()) return@launch
+            enterSession()
+            val dueIds = srs.due(progressList).toSet()
             val ordered = pool.filter { it.id in dueIds } + pool.filter { it.id !in dueIds }.shuffled(random)
             val items = ordered.take(REPERTOIRE_SIZE).map { it.id to random.nextInt(it.variants.size + 1) }
             _state.update { it.copy(repertoire = RepertoireSession(white, items), review = null, challenge = true) }

@@ -127,6 +127,26 @@ val Icons.Rounded.Analytics: ImageVector
         )
     }.also { _rounded_Analytics = it }
 
+private var _rounded_Bookmark: ImageVector? = null
+
+val Icons.Rounded.Bookmark: ImageVector
+    get() = _rounded_Bookmark ?: materialIcon(name = "Rounded.Bookmark", autoMirror = false) {
+        addPath(
+            addPathNodes("M17,3 H7 c-1.1,0 -2,0.9 -2,2 v16 l7,-3 l7,3 V5 c0,-1.1 -0.9,-2 -2,-2 Z"),
+            pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black), fillAlpha = 1.0f,
+        )
+    }.also { _rounded_Bookmark = it }
+
+private var _rounded_BookmarkBorder: ImageVector? = null
+
+val Icons.Rounded.BookmarkBorder: ImageVector
+    get() = _rounded_BookmarkBorder ?: materialIcon(name = "Rounded.BookmarkBorder", autoMirror = false) {
+        addPath(
+            addPathNodes("M17,3 L7,3 c-1.1,0 -2,0.9 -2,2 v16 l7,-3 l7,3 L19,5 c0,-1.1 -0.9,-2 -2,-2 Z M17,18 l-5,-2.18 L7,18 L7,6 c0,-0.55 0.45,-1 1,-1 h8 c0.55,0 1,0.45 1,1 v12 Z"),
+            pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black), fillAlpha = 1.0f,
+        )
+    }.also { _rounded_BookmarkBorder = it }
+
 private var _rounded_Casino: ImageVector? = null
 
 val Icons.Rounded.Casino: ImageVector
