@@ -141,6 +141,8 @@ private fun JourneyCard(vm: AcademyViewModel, home: AcademyHome, onLevels: () ->
             Column(Modifier.fillMaxWidth().padding(top = 8.dp).semantics(mergeDescendants = true) { contentDescription = "Palier ${home.level} : $text" }) {
                 LinearProgressIndicator(
                     progress = { home.levelMastered.toFloat() / home.levelTotal }, color = c.greenRole.fill, trackColor = c.surfaceHi,
+                    // Barre pleine et continue : ni écart entre la partie remplie et le reste, ni point final (style Material 3 par défaut).
+                    gapSize = 0.dp, drawStopIndicator = {},
                     modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
                 )
                 Text(text, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))

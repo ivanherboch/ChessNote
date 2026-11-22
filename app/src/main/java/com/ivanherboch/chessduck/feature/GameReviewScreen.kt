@@ -181,6 +181,8 @@ private fun ReviewSummary(g: GameRecord, line: Line, analysis: List<Analysis?>, 
             Text("Analyse : ${fr(ready)} position${if (ready > 1) "s" else ""} sur ${fr(total)}…", color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
             LinearProgressIndicator(
                 progress = { ready.toFloat() / total }, color = c.blueRole.fill, trackColor = c.surfaceHi,
+                // Barre pleine et continue : ni écart entre la partie remplie et le reste, ni point final (style Material 3 par défaut).
+                gapSize = 0.dp, drawStopIndicator = {},
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(4.dp).clip(RoundedCornerShape(2.dp)),
             )
         }

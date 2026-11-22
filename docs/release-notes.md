@@ -1,3 +1,9 @@
+## ChessDuck 4.0.2 — barres de progression nettes
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Barres de progression (palier de l'Académie, analyse d'une partie, compte à rebours d'une réfutation) : plus de petit point au bout ni d'écart entre la partie remplie et le reste.
+
 ## ChessDuck 4.0.1 — un échiquier plus grand dans les séances
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

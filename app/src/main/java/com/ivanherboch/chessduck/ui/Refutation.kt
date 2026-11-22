@@ -51,6 +51,8 @@ fun RefuteCountdown(until: Long, hold: Long, onHold: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         LinearProgressIndicator(
             progress = { progress.value }, color = c.redRole.fill, trackColor = c.surfaceHi,
+            // Barre pleine et continue : ni écart entre la partie remplie et le reste, ni point final (style Material 3 par défaut).
+            gapSize = 0.dp, drawStopIndicator = {},
             modifier = Modifier.weight(1f).height(4.dp).clip(RoundedCornerShape(2.dp))
                 .semantics { contentDescription = "Annulation automatique du coup imminente" },
         )
