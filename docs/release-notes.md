@@ -1,3 +1,17 @@
+## ChessDuck 4.2.6 — filet de sécurité débogué
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Bugs corrigés dans le filet de sécurité :
+  - un coup rejoué après être revenu en arrière dans l'historique n'était pas vérifié : il l'est désormais ;
+  - pendant la vérification, les flèches de navigation sont bloquées (plus d'état incohérent) ;
+  - « … était attaquée, mais pas en danger » n'apparaît plus quand la pièce était réellement menacée ;
+  - un coup qui fait pat alors que vous gagnez est maintenant arrêté ;
+  - les coups ne prennent plus de majuscule à tort en début d'explication (« B4 », « F5 » → « b4 », « f5 »).
+- Nouveau cas reconnu : un coup qui laisse à l'adversaire un échec qui fait basculer la partie (« Après Nd7, l'échec f6+ fait basculer la partie… »).
+- Explication plus juste quand une pièce va tomber : « attaquée par un pion, qui vaut moins qu'elle », « plus personne ne la défend », ou « attaquée plus de fois qu'elle n'est défendue », selon le vrai motif.
+- Mesuré sur des positions réelles avec l'Ordinateur : 121 gaffes sur 133 arrêtées (106 avant), aucun arrêt à tort sur 150 bons coups, et 9 arrêts tous justifiés sur 347 coups de débutants.
+
 ## ChessDuck 4.2.5 — le filet de sécurité ne s'arrête que pour une vraie gaffe
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

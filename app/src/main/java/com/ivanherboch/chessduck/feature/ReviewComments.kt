@@ -221,9 +221,17 @@ object ReviewComments {
                 if (!underAttack(next, sq) || underAttack(after, sq)) continue
                 val t = pieceType(pc)
                 val e = if (PieceLexiconFr.isFeminine(t)) "e" else ""
+                val pr = if (e.isEmpty()) "il" else "elle"
+                val attackers = next.attackers(sq, !mine)
+                val cheapest = attackers.map { pieceType(next[it]) }.minByOrNull { PIECE_VALUES[it] }
+                val why = when {
+                    next.attackers(sq, mine).isEmpty() -> "$pr est attaqué$e et plus personne ne ${it(t)} défend"
+                    cheapest != null && PIECE_VALUES[cheapest] < PIECE_VALUES[t] ->
+                        "$pr est attaqué$e par ${PieceLexiconFr.indefinite(cheapest)}, qui vaut moins que ${if (e.isEmpty()) "lui" else "elle"}, et ne pourra pas s'en sortir sans perte"
+                    else -> "$pr est attaqué$e plus de fois qu'$pr n'est défendu$e"
+                }
                 return ("en jouant $san, ${v.f("vous laissez", "il laisse")} ${poss(v, t)} en ${sqName(sq)} trop peu défendu$e : après " +
-                    "${after.san(reply)}, ${if (e.isEmpty()) "il" else "elle"} est attaqué$e plus de fois qu'${if (e.isEmpty()) "il" else "elle"} n'est défendu$e et va tomber.") to
-                    ReviewTopic.HANGING_PIECE
+                    "${after.san(reply)}, $why.") to ReviewTopic.HANGING_PIECE
             }
         }
         if (best != null) {
