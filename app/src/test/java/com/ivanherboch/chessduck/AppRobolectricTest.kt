@@ -619,11 +619,29 @@ class AppRobolectricTest {
             rule.onAllNodesWithContentDescription("Travailler ce point", substring = true).fetchSemanticsNodes().size == 3
         }
         settle(500); shot("2g_accueil_charge")
-        rule.onNodeWithText("Révisions (", substring = true).assertExists()
+        rule.onNodeWithText("Révisions du jour (", substring = true).assertExists()
         val navTop = rule.onAllNodesWithText("Problèmes").onFirst().fetchSemanticsNode().boundsInRoot.top
         // Position réelle (non rognée par la zone visible) du bas de la dernière carte.
         val lastTile = rule.onNodeWithText("Tests de niveau").fetchSemanticsNode().let { it.positionInRoot.y + it.size.height }
         assertTrue("l'accueil déborde : dernière tuile à $lastTile, barre de navigation à $navTop", lastTile <= navTop)
+    }
+
+    /** Jeu Libre : le filet de sécurité se règle dans « Paramètres de partie » ; actif, l'adversaire porte un bouclier. */
+    @Test
+    fun playSafetyNetToggle() {
+        settle(2500)
+        rule.onNodeWithText("Jeu Libre").performClick(); settle(2000)
+        desc("Paramètres de partie").performClick(); settle(800)
+        rule.onNodeWithText("Filet de sécurité").performScrollTo().performClick(); settle(600); shot("4h_jeu_filet_reglage")
+        close(); settle(800); shot("4h_jeu_filet")
+        // Bouclier de l'adversaire (description exacte) et mention dans le message de début de partie.
+        rule.onNodeWithContentDescription("Filet de sécurité actif").assertExists()
+        rule.onNodeWithText("Filet de sécurité actif", substring = true).assertExists()
+        desc("Paramètres de partie").performClick(); settle(800)
+        rule.onNodeWithText("Filet de sécurité").performScrollTo().performClick(); settle(600)
+        close(); settle(800)
+        rule.onAllNodesWithContentDescription("Filet de sécurité actif").assertCountEquals(0)
+        rule.onAllNodesWithText("Filet de sécurité actif", substring = true).assertCountEquals(0)
     }
 
     /** Clavier de Notation : touches assez grandes pour le doigt (hauteurs 44 et 48 dp) sur un téléphone de 360 dp. */

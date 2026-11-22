@@ -6,6 +6,7 @@ import com.ivanherboch.chessduck.content.Lesson
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.data.GameRecord
 import com.ivanherboch.chessduck.data.LessonProgress
+import com.ivanherboch.chessduck.data.NetEvent
 
 /**
  * Point faible repéré dans une partie analysée : la leçon de l'Académie qui l'enseigne en priorité, le thème des
@@ -98,6 +99,8 @@ object WeakTopics {
 
     fun compute(
         games: List<GameRecord>, progress: List<LessonProgress>, worked: Map<Int, Long> = emptyMap(), now: Long = System.currentTimeMillis(),
+        /** Gaffes arrêtées par le filet de sécurité du Jeu Libre (elles ne figurent pas dans les parties enregistrées). */
+        events: List<NetEvent> = emptyList(),
     ): List<Priority> {
         val byId = progress.associateBy { it.lessonId }
         val recent = games.sortedByDescending { it.date }.take(GAMES)
@@ -115,7 +118,14 @@ object WeakTopics {
                 last = maxOf(last, g.date)
                 weight += n * Math.pow(DECAY, i.toDouble()) * (if (g.date > since) 1.0 else WORKED_WEIGHT)
             }
-            if (total == 0) return@mapNotNull null
+            // Gaffes arrêtées par le filet : pleines la première semaine, à moitié ensuite.
+            val ev = events.filter { it.topic == t.name }
+            for (e in ev) {
+                if (e.at > since) after++
+                last = maxOf(last, e.at)
+                weight += (if (now - e.at < 7 * DAY) 1.0 else 0.5) * (if (e.at > since) 1.0 else WORKED_WEIGHT)
+            }
+            if (total == 0 && ev.isEmpty()) return@mapNotNull null
             // Travaillé récemment et pas réapparu depuis : on laisse le temps de le vérifier en partie.
             if (since > 0 && after == 0 && now - since < SNOOZE_DAYS * DAY) return@mapNotNull null
             val l = lessonFor(t, progress, worked) ?: return@mapNotNull null
@@ -123,7 +133,9 @@ object WeakTopics {
             val when_ = when (days) { 0 -> "aujourd'hui"; 1 -> "hier"; else -> "il y a $days jours" }
             val where = if (analyzed > 1) "vos $analyzed dernières parties" else "votre dernière partie"
             // Court (deux lignes au plus sur un téléphone) : l'accueil tient sans défilement.
-            val reason = "$total fois dans $where, la dernière $when_." + when {
+            val net = ev.size.takeIf { it > 0 }?.let { n -> "$n gaffe${if (n > 1) "s" else ""} arrêtée${if (n > 1) "s" else ""} par le filet" }
+            val seen = listOfNotNull(if (total > 0) "$total fois dans $where" else null, net).joinToString(" et ")
+            val reason = "${seen.replaceFirstChar { it.uppercase() }}, la dernière $when_." + when {
                 since <= 0 -> ""
                 after == 0 -> " Plus revu depuis votre entraînement."
                 else -> " $after depuis votre entraînement."

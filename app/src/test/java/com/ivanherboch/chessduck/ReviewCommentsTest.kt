@@ -142,6 +142,38 @@ class ReviewCommentsTest {
         assertTrue(next.id != hanging.lessonId && next.theme == "hangingPiece")
     }
 
+    /** Séance du jour : étapes cochées le jour même, série qui avance de jour en jour et repart à 1 après un trou. */
+    @Test
+    fun dailyLogCountsConsecutiveDays() {
+        val req = setOf("lesson", "puzzles")
+        var log = com.ivanherboch.chessduck.data.DailyLog()
+        log = log.mark("lesson", 10, req)
+        assertEquals(0, log.streakOn(10))
+        log = log.mark("puzzles", 10, req)
+        assertEquals(1, log.streakOn(10))
+        assertEquals(1, log.streakOn(11)) // tient jusqu'au lendemain
+        log = log.mark("lesson", 11, req).mark("puzzles", 11, req)
+        assertEquals(2, log.streakOn(11))
+        assertEquals(setOf("lesson", "puzzles"), log.doneOn(11))
+        assertTrue(log.doneOn(12).isEmpty())
+        assertEquals(0, log.streakOn(13)) // un jour manqué : la série est perdue
+        log = log.mark("lesson", 14, req).mark("puzzles", 14, req)
+        assertEquals(1, log.streakOn(14))
+        assertEquals(log, com.ivanherboch.chessduck.data.DailyLog.decode(log.encode()))
+    }
+
+    /** Filet de sécurité : une gaffe arrêtée compte dans « À travailler », même sans partie enregistrée. */
+    @Test
+    fun netEventsFeedWeakTopics() {
+        val now = 100 * 86_400_000L
+        val p = com.ivanherboch.chessduck.feature.WeakTopics.compute(
+            emptyList(), emptyList(), now = now,
+            events = listOf(com.ivanherboch.chessduck.data.NetEvent("FORK_ALLOWED", now - 3_600_000), com.ivanherboch.chessduck.data.NetEvent("FORK_ALLOWED", now - 7_200_000)),
+        )
+        assertEquals("Fourchette subie", p.single().title)
+        assertTrue(p[0].reason, "2 gaffes arrêtées par le filet" in p[0].reason)
+    }
+
     /** Bilan : les erreurs des parties et les difficultés de l'Académie donnent au plus 3 priorités, les plus fréquentes d'abord. */
     @Test
     fun weakTopicsBalanceGamesAndAcademy() {

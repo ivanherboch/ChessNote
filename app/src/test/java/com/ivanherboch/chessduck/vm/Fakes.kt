@@ -44,6 +44,11 @@ class FakeSettings(initial: Settings = Settings(lessonId = 1, academyLevel = 2))
     }
     override suspend fun markThemeKnown(id: String) = flow.update { it.copy(knownThemePuzzles = it.knownThemePuzzles + id) }
     override suspend fun markVariantDone(key: String) = flow.update { it.copy(variantsDone = it.variantsDone + key) }
+    override suspend fun markDailyStep(step: String, today: Long, required: Set<String>) = flow.update { it.copy(daily = it.daily.mark(step, today, required)) }
+    override suspend fun setSafetyNet(on: Boolean) = flow.update { it.copy(safetyNet = on) }
+    override suspend fun addNetEvent(topic: String, at: Long) = flow.update {
+        it.copy(netEvents = (it.netEvents + com.ivanherboch.chessduck.data.NetEvent(topic, at)).takeLast(com.ivanherboch.chessduck.data.NET_EVENTS_MAX))
+    }
     override suspend fun markUnderstood(lessonId: Int) = flow.update { it.copy(understoodIds = it.understoodIds + lessonId) }
     override suspend fun markLessonWorked(lessonId: Int, at: Long) = flow.update { it.copy(lessonWorkedAt = it.lessonWorkedAt + (lessonId to at)) }
     override suspend fun toggleRepertoire(lessonId: Int) = flow.update {

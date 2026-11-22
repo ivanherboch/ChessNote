@@ -27,6 +27,12 @@ interface SettingsRepository {
     suspend fun markLessonWorked(lessonId: Int, at: Long)
     /** Note que la démonstration « Comprendre » de la leçon [lessonId] a été suivie jusqu'au bout. */
     suspend fun markUnderstood(lessonId: Int)
+    /** Séance du jour : l'étape [step] est faite [today] ; la série avance quand toutes les étapes [required] le sont. */
+    suspend fun markDailyStep(step: String, today: Long, required: Set<String>)
+    /** Jeu Libre : active ou coupe le filet de sécurité. */
+    suspend fun setSafetyNet(on: Boolean)
+    /** Une gaffe ([topic], nom de ReviewTopic) a été arrêtée par le filet de sécurité. */
+    suspend fun addNetEvent(topic: String, at: Long)
 
     // Réglages globaux (tiroir Paramètres, mode enfant, style des images partagées).
     /** 0 = suivre le système, 1 = Jour, 2 = Nuit. */

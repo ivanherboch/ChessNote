@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.icons.Shield
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.draw.clip
@@ -126,7 +127,12 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                         .clickable(role = Role.Button, onClickLabel = "Modifier les réglages de partie") { gameSettings = true },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                Icon(if (s.twoPlayers) Icons.Rounded.People else Icons.Rounded.SmartToy, contentDescription = null, tint = c.muted, modifier = Modifier.size(20.dp))
+                // Filet de sécurité actif : l'icône de l'adversaire devient un bouclier vert.
+                val net = s.coached && !s.fromPosition && !s.twoPlayers
+                Icon(
+                    when { s.twoPlayers -> Icons.Rounded.People; net -> Icons.Rounded.Shield; else -> Icons.Rounded.SmartToy },
+                    contentDescription = if (net) "Filet de sécurité actif" else null, tint = if (net) c.greenText else c.muted, modifier = Modifier.size(20.dp),
+                )
                 Column(Modifier.padding(start = 8.dp).weight(1f)) {
                     Text(
                         if (s.twoPlayers) "Partie à 2 joueurs" else "Ordinateur · ${s.aiElo}",
@@ -141,6 +147,8 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                     )
                 }
                 }
+                // Partie accompagnée (position de leçon) : arrêt avant une gaffe. Pour une partie normale, le filet de
+                // sécurité se règle dans « Paramètres de partie » (l'en-tête garde ainsi la place du nom et du bilan).
                 if (s.fromPosition && s.result == null) DuckIconButton(
                     Icons.Rounded.School, if (s.coached) "Partie accompagnée activée : la désactiver" else "Activer la partie accompagnée (arrêt avant une grosse erreur)",
                     vm::toggleCoach, accent = c.green, selected = s.coached,
@@ -165,7 +173,14 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                     interactive = s.canPlay,
                     lastMove = last,
                     anim = s.anim,
-                    arrows = if (hint != null && s.hintStage >= 2) listOf(Arrow(hint.from, hint.to, c.green)) else emptyList(),
+                    arrows = when {
+                        // « Pourquoi ? » : le coup envisagé (or) et la réponse adverse qui le punirait (rouge).
+                        s.warning?.showWhy == true -> s.warning!!.let { w ->
+                            listOfNotNull(Arrow(w.move.from, w.move.to, c.gold), w.reply?.let { Arrow(it.from, it.to, c.red) })
+                        }
+                        hint != null && s.hintStage >= 2 -> listOf(Arrow(hint.from, hint.to, c.green))
+                        else -> emptyList()
+                    },
                     marks = if (hint != null && s.hintStage >= 1) listOf(hint.from to c.green) else emptyList(),
                     onIllegalTouch = { stuck = GameLogic.whyStuck(pos, it) },
                     onMove = vm::playerMove,
@@ -188,6 +203,10 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                 if (w != null) {
                     // Partie accompagnée : le coup est arrêté, l'élève choisit.
                     DuckButton("Changer de coup", vm::dismissWarning, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.Undo)
+                    if (w.why != null && !w.showWhy) DuckButton(
+                        "Pourquoi ?", vm::showWhy, Modifier.weight(0.8f), accent = c.blue, variant = ButtonVariant.OUTLINED,
+                        contentDescription = "Pourquoi est-ce une gaffe ? Montrer la réponse adverse",
+                    )
                     DuckButton("Jouer quand même", vm::playAnyway, Modifier.weight(1f), accent = c.gold, variant = ButtonVariant.OUTLINED)
                 } else if (s.result != null) {
                     // Fin de partie : l'analyse est à un geste.
@@ -237,7 +256,9 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
         history = false
         openReview(g)
     }
-    if (gameSettings) GameSettingsSheet(st.twoPlayers, st.colorChoice, st.aiElo, onClose = { gameSettings = false }) { two, color, elo ->
+    if (gameSettings) GameSettingsSheet(
+        st.twoPlayers, st.colorChoice, st.aiElo, st.safetyNet, onSafetyNet = vm::setSafetyNet, onClose = { gameSettings = false },
+    ) { two, color, elo ->
         gameSettings = false
         if (st.confirmActions && s.inProgress) pendingSettings = Triple(two, color, elo) else vm.applySettings(two, color, elo)
     }
@@ -252,8 +273,8 @@ private fun liveStatus(s: PlayState, p1: String, p2: String): Pair<String, Tone>
         return (if (s.cursor < s.line.size) "$at. " else "") + r.text +
             (if (s.lastRecord != null) " Touchez « Analyser la partie » pour la revue commentée." else "") to r.tone
     }
-    s.warning?.let { return it.text to Tone.GOLD }
-    if (s.checking) return "Partie accompagnée : vérification de votre coup…" to Tone.NEUTRAL
+    s.warning?.let { return (if (it.showWhy && it.why != null) "${it.why}\n\nChangez de coup, ou jouez-le quand même." else it.text) to Tone.GOLD }
+    if (s.checking) return "Vérification de votre coup…" to Tone.NEUTRAL
     if (s.thinking) return "L'ordinateur (${s.aiElo} ELO) réfléchit…" to Tone.NEUTRAL
     if (s.canPlay && s.hintStage > 0) {
         val h = s.hint ?: return "Calcul en cours, l'indice s'affiche dans un instant…" to Tone.GOLD
@@ -268,7 +289,8 @@ private fun liveStatus(s: PlayState, p1: String, p2: String): Pair<String, Tone>
     return if (s.twoPlayers) "${check}À ${if (pos.whiteToMove) p1 else p2} de jouer (les $side)." to Tone.INFO
     else if (s.line.size == 0 && s.fromPosition) "Position de la leçon contre l'ordinateur (${s.aiElo} ELO). Vous jouez les $side. Partie d'entraînement : l'ELO ne change pas." +
         (if (s.coached) " Partie accompagnée : l'Ordinateur vous arrête avant une grosse erreur, $COACH_STOPS fois au plus." else "") to Tone.INFO
-    else if (s.line.size == 0) "Nouvelle partie contre l'ordinateur (${s.aiElo} ELO). Vous jouez les $side : à vous de commencer !" to Tone.INFO
+    else if (s.line.size == 0) "Nouvelle partie contre l'ordinateur (${s.aiElo} ELO). Vous jouez les $side : à vous de commencer !" +
+        (if (s.coached) " Filet de sécurité actif : l'Ordinateur arrête une gaffe avant qu'elle soit jouée (la partie ne compte alors plus pour l'ELO)." else "") to Tone.INFO
     else "${check}À vous de jouer (les $side)." to Tone.INFO
 }
 

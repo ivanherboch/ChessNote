@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
@@ -66,7 +69,6 @@ import com.ivanherboch.chessduck.ui.DuckSheet
 import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.LocalIsTwoPane
 import com.ivanherboch.chessduck.ui.SessionHeader
-import com.ivanherboch.chessduck.ui.icons.History
 import com.ivanherboch.chessduck.ui.icons.Insights
 import com.ivanherboch.chessduck.ui.icons.LocalFireDepartment
 import com.ivanherboch.chessduck.ui.icons.MenuBook
@@ -125,10 +127,11 @@ private fun HomeCard(title: String?, accent: Color? = null, content: @Composable
 }
 
 /**
- * « Mon parcours » : palier et « Changer de palier » sur une ligne, la progression du palier, puis une seule action
- * principale (reprendre la leçon commencée, sinon la prochaine leçon conseillée) et les révisions du jour s'il y en a.
+ * « Mon parcours » : palier et « Changer de palier » sur une ligne, la progression du palier, puis la « Séance du jour »
+ * (révisions, leçon, point faible, cochés une fois faits, et la série de jours) avec un seul bouton pour l'étape suivante.
  * Compacte, pour que tout l'accueil tienne sur un écran de téléphone sans défilement.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun JourneyCard(vm: AcademyViewModel, home: AcademyHome, onLevels: () -> Unit) {
     val c = LocalDuck.current
@@ -168,26 +171,28 @@ private fun JourneyCard(vm: AcademyViewModel, home: AcademyHome, onLevels: () ->
                 Text(text, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp))
             }
         }
-        // Une seule action principale, selon l'état réel de l'élève.
-        val cont = home.continueId
-        val next = home.recommended
-        val (label, id) = when {
-            cont != null -> "Continuer : ${Lessons.byId(cont).title}" to cont
-            next != null -> "Prochaine leçon : ${Lessons.byId(next).title}" to next
-            else -> null to null
-        }
-        // L'action principale et les révisions du jour partagent une rangée (l'accueil tient sans défilement).
-        if (label != null && id != null || home.due.isNotEmpty()) Row(
-            Modifier.fillMaxWidth().padding(top = 8.dp).height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(6.dp),
+        // Séance du jour : les étapes (cochées une fois faites) et un seul bouton qui lance la suivante.
+        val plan by vm.daily.collectAsStateWithLifecycle()
+        if (plan.steps.isNotEmpty()) FlowRow(
+            Modifier.fillMaxWidth().padding(top = 6.dp).semantics(mergeDescendants = true) {
+                contentDescription = "Séance du jour : " + plan.steps.joinToString(", ") { st ->
+                    plan.stepName(st) + if (st in plan.done) " faite" else " à faire"
+                } + if (plan.streak > 0) ". Série : ${plan.streak} jour${if (plan.streak > 1) "s" else ""}" else ""
+            },
+            horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            if (label != null && id != null) DuckButton(
-                label, { vm.open(id, guided = true) }, Modifier.weight(1.7f).fillMaxHeight(), accent = c.green, filled = true,
-                icon = Icons.AutoMirrored.Rounded.ArrowForward,
-            )
-            if (home.due.isNotEmpty()) DuckButton(
-                "Révisions (${home.due.size})", vm::startReviews, Modifier.weight(1f).fillMaxHeight(), accent = c.gold,
-                filled = id == null, variant = if (id == null) null else ButtonVariant.OUTLINED, icon = Icons.Rounded.History,
-                contentDescription = "Révisions du jour : ${home.due.size} leçon${if (home.due.size > 1) "s" else ""} à rejouer",
+            Text("Séance du jour", color = c.text, style = MaterialTheme.typography.labelLarge)
+            for (st in plan.steps) {
+                val ok = st in plan.done
+                Text((if (ok) "✓ " else "○ ") + plan.stepName(st), color = if (ok) c.greenText else c.muted, style = MaterialTheme.typography.labelMedium)
+            }
+            if (plan.streak > 0) Text("🔥 ${plan.streak} j", color = c.goldText, style = MaterialTheme.typography.labelMedium)
+        }
+        plan.actionLabel()?.let { label ->
+            DuckButton(
+                if (plan.finished) "Séance terminée ✓ · $label" else label, vm::startDaily, Modifier.fillMaxWidth().padding(top = 6.dp),
+                accent = c.green, filled = true, icon = if (plan.finished) Icons.AutoMirrored.Rounded.ArrowForward else Icons.Rounded.PlayArrow,
+                contentDescription = if (plan.finished) "Séance du jour terminée. $label" else "Séance du jour, étape suivante : $label",
             )
         }
     }

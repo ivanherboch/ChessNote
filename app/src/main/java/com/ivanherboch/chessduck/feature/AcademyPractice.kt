@@ -44,6 +44,8 @@ internal interface PracticeHost {
     fun cancelAll()
     /** Fin d'une séance lancée depuis l'accueil ou l'Atelier : retour à cet écran. */
     fun backToCaller()
+    /** Une série de la leçon (Pratiquer, ou point faible travaillé) est terminée : étape de la séance du jour. */
+    fun lessonSeriesDone()
     suspend fun saveProgress(id: Int, update: (LessonProgress) -> LessonProgress): LessonProgress
     suspend fun completeReview(success: Boolean, fluent: Boolean)
 }
@@ -365,6 +367,7 @@ internal class PracticeSeries(
     private suspend fun lessonPracticeDone(score: Int, total: Int): String {
         val l = lesson
         val passed = score >= PASS
+        host.lessonSeriesDone()
         // Pratique réussie : le point faible enseigné par la leçon recule dans « À travailler ».
         if (passed) prefs.markLessonWorked(l.id, srs.now())
         // Pratiquer réussi (4 problèmes sur 5) : la leçon est maîtrisée, sans autre étape.

@@ -1155,6 +1155,73 @@ class ViewModelsTest {
         assertEquals(blunder, vm.state.value.line.moves[0])
     }
 
+    /** Filet de sécurité (partie normale) : la gaffe est arrêtée, « Pourquoi ? » l'explique, et la partie ne compte plus pour l'ELO. */
+    @Test
+    fun safetyNetStopsABlunderAndMakesTheGameUnrated() = test {
+        val games = FakeGames()
+        val engine = FakeEngine()
+        val prefs = FakeSettings(com.ivanherboch.chessduck.data.Settings(lessonId = 1, academyLevel = 2, safetyNet = true))
+        val vm = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope))
+        advanceUntilIdle()
+        assertTrue(vm.state.value.coached) // réglage mémorisé : actif dès la nouvelle partie
+        val start = vm.state.value.position
+        val blunder = Move.fromUci("d2d4")
+        val after = start.play(blunder)
+        val reply = after.legalMoves.first()
+        engine.scripted[after.toFen().split(' ').take(4).joinToString(" ")] = SearchResult(reply, listOf(PvLine(reply, 600)))
+        vm.playerMove(blunder); advanceUntilIdle()
+        val w = vm.state.value.warning!!
+        assertTrue(w.text, w.text.startsWith("Filet de sécurité"))
+        assertNotNull(w.why)
+        assertTrue(vm.state.value.netUsed)
+        vm.showWhy()
+        assertTrue(vm.state.value.warning!!.showWhy)
+        vm.playAnyway(); advanceUntilIdle()
+        val elo = prefs.settings.first().elo
+        vm.resign(); advanceUntilIdle()
+        assertEquals(elo, prefs.settings.first().elo)
+        assertTrue(vm.state.value.result!!.text, "filet de sécurité" in vm.state.value.result!!.text)
+        // Le couper est mémorisé pour les parties suivantes.
+        vm.newGame(); advanceUntilIdle()
+        vm.toggleCoach(); advanceUntilIdle()
+        assertFalse(prefs.settings.first().safetyNet)
+        assertFalse(vm.state.value.coached)
+    }
+
+    /** Séance du jour : les étapes du jour, cochées une à une, puis la série de jours. */
+    @Test
+    fun dailySessionPlansStepsAndCountsTheStreak() = test {
+        val day = 86_400_000L
+        var now = 20_000 * day + 12 * 3_600_000L
+        val lessons = FakeLessons()
+        lessons.save(com.ivanherboch.chessduck.data.LessonProgress(5, masteredAt = 1, stars = 3, srsStage = 1, nextReviewAt = 1))
+        val prefs = FakeSettings()
+        val vm = academy(lessons, prefs = prefs, clock = { now })
+        val sub = backgroundScope.launch { vm.daily.collect {} }
+        advanceUntilIdle()
+        val plan = vm.daily.value
+        assertEquals(listOf(com.ivanherboch.chessduck.feature.DailyStep.REVIEWS, com.ivanherboch.chessduck.feature.DailyStep.LESSON), plan.steps)
+        assertEquals("Révisions du jour (1)", plan.actionLabel())
+        // Le bouton lance la première étape : les révisions.
+        vm.startDaily(); advanceUntilIdle()
+        assertNotNull(vm.state.value.review)
+        assertTrue(vm.state.value.dailyRunning)
+        playChallenge(vm)
+        vm.nextReview(); advanceUntilIdle()
+        assertTrue(vm.state.value.dailyPrompt) // bandeau « Étape terminée · Suite »
+        assertEquals(setOf(com.ivanherboch.chessduck.feature.DailyStep.REVIEWS), vm.daily.value.done)
+        assertEquals(0, vm.daily.value.streak)
+        // Suite : la leçon ; Pratiquer réussi termine la séance et ouvre la série.
+        vm.closeReviews()
+        vm.startDaily(); advanceUntilIdle()
+        vm.setChallenge(true); advanceUntilIdle()
+        playChallenge(vm)
+        advanceUntilIdle()
+        assertTrue(vm.daily.value.finished)
+        assertEquals(1, vm.daily.value.streak)
+        sub.cancel()
+    }
+
     /** « Jouer cette position » à la première ouverture du Jeu Libre : la partie de départ ne doit pas l'écraser. */
     @Test
     fun lessonPositionIsNotOverwrittenByTheStartingGame() = test {

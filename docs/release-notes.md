@@ -1,3 +1,17 @@
+## ChessDuck 4.2.0 — Séance du jour et filet de sécurité
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Séance du jour (accueil de l'Académie, carte « Mon parcours ») : une dizaine de minutes en un seul bouton.
+  - Les étapes du jour : révisions dues, la leçon en cours (Comprendre puis Pratiquer), puis 5 exercices de votre point faible n° 1 ; chacune est cochée une fois faite.
+  - Le bouton lance toujours l'étape suivante ; à la fin d'une étape, un bandeau propose « Continuer » vers la suivante.
+  - Série de jours consécutifs (🔥) : elle avance chaque jour où la séance est terminée.
+- Filet de sécurité dans le Jeu Libre (Paramètres de partie) :
+  - l'Ordinateur arrête une gaffe nette avant qu'elle soit jouée ; « Pourquoi ? » l'explique comme dans la revue, avec la réponse adverse en rouge ;
+  - « Changer de coup » ou « Jouer quand même » ; dès qu'il vous a arrêté, la partie ne compte plus pour l'ELO ;
+  - réglage mémorisé, bouclier vert à côté de l'adversaire quand il est actif ;
+  - les gaffes arrêtées comptent dans « À travailler » de l'Académie, même sans analyse de la partie.
+
 ## ChessDuck 4.1.4 — l'Atelier avant les Leçons
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

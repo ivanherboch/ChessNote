@@ -61,6 +61,8 @@ data class PlayState(
     val checking: Boolean = false,
     /** Coup arrêté avant d'être joué : l'élève en change, ou le joue quand même. */
     val warning: CoachWarning? = null,
+    /** Partie normale : le filet de sécurité a arrêté au moins une gaffe ; la partie ne compte plus pour l'ELO. */
+    val netUsed: Boolean = false,
 ) {
     /** Partie d'entraînement lancée depuis une position de l'Académie : elle ne compte pas pour l'ELO. */
     val fromPosition: Boolean get() = line.startFen != START_FEN
@@ -126,7 +128,7 @@ class PlayViewModel(
         _state.update {
             PlayState(
                 playerWhite = playerWhite, twoPlayers = st.twoPlayers, aiElo = st.aiElo, flipped = !playerWhite,
-                evalOn = it.evalOn,
+                evalOn = it.evalOn, coached = st.safetyNet && !st.twoPlayers, coachLeft = Int.MAX_VALUE,
             )
         }
         if (!st.twoPlayers && !playerWhite) aiMove() else precompute()
@@ -175,13 +177,29 @@ class PlayViewModel(
         commit(m)
     }
 
-    /** Partie accompagnée : active ou coupe les arrêts avant une gaffe. */
+    /**
+     * Partie accompagnée (position de leçon) ou filet de sécurité (partie normale, réglage mémorisé) : active ou coupe
+     * les arrêts avant une gaffe.
+     */
     fun toggleCoach() {
-        if (!state.value.fromPosition) return
+        val s = state.value
+        if (s.twoPlayers) return
         // Une vérification en cours est abandonnée : le coup n'est pas joué, l'élève le rejoue.
         coachJob?.cancel()
-        _state.update { it.copy(coached = !it.coached, warning = null, checking = false) }
+        val on = !s.coached
+        _state.update { it.copy(coached = on, coachLeft = if (it.fromPosition) it.coachLeft else Int.MAX_VALUE, warning = null, checking = false) }
+        if (!s.fromPosition) viewModelScope.launch { prefs.setSafetyNet(on) }
     }
+
+    /** « Paramètres de partie » : filet de sécurité mémorisé, appliqué aussitôt à la partie normale en cours. */
+    fun setSafetyNet(on: Boolean) {
+        val s = state.value
+        if (!s.fromPosition && !s.twoPlayers && s.coached != on) toggleCoach()
+        else viewModelScope.launch { prefs.setSafetyNet(on) }
+    }
+
+    /** Coup arrêté : montre pourquoi c'est une gaffe (la réponse adverse, en rouge). */
+    fun showWhy() = _state.update { s -> s.warning?.takeIf { it.why != null }?.let { s.copy(warning = it.copy(showWhy = true)) } ?: s }
 
     /** Abandonne la vérification ou l'arrêt en cours de la partie accompagnée. */
     private fun stopCoach() {
@@ -221,7 +239,16 @@ class PlayViewModel(
                 return@launch commit(m)
             }
             val reply = res.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { after.isLegal(it) }
-            _state.update { it.copy(checking = false, coachLeft = it.coachLeft - 1, warning = CoachWarning(m, coachText(pos.san(m), after, reply))) }
+            // L'explication de la revue de partie, montrée à la demande (« Pourquoi ? »), et le point faible révélé.
+            val (why, topic) = runCatching { ReviewComments.netReason(pos, m, before, res) }.getOrDefault(null to null)
+            val net = !s.fromPosition
+            if (net && topic != null) launch { prefs.addNetEvent(topic.name, System.currentTimeMillis()) }
+            _state.update {
+                it.copy(
+                    checking = false, coachLeft = it.coachLeft - 1, netUsed = it.netUsed || net,
+                    warning = CoachWarning(m, coachText(pos.san(m), after, reply, net), why, reply),
+                )
+            }
         }
     }
 
@@ -395,7 +422,9 @@ class PlayViewModel(
                 analyzer.start(record, line)
             } else {
                 val outcome = if (s.playerWhite) whiteResult else -whiteResult
-                val newElo = if (s.fromPosition) st.elo else GameLogic.newElo(st.elo, s.aiElo, (outcome + 1) / 2.0)
+                // Partie d'entraînement (position de leçon) ou filet de sécurité utilisé : l'ELO ne change pas.
+                val rated = !s.fromPosition && !s.netUsed
+                val newElo = if (!rated) st.elo else GameLogic.newElo(st.elo, s.aiElo, (outcome + 1) / 2.0)
                 val diff = newElo - st.elo
                 val delta = if (diff >= 0) "+$diff" else "−${-diff}"
                 val head = when (outcome) {
@@ -407,12 +436,16 @@ class PlayViewModel(
                     it.copy(
                         thinking = false,
                         result = GameResult(
-                            head + if (s.fromPosition) " Partie d'entraînement depuis une leçon : l'ELO ne change pas." else " ELO ${st.elo} → $newElo ($delta).",
+                            head + when {
+                                s.fromPosition -> " Partie d'entraînement depuis une leçon : l'ELO ne change pas."
+                                s.netUsed -> " Le filet de sécurité vous a arrêté : la partie ne compte pas pour l'ELO."
+                                else -> " ELO ${st.elo} → $newElo ($delta)."
+                            },
                             if (outcome == 1) Tone.GOOD else if (outcome == 0) Tone.GOLD else Tone.BAD,
                         ),
                     )
                 }
-                if (!s.fromPosition) prefs.setElo(newElo)
+                if (rated) prefs.setElo(newElo)
                 var record = GameRecord(
                         date = System.currentTimeMillis(), opponent = "Ordinateur ${s.aiElo}", vsComputer = true, playerWhite = s.playerWhite,
                         result = resultStr, outcome = outcome, reason = reason, eloBefore = st.elo, eloAfter = newElo, moves = line.uciMoves(), analysis = analysis,
@@ -434,7 +467,15 @@ class PlayViewModel(
 
 /** Force de l'Ordinateur pour « Jouer cette position », selon le palier de l'Académie (1 à 5). */
 /** Coup arrêté par la partie accompagnée, et la question réflexe à se poser. */
-data class CoachWarning(val move: Move, val text: String)
+data class CoachWarning(
+    val move: Move,
+    val text: String,
+    /** Explication de la gaffe (comme dans la revue), montrée par « Pourquoi ? ». */
+    val why: String? = null,
+    /** Réponse adverse qui punirait le coup (flèche rouge une fois l'explication montrée). */
+    val reply: Move? = null,
+    val showWhy: Boolean = false,
+)
 
 /** Arrêts de la partie accompagnée (une ou deux fois par partie), et seuils (centipions). */
 const val COACH_STOPS = 2
@@ -442,7 +483,7 @@ const val BLUNDER_CP = 200
 private const val LOST_CP = 300
 
 /** La question réflexe adaptée à la réponse adverse qui punirait le coup [san] (sans la dévoiler). */
-internal fun coachText(san: String, after: Position, reply: Move?): String {
+internal fun coachText(san: String, after: Position, reply: Move?, net: Boolean = false): String {
     val next = reply?.let { after.play(it) }
     val q = when {
         reply == null || next == null -> "Quelle menace laissez-vous à l'adversaire ?"
@@ -451,7 +492,7 @@ internal fun coachText(san: String, after: Position, reply: Move?): String {
         next.inCheck -> "Quel échec laissez-vous à l'adversaire ?"
         else -> "Quelle menace laissez-vous à l'adversaire ? Regardez ses échecs, ses prises et ses attaques."
     }
-    return "Partie accompagnée : $san serait une grosse erreur. $q Changez de coup, ou jouez-le quand même."
+    return (if (net) "Filet de sécurité" else "Partie accompagnée") + " : $san serait une grosse erreur. $q Changez de coup, ou jouez-le quand même."
 }
 
 fun positionElo(level: Int): Int = when (level.coerceIn(1, 5)) {

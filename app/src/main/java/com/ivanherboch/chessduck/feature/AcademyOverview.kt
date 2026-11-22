@@ -55,8 +55,8 @@ internal class AcademyOverview(
 
     /** Bilan : les 3 priorités du moment, d'après les parties analysées et la progression dans l'Académie. */
     val priorities: StateFlow<List<Priority>> = combine(
-        games?.games() ?: flowOf(emptyList()), lessons.progress(), prefs.settings.map { it.lessonWorkedAt }.distinctUntilChanged(),
-    ) { g, p, worked ->
-        WeakTopics.compute(g, p, worked, srs.now())
+        games?.games() ?: flowOf(emptyList()), lessons.progress(), prefs.settings.map { it.lessonWorkedAt to it.netEvents }.distinctUntilChanged(),
+    ) { g, p, (worked, events) ->
+        WeakTopics.compute(g, p, worked, srs.now(), events)
     }.let { f -> if (work != null) f.flowOn(work) else f }.stateIn(scope, SharingStarted.WhileSubscribed(5_000), emptyList())
 }

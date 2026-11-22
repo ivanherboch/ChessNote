@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -104,6 +105,7 @@ class AcademyViewModel(
             override fun warmEngine() = this@AcademyViewModel.warmEngine()
             override fun cancelAll() = this@AcademyViewModel.cancelAll()
             override fun backToCaller() = this@AcademyViewModel.backToCaller()
+            override fun lessonSeriesDone() = markDaily(if (topicSeries) DailyStep.PUZZLES else DailyStep.LESSON)
             override suspend fun saveProgress(id: Int, update: (LessonProgress) -> LessonProgress) = this@AcademyViewModel.saveProgress(id, update)
             override suspend fun completeReview(success: Boolean, fluent: Boolean) = this@AcademyViewModel.completeReview(success, fluent)
         },
@@ -340,6 +342,7 @@ class AcademyViewModel(
      * toujours la ligne.
      */
     private fun startPractising() {
+        topicSeries = false
         val s = state.value
         if (s.review != null || s.repertoire != null) return startChallenge()
         val l = lesson
@@ -625,6 +628,7 @@ class AcademyViewModel(
             )
         }
         _state.update { it.copy(message = it.message + next) }
+        markDaily(DailyStep.LESSON)
     }
 
     /**
@@ -830,6 +834,7 @@ class AcademyViewModel(
         openedExplicitly = true
         open(lessonId, guided = true)
         if (theme.isEmpty()) return
+        topicSeries = true
         viewModelScope.launch {
             val level = prefs.settings.first().academyLevel.coerceAtLeast(2)
             startSeries(PracticeKind.LESSON, List(PRACTICE_SIZE) { PuzzleSpec(listOf(theme), AcademyAssessments.levelRange(level)) }, level)
@@ -873,6 +878,53 @@ class AcademyViewModel(
     private fun backToLesson() {
         if (state.value.lessonPractice) setChallenge(false)
     }
+
+    // ---- Séance du jour ----
+
+    /** La série de problèmes en cours vient du travail d'un point faible (et non de Pratiquer). */
+    private var topicSeries = false
+
+    private fun today(): Long = java.time.Instant.ofEpochMilli(srs.now()).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toEpochDay()
+
+    /** Plan de la séance du jour, recalculé à chaque changement (révisions dues, leçon, points faibles, journal). */
+    val daily: StateFlow<DailyPlan> = combine(home, priorities, prefs.settings.map { it.daily }.distinctUntilChanged()) { h, prio, log ->
+        val day = today()
+        val done = log.doneOn(day).mapNotNull { k -> DailyStep.entries.firstOrNull { it.key == k } }.toSet()
+        val lessonId = h.continueId ?: h.recommended
+        val weak = prio.firstOrNull { it.theme.isNotEmpty() }
+        val steps = listOfNotNull(
+            DailyStep.REVIEWS.takeIf { h.due.isNotEmpty() || it in done },
+            DailyStep.LESSON.takeIf { lessonId != null || it in done },
+            DailyStep.PUZZLES.takeIf { weak != null || it in done },
+        )
+        DailyPlan(steps, done, log.streakOn(day), h.due.size, lessonId, h.continueId != null, weak)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DailyPlan())
+
+    /** Une étape de la séance du jour est faite ; si la séance est en cours, le bandeau propose la suite. */
+    private fun markDaily(step: DailyStep) {
+        val required = daily.value.steps.map { it.key }.toSet().ifEmpty { setOf(step.key) }
+        viewModelScope.launch { prefs.markDailyStep(step.key, today(), required) }
+        if (state.value.dailyRunning) _state.update { it.copy(dailyPrompt = true) }
+    }
+
+    /**
+     * Bouton « Séance du jour » : lance l'étape suivante (révisions, leçon, point faible) depuis l'accueil ; quand la
+     * séance est finie, il rouvre simplement la leçon en cours.
+     */
+    fun startDaily() {
+        val plan = daily.value
+        val step = plan.next
+        goHome()
+        _state.update { it.copy(dailyRunning = step != null, dailyPrompt = false) }
+        when (step) {
+            DailyStep.REVIEWS -> startReviews()
+            DailyStep.LESSON, null -> plan.lessonId?.let { open(it, guided = true) }
+            DailyStep.PUZZLES -> plan.weak?.let { trainTopic(it.lessonId, it.theme) }
+        }
+    }
+
+    /** Ferme le bandeau de la séance du jour (l'élève reste où il est). */
+    fun dismissDailyPrompt() = _state.update { it.copy(dailyPrompt = false, dailyRunning = daily.value.next != null && it.dailyRunning) }
 
     // ---- Navigation entre l'accueil, l'Atelier et les séances ----
 
@@ -947,6 +999,7 @@ class AcademyViewModel(
     private suspend fun endgameFinished(family: EndgameFamily, score: Int, total: Int) {
         if (endgameReview) return completeReview(score == total, reviewFluent)
         val id = endgameLesson ?: return
+        markDaily(DailyStep.LESSON)
         val passed = score >= EndgameTrainer.PASS
         // Pratiquer réussi (3 positions sur 5) : la leçon est maîtrisée.
         saveProgress(id) { p ->
@@ -1104,7 +1157,10 @@ class AcademyViewModel(
         endgameReview = false
         _state.update { it.copy(practice = null) }
         if (r.index + 1 < r.queue.size) openReview(r.index + 1)
-        else _state.update { it.copy(review = r.copy(finished = true)) }
+        else {
+            _state.update { it.copy(review = r.copy(finished = true)) }
+            markDaily(DailyStep.REVIEWS)
+        }
     }
 
     fun closeReviews() {

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.chess.Move
 import com.ivanherboch.chessduck.content.Lesson
+import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.content.LessonCategory
 import com.ivanherboch.chessduck.ui.Refutation
 import com.ivanherboch.chessduck.ui.BoardAnim
@@ -154,7 +155,52 @@ data class AcademyState(
     val route: AcademyRoute = AcademyRoute.HOME,
     /** Écran d'où la séance en cours a été lancée (accueil ou Atelier) : on y revient en la quittant ; null : la leçon. */
     val sessionFrom: AcademyRoute? = null,
+    /** La « Séance du jour » a été lancée : chaque étape terminée propose la suivante. */
+    val dailyRunning: Boolean = false,
+    /** Une étape de la séance du jour vient d'être terminée : le bandeau « Suite de la séance » s'affiche. */
+    val dailyPrompt: Boolean = false,
 )
+
+/** Étapes de la séance du jour, dans l'ordre. */
+enum class DailyStep(val key: String) { REVIEWS("reviews"), LESSON("lesson"), PUZZLES("puzzles") }
+
+/**
+ * Séance du jour (une dizaine de minutes) : les révisions dues, la leçon en cours (Comprendre puis Pratiquer), puis
+ * 5 exercices du point faible n° 1. [steps] : les étapes du jour ; [done] : celles déjà faites ; [streak] : jours
+ * consécutifs où la séance a été terminée.
+ */
+@Immutable
+data class DailyPlan(
+    val steps: List<DailyStep> = emptyList(),
+    val done: Set<DailyStep> = emptySet(),
+    val streak: Int = 0,
+    val dueCount: Int = 0,
+    val lessonId: Int? = null,
+    /** La leçon est commencée (« Continuer ») plutôt que nouvelle (« Prochaine leçon »). */
+    val lessonStarted: Boolean = false,
+    val weak: Priority? = null,
+) {
+    val next: DailyStep? get() = steps.firstOrNull { it !in done }
+    val finished: Boolean get() = steps.isNotEmpty() && next == null
+
+    /** Nom court d'une étape (cases à cocher de l'accueil). */
+    fun stepName(st: DailyStep): String = when (st) {
+        DailyStep.REVIEWS -> "Révisions"
+        DailyStep.LESSON -> "Leçon"
+        DailyStep.PUZZLES -> "Point faible"
+    }
+
+    /** Libellé du bouton de la séance : l'étape suivante, ou la leçon à continuer une fois la séance terminée. */
+    fun actionLabel(): String? {
+        val title = lessonId?.let { Lessons.byId(it).title }
+        return when (next) {
+            DailyStep.REVIEWS -> "Révisions du jour ($dueCount)"
+            DailyStep.LESSON -> if (lessonStarted) "Continuer : $title" else "Leçon : $title"
+            DailyStep.PUZZLES -> "Point faible : ${weak?.title}"
+            null -> title?.let { "Continuer : $it" }
+        }
+    }
+}
 
 /** Libellé (TalkBack) de la flèche de retour d'une séance : vers l'écran qui l'a lancée. */
 internal fun backLabel(s: AcademyState): String = when (s.sessionFrom) {

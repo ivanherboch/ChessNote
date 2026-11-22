@@ -64,6 +64,12 @@ data class Settings(
     val lessonWorkedAt: Map<Int, Long> = emptyMap(),
     /** Leçons dont la démonstration « Comprendre » a été suivie jusqu'au bout. */
     val understoodIds: Set<Int> = emptySet(),
+    /** Séance du jour : étapes faites aujourd'hui et série de jours. */
+    val daily: DailyLog = DailyLog(),
+    /** Jeu Libre : filet de sécurité (l'Ordinateur arrête une gaffe nette avant qu'elle soit jouée). */
+    val safetyNet: Boolean = false,
+    /** Gaffes arrêtées par le filet (elles comptent dans « À travailler »). */
+    val netEvents: List<NetEvent> = emptyList(),
     val pseudo: String = "Joueur",
     /** Second joueur humain du mode 2 joueurs. */
     val pseudo2: String = "Joueur 2",
@@ -115,6 +121,9 @@ class Prefs(private val context: Context) : SettingsRepository {
         val repertoireIds = stringPreferencesKey("academy_repertoire_ids")
         val workedAt = stringPreferencesKey("academy_lesson_worked_at")
         val understood = stringPreferencesKey("academy_understood_ids")
+        val daily = stringPreferencesKey("academy_daily")
+        val safetyNet = booleanPreferencesKey("play_safety_net")
+        val netEvents = stringPreferencesKey("play_net_events")
         val pseudo = stringPreferencesKey("pseudo")
         val pseudo2 = stringPreferencesKey("pseudo2")
         val elo = intPreferencesKey("elo")
@@ -149,6 +158,9 @@ class Prefs(private val context: Context) : SettingsRepository {
             repertoireIds = (p[K.repertoireIds] ?: "").split(',').mapNotNull { it.trim().toIntOrNull() }.toSet(),
             lessonWorkedAt = decodeWorked(p[K.workedAt]),
             understoodIds = (p[K.understood] ?: "").split(',').mapNotNull { it.trim().toIntOrNull() }.toSet(),
+            daily = DailyLog.decode(p[K.daily]),
+            safetyNet = p[K.safetyNet] ?: false,
+            netEvents = decodeNetEvents(p[K.netEvents]),
             pseudo = p[K.pseudo] ?: "Joueur",
             pseudo2 = p[K.pseudo2] ?: "Joueur 2",
             elo = p[K.elo] ?: DEFAULT_ELO,
@@ -202,6 +214,13 @@ class Prefs(private val context: Context) : SettingsRepository {
     override suspend fun markVariantDone(key: String) { context.store.edit { p ->
         val done = (p[K.variantsDone] ?: "").split(',').filter { it.isNotBlank() }.toMutableSet()
         if (done.add(key)) p[K.variantsDone] = done.joinToString(",")
+    } }
+    override suspend fun markDailyStep(step: String, today: Long, required: Set<String>) { context.store.edit { p ->
+        p[K.daily] = DailyLog.decode(p[K.daily]).mark(step, today, required).encode()
+    } }
+    override suspend fun setSafetyNet(on: Boolean) { context.store.edit { it[K.safetyNet] = on } }
+    override suspend fun addNetEvent(topic: String, at: Long) { context.store.edit { p ->
+        p[K.netEvents] = encodeNetEvents((decodeNetEvents(p[K.netEvents]) + NetEvent(topic, at)).takeLast(NET_EVENTS_MAX))
     } }
     override suspend fun markUnderstood(lessonId: Int) { context.store.edit { p ->
         val ids = (p[K.understood] ?: "").split(',').mapNotNull { it.trim().toIntOrNull() }.toMutableSet()

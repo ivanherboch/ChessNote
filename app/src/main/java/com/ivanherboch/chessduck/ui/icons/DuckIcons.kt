@@ -417,6 +417,16 @@ val Icons.Rounded.SearchOff: ImageVector
         )
     }.also { _rounded_SearchOff = it }
 
+private var _rounded_Shield: ImageVector? = null
+
+val Icons.Rounded.Shield: ImageVector
+    get() = _rounded_Shield ?: materialIcon(name = "Rounded.Shield", autoMirror = false) {
+        addPath(
+            addPathNodes("M11.3,2.26 l-6,2.25 C4.52,4.81 4,5.55 4,6.39 v4.7 c0,4.83 3.13,9.37 7.43,10.75 c0.37,0.12 0.77,0.12 1.14,0 c4.3,-1.38 7.43,-5.91 7.43,-10.75 v-4.7 c0,-0.83 -0.52,-1.58 -1.3,-1.87 l-6,-2.25 C12.25,2.09 11.75,2.09 11.3,2.26 Z"),
+            pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black), fillAlpha = 1.0f,
+        )
+    }.also { _rounded_Shield = it }
+
 private var _rounded_Shuffle: ImageVector? = null
 
 val Icons.Rounded.Shuffle: ImageVector

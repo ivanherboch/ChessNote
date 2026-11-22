@@ -104,6 +104,15 @@ object ReviewComments {
      * (le roi, une pièce plus forte qu'elle, ou une pièce non défendue), sans pouvoir être prise elle-même par une pièce
      * plus faible ni sans protection.
      */
+    /**
+     * Filet de sécurité du Jeu Libre : pourquoi le coup [m] du joueur humain serait une gaffe (phrase complète) et le
+     * point faible qu'il révèle (null s'il ne relève d'aucun thème de l'Académie).
+     */
+    fun netReason(p: Position, m: Move, a0: Analysis, a1: Analysis): Pair<String, ReviewTopic?> {
+        val (text, topic) = diagnose(Voice("", true, p.whiteToMove), p, m, p.san(m), a0, a1)
+        return text.replaceFirstChar { it.uppercase() } to topic
+    }
+
     internal fun isFork(p: Position, m: Move): Boolean {
         val white = p.whiteToMove
         val after = p.play(m)
