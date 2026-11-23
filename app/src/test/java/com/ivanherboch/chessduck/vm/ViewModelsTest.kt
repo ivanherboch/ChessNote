@@ -1590,18 +1590,20 @@ class ViewModelsTest {
         assertTrue(vm.state.value.thinking)
         advanceTimeBy(600); runCurrent()
         assertEquals(2, vm.state.value.line.size) // l'ordinateur a répondu
-        // Coup joué puis nouvelle partie pendant la réflexion : la réponse de l'ancienne partie est ignorée.
+        // Coup joué puis nouvelle partie pendant la réflexion : la réponse de l'ancienne partie est ignorée, et la partie
+        // quittée en cours compte comme un abandon.
         vm.playerMove(vm.state.value.position.legalMoves.first())
         vm.newGame()
         advanceUntilIdle()
         assertEquals(0, vm.state.value.line.size)
+        assertEquals(1, games.stored.value.size)
         // Abandon après un échange : partie enregistrée et ELO mis à jour.
         vm.playerMove(Move.fromUci("d2d4"))
         advanceUntilIdle()
         vm.resign()
         advanceUntilIdle()
         assertNotNull(vm.state.value.result)
-        assertEquals(1, games.stored.value.size)
+        assertEquals(2, games.stored.value.size)
         assertTrue(settings.flow.value.elo < 1200)
     }
 

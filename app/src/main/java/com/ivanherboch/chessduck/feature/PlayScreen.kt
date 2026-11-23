@@ -242,7 +242,7 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
             "Abandonner", { confirm = null; vm.resign() }, { confirm = null },
         )
         ConfirmAction.NEW_GAME -> ConfirmDialog(
-            "Commencer une nouvelle partie ?", "La partie en cours sera perdue (elle n'est pas enregistrée).",
+            "Commencer une nouvelle partie ?", quitText(s),
             "Nouvelle partie", { confirm = null; vm.newGame() }, { confirm = null },
         )
         null -> Unit
@@ -250,7 +250,7 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
     // Nouveaux réglages : ils relancent une partie, donc confirmation si une partie est en cours.
     pendingSettings?.let { (two, color, elo) ->
         ConfirmDialog(
-            "Appliquer les nouveaux réglages ?", "Une nouvelle partie commencera : la partie en cours sera perdue (elle n'est pas enregistrée).",
+            "Appliquer les nouveaux réglages ?", "Une nouvelle partie commencera. " + quitText(s),
             "Nouvelle partie", { pendingSettings = null; vm.applySettings(two, color, elo) }, { pendingSettings = null },
         )
     }
@@ -265,6 +265,13 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
         gameSettings = false
         if (st.confirmActions && s.inProgress) pendingSettings = Triple(two, color, elo) else vm.applySettings(two, color, elo)
     }
+}
+
+/** Ce que devient la partie en cours si l'on en commence une autre. */
+private fun quitText(s: PlayState): String = when {
+    s.twoPlayers -> "La partie en cours sera perdue (elle n'est pas enregistrée)."
+    s.fromPosition || s.netUsed -> "La partie en cours comptera comme un abandon (enregistrée dans l'historique, sans effet sur l'ELO)."
+    else -> "La partie en cours comptera comme un abandon : une défaite, et votre ELO sera mis à jour."
 }
 
 private fun liveStatus(s: PlayState, p1: String, p2: String): Pair<String, Tone> {

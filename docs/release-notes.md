@@ -1,3 +1,11 @@
+## ChessDuck 4.2.9 — quitter une partie compte comme un abandon
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Jeu Libre : commencer une nouvelle partie, changer les réglages ou lancer une position de leçon pendant une partie en cours contre l'Ordinateur compte désormais comme un abandon. La partie est enregistrée dans l'historique (analysable) et, si elle était classée, l'ELO est mis à jour. Relancer une partie mal engagée ne permet plus d'éviter une défaite.
+- La confirmation l'annonce clairement (« La partie en cours comptera comme un abandon… »).
+- Avant le premier échange, ou à deux joueurs, rien ne change : la partie est simplement laissée de côté.
+
 ## ChessDuck 4.2.8 — Jeu Libre débogué
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

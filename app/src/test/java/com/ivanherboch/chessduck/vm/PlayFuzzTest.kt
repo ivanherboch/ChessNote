@@ -74,6 +74,9 @@ class PlayFuzzTest {
             repeat(160) { step ->
                 val s = vm.state.value
                 val a = r.nextInt(100)
+                if (s.result == null) eloBefore = prefs.flow.value.elo
+                // Quitter une partie en cours contre l'Ordinateur la compte comme un abandon (enregistré).
+                if (a in 77..78 || a in 94..95 || a >= 98) if (s.inProgress && !s.twoPlayers) finished++
                 val name = when {
                     a < 55 -> { val m = s.position.legalMoves.randomOrNull(r); if (m != null) vm.playerMove(m); "coup ${m?.let { s.position.san(it) }}" }
                     a < 60 -> { vm.hint(); "indice" }
@@ -122,5 +125,23 @@ class PlayFuzzTest {
         }
         println(problems.joinToString("\n"))
         assertTrue(problems.joinToString("\n"), problems.isEmpty())
+    }
+
+    /** « Nouvelle partie » en pleine partie contre l'Ordinateur : un abandon, enregistré, qui fait perdre de l'ELO. */
+    @Test
+    fun quittingAGameInProgressCountsAsResignation() = runTest(main) {
+        val games = FakeGames()
+        val engine = FakeEngine()
+        val prefs = FakeSettings(Settings(colorChoice = 0, aiElo = 1200))
+        val vm = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope))
+        advanceUntilIdle()
+        // Pas encore d'échange : rien n'est enregistré.
+        vm.newGame(); advanceUntilIdle()
+        assertTrue(games.stored.value.isEmpty())
+        vm.playerMove(com.ivanherboch.chessduck.chess.Move.fromUci("e2e4")); advanceUntilIdle()
+        vm.newGame(); advanceUntilIdle()
+        assertTrue(games.stored.value.size == 1 && games.stored.value[0].reason == "abandon" && games.stored.value[0].outcome == -1)
+        assertTrue(prefs.flow.value.elo < 1200)
+        assertTrue(vm.state.value.line.size == 0 && vm.state.value.result == null)
     }
 }

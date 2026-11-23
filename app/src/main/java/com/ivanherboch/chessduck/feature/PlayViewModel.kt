@@ -104,6 +104,7 @@ class PlayViewModel(
     }
 
     fun applySettings(twoPlayers: Boolean, color: Int, aiElo: Int) {
+        abandonInProgress()
         applyJob?.cancel()
         applyJob = viewModelScope.launch {
             prefs.setGameSettings(twoPlayers, color, aiElo)
@@ -113,8 +114,23 @@ class PlayViewModel(
 
     /** Nouvelle partie avec les réglages enregistrés (lus dans DataStore, même si l'écran n'est pas abonné). */
     fun newGame() {
+        abandonInProgress()
         applyJob?.cancel()
         applyJob = viewModelScope.launch { newGame(prefs.settings.first()) }
+    }
+
+    /**
+     * Partie contre l'Ordinateur quittée en cours (nouvelle partie, nouveaux réglages, position de leçon) : elle compte
+     * comme un abandon, enregistré avec son effet sur l'ELO. Sinon, relancer une partie mal engagée éviterait la défaite.
+     * À deux joueurs, la partie est simplement laissée de côté.
+     */
+    private fun abandonInProgress() {
+        val s = state.value
+        if (!s.inProgress || s.twoPlayers) return
+        aiJob?.cancel()
+        stopCoach()
+        _state.update { it.copy(thinking = false) }
+        finish(GameEnd.NONE, s.playerWhite)
     }
 
     private fun newGame(st: Settings) {
@@ -142,6 +158,7 @@ class PlayViewModel(
      */
     fun startFromPosition(fen: String, playerWhite: Boolean) {
         val start = runCatching { Line(fen) }.getOrNull() ?: return
+        abandonInProgress()
         applyJob?.cancel()
         applyJob = viewModelScope.launch {
             val st = prefs.settings.first()
