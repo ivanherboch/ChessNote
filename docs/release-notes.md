@@ -1,3 +1,11 @@
+## ChessDuck 4.2.10 — Problèmes débogués
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Reculer d'un coup juste après un bon coup ne fait plus sauter l'échiquier en avant quand la réponse adverse arrive : elle s'ajoute à la suite, et « Coup suivant » la montre.
+- Base vérifiée : les 150 000 problèmes ont des coups légaux, une solution qui se termine par un coup du joueur, aucune fin de partie prématurée et un thème connu.
+- Nouveau test automatique : 60 sessions d'actions au hasard (bons et mauvais coups, indice, navigation, Réessayer, nouveau problème, filtres). Aucun blocage, et la solution jouée résout toujours le problème, qui est bien compté comme résolu.
+
 ## ChessDuck 4.2.9 — quitter une partie compte comme un abandon
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

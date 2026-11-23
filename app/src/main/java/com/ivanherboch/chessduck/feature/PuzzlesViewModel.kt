@@ -326,8 +326,11 @@ class PuzzlesViewModel(
                 delay(600)
                 val reply = newLine.moves[cur + 1]
                 _state.update {
+                    // Le joueur a reculé pour revoir la position entre-temps : la réponse s'ajoute sans faire sauter l'échiquier.
+                    val here = it.cursor == cur + 1
                     it.copy(
-                        cursor = cur + 2, progress = cur + 2, anim = moveAnim(newLine.positions[cur + 1], reply),
+                        cursor = if (here) cur + 2 else it.cursor, progress = cur + 2,
+                        anim = if (here) moveAnim(newLine.positions[cur + 1], reply) else it.anim,
                         message = "Bien vu. L'adversaire répond ${newLine.sans[cur + 1]} : à vous de continuer.",
                     )
                 }

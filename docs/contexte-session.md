@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `4.2.9` (`versionCode = 97`), publiée en release GitHub `v4.2.9`.
+- **Version actuelle** : `4.2.10` (`versionCode = 98`), publiée en release GitHub `v4.2.10`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -201,6 +201,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **4.2.7** : `closeReviews`/`closeRepertoire` → `stopSessionLine()` (annule lecture/jugement, `challenge = false`) ; `dailyPrompt` effacé par `open()` hors séance, `goHome`, `backToCaller`/`openRoute` vers HOME ; `PracticeSeries.widen` (tranche ±300, ±600, puis 0..4000) ; test `AcademyWalkthroughTest` (toutes les leçons, variantes, sortie de révision, bandeau).
 - **4.2.8** : `PlayViewModel.navigate` efface `warning` ; `playAnyway` vérifie la légalité dans la position affichée ; test `PlayFuzzTest` (moteur bruité, 80 graines × 160 actions : blocage, fin non conclue, enregistrement, ELO hors classement).
 - **4.2.9** : `PlayViewModel.abandonInProgress()` (appelé par `newGame`, `applySettings`, `startFromPosition`) : partie en cours contre l'Ordinateur (`inProgress`) → `finish` comme un abandon (enregistrée, ELO si classée) ; textes de confirmation `quitText` dans `PlayScreen`.
+- **4.2.10** : `PuzzlesViewModel.onMove` : la réponse adverse n'avance le curseur que s'il est resté sur le coup joué ; audit de la base (150 000 problèmes : légalité, parité, fins prématurées, thèmes) ; tests `PuzzlesFuzzTest`.
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.

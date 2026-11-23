@@ -76,7 +76,8 @@ class PlayFuzzTest {
                 val a = r.nextInt(100)
                 if (s.result == null) eloBefore = prefs.flow.value.elo
                 // Quitter une partie en cours contre l'Ordinateur la compte comme un abandon (enregistré).
-                if (a in 77..78 || a in 94..95 || a >= 98) if (s.inProgress && !s.twoPlayers) finished++
+                val quit = (a in 77..78 || a in 94..95 || a >= 98) && s.inProgress && !s.twoPlayers
+                if (quit) finished++
                 val name = when {
                     a < 55 -> { val m = s.position.legalMoves.randomOrNull(r); if (m != null) vm.playerMove(m); "coup ${m?.let { s.position.san(it) }}" }
                     a < 60 -> { vm.hint(); "indice" }
@@ -105,7 +106,8 @@ class PlayFuzzTest {
                     advanceUntilIdle()
                     val elo = prefs.flow.value.elo
                     val unrated = t.twoPlayers || t.fromPosition || t.netUsed
-                    if (unrated && elo != eloBefore) problems += "seed $seed pas $step : ELO changé par une partie hors classement (${t.result!!.text})"
+                    // Une partie classée quittée dans la même étape (abandon) a pu, elle, changer l'ELO.
+                    if (unrated && !quit && elo != eloBefore) problems += "seed $seed pas $step : ELO changé par une partie hors classement (${t.result!!.text})"
                     eloBefore = elo
                 }
                 if (t.result == null) lastResult = null
