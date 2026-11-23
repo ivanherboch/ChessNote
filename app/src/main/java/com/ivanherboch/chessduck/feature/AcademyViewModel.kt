@@ -277,6 +277,8 @@ class AcademyViewModel(
                 // Une leçon choisie (ou une étape de révision) s'affiche ; la restauration au lancement garde l'accueil.
                 route = if (save || session) AcademyRoute.LESSON else it.route,
                 sessionFrom = if (session) it.sessionFrom else null,
+                // Le bandeau « Étape terminée » concernait l'étape d'avant : une autre leçon le referme.
+                dailyPrompt = if (session) it.dailyPrompt else false,
             )
         }
         if (save) viewModelScope.launch { prefs.setLesson(l.id) }
@@ -934,10 +936,13 @@ class AcademyViewModel(
     }
 
     /** Fin d'une séance lancée depuis l'accueil ou l'Atelier : on revient à cet écran (jamais à un tiroir). */
-    private fun backToCaller() = _state.update { st -> st.sessionFrom?.let { st.copy(sessionFrom = null, route = it) } ?: st }
+    private fun backToCaller() = _state.update { st ->
+        // De retour à l'accueil, la carte « Séance du jour » montre la suite : le bandeau ne doit pas resurgir plus tard.
+        st.sessionFrom?.let { st.copy(sessionFrom = null, route = it, dailyPrompt = st.dailyPrompt && it != AcademyRoute.HOME) } ?: st
+    }
 
     /** Ouvre une sous-liste de l'Atelier, ou revient à l'accueil depuis l'une d'elles. */
-    fun openRoute(route: AcademyRoute) = _state.update { it.copy(route = route) }
+    fun openRoute(route: AcademyRoute) = _state.update { it.copy(route = route, dailyPrompt = it.dailyPrompt && route != AcademyRoute.HOME) }
 
     /**
      * Retour à l'accueil de l'Académie depuis une leçon ou une séance : tout s'arrête (voix, lecture, exercices,
@@ -952,7 +957,7 @@ class AcademyViewModel(
             it.copy(
                 route = AcademyRoute.HOME, sessionFrom = null, playing = false, challenge = false, lessonPractice = false, practice = null,
                 quiz = null, review = null, repertoire = null, refute = null, refuteUntil = 0L, tentative = null, judging = false, anim = null,
-                suggest = null, done = false, message = "", note = null,
+                suggest = null, done = false, message = "", note = null, dailyPrompt = false,
             )
         }
     }
@@ -1164,8 +1169,23 @@ class AcademyViewModel(
     }
 
     fun closeReviews() {
+        if (state.value.review != null) stopSessionLine()
         _state.update { it.copy(review = null) }
         backToCaller()
+    }
+
+    /**
+     * Une révision ou le répertoire se ferme : la ligne rejouée s'arrête tout de suite (réponse adverse, jugement), pour
+     * qu'une fin de séquence ne soit pas comptée après coup comme une leçon pratiquée hors séance.
+     */
+    private fun stopSessionLine() {
+        cancelAll()
+        _state.update {
+            it.copy(
+                challenge = false, done = false, judging = false, refute = null, refuteUntil = 0L, tentative = null, suggest = null,
+                anim = null, message = "", tone = Tone.INFO,
+            )
+        }
     }
 
     // ---- Répertoire ----
@@ -1208,6 +1228,7 @@ class AcademyViewModel(
     }
 
     fun closeRepertoire() {
+        if (state.value.repertoire != null) stopSessionLine()
         _state.update { it.copy(repertoire = null) }
         backToCaller()
     }

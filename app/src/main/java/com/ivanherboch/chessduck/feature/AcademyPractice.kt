@@ -112,7 +112,9 @@ internal class PracticeSeries(
             val ids = ArrayList<String>()
             for (spec in specs) {
                 var id: String? = null
-                for (range in listOf(spec.range, 0..4000)) {
+                // Thème rare à ce palier (le roque n'a que 2 problèmes sous 1200) : on élargit peu à peu autour de la tranche,
+                // plutôt que de tirer d'un coup dans toute la base (surtout des problèmes vers 2000, hors de portée).
+                for (range in widen(spec.range)) {
                     repeat(6) {
                         if (id != null) return@repeat
                         val c = runCatchingSuspend { puzzles.randomId(spec.themes, range, ids.lastOrNull() ?: "", random) }.getOrNull()
@@ -392,6 +394,10 @@ internal class PracticeSeries(
     }
 
     companion object {
+        /** Tranches essayées tour à tour pour un problème : la tranche demandée, élargie de 300 puis 600 points, puis toute la base. */
+        internal fun widen(r: IntRange): List<IntRange> =
+            listOf(r, (r.first - 300).coerceAtLeast(0)..r.last + 300, (r.first - 600).coerceAtLeast(0)..r.last + 600, 0..4000)
+
         /** Problèmes d'une série de validation (et du « Seul coup »). */
         const val SIZE = 5
         /** Problèmes réussis pour valider une série. */
