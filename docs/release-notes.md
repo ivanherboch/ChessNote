@@ -1,3 +1,10 @@
+## ChessDuck 4.2.8 — Jeu Libre débogué
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Filet de sécurité : naviguer dans les coups (flèches ou liste) pendant qu'un coup est arrêté referme l'arrêt. Avant, « Jouer quand même » pouvait jouer ce coup dans une autre position, et « Pourquoi ? » dessinait ses flèches sur le mauvais échiquier.
+- Nouveau test automatique : 80 sessions de 160 actions au hasard (coups, indice, annulation, navigation, abandon, filet, nouvelle partie, réglages, positions de leçon). Aucune partie ne reste bloquée, chaque fin de partie est conclue et enregistrée une seule fois, et l'ELO ne bouge jamais pour une partie hors classement.
+
 ## ChessDuck 4.2.7 — Académie déboguée
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

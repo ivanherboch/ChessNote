@@ -214,6 +214,7 @@ class PlayViewModel(
     fun playAnyway() {
         val w = state.value.warning ?: return
         _state.update { it.copy(warning = null) }
+        if (!state.value.position.isLegal(w.move)) return
         commit(w.move)
     }
 
@@ -392,7 +393,9 @@ class PlayViewModel(
         val t = (s.cursor + delta).coerceIn(0, s.line.size)
         if (t == s.cursor) return
         val anim = LinePlaybackController.transition(s.line, s.cursor, t)
-        _state.update { it.copy(cursor = t, anim = anim, hintStage = 0) }
+        // Un coup arrêté par le filet concerne la position quittée : l'arrêt se referme (sinon « Jouer quand même »
+        // jouerait ce coup ailleurs, et « Pourquoi ? » dessinerait ses flèches sur un autre échiquier).
+        _state.update { it.copy(cursor = t, anim = anim, hintStage = 0, warning = null) }
         precompute()
     }
 
