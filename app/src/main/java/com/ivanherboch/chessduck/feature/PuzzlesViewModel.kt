@@ -60,6 +60,8 @@ data class PuzzleState(
     /** Fin (horloge système) et durée de l'affichage de la réfutation, pour le compte à rebours. */
     val refuteUntil: Long = 0L,
     val refuteHold: Long = 0L,
+    /** La flèche de l'indice 2/2 a montré un coup : le problème, même terminé, ne compte pas comme résolu. */
+    val arrowUsed: Boolean = false,
 ) {
     /** Le thème est visible si le joueur l'a choisi lui-même, l'a révélé, ou a résolu le problème. */
     val themeVisible: Boolean get() = solved || themeRevealed || PuzzleThemes.byKey.containsKey(theme)
@@ -177,7 +179,7 @@ class PuzzlesViewModel(
         val white = line.positions[1].whiteToMove
         _state.update {
             it.copy(
-                puzzle = p, line = line, progress = 0, cursor = 0, solved = false, anim = null, hintStage = 0, refute = null, empty = false,
+                puzzle = p, line = line, progress = 0, cursor = 0, solved = false, anim = null, hintStage = 0, refute = null, empty = false, arrowUsed = false,
                 themeRevealed = false, message = "${turnLabel(white)} : trouvez la meilleure suite.", tone = Tone.INFO,
             )
         }
@@ -290,8 +292,9 @@ class PuzzlesViewModel(
         val stage = (s.hintStage + 1).coerceAtMost(2)
         _state.update {
             it.copy(
-                hintStage = stage, tone = Tone.GOLD,
-                message = if (stage == 1) "Indice 1/2 : la pièce à jouer est surlignée en vert." else "Indice 2/2 : la flèche montre le coup à jouer.",
+                hintStage = stage, tone = Tone.GOLD, arrowUsed = it.arrowUsed || stage == 2,
+                message = if (stage == 1) "Indice 1/2 : la pièce à jouer est surlignée en vert."
+                else "Indice 2/2 : la flèche montre le coup à jouer. Ce problème ne comptera pas comme résolu.",
             )
         }
     }
@@ -315,11 +318,12 @@ class PuzzlesViewModel(
                 it.copy(
                     line = newLine, cursor = cur + 1, progress = cur + 1, anim = moveAnim(pos, m), hintStage = 0,
                     solved = it.solved || finished, tone = Tone.GOOD,
-                    message = if (finished) solvedMessage(p) else "${newLine.sans[cur]} — bon coup ! La suite arrive…",
+                    message = if (finished) solvedMessage(p, it.arrowUsed) else "${newLine.sans[cur]} — bon coup ! La suite arrive…",
                 )
             }
             if (finished) {
-                viewModelScope.launch { dao.markSolved(p.id) }
+                // Comme dans les séries de l'Académie : résolu après une erreur, il compte ; avec la flèche de l'indice, non.
+                if (!state.value.arrowUsed) viewModelScope.launch { dao.markSolved(p.id) }
                 return 2
             }
             job = viewModelScope.launch {
@@ -341,9 +345,9 @@ class PuzzlesViewModel(
         return -1
     }
 
-    private fun solvedMessage(p: Puzzle): String {
+    private fun solvedMessage(p: Puzzle, arrow: Boolean): String {
         val themes = p.themes.trim().split(' ').mapNotNull { PuzzleThemes.byKey[it]?.name }.take(4)
-        return "Problème résolu ! " + (if (themes.isNotEmpty()) "Thèmes : ${themes.joinToString(", ")}. " else "") +
+        return (if (arrow) "Terminé avec la flèche de l'indice : ce problème ne compte pas comme résolu, il reviendra plus tard. " else "Problème résolu ! ") + (if (themes.isNotEmpty()) "Thèmes : ${themes.joinToString(", ")}. " else "") +
             "Touchez « Problème aléatoire » pour le suivant."
     }
 

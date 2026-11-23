@@ -85,7 +85,7 @@ class PuzzlesFuzzTest {
             }
             val end = vm.state.value
             if (!end.solved) problems += "seed $seed : solution jouée mais problème non résolu (curseur ${end.cursor}/${end.line?.size}, ${log.takeLast(4)})"
-            else if (end.puzzle!!.id !in puzzles.solvedIds().first()) problems += "seed $seed : résolu mais non enregistré"
+            else if (!end.arrowUsed && end.puzzle!!.id !in puzzles.solvedIds().first()) problems += "seed $seed : résolu mais non enregistré"
         }
         println(problems.joinToString("\n"))
         assertTrue(problems.joinToString("\n"), problems.isEmpty())
@@ -105,6 +105,28 @@ class PuzzlesFuzzTest {
         assertTrue(vm.state.value.cursor == 3)
         vm.onMove(l.moves[3]); advanceUntilIdle()
         assertTrue(vm.state.value.solved)
+    }
+
+    /** Problème terminé avec la flèche de l'indice 2/2 : pas compté comme résolu ; après une simple erreur, il compte. */
+    @Test
+    fun arrowHintDoesNotCountAsSolved() = runTest(main) {
+        val repo = FakePuzzles(listOf(PUZZLE_0000D))
+        val vm = PuzzlesViewModel(FakeSettings(), repo, FakeEngine())
+        advanceUntilIdle()
+        val l = vm.state.value.line!!
+        vm.hint(); vm.hint()
+        vm.onMove(l.moves[1]); advanceUntilIdle()
+        vm.onMove(l.moves[3]); advanceUntilIdle()
+        assertTrue(vm.state.value.solved)
+        assertTrue(vm.state.value.message, vm.state.value.message.contains("ne compte pas"))
+        assertTrue(repo.solvedIds().first().isEmpty())
+        // Le même problème rouvert, résolu après une erreur : il compte.
+        vm.openPuzzle(PUZZLE_0000D); advanceUntilIdle()
+        val wrong = l.positions[1].legalMoves.first { it != l.moves[1] && !l.positions[1].play(it).isCheckmate }
+        vm.onMove(wrong); vm.retry(); advanceUntilIdle()
+        vm.onMove(l.moves[1]); advanceUntilIdle()
+        vm.onMove(l.moves[3]); advanceUntilIdle()
+        assertTrue(repo.solvedIds().first() == listOf(PUZZLE_0000D.id))
     }
 
     private fun com.ivanherboch.chessduck.feature.PuzzleState.position() = line?.positions?.getOrNull(cursor)

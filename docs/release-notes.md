@@ -1,3 +1,10 @@
+## ChessDuck 4.2.11 — « résolu » sans la flèche de l'indice
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Problèmes : un problème terminé après la flèche de l'indice 2/2 ne compte plus comme résolu (compteur, coche des récents). Il reste à résoudre et pourra revenir au tirage. Comme dans les séries de l'Académie, un problème réussi après une erreur compte toujours.
+- L'indice 2/2 le signale avant (« Ce problème ne comptera pas comme résolu »), et le message de fin le rappelle.
+
 ## ChessDuck 4.2.10 — Problèmes débogués
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
