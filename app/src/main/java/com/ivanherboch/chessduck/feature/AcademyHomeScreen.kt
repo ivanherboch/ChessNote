@@ -63,6 +63,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ivanherboch.chessduck.content.LessonCategory
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.ui.ButtonVariant
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.RowScope
 import com.ivanherboch.chessduck.ui.DuckButton
 import com.ivanherboch.chessduck.ui.DuckRadius
 import com.ivanherboch.chessduck.ui.DuckSheet
@@ -94,7 +97,7 @@ internal fun AcademyHomeScreen(vm: AcademyViewModel, onCatalog: (level: Int, cat
     }
     val right: @Composable ColumnScope.() -> Unit = {
         WorkshopTiles(vm, home)
-        LessonsCard(mastered.size, onCatalog)
+        LessonsCard(mastered.size, home.level, onCatalog)
     }
     if (LocalIsTwoPane.current) {
         Row(
@@ -239,22 +242,36 @@ private fun PrioritiesCard(vm: AcademyViewModel, priorities: List<Priority>) {
     }
 }
 
-/** « Leçons » : le nombre de leçons maîtrisées et le catalogue (recherche et filtres par palier et catégorie), sur une ligne. */
+/**
+ * « Leçons » : le nombre de leçons maîtrisées, un raccourci vers les leçons du palier en cours (catalogue filtré) et le
+ * catalogue complet (recherche et filtres par palier et catégorie), sur une ligne.
+ */
 @Composable
-private fun LessonsCard(masteredCount: Int, onCatalog: (Int, LessonCategory?) -> Unit) {
+private fun LessonsCard(masteredCount: Int, level: Int, onCatalog: (Int, LessonCategory?) -> Unit) {
     val c = LocalDuck.current
     val total = Lessons.all.size
+    // Grande police : les deux boutons passent sous le titre (sinon « Leçons » se couperait).
+    val stacked = LocalDensity.current.fontScale > 1.3f
+    val buttons: @Composable RowScope.() -> Unit = {
+        DuckButton(
+            "Palier $level", { onCatalog(level, null) }, if (stacked) Modifier.weight(1f) else Modifier.padding(end = 6.dp),
+            accent = c.blue, variant = ButtonVariant.OUTLINED, height = 40.dp, contentDescription = "Leçons du palier ${levelSpoken(level)}",
+        )
+        if (stacked) Spacer(Modifier.width(6.dp))
+        DuckButton(
+            "Catalogue", { onCatalog(0, null) }, if (stacked) Modifier.weight(1f) else Modifier, accent = c.blue, filled = true, height = 40.dp,
+            icon = Icons.AutoMirrored.Rounded.MenuBook, contentDescription = "Ouvrir le catalogue des leçons",
+        )
+    }
     HomeCard(null) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Leçons ($total)", color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
-                Text("$masteredCount maîtrisée${if (masteredCount > 1) "s" else ""}, toutes en accès libre", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text("$masteredCount maîtrisée${if (masteredCount > 1) "s" else ""}", color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
-            DuckButton(
-                "Catalogue", { onCatalog(0, null) }, accent = c.blue, filled = true, height = 40.dp,
-                icon = Icons.AutoMirrored.Rounded.MenuBook, contentDescription = "Ouvrir le catalogue des leçons",
-            )
+            if (!stacked) buttons()
         }
+        if (stacked) Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) { buttons() }
     }
 }
 

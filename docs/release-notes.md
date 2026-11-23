@@ -1,3 +1,10 @@
+## ChessDuck 4.2.12 — raccourci « Palier » sur l'accueil de l'Académie
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Carte « Leçons » de l'accueil : le bouton « Palier N » revient à côté de « Catalogue ». Il ouvre le catalogue filtré sur les leçons de votre palier. En grande police, les deux boutons passent sous le titre.
+- Le filtre complet reste dans le catalogue (bouton « Filtres », rangée « Palier »).
+
 ## ChessDuck 4.2.11 — « résolu » sans la flèche de l'indice
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
