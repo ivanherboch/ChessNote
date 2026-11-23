@@ -7,6 +7,7 @@ APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v
   - pendant la vérification, les flèches de navigation sont bloquées (plus d'état incohérent) ;
   - « … était attaquée, mais pas en danger » n'apparaît plus quand la pièce était réellement menacée ;
   - un coup qui fait pat alors que vous gagnez est maintenant arrêté ;
+  - un simple conseil (« vous auriez dû développer votre cavalier », « pensez à roquer ») ne suffit plus à arrêter un coup ;
   - les coups ne prennent plus de majuscule à tort en début d'explication (« B4 », « F5 » → « b4 », « f5 »).
 - Nouveau cas reconnu : un coup qui laisse à l'adversaire un échec qui fait basculer la partie (« Après Nd7, l'échec f6+ fait basculer la partie… »).
 - Explication plus juste quand une pièce va tomber : « attaquée par un pion, qui vaut moins qu'elle », « plus personne ne la défend », ou « attaquée plus de fois qu'elle n'est défendue », selon le vrai motif.

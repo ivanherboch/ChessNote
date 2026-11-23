@@ -208,7 +208,7 @@ class ReviewCommentsTest {
         val g = SN.decide(l.last, mv("d1g4"), Analysis(30, 0, "e4d5"), Analysis(-900, null, "c8g4"))!!
         assertEquals(com.ivanherboch.chessduck.feature.ReviewTopic.HANGING_PIECE, g.topic)
         // Même perte d'évaluation, mais aucun danger concret (coup tranquille) : pas d'arrêt.
-        assertEquals(null, SN.decide(l.last, mv("a2a3"), Analysis(30, 0, "e4d5"), Analysis(-300, null, "g8f6")))
+        assertEquals(null, SN.decide(l.last, mv("a2a3"), Analysis(30, 0, "g1f3"), Analysis(-300, null, "g8f6")))
         // Toujours nettement gagnant après le coup (+9 → +6) : pas d'arrêt.
         assertEquals(null, SN.decide(l.last, mv("d1g4"), Analysis(900, 0, "e4d5"), Analysis(600, null, "c8g4")))
         // Partie déjà perdue : pas d'arrêt.

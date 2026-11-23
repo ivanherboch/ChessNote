@@ -20,6 +20,9 @@ object SafetyNet {
     /** Perte minimale pour arrêter un « échec gagnant » dont la suite ne se nomme pas simplement. */
     const val CHECK_REPLY_CP = 300
 
+    /** Thèmes de conseil général, jamais une raison suffisante pour arrêter un coup. */
+    private val ADVICE = setOf(ReviewTopic.CASTLING, ReviewTopic.DEVELOPMENT)
+
     fun decide(pos: Position, m: Move, before: Analysis, after: Analysis): ReviewComments.NetReason? {
         val sign = if (pos.whiteToMove) 1 else -1
         val next = pos.play(m)
@@ -37,7 +40,8 @@ object SafetyNet {
         if (sign * (before.eval - after.eval) < BLUNDER_CP) return null
         if (sign * after.eval >= STILL_WINNING_CP) return null
         val reason = runCatching { ReviewComments.netReason(pos, m, before, after) }.getOrNull() ?: return null
-        if (reason.topic != null) return reason
+        // Seuls les dangers concrets arrêtent : le développement et le roque sont des conseils, pas une gaffe à expliquer.
+        if (reason.topic != null && reason.topic !in ADVICE) return reason
         // Échec gagnant permis : la réponse est un échec qui fait basculer la partie (gain de matériel ou attaque du roi),
         // par une suite trop longue pour être nommée. On l'arrête seulement si la perte est nette, en nommant l'échec.
         val reply = after.best.takeIf { it.isNotEmpty() }?.let { Move.fromUci(it) }?.takeIf { next.isLegal(it) } ?: return null
