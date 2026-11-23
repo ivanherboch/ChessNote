@@ -1,3 +1,9 @@
+## ChessDuck 4.2.13 — une partie terminée n'est enregistrée qu'une fois
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Jeu Libre : une partie est close dès sa fin (mat, pat, nulle, abandon), avant même l'affichage du résultat. Un double toucher sur « Abandonner », ou « Nouvelle partie » touché à l'instant de la fin, ne peut plus l'enregistrer plusieurs fois dans l'historique, ni compter l'ELO deux fois.
+
 ## ChessDuck 4.2.12 — raccourci « Palier » sur l'accueil de l'Académie
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

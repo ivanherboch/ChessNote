@@ -81,8 +81,9 @@ class PlayViewModel(
     private val gamesRepo: GameRepository,
     private val engine: ChessEngine,
     private val analyzer: GameAnalysisService,
+    /** Hasard (couleur tirée au sort, fautes de l'Ordinateur faible) ; fixé dans les tests pour rejouer un cas. */
+    private val rnd: Random = Random(System.nanoTime()),
 ) : ViewModel() {
-    private val rnd = Random(System.nanoTime())
     private val _state = MutableStateFlow(PlayState())
     val state: StateFlow<PlayState> = _state.asStateFlow()
     // Flux partagés seulement tant que l'écran les observe (5 s de grâce pour une rotation ou un changement d'onglet).
@@ -91,6 +92,11 @@ class PlayViewModel(
     val tally = gamesRepo.tally().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     /** Jeton de partie : incrémenté à chaque nouvelle partie, il invalide les résultats asynchrones d'une partie précédente. */
     private var gameGeneration = 0L
+    /**
+     * Génération de la dernière partie conclue. Le résultat s'affiche un instant après la fin (lecture des réglages) :
+     * ce repère, posé aussitôt, empêche qu'un second abandon ou une nouvelle partie l'enregistre (et compte l'ELO) deux fois.
+     */
+    private var finishedGeneration = -1L
     private var applyJob: Job? = null
     private var aiJob: Job? = null
     private var analysisJob: Job? = null
@@ -126,7 +132,7 @@ class PlayViewModel(
      */
     private fun abandonInProgress() {
         val s = state.value
-        if (!s.inProgress || s.twoPlayers) return
+        if (!s.inProgress || s.twoPlayers || finishedGeneration == gameGeneration) return
         aiJob?.cancel()
         stopCoach()
         _state.update { it.copy(thinking = false) }
@@ -418,7 +424,7 @@ class PlayViewModel(
 
     fun resign() {
         val s = state.value
-        if (s.result != null) return
+        if (s.result != null || finishedGeneration == gameGeneration) return
         aiJob?.cancel()
         stopCoach()
         _state.update { it.copy(thinking = false) }
@@ -427,6 +433,8 @@ class PlayViewModel(
 
     /** Clôt la partie : résultat, ELO FIDE (K = 32) contre l'ordinateur, enregistrement dans l'historique. */
     private fun finish(end: GameEnd, resignedWhite: Boolean?) {
+        if (finishedGeneration == gameGeneration) return
+        finishedGeneration = gameGeneration
         // Mat ou nulle : l'évaluation de la position finale est connue, la jauge ne garde pas une ancienne valeur.
         if (end != GameEnd.NONE) {
             analysisJob?.cancel()
@@ -448,6 +456,8 @@ class PlayViewModel(
             return
         }
         val gen = gameGeneration
+        // La partie est close tout de suite (plus aucun coup jouable) ; le texte du résultat arrive un instant après.
+        _state.update { it.copy(result = it.result ?: GameResult("Partie terminée.", Tone.NEUTRAL), thinking = false) }
         // Mise à jour de l'écran seulement si la partie affichée est toujours celle qui vient de se terminer.
         fun show(f: (PlayState) -> PlayState) = _state.update { if (gen == gameGeneration) f(it) else it }
         // La partie est réellement terminée : son enregistrement et l'ELO ne sont jamais annulés.

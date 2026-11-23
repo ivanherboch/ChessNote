@@ -60,12 +60,12 @@ class PlayFuzzTest {
     @Test
     fun randomSessionsNeverGetStuck() = runTest(main) {
         val problems = LinkedHashSet<String>()
-        for (seed in 1..80) {
+        for (seed in (System.getenv("FUZZ_FROM")?.toInt() ?: 1)..(System.getenv("FUZZ_TO")?.toInt() ?: 80)) {
             val r = Random(seed)
             val games = FakeGames()
             val engine = NoisyEngine()
             val prefs = FakeSettings(Settings(colorChoice = r.nextInt(3), aiElo = listOf(800, 1200, 1600).random(r), safetyNet = r.nextBoolean()))
-            val vm = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope))
+            val vm = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope), Random(seed * 7919))
             advanceUntilIdle()
             var finished = 0
             var eloBefore = prefs.flow.value.elo
@@ -100,7 +100,9 @@ class PlayFuzzTest {
                 // Parfois on laisse tout se terminer, parfois on agit pendant la réflexion (courses).
                 if (r.nextInt(3) == 0) { advanceTimeBy(r.nextLong(0, 400)); runCurrent() } else advanceUntilIdle()
                 val t = vm.state.value
-                if (t.result != null && t.result !== lastResult) {
+                if (System.getenv("FUZZ_DEBUG") != null) println("S$seed #$step ${log.last()} quit=$quit -> size=${t.line.size} res=${t.result?.text?.take(40)} stored=${games.stored.value.size} fin=$finished")
+                // Une nouvelle fin de partie : tout nouveau résultat, sauf le texte définitif qui remplace « Partie terminée. ».
+                if (t.result != null && t.result !== lastResult && (lastResult as? com.ivanherboch.chessduck.feature.GameResult)?.text != "Partie terminée.") {
                     lastResult = t.result
                     if (!t.result!!.text.startsWith("Partie interrompue")) finished++
                     advanceUntilIdle()
@@ -123,7 +125,7 @@ class PlayFuzzTest {
             }
             advanceUntilIdle()
             val stored = games.stored.value.size
-            if (stored != finished) problems += "seed $seed : $finished parties conclues, $stored enregistrées"
+            if (stored != finished) problems += "seed $seed : $finished parties conclues, $stored enregistrées (${games.stored.value.map { it.reason + "/" + it.moves.split(' ').size }})"
         }
         println(problems.joinToString("\n"))
         assertTrue(problems.joinToString("\n"), problems.isEmpty())
@@ -145,5 +147,20 @@ class PlayFuzzTest {
         assertTrue(games.stored.value.size == 1 && games.stored.value[0].reason == "abandon" && games.stored.value[0].outcome == -1)
         assertTrue(prefs.flow.value.elo < 1200)
         assertTrue(vm.state.value.line.size == 0 && vm.state.value.result == null)
+    }
+
+    /** Fin de partie puis « Nouvelle partie » (ou un second abandon) aussitôt : la partie n'est enregistrée qu'une fois. */
+    @Test
+    fun aGameIsRecordedOnceEvenWhenQuitRightAfterItsEnd() = runTest(main) {
+        val games = FakeGames()
+        val engine = FakeEngine()
+        val prefs = FakeSettings(Settings(colorChoice = 0, aiElo = 1200))
+        val vm = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope), Random(1))
+        advanceUntilIdle()
+        vm.playerMove(com.ivanherboch.chessduck.chess.Move.fromUci("e2e4")); advanceUntilIdle()
+        vm.resign(); vm.resign(); vm.newGame()
+        advanceUntilIdle()
+        assertTrue("${games.stored.value.size} enregistrements", games.stored.value.size == 1)
+        assertTrue(prefs.flow.value.elo == com.ivanherboch.chessduck.feature.GameLogic.newElo(1200, 1200, 0.0))
     }
 }
