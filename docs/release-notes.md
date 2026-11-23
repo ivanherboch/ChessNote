@@ -1,3 +1,12 @@
+## ChessDuck 4.2.7 — Académie déboguée
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Quitter une révision ou « Mon répertoire » juste après le dernier coup ne compte plus la leçon comme pratiquée (étoiles, étape « Leçon » de la séance du jour) : la ligne rejouée s'arrête aussitôt.
+- Séance du jour : le bandeau « Étape terminée ✓ · Suite » ne resurgit plus à tort dans une autre leçon après le retour à l'accueil.
+- Séries de problèmes au bon niveau : quand un thème a trop peu de problèmes au palier (le roque au palier 2 n'en a que 2), la recherche s'élargit peu à peu autour du palier au lieu de piocher dans toute la base (surtout des problèmes vers 2000, impossibles à réussir à 4 sur 5).
+- Nouveau test automatique qui parcourt les 211 leçons comme un élève (Comprendre jusqu'au bout, puis Pratiquer, ligne principale et chaque variante) : aucune ne bloque ni ne se termine sans rien demander.
+
 ## ChessDuck 4.2.6 — filet de sécurité débogué
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
