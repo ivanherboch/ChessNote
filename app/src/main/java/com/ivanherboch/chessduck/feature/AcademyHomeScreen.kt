@@ -252,22 +252,25 @@ private fun LessonsCard(masteredCount: Int, level: Int, onCatalog: (Int, LessonC
     val total = Lessons.all.size
     // Grande police : les deux boutons passent sous le titre (sinon « Leçons » se couperait).
     val stacked = LocalDensity.current.fontScale > 1.3f
+    val levelTotal = Lessons.all.count { it.level == level }
     val buttons: @Composable RowScope.() -> Unit = {
+        // Chaque bouton dit combien de leçons il ouvre : celles du palier, ou toutes.
         DuckButton(
-            "Palier $level", { onCatalog(level, null) }, if (stacked) Modifier.weight(1f) else Modifier.padding(end = 6.dp),
-            accent = c.blue, variant = ButtonVariant.OUTLINED, height = 40.dp, contentDescription = "Leçons du palier ${levelSpoken(level)}",
+            "Palier $level ($levelTotal)", { onCatalog(level, null) }, if (stacked) Modifier.weight(1f) else Modifier.padding(end = 6.dp),
+            accent = c.blue, variant = ButtonVariant.OUTLINED, height = 40.dp,
+            contentDescription = "Les $levelTotal leçons du palier ${levelSpoken(level)}",
         )
         if (stacked) Spacer(Modifier.width(6.dp))
         DuckButton(
-            "Catalogue", { onCatalog(0, null) }, if (stacked) Modifier.weight(1f) else Modifier, accent = c.blue, filled = true, height = 40.dp,
-            icon = Icons.AutoMirrored.Rounded.MenuBook, contentDescription = "Ouvrir le catalogue des leçons",
+            "Toutes ($total)", { onCatalog(0, null) }, if (stacked) Modifier.weight(1f) else Modifier, accent = c.blue, filled = true, height = 40.dp,
+            contentDescription = "Toutes les leçons ($total). Ouvrir le catalogue des leçons, avec recherche et filtres",
         )
     }
     HomeCard(null) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Leçons ($total)", color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
-                Text("$masteredCount maîtrisée${if (masteredCount > 1) "s" else ""}", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text("Leçons", color = c.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+                Text("$masteredCount sur $total maîtrisée${if (masteredCount > 1) "s" else ""}", color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
             if (!stacked) buttons()
         }

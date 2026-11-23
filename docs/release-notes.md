@@ -1,3 +1,11 @@
+## ChessDuck 4.2.14 — carte « Leçons » plus claire
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Accueil de l'Académie, carte « Leçons » :
+  - chaque bouton dit combien de leçons il ouvre : « Palier 2 (33) » (les leçons de votre palier) et « Toutes (211) » (le catalogue complet, avec recherche et filtres) ;
+  - la progression s'écrit « 7 sur 211 maîtrisées ».
+
 ## ChessDuck 4.2.13 — une partie terminée n'est enregistrée qu'une fois
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

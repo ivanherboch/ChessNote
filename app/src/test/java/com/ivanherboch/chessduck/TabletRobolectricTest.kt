@@ -106,7 +106,7 @@ class TabletRobolectricTest {
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("o4_tablette_portrait_academie")
         rule.onNodeWithText("Séance du jour").assertExists()
         // Une leçon (Comprendre | Pratiquer) et une sous-liste de l'Atelier en portrait.
-        rule.onNodeWithContentDescription("Ouvrir le catalogue des leçons").performClick(); settle(1000)
+        rule.onNodeWithContentDescription("Ouvrir le catalogue des leçons", substring = true).performClick(); settle(1000)
         rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("trois principes"); settle(800)
         rule.onNodeWithText("Les trois principes de l'ouverture").performClick(); settle(1500); shot("o5_tablette_portrait_lecon")
         rule.onNodeWithContentDescription("Revenir à l'accueil de l'Académie").performClick(); settle(1000)
@@ -119,7 +119,7 @@ class TabletRobolectricTest {
         rule.onNodeWithText("Notation").performClick(); settle(1500); shot("t1_notation")
         // Accueil de l'Académie en deux colonnes, puis une leçon, l'Atelier et une finale.
         rule.onNodeWithText("Académie").performClick(); settle(1500); shot("t0_accueil")
-        rule.onNodeWithContentDescription("Ouvrir le catalogue des leçons").performClick(); settle(1000)
+        rule.onNodeWithContentDescription("Ouvrir le catalogue des leçons", substring = true).performClick(); settle(1000)
         rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("trois principes"); settle(800)
         rule.onNodeWithText("Les trois principes de l'ouverture").performClick(); settle(1500); shot("t2_academie")
         rule.onNodeWithContentDescription("Revenir à l'accueil de l'Académie").performClick(); settle(1000)
