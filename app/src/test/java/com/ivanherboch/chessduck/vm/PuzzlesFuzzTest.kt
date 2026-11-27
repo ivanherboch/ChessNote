@@ -371,9 +371,14 @@ class PuzzlesFuzzTest {
     /** Longueur : un coup, court, long ; « Mon niveau » : autour de l'ELO tactique. */
     @Test
     fun lengthAndMyLevelFilters() = runTest(main) {
-        val one = PUZZLE_0000D.copy(id = "ONE", themes = " mateIn1 oneMove ", primaryTheme = "mateIn1", rating = 900)
+        // La longueur se compte sur les coups réels : « LON » porte à tort « oneMove » (comme #Cex55), il reste long.
+        val one = PUZZLE_0000D.copy(id = "ONE", fen = "6k1/5ppp/8/8/8/8/5PPP/R5K1 b - - 0 1", moves = "g8f8 a1a8", themes = " mateIn1 oneMove ", primaryTheme = "mateIn1", rating = 900)
         val short = PUZZLE_0000D.copy(id = "SHO", themes = " fork short ", primaryTheme = "fork", rating = 1500)
-        val long = PUZZLE_0000D.copy(id = "LON", themes = " pin veryLong ", primaryTheme = "pin", rating = 2100)
+        val long = PUZZLE_0000D.copy(
+            id = "LON", fen = "8/5k2/p1p3p1/PpPpP2p/1P4p1/2P1K1P1/7P/8 b - - 0 53",
+            moves = "f7e6 e3f4 g6g5 f4g5 e6e5 g5h5 e5f5 h5h4 f5e4 h4g4 e4d3 h2h4 d3c3 h4h5 d5d4 h5h6 d4d3 h6h7 d3d2 h7h8q",
+            themes = " pin oneMove veryLong ", primaryTheme = "pin", rating = 2100,
+        )
         val vm = PuzzlesViewModel(FakeSettings(com.ivanherboch.chessduck.data.Settings(elo = 1520)), FakePuzzles(listOf(one, short, long)), FakeEngine())
         advanceUntilIdle()
         for ((len, id) in listOf(1 to "ONE", 2 to "SHO", 3 to "LON")) {

@@ -154,14 +154,15 @@ object PuzzleThemes {
     val LENGTHS = listOf("Toutes", "1 coup", "Court", "Long")
 
     /**
-     * Motifs LIKE de la colonne `themes` pour la longueur [length] (étiquettes Lichess oneMove, short, long, veryLong) :
-     * deux motifs (le second vide si inutile) ; ("", "") : toutes les longueurs.
+     * Longueur [length] en demi-coups de la ligne (coup d'introduction de l'adversaire compris) : (min, max) ; (0, 0) :
+     * toutes. Comptée sur les coups réels de la solution, et non sur les étiquettes Lichess oneMove, short, long, veryLong,
+     * parfois fausses (#Cex55, un mat en 4, porte « oneMove »).
      */
-    fun lengthPatterns(length: Int): Pair<String, String> = when (length) {
-        1 -> "% oneMove %" to ""
-        2 -> "% short %" to ""
-        3 -> "% long %" to "% veryLong %"
-        else -> "" to ""
+    fun lengthPlies(length: Int): Pair<Int, Int> = when (length) {
+        1 -> 2 to 2
+        2 -> 4 to 4
+        3 -> 6 to 99
+        else -> 0 to 0
     }
 
     /** La puce « Mon niveau » du catalogue : tirage autour de l'ELO tactique du joueur. */

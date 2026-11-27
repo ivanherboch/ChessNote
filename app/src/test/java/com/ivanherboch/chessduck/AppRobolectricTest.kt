@@ -177,7 +177,7 @@ class AppRobolectricTest {
         }
         val old = (System.nanoTime() - t0) / 5 / 1e6
         println("Tirage : libre %.2f ms, fourchette %.2f ms, roque %.2f ms ; ancien libre %.1f ms".format(free, fork, rare, old))
-        // Compteurs du catalogue avec un filtre de longueur (« Long » : 61 555 problèmes), thèmes secondaires compris.
+        // Compteurs du catalogue avec un filtre de longueur (« Long » : 61 570 problèmes de 3 coups ou plus), thèmes secondaires compris.
         val groups = com.ivanherboch.chessduck.content.PuzzleThemes.groups.associate { g ->
             com.ivanherboch.chessduck.content.PuzzleThemes.groupKey(g) to com.ivanherboch.chessduck.content.PuzzleThemes.all.filter { it.group == g }.map { it.key }
         }
@@ -185,7 +185,7 @@ class AppRobolectricTest {
         val long = repo.lengthCounts(0..4000, 3, true, groups)
         val lengthMs = (System.nanoTime() - l0) / 1e6
         println("Compteurs « Long » : %.0f ms".format(lengthMs))
-        assertEquals(61_555, long[""]?.total)
+        assertEquals(61_570, long[""]?.total)
         assertNull(long["mateIn1"])
         assertTrue("libre $free ms", free < 15.0)
         assertTrue("fourchette $fork ms", fork < 15.0)

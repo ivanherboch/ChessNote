@@ -1,3 +1,9 @@
+## ChessDuck 4.4.5 — longueur comptée sur les vrais coups
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Filtre « Longueur de la solution » : la longueur se compte désormais sur les coups réels de chaque problème (1 coup, 2 coups, 3 coups ou plus), et non plus sur les étiquettes de Lichess. 26 problèmes sur 150 000 avaient des étiquettes fausses ou absentes. Par exemple #Cex55, un mat en 4 étiqueté à la fois « un coup » et « très long », apparaissait avec « 1 coup ». Tirage et compteurs du catalogue suivent la même règle.
+
 ## ChessDuck 4.4.4 — filtre de longueur plus clair
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

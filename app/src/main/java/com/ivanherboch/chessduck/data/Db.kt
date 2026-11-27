@@ -216,50 +216,50 @@ interface PuzzleDao {
      * suivent une longue suite de problèmes résolus ou hors filtre.
      */
     @Query(
-        "SELECT id FROM (SELECT id, rating, themes FROM puzzles WHERE rowid >= :start ORDER BY rowid LIMIT :window) " +
+        "SELECT id FROM (SELECT id, rating, moves FROM puzzles WHERE rowid >= :start ORDER BY rowid LIMIT :window) " +
             "WHERE rating BETWEEN :lo AND :hi AND id != :exclude AND id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0) " +
-            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB) LIMIT $PROBE_PICK",
+            "AND (:minPly = 0 OR (length(moves) - length(replace(moves, ' ', '')) + 1) BETWEEN :minPly AND :maxPly) LIMIT $PROBE_PICK",
     )
-    suspend fun probeAll(start: Long, window: Int, lo: Int, hi: Int, exclude: String, lenA: String = "", lenB: String = ""): List<String>
+    suspend fun probeAll(start: Long, window: Int, lo: Int, hi: Int, exclude: String, minPly: Int = 0, maxPly: Int = 0): List<String>
 
     /** Comme [probeAll], limité aux problèmes dont le thème principal est l'un de [themes]. */
     @Query(
-        "SELECT id FROM (SELECT id, rating, primaryTheme, themes FROM puzzles WHERE rowid >= :start ORDER BY rowid LIMIT :window) " +
+        "SELECT id FROM (SELECT id, rating, primaryTheme, moves FROM puzzles WHERE rowid >= :start ORDER BY rowid LIMIT :window) " +
             "WHERE primaryTheme IN (:themes) AND rating BETWEEN :lo AND :hi AND id != :exclude " +
             "AND id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0) " +
-            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB) LIMIT $PROBE_PICK",
+            "AND (:minPly = 0 OR (length(moves) - length(replace(moves, ' ', '')) + 1) BETWEEN :minPly AND :maxPly) LIMIT $PROBE_PICK",
     )
-    suspend fun probeInThemes(start: Long, window: Int, themes: List<String>, lo: Int, hi: Int, exclude: String, lenA: String = "", lenB: String = ""): List<String>
+    suspend fun probeInThemes(start: Long, window: Int, themes: List<String>, lo: Int, hi: Int, exclude: String, minPly: Int = 0, maxPly: Int = 0): List<String>
 
     // ---- Tirage exact (repli) : comptage puis lecture à un rang tiré au hasard ----
 
     @Query(
         "SELECT COUNT(*) FROM puzzles WHERE primaryTheme IN (:themes) AND rating BETWEEN :lo AND :hi AND id != :exclude " +
             "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0)) " +
-            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB)",
+            "AND (:minPly = 0 OR (length(moves) - length(replace(moves, ' ', '')) + 1) BETWEEN :minPly AND :maxPly)",
     )
-    suspend fun countInThemes(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, lenA: String = "", lenB: String = ""): Int
+    suspend fun countInThemes(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, minPly: Int = 0, maxPly: Int = 0): Int
 
     @Query(
         "SELECT id FROM puzzles WHERE primaryTheme IN (:themes) AND rating BETWEEN :lo AND :hi AND id != :exclude " +
             "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0)) " +
-            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB) LIMIT 1 OFFSET :offset",
+            "AND (:minPly = 0 OR (length(moves) - length(replace(moves, ' ', '')) + 1) BETWEEN :minPly AND :maxPly) LIMIT 1 OFFSET :offset",
     )
-    suspend fun idInThemesAt(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int, lenA: String = "", lenB: String = ""): String?
+    suspend fun idInThemesAt(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int, minPly: Int = 0, maxPly: Int = 0): String?
 
     @Query(
         "SELECT COUNT(*) FROM puzzles WHERE rating BETWEEN :lo AND :hi AND id != :exclude " +
             "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0)) " +
-            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB)",
+            "AND (:minPly = 0 OR (length(moves) - length(replace(moves, ' ', '')) + 1) BETWEEN :minPly AND :maxPly)",
     )
-    suspend fun countAll(lo: Int, hi: Int, exclude: String, includeSolved: Boolean, lenA: String = "", lenB: String = ""): Int
+    suspend fun countAll(lo: Int, hi: Int, exclude: String, includeSolved: Boolean, minPly: Int = 0, maxPly: Int = 0): Int
 
     @Query(
         "SELECT id FROM puzzles WHERE rating BETWEEN :lo AND :hi AND id != :exclude " +
             "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0)) " +
-            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB) LIMIT 1 OFFSET :offset",
+            "AND (:minPly = 0 OR (length(moves) - length(replace(moves, ' ', '')) + 1) BETWEEN :minPly AND :maxPly) LIMIT 1 OFFSET :offset",
     )
-    suspend fun idAllAt(lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int, lenA: String = "", lenB: String = ""): String?
+    suspend fun idAllAt(lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int, minPly: Int = 0, maxPly: Int = 0): String?
 
     /**
      * Compteurs agrégés du catalogue par thème principal, pour une tranche de classement.
@@ -340,17 +340,17 @@ interface PuzzleDao {
         "SELECT COUNT(DISTINCT pt.puzzleId) FROM puzzle_themes pt CROSS JOIN puzzles p ON p.id = pt.puzzleId " +
             "WHERE pt.theme IN (:themes) AND pt.rating BETWEEN :lo AND :hi AND pt.puzzleId != :exclude " +
             "AND (:includeSolved OR pt.puzzleId NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0)) " +
-            "AND (:lenA = '' OR p.themes LIKE :lenA OR p.themes LIKE :lenB)",
+            "AND (:minPly = 0 OR (length(p.moves) - length(replace(p.moves, ' ', '')) + 1) BETWEEN :minPly AND :maxPly)",
     )
-    suspend fun countLinked(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, lenA: String, lenB: String): Int
+    suspend fun countLinked(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, minPly: Int, maxPly: Int): Int
 
     @Query(
         "SELECT DISTINCT pt.puzzleId FROM puzzle_themes pt CROSS JOIN puzzles p ON p.id = pt.puzzleId " +
             "WHERE pt.theme IN (:themes) AND pt.rating BETWEEN :lo AND :hi AND pt.puzzleId != :exclude " +
             "AND (:includeSolved OR pt.puzzleId NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0)) " +
-            "AND (:lenA = '' OR p.themes LIKE :lenA OR p.themes LIKE :lenB) ORDER BY pt.puzzleId LIMIT 1 OFFSET :offset",
+            "AND (:minPly = 0 OR (length(p.moves) - length(replace(p.moves, ' ', '')) + 1) BETWEEN :minPly AND :maxPly) ORDER BY pt.puzzleId LIMIT 1 OFFSET :offset",
     )
-    suspend fun idLinkedAt(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int, lenA: String, lenB: String): String?
+    suspend fun idLinkedAt(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int, minPly: Int, maxPly: Int): String?
 
     /** Problèmes par thème officiel (principal ou secondaire) dans une tranche : la table de liaison sert d'index. */
     @Query("SELECT theme AS theme, COUNT(*) AS total, 0 AS solved FROM puzzle_themes WHERE rating BETWEEN :lo AND :hi GROUP BY theme")
@@ -367,12 +367,12 @@ interface PuzzleDao {
     @Query("SELECT COUNT(DISTINCT puzzleId) FROM puzzle_themes WHERE theme IN (:themes) AND rating BETWEEN :lo AND :hi")
     suspend fun countLinkedTotal(themes: List<String>, lo: Int, hi: Int): Int
 
-    /** Problèmes d'une tranche dont la solution a la longueur demandée (motifs LIKE de PuzzleThemes.lengthPatterns). */
+    /** Problèmes d'une tranche dont la solution compte entre [minPly] et [maxPly] demi-coups (coup adverse compris). */
     @Query(
         "SELECT id, rating, themes, primaryTheme FROM puzzles WHERE rating BETWEEN :lo AND :hi " +
-            "AND (themes LIKE :lenA OR themes LIKE :lenB)",
+            "AND (length(moves) - length(replace(moves, ' ', '')) + 1) BETWEEN :minPly AND :maxPly",
     )
-    suspend fun metaWithLength(lo: Int, hi: Int, lenA: String, lenB: String): List<PuzzleMeta>
+    suspend fun metaWithLength(lo: Int, hi: Int, minPly: Int, maxPly: Int): List<PuzzleMeta>
 
     @Query("SELECT COUNT(*) FROM puzzle_themes")
     suspend fun linkCount(): Int

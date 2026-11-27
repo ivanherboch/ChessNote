@@ -106,16 +106,16 @@ class FakePuzzles(private val puzzles: List<Puzzle>) : PuzzleRepository {
     override suspend fun syncCatalogue() = false
     private fun tags(p: Puzzle) = p.themes.trim().split(' ').toSet()
     override suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random, secondary: Boolean, length: Int): String? {
-        val (la, lb) = com.ivanherboch.chessduck.content.PuzzleThemes.lengthPatterns(length)
-        fun lengthOk(p: Puzzle) = la.isEmpty() || listOf(la, lb).filter { it.isNotEmpty() }.any { pat -> " ${pat.trim('%', ' ')} " in p.themes }
+        val (la, lb) = com.ivanherboch.chessduck.content.PuzzleThemes.lengthPlies(length)
+        fun lengthOk(p: Puzzle) = la == 0 || p.moves.trim().split(' ').size in la..lb
         val pool = puzzles.filter {
             (themes == null || it.primaryTheme in themes || (secondary && tags(it).any { t -> t in themes })) && it.rating in range && it.id != exclude && lengthOk(it)
         }
         return (pool.filter { it.id !in solved.value }.ifEmpty { pool }).randomOrNull(random)?.id
     }
     override suspend fun lengthCounts(range: IntRange, length: Int, secondary: Boolean, groups: Map<String, List<String>>): Map<String, ThemeCountRow> {
-        val (la, lb) = com.ivanherboch.chessduck.content.PuzzleThemes.lengthPatterns(length)
-        val metas = puzzles.filter { p -> p.rating in range && listOf(la, lb).filter { it.isNotEmpty() }.any { " ${it.trim('%', ' ')} " in p.themes } }
+        val (la, lb) = com.ivanherboch.chessduck.content.PuzzleThemes.lengthPlies(length)
+        val metas = puzzles.filter { p -> p.rating in range && p.moves.trim().split(' ').size in la..lb }
             .map { com.ivanherboch.chessduck.data.PuzzleMeta(it.id, it.rating, it.themes, it.primaryTheme) }
         return com.ivanherboch.chessduck.data.countByLength(metas, solved.value, secondary, groups)
     }

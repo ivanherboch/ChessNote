@@ -152,7 +152,7 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
      * résolu), repli exact sur le comptage puis la lecture à un rang tiré au hasard, résolus compris en dernier recours.
      */
     override suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random, secondary: Boolean, length: Int): String? {
-        val (la, lb) = PuzzleThemes.lengthPatterns(length)
+        val (la, lb) = PuzzleThemes.lengthPlies(length)
         val lo = range.first
         val hi = range.last
         // Thèmes secondaires : tirage exact sur la table de liaison (indexée par thème et classement).
@@ -182,7 +182,7 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
     }
 
     override suspend fun lengthCounts(range: IntRange, length: Int, secondary: Boolean, groups: Map<String, List<String>>): Map<String, ThemeCountRow> =
-        countByLength(dao.metaWithLength(range.first, range.last, PuzzleThemes.lengthPatterns(length).first, PuzzleThemes.lengthPatterns(length).second),
+        countByLength(dao.metaWithLength(range.first, range.last, PuzzleThemes.lengthPlies(length).first, PuzzleThemes.lengthPlies(length).second),
             dao.solvedIds().first().toSet(), secondary, groups)
 
     override suspend fun linkedCount(themes: List<String>, range: IntRange): ThemeCountRow {
