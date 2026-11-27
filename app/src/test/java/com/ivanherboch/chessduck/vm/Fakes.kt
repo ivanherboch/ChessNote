@@ -113,6 +113,12 @@ class FakePuzzles(private val puzzles: List<Puzzle>) : PuzzleRepository {
         }
         return (pool.filter { it.id !in solved.value }.ifEmpty { pool }).randomOrNull(random)?.id
     }
+    override suspend fun lengthCounts(range: IntRange, length: Int, secondary: Boolean, groups: Map<String, List<String>>): Map<String, ThemeCountRow> {
+        val (la, lb) = com.ivanherboch.chessduck.content.PuzzleThemes.lengthPatterns(length)
+        val metas = puzzles.filter { p -> p.rating in range && listOf(la, lb).filter { it.isNotEmpty() }.any { " ${it.trim('%', ' ')} " in p.themes } }
+            .map { com.ivanherboch.chessduck.data.PuzzleMeta(it.id, it.rating, it.themes, it.primaryTheme) }
+        return com.ivanherboch.chessduck.data.countByLength(metas, solved.value, secondary, groups)
+    }
     override suspend fun linkedCount(themes: List<String>, range: IntRange): ThemeCountRow {
         val l = puzzles.filter { it.rating in range && tags(it).any { t -> t in themes } }
         return ThemeCountRow("", l.size, l.count { it.id in solved.value })

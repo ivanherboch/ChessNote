@@ -380,6 +380,9 @@ class PuzzlesFuzzTest {
             vm.setLength(len); vm.random(); advanceUntilIdle()
             assertTrue("longueur $len", vm.state.value.puzzle?.id == id)
         }
+        // Compteurs du catalogue avec la longueur « Long » : le mat en 1 n'y figure plus.
+        vm.setLength(3); vm.loadCounts(0); advanceUntilIdle()
+        assertTrue(vm.counts.value["mateIn1"]?.total == 0 && vm.counts.value["pin"]?.total == 1 && vm.counts.value[""]?.total == 1)
         vm.setLength(0); vm.setBand(com.ivanherboch.chessduck.content.PuzzleThemes.MY_LEVEL)
         repeat(5) { vm.random(); advanceUntilIdle(); assertTrue(vm.state.value.puzzle?.id == "SHO") } // 1520 ± 100
     }

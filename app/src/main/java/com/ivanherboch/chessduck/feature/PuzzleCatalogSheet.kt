@@ -95,7 +95,7 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
     val c = LocalDuck.current
     val counts by vm.counts.collectAsStateWithLifecycle()
     val stats by vm.stats.collectAsStateWithLifecycle()
-    LaunchedEffect(s.band, s.secondary, s.puzzleElo) { vm.loadCounts(s.band) }
+    LaunchedEffect(s.band, s.secondary, s.puzzleElo, s.length) { vm.loadCounts(s.band) }
     var query by remember { mutableStateOf("") }
     // Réglages à l'ouverture du catalogue : si seuls difficulté, longueur ou thèmes secondaires changent, « Tirer un problème » s'affiche.
     val filtersAtOpen = remember { Triple(s.band, s.length, s.secondary) }
@@ -187,6 +187,14 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             PuzzleThemes.LENGTHS.forEachIndexed { i, label -> DuckChip(label, s.length == i, { vm.setLength(i); if (s.empty) vm.random() }) }
         }
+        if (s.length != 0) Text(
+            when (s.length) {
+                1 -> "Un seul coup à trouver. Les nombres ci-dessous ne comptent que ces problèmes."
+                2 -> "Deux coups à trouver. Les nombres ci-dessous ne comptent que ces problèmes."
+                else -> "Trois coups ou plus à trouver. Les nombres ci-dessous ne comptent que ces problèmes (aucun mat en 1 ou en 2, par exemple)."
+            },
+            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp),
+        )
         // Les réglages seuls ne tirent pas de problème : un bouton le fait, sans repasser par un thème.
         if (Triple(s.band, s.length, s.secondary) != filtersAtOpen && !s.empty) Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(

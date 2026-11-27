@@ -1,3 +1,10 @@
+## ChessDuck 4.4.4 — filtre de longueur plus clair
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Catalogue des problèmes : avec une longueur choisie (1 coup, court, long), les nombres de chaque thème et de chaque famille ne comptent plus que les problèmes de cette longueur. Avec « Long », par exemple, « Mat en 1 » affiche 0 au lieu de 2 270. Une phrase sous les puces rappelle ce que veut dire la longueur choisie.
+- Rappel : la longueur s'applique au prochain problème tiré (bouton « Tirer un problème », ou choix d'un thème) ; le problème déjà affiché ne change pas.
+
 ## ChessDuck 4.4.3 — compteurs justes avec les thèmes secondaires
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

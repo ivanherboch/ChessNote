@@ -367,6 +367,13 @@ interface PuzzleDao {
     @Query("SELECT COUNT(DISTINCT puzzleId) FROM puzzle_themes WHERE theme IN (:themes) AND rating BETWEEN :lo AND :hi")
     suspend fun countLinkedTotal(themes: List<String>, lo: Int, hi: Int): Int
 
+    /** Problèmes d'une tranche dont la solution a la longueur demandée (motifs LIKE de PuzzleThemes.lengthPatterns). */
+    @Query(
+        "SELECT id, rating, themes, primaryTheme FROM puzzles WHERE rating BETWEEN :lo AND :hi " +
+            "AND (themes LIKE :lenA OR themes LIKE :lenB)",
+    )
+    suspend fun metaWithLength(lo: Int, hi: Int, lenA: String, lenB: String): List<PuzzleMeta>
+
     @Query("SELECT COUNT(*) FROM puzzle_themes")
     suspend fun linkCount(): Int
 }

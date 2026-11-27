@@ -155,6 +155,8 @@ class PuzzlesViewModel(
     /** Chargement de problème en cours (tirage, ouverture par identifiant ou suggestion) : un seul à la fois. */
     private var loadJob: Job? = null
     private var countsJob: Job? = null
+    /** Derniers compteurs calculés avec un filtre de longueur, et leur clé (tranche, longueur, option, résolus). */
+    private var lengthCache: Pair<List<Any>, Map<String, ThemeCount>>? = null
     private var searchJob: Job? = null
 
     /** Le filtre a été changé (catalogue, « S'entraîner sur ce thème ») : celui enregistré ne doit plus l'écraser. */
@@ -356,6 +358,19 @@ class PuzzlesViewModel(
         countsJob?.cancel()
         countsJob = viewModelScope.launch {
             val range = state.value.copy(band = band).range
+            val length = state.value.length
+            // Filtre de longueur : les compteurs le respectent (un seul passage sur les problèmes de cette longueur).
+            if (length != 0) {
+                // Calcul d'environ une seconde : gardé tant que la tranche, la longueur, l'option et le nombre de résolus ne changent pas.
+                val key = listOf(range, length, state.value.secondary, solvedCount.value)
+                lengthCache?.takeIf { it.first == key }?.let { _counts.value = it.second; return@launch }
+                val groups = PuzzleThemes.groups.associate { g -> PuzzleThemes.groupKey(g) to PuzzleThemes.all.filter { it.group == g }.map { it.key } }
+                val rows = runCatchingSuspend { dao.lengthCounts(range, length, state.value.secondary, groups) }.getOrNull() ?: return@launch
+                val res = (PuzzleThemes.all.map { it.key } + groups.keys + "").associateWith { k -> rows[k]?.let { ThemeCount(it.total, it.solved) } ?: ThemeCount(0, 0) }
+                lengthCache = key to res
+                _counts.value = res
+                return@launch
+            }
             val rows = runCatchingSuspend { dao.themeCounts(range, state.value.secondary) }.getOrDefault(emptyList())
             val byTheme = rows.associateBy { it.theme }
             val map = HashMap<String, ThemeCount>()

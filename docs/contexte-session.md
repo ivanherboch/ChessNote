@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `4.4.3` (`versionCode = 108`), publiée en release GitHub `v4.4.3`.
+- **Version actuelle** : `4.4.4` (`versionCode = 109`), publiée en release GitHub `v4.4.4`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -212,6 +212,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **4.4.1** : points hors périmètre de la refonte des Problèmes traités : `PuzzleProgress.after` suit `SrsScheduler.INTERVAL_DAYS` (abandon → 1 j, erreur → intervalle gardé, résolution nette → intervalle suivant puis retrait) ; `probeAll`/`probeInThemes` renvoient jusqu'à `PROBE_PICK` (200) candidats tirés au hasard ; `PlayState.origin` (`PositionOrigin` LESSON/PUZZLE, `TabBridges.playPosition` en Triple) ; grande police dans `PuzzlesScreen` (`bottomMin` 240 dp, ligne d'information sur deux lignes, indice 1/2 raccourci).
 - **4.4.2** : `MoveStrip` retiré de `PuzzlesScreen` (demande du propriétaire : échiquier trop petit) ; `PuzzlesViewModel.goTo` reste (tests, navigation possible).
 - **4.4.3** : thèmes secondaires : total « Tous les thèmes » tiré des compteurs stricts (problèmes distincts), familles via `PuzzleRepository.linkedCount` (COUNT DISTINCT sur `puzzle_themes`).
+- **4.4.4** : compteurs du catalogue avec filtre de longueur : `PuzzleDao.metaWithLength` + `countByLength` (un passage, thèmes/familles/total avec résolus, ~1,6 s sur la vraie base en Robolectric), `PuzzleRepository.lengthCounts`, cache `lengthCache` dans le ViewModel ; phrase explicative sous les puces de longueur.
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.
