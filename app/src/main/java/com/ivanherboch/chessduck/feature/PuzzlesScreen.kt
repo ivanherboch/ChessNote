@@ -16,7 +16,6 @@ import com.ivanherboch.chessduck.ui.icons.BookmarkBorder
 import com.ivanherboch.chessduck.ui.icons.Bookmark
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.chess.Line
-import com.ivanherboch.chessduck.ui.MoveStrip
 import com.ivanherboch.chessduck.ui.icons.School
 import com.ivanherboch.chessduck.ui.icons.SportsEsports
 import com.ivanherboch.chessduck.ui.icons.RestartAlt
@@ -168,13 +167,7 @@ fun PuzzlesScreen(
             }
             if (large) Text(details, color = c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.fillMaxWidth())
         },
-        // Bandeau des coups déjà joués (jamais la suite de la solution) : toucher un coup y revient.
-        underBoard = {
-            MoveStrip(
-                Line(line.startFen, line.moves.take(s.progress)), s.cursor.coerceIn(0, s.progress), Modifier.padding(top = 2.dp),
-                onSelect = { n -> vm.goTo(n) }, emptyText = "Les coups joués s'afficheront ici.",
-            )
-        },
+        // Pas de bandeau des coups sous l'échiquier : toute la hauteur va à l'échiquier ; ‹ et › suffisent à revoir les coups.
         board = {
             val r = s.refute
             val cur = s.cursor.coerceIn(0, line.size)

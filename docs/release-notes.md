@@ -1,3 +1,9 @@
+## ChessDuck 4.4.2 — Problèmes : échiquier plus grand
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Le bandeau des coups sous l'échiquier est retiré de l'onglet Problèmes : l'échiquier reprend cette hauteur. Les flèches ‹ et › permettent toujours de revoir les coups joués et la solution.
+
 ## ChessDuck 4.4.1 — finitions des Problèmes
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
