@@ -26,8 +26,9 @@ import kotlinx.coroutines.flow.Flow
  * Problème Lichess (base officielle database.lichess.org, licence CC0).
  * v3 : [primaryTheme] (type principal, règle PuzzleThemes.primary) indexé avec le classement pour le tirage,
  * les compteurs du catalogue et les exercices de notation directement en SQL.
+ * v5 : index couvrants (classement, id) et (thème principal, classement, id) : comptages et tirages sans lire la table.
  */
-@Entity(tableName = "puzzles", indices = [Index("rating"), Index("primaryTheme", "rating")])
+@Entity(tableName = "puzzles", indices = [Index("rating", "id"), Index("primaryTheme", "rating", "id")])
 data class Puzzle(
     @PrimaryKey val id: String,
     val fen: String,
@@ -42,8 +43,58 @@ data class Puzzle(
     val primaryTheme: String = "",
 )
 
+/**
+ * Suivi d'un problème. [solvedAt] > 0 : compté comme résolu (date). v5 : [status] du dernier essai (voir [PuzzleOutcome]),
+ * nombre d'[attempts], prochaine fois « À refaire » ([nextReviewAt], 0 : rien à refaire), dernier essai ([lastTriedAt])
+ * et favori ([bookmarked]). Une ligne peut exister sans résolution (essai manqué, favori).
+ */
 @Entity(tableName = "puzzle_progress")
-data class PuzzleProgress(@PrimaryKey val puzzleId: String, val solvedAt: Long)
+data class PuzzleProgress(
+    @PrimaryKey val puzzleId: String,
+    val solvedAt: Long,
+    @ColumnInfo(defaultValue = "0") val status: Int = 0,
+    @ColumnInfo(defaultValue = "0") val attempts: Int = 0,
+    @ColumnInfo(defaultValue = "0") val nextReviewAt: Long = 0,
+    @ColumnInfo(defaultValue = "0") val lastTriedAt: Long = 0,
+    @ColumnInfo(defaultValue = "0") val bookmarked: Boolean = false,
+) {
+    companion object {
+        /** Une journée : un problème manqué revient dans « À refaire » le lendemain. */
+        const val REDO_DELAY = 86_400_000L
+
+        /** Suivi après un essai conclu [outcome] à l'instant [at] (favori conservé). */
+        fun after(old: PuzzleProgress, outcome: Int, at: Long): PuzzleProgress {
+            val solved = outcome == PuzzleOutcome.CLEAN || outcome == PuzzleOutcome.WITH_ERROR
+            return old.copy(
+                solvedAt = if (solved && old.solvedAt <= 0) at else old.solvedAt, status = outcome, attempts = old.attempts + 1,
+                lastTriedAt = at, nextReviewAt = if (outcome == PuzzleOutcome.CLEAN) 0 else at + REDO_DELAY,
+            )
+        }
+    }
+}
+
+/** Issue d'un essai de problème (colonne [PuzzleProgress.status]). */
+object PuzzleOutcome {
+    /** Aucun essai conclu (ligne créée pour un favori). */
+    const val NONE = 0
+    /** Résolu sans erreur ni flèche de l'indice. */
+    const val CLEAN = 1
+    /** Résolu après une erreur : compté, mais à refaire. */
+    const val WITH_ERROR = 2
+    /** Abandonné (solution dévoilée ou flèche de l'indice) : non compté, à refaire. */
+    const val GAVE_UP = 3
+}
+
+/**
+ * Lien problème → thème officiel (v5), pour l'option « Inclure les thèmes secondaires » : tous les thèmes officiels
+ * d'un problème, pas seulement le principal. Clé primaire (thème, classement, id) : la table sert elle-même d'index
+ * (créée WITHOUT ROWID dans la base livrée et par la migration, pour rester compacte).
+ */
+@Entity(tableName = "puzzle_themes", primaryKeys = ["theme", "rating", "puzzleId"])
+data class PuzzleThemeLink(val theme: String, val rating: Int, val puzzleId: String)
+
+/** Essai d'un problème avec son thème principal (bilan tactique). */
+data class AttemptRow(val status: Int, val attempts: Int, val lastTriedAt: Long, val theme: String)
 
 /**
  * Progression d'une leçon de l'Académie (v4). [masteredAt] > 0 : leçon maîtrisée (0 : pas encore maîtrisée).
@@ -144,44 +195,50 @@ interface PuzzleDao {
      * quelle que soit la taille de la base (environ un millième de seconde au lieu d'un comptage complet).
      */
     @Query(
-        "SELECT id FROM (SELECT id, rating FROM puzzles WHERE rowid >= :start ORDER BY rowid LIMIT :window) " +
-            "WHERE rating BETWEEN :lo AND :hi AND id != :exclude AND id NOT IN (SELECT puzzleId FROM puzzle_progress) LIMIT 1",
+        "SELECT id FROM (SELECT id, rating, themes FROM puzzles WHERE rowid >= :start ORDER BY rowid LIMIT :window) " +
+            "WHERE rating BETWEEN :lo AND :hi AND id != :exclude AND id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0) " +
+            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB) LIMIT 1",
     )
-    suspend fun probeAll(start: Long, window: Int, lo: Int, hi: Int, exclude: String): String?
+    suspend fun probeAll(start: Long, window: Int, lo: Int, hi: Int, exclude: String, lenA: String = "", lenB: String = ""): String?
 
     /** Comme [probeAll], limité aux problèmes dont le thème principal est l'un de [themes]. */
     @Query(
-        "SELECT id FROM (SELECT id, rating, primaryTheme FROM puzzles WHERE rowid >= :start ORDER BY rowid LIMIT :window) " +
+        "SELECT id FROM (SELECT id, rating, primaryTheme, themes FROM puzzles WHERE rowid >= :start ORDER BY rowid LIMIT :window) " +
             "WHERE primaryTheme IN (:themes) AND rating BETWEEN :lo AND :hi AND id != :exclude " +
-            "AND id NOT IN (SELECT puzzleId FROM puzzle_progress) LIMIT 1",
+            "AND id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0) " +
+            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB) LIMIT 1",
     )
-    suspend fun probeInThemes(start: Long, window: Int, themes: List<String>, lo: Int, hi: Int, exclude: String): String?
+    suspend fun probeInThemes(start: Long, window: Int, themes: List<String>, lo: Int, hi: Int, exclude: String, lenA: String = "", lenB: String = ""): String?
 
     // ---- Tirage exact (repli) : comptage puis lecture à un rang tiré au hasard ----
 
     @Query(
         "SELECT COUNT(*) FROM puzzles WHERE primaryTheme IN (:themes) AND rating BETWEEN :lo AND :hi AND id != :exclude " +
-            "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress))",
+            "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0)) " +
+            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB)",
     )
-    suspend fun countInThemes(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean): Int
+    suspend fun countInThemes(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, lenA: String = "", lenB: String = ""): Int
 
     @Query(
         "SELECT id FROM puzzles WHERE primaryTheme IN (:themes) AND rating BETWEEN :lo AND :hi AND id != :exclude " +
-            "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress)) LIMIT 1 OFFSET :offset",
+            "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0)) " +
+            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB) LIMIT 1 OFFSET :offset",
     )
-    suspend fun idInThemesAt(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int): String?
+    suspend fun idInThemesAt(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int, lenA: String = "", lenB: String = ""): String?
 
     @Query(
         "SELECT COUNT(*) FROM puzzles WHERE rating BETWEEN :lo AND :hi AND id != :exclude " +
-            "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress))",
+            "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0)) " +
+            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB)",
     )
-    suspend fun countAll(lo: Int, hi: Int, exclude: String, includeSolved: Boolean): Int
+    suspend fun countAll(lo: Int, hi: Int, exclude: String, includeSolved: Boolean, lenA: String = "", lenB: String = ""): Int
 
     @Query(
         "SELECT id FROM puzzles WHERE rating BETWEEN :lo AND :hi AND id != :exclude " +
-            "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress)) LIMIT 1 OFFSET :offset",
+            "AND (:includeSolved OR id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0)) " +
+            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB) LIMIT 1 OFFSET :offset",
     )
-    suspend fun idAllAt(lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int): String?
+    suspend fun idAllAt(lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int, lenA: String = "", lenB: String = ""): String?
 
     /**
      * Compteurs agrégés du catalogue par thème principal, pour une tranche de classement.
@@ -191,10 +248,10 @@ interface PuzzleDao {
      */
     @Query(
         "SELECT t.theme AS theme, t.total AS total, IFNULL(s.solved, 0) AS solved FROM " +
-            "(SELECT primaryTheme AS theme, COUNT(*) AS total FROM puzzles INDEXED BY index_puzzles_primaryTheme_rating " +
+            "(SELECT primaryTheme AS theme, COUNT(*) AS total FROM puzzles INDEXED BY index_puzzles_primaryTheme_rating_id " +
             "WHERE rating BETWEEN :lo AND :hi GROUP BY primaryTheme) t " +
             "LEFT JOIN (SELECT p.primaryTheme AS theme, COUNT(*) AS solved FROM puzzle_progress pp " +
-            "CROSS JOIN puzzles p ON p.id = pp.puzzleId WHERE p.rating BETWEEN :lo AND :hi GROUP BY p.primaryTheme) s " +
+            "CROSS JOIN puzzles p ON p.id = pp.puzzleId WHERE pp.solvedAt > 0 AND p.rating BETWEEN :lo AND :hi GROUP BY p.primaryTheme) s " +
             "ON s.theme = t.theme",
     )
     suspend fun themeCounts(lo: Int, hi: Int): List<ThemeCountRow>
@@ -222,16 +279,71 @@ interface PuzzleDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun markSolved(p: PuzzleProgress)
 
-    @Query("SELECT puzzleId FROM puzzle_progress")
+    @Query("SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0")
     fun solvedIds(): Flow<List<String>>
 
     /** Nombre de problèmes résolus (sans charger leurs identifiants). */
-    @Query("SELECT COUNT(*) FROM puzzle_progress")
+    @Query("SELECT COUNT(*) FROM puzzle_progress WHERE solvedAt > 0")
     fun solvedCount(): Flow<Int>
 
     /** Parmi [ids] (quelques problèmes récents), ceux déjà résolus. */
-    @Query("SELECT puzzleId FROM puzzle_progress WHERE puzzleId IN (:ids)")
+    @Query("SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0 AND puzzleId IN (:ids)")
     fun solvedAmong(ids: List<String>): Flow<List<String>>
+
+    // ---- v5 : suivi détaillé, « À refaire », favoris, bilan ----
+
+    @Query("SELECT * FROM puzzle_progress WHERE puzzleId = :id")
+    suspend fun progressOf(id: String): PuzzleProgress?
+
+    @Query("SELECT IFNULL((SELECT bookmarked FROM puzzle_progress WHERE puzzleId = :id), 0)")
+    fun bookmarked(id: String): Flow<Boolean>
+
+    /** Favoris, les plus récemment joués d'abord. */
+    @Query("SELECT p.* FROM puzzle_progress pp CROSS JOIN puzzles p ON p.id = pp.puzzleId WHERE pp.bookmarked = 1 ORDER BY pp.lastTriedAt DESC, pp.puzzleId LIMIT 100")
+    fun bookmarks(): Flow<List<Puzzle>>
+
+    /** « À refaire » : problèmes manqués ou résolus avec erreur, par date prévue. */
+    @Query("SELECT * FROM puzzle_progress WHERE nextReviewAt > 0 ORDER BY nextReviewAt LIMIT 100")
+    fun toRedo(): Flow<List<PuzzleProgress>>
+
+    /** Essais conclus et thème principal de chaque problème (bilan tactique). */
+    @Query(
+        "SELECT pp.status AS status, pp.attempts AS attempts, pp.lastTriedAt AS lastTriedAt, p.primaryTheme AS theme " +
+            "FROM puzzle_progress pp CROSS JOIN puzzles p ON p.id = pp.puzzleId WHERE pp.status > 0",
+    )
+    fun attempts(): Flow<List<AttemptRow>>
+
+    // ---- v5 : « Inclure les thèmes secondaires » (table puzzle_themes) ----
+
+    @Query(
+        "SELECT COUNT(DISTINCT pt.puzzleId) FROM puzzle_themes pt CROSS JOIN puzzles p ON p.id = pt.puzzleId " +
+            "WHERE pt.theme IN (:themes) AND pt.rating BETWEEN :lo AND :hi AND pt.puzzleId != :exclude " +
+            "AND (:includeSolved OR pt.puzzleId NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0)) " +
+            "AND (:lenA = '' OR p.themes LIKE :lenA OR p.themes LIKE :lenB)",
+    )
+    suspend fun countLinked(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, lenA: String, lenB: String): Int
+
+    @Query(
+        "SELECT DISTINCT pt.puzzleId FROM puzzle_themes pt CROSS JOIN puzzles p ON p.id = pt.puzzleId " +
+            "WHERE pt.theme IN (:themes) AND pt.rating BETWEEN :lo AND :hi AND pt.puzzleId != :exclude " +
+            "AND (:includeSolved OR pt.puzzleId NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0)) " +
+            "AND (:lenA = '' OR p.themes LIKE :lenA OR p.themes LIKE :lenB) ORDER BY pt.puzzleId LIMIT 1 OFFSET :offset",
+    )
+    suspend fun idLinkedAt(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int, lenA: String, lenB: String): String?
+
+    /** Problèmes par thème officiel (principal ou secondaire) dans une tranche : la table de liaison sert d'index. */
+    @Query("SELECT theme AS theme, COUNT(*) AS total, 0 AS solved FROM puzzle_themes WHERE rating BETWEEN :lo AND :hi GROUP BY theme")
+    suspend fun linkedTotals(lo: Int, hi: Int): List<ThemeCountRow>
+
+    /** Problèmes résolus de la tranche avec tous leurs thèmes (peu nombreux : comptés par thème en Kotlin). */
+    @Query(
+        "SELECT p.id AS id, p.rating AS rating, p.themes AS themes, p.primaryTheme AS primaryTheme FROM puzzle_progress pp " +
+            "CROSS JOIN puzzles p ON p.id = pp.puzzleId WHERE pp.solvedAt > 0 AND p.rating BETWEEN :lo AND :hi",
+    )
+    suspend fun solvedMeta(lo: Int, hi: Int): List<PuzzleMeta>
+
+    @Query("SELECT COUNT(*) FROM puzzle_themes")
+    suspend fun linkCount(): Int
 }
 
 @Dao
@@ -271,8 +383,8 @@ interface UserDao {
 }
 
 @Database(
-    entities = [Puzzle::class, PuzzleProgress::class, LessonProgress::class, GameRecord::class, AcademyAssessment::class],
-    version = 4,
+    entities = [Puzzle::class, PuzzleProgress::class, PuzzleThemeLink::class, LessonProgress::class, GameRecord::class, AcademyAssessment::class],
+    version = 5,
     exportSchema = true,
 )
 abstract class DuckDatabase : RoomDatabase() {
@@ -286,7 +398,7 @@ abstract class DuckDatabase : RoomDatabase() {
         fun create(context: Context, name: String = "chessduck.db"): DuckDatabase =
             Room.databaseBuilder(context, DuckDatabase::class.java, name)
                 .createFromAsset("chessduck.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
 
         /**
@@ -311,6 +423,8 @@ abstract class DuckDatabase : RoomDatabase() {
                             "INSERT OR IGNORE INTO puzzles (id, fen, moves, rating, popularity, plays, themes, primaryTheme) " +
                                 "SELECT id, fen, moves, rating, popularity, plays, themes, " + PuzzleThemes.primarySql() + " FROM catalogue.puzzles",
                         )
+                        // v5 : les liens vers les thèmes (principal et secondaires) des problèmes importés.
+                        conn.execSQL(themeLinksSql("catalogue.puzzles"))
                     } finally {
                         conn.execSQL("DETACH DATABASE catalogue")
                     }
@@ -341,6 +455,41 @@ abstract class DuckDatabase : RoomDatabase() {
                         "`passed` INTEGER NOT NULL, `completedAt` INTEGER NOT NULL)",
                 )
                 db.execSQL("ALTER TABLE games ADD COLUMN startFen TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
+        /**
+         * Remplit puzzle_themes depuis la colonne `themes` de [from] : un lien par thème officiel (PuzzleThemes, les 50
+         * thèmes du catalogue) de chaque problème, découpé en SQL natif (CTE récursive, aucune boucle Kotlin).
+         */
+        fun themeLinksSql(from: String = "puzzles"): String {
+            val keys = PuzzleThemes.all.joinToString(",") { "'${it.key}'" }
+            return "WITH RECURSIVE split(id, rating, rest, tag) AS (SELECT id, rating, trim(themes) || ' ', '' FROM $from " +
+                "UNION ALL SELECT id, rating, substr(rest, instr(rest, ' ') + 1), substr(rest, 1, instr(rest, ' ') - 1) FROM split WHERE rest <> '') " +
+                "INSERT OR IGNORE INTO puzzle_themes (theme, rating, puzzleId) SELECT tag, rating, id FROM split WHERE tag IN ($keys)"
+        }
+
+        /** Table de liaison v5, compacte (WITHOUT ROWID : la clé primaire est l'unique arbre). Même schéma que l'entité. */
+        const val PUZZLE_THEMES_SQL = "CREATE TABLE IF NOT EXISTS `puzzle_themes` (`theme` TEXT NOT NULL, `rating` INTEGER NOT NULL, " +
+            "`puzzleId` TEXT NOT NULL, PRIMARY KEY(`theme`, `rating`, `puzzleId`)) WITHOUT ROWID"
+
+        /**
+         * v5 : suivi détaillé des problèmes (issue, essais, « À refaire », favoris), index couvrants et table de liaison
+         * des thèmes. Les problèmes déjà résolus gardent leur date et deviennent des résolutions nettes ; aucun
+         * problème n'est modifié.
+         */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                for (c in listOf("status", "attempts", "nextReviewAt", "lastTriedAt", "bookmarked")) {
+                    db.execSQL("ALTER TABLE puzzle_progress ADD COLUMN $c INTEGER NOT NULL DEFAULT 0")
+                }
+                db.execSQL("UPDATE puzzle_progress SET status = 1, attempts = 1, lastTriedAt = solvedAt WHERE solvedAt > 0")
+                db.execSQL("DROP INDEX IF EXISTS `index_puzzles_rating`")
+                db.execSQL("DROP INDEX IF EXISTS `index_puzzles_primaryTheme_rating`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_puzzles_rating_id` ON `puzzles` (`rating`, `id`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_puzzles_primaryTheme_rating_id` ON `puzzles` (`primaryTheme`, `rating`, `id`)")
+                db.execSQL(PUZZLE_THEMES_SQL)
+                db.execSQL(themeLinksSql())
             }
         }
 

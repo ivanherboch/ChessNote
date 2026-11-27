@@ -81,6 +81,12 @@ data class Settings(
     /** 0 = Tous, 1 = Débutant, 2 = Intermédiaire, 3 = Avancé, 4 = Expert. */
     val puzzleBand: Int = 0,
     val puzzleTheme: String = "",
+    /** ELO tactique des Problèmes (« Mon niveau ») ; 0 : pas encore calculé (on part alors de l'ELO du Jeu Libre). */
+    val puzzleElo: Int = 0,
+    /** Catalogue : inclure les thèmes secondaires de chaque problème (table puzzle_themes). */
+    val puzzleSecondary: Boolean = false,
+    /** Catalogue : longueur de la solution (0 toutes, 1 un coup, 2 courte, 3 longue ; PuzzleThemes.LENGTHS). */
+    val puzzleLength: Int = 0,
     val puzzleId: String = "",
     val notationLevel: Int = 0,
     /** Leçon ouverte : au premier lancement, la première du cursus (« L'échiquier et la notation »). */
@@ -131,6 +137,9 @@ class Prefs(private val context: Context) : SettingsRepository {
         val color = intPreferencesKey("color")
         val aiElo = intPreferencesKey("ai_elo")
         val band = intPreferencesKey("puzzle_band")
+        val puzzleElo = intPreferencesKey("puzzle_elo")
+        val puzzleSecondary = booleanPreferencesKey("puzzle_secondary")
+        val puzzleLength = intPreferencesKey("puzzle_length")
         val theme = stringPreferencesKey("puzzle_theme")
         val puzzleId = stringPreferencesKey("puzzle_id")
         val level = intPreferencesKey("notation_level")
@@ -169,6 +178,9 @@ class Prefs(private val context: Context) : SettingsRepository {
             aiElo = p[K.aiElo] ?: 1200,
             puzzleBand = p[K.band] ?: 0,
             puzzleTheme = p[K.theme] ?: "",
+            puzzleElo = p[K.puzzleElo] ?: 0,
+            puzzleSecondary = p[K.puzzleSecondary] ?: false,
+            puzzleLength = p[K.puzzleLength] ?: 0,
             puzzleId = p[K.puzzleId] ?: "",
             notationLevel = p[K.level] ?: 0,
             lessonId = p[K.lesson] ?: 115,
@@ -197,10 +209,10 @@ class Prefs(private val context: Context) : SettingsRepository {
     override suspend fun setKidNarration(v: Boolean) { context.store.edit { it[K.kidNarration] = v } }
     override suspend fun setKidMode(v: Boolean) { context.store.edit { it[K.kid] = v } }
 
-    /** Place [id] en tête de l'historique des problèmes joués (6 conservés : le courant + 5 précédents). */
+    /** Place [id] en tête de l'historique des problèmes joués (51 conservés : le courant + 50 précédents). */
     override suspend fun pushRecentPuzzle(id: String) { context.store.edit { p ->
         val old = (p[K.recent] ?: "").split(',').filter { it.isNotBlank() && it != id }
-        val recent = (listOf(id) + old).take(6)
+        val recent = (listOf(id) + old).take(RECENT_PUZZLES + 1)
         p[K.recent] = recent.joinToString(",")
         p[K.puzzleId] = id
         // Les thèmes « connus » ne concernent que les problèmes encore dans l'historique.
@@ -248,7 +260,13 @@ class Prefs(private val context: Context) : SettingsRepository {
         it[K.twoPlayers] = twoPlayers; it[K.color] = color; it[K.aiElo] = aiElo
     } }
     override suspend fun setPuzzleFilter(band: Int, theme: String) { context.store.edit { it[K.band] = band; it[K.theme] = theme } }
+    override suspend fun setPuzzleElo(v: Int) { context.store.edit { it[K.puzzleElo] = v } }
+    override suspend fun setPuzzleSecondary(v: Boolean) { context.store.edit { it[K.puzzleSecondary] = v } }
+    override suspend fun setPuzzleLength(v: Int) { context.store.edit { it[K.puzzleLength] = v } }
     override suspend fun setNotationLevel(v: Int) { context.store.edit { it[K.level] = v } }
     override suspend fun setLesson(v: Int) { context.store.edit { it[K.lesson] = v } }
     override suspend fun setShareStyle(format: String, light: Boolean) { context.store.edit { it[SHARE_FORMAT] = format; it[SHARE_LIGHT] = light } }
 }
+
+/** Problèmes récents gardés dans l'historique (en plus du problème courant). */
+const val RECENT_PUZZLES = 50

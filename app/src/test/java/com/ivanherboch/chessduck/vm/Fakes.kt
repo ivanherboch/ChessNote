@@ -38,8 +38,11 @@ class FakeSettings(initial: Settings = Settings(lessonId = 1, academyLevel = 2))
     override suspend fun setGameSettings(twoPlayers: Boolean, color: Int, aiElo: Int) =
         flow.update { it.copy(twoPlayers = twoPlayers, colorChoice = color, aiElo = aiElo) }
     override suspend fun setPuzzleFilter(band: Int, theme: String) = flow.update { it.copy(puzzleBand = band, puzzleTheme = theme) }
+    override suspend fun setPuzzleElo(v: Int) = flow.update { it.copy(puzzleElo = v) }
+    override suspend fun setPuzzleSecondary(v: Boolean) = flow.update { it.copy(puzzleSecondary = v) }
+    override suspend fun setPuzzleLength(v: Int) = flow.update { it.copy(puzzleLength = v) }
     override suspend fun pushRecentPuzzle(id: String) = flow.update {
-        val recent = (listOf(id) + it.recentPuzzles.filter { r -> r != id }).take(6)
+        val recent = (listOf(id) + it.recentPuzzles.filter { r -> r != id }).take(com.ivanherboch.chessduck.data.RECENT_PUZZLES + 1)
         it.copy(recentPuzzles = recent, puzzleId = id, knownThemePuzzles = it.knownThemePuzzles.filter { k -> k in recent }.toSet())
     }
     override suspend fun markThemeKnown(id: String) = flow.update { it.copy(knownThemePuzzles = it.knownThemePuzzles + id) }
@@ -78,17 +81,45 @@ class FakePuzzles(private val puzzles: List<Puzzle>) : PuzzleRepository {
     override suspend fun slice(start: Int, n: Int) = emptyList<Puzzle>()
     override suspend fun sliceThemes(start: Int, themes: List<String>, n: Int) = emptyList<Puzzle>()
     override suspend fun sliceCastling(start: Int, n: Int) = emptyList<Puzzle>()
-    override suspend fun markSolved(id: String, at: Long) = solved.update { it + id }
+    /** Suivi détaillé (v5) : même règle que la base ([com.ivanherboch.chessduck.data.PuzzleProgress.after]). */
+    val progress = MutableStateFlow<Map<String, com.ivanherboch.chessduck.data.PuzzleProgress>>(emptyMap())
+    override suspend fun recordAttempt(id: String, outcome: Int, at: Long) {
+        val old = progress.value[id] ?: com.ivanherboch.chessduck.data.PuzzleProgress(id, 0)
+        val next = com.ivanherboch.chessduck.data.PuzzleProgress.after(old, outcome, at)
+        progress.update { it + (id to next) }
+        if (next.solvedAt > 0) solved.update { it + id }
+    }
+    override suspend fun setBookmark(id: String, on: Boolean) = progress.update {
+        it + (id to (it[id] ?: com.ivanherboch.chessduck.data.PuzzleProgress(id, 0)).copy(bookmarked = on))
+    }
+    override fun bookmarked(id: String): Flow<Boolean> = progress.map { it[id]?.bookmarked == true }
+    override fun bookmarks(): Flow<List<Puzzle>> = progress.map { m -> m.values.filter { it.bookmarked }.mapNotNull { p -> puzzles.firstOrNull { it.id == p.puzzleId } } }
+    override fun toRedo(): Flow<List<Pair<Puzzle, Long>>> = progress.map { m ->
+        m.values.filter { it.nextReviewAt > 0 }.sortedBy { it.nextReviewAt }.mapNotNull { p -> puzzles.firstOrNull { it.id == p.puzzleId }?.let { it to p.nextReviewAt } }
+    }
+    override fun attempts(): Flow<List<com.ivanherboch.chessduck.data.AttemptRow>> = progress.map { m ->
+        m.values.filter { it.status > 0 }.mapNotNull { p -> puzzles.firstOrNull { it.id == p.puzzleId }?.let { com.ivanherboch.chessduck.data.AttemptRow(p.status, p.attempts, p.lastTriedAt, it.primaryTheme) } }
+    }
     override fun solvedIds(): Flow<List<String>> = solved.map { it.toList() }
     override fun solvedCount(): Flow<Int> = solved.map { it.size }
     override fun solvedAmong(ids: List<String>): Flow<List<String>> = solved.map { s -> ids.filter { it in s } }
     override suspend fun syncCatalogue() = false
-    override suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random): String? {
-        val pool = puzzles.filter { (themes == null || it.primaryTheme in themes) && it.rating in range && it.id != exclude }
+    private fun tags(p: Puzzle) = p.themes.trim().split(' ').toSet()
+    override suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random, secondary: Boolean, length: Int): String? {
+        val (la, lb) = com.ivanherboch.chessduck.content.PuzzleThemes.lengthPatterns(length)
+        fun lengthOk(p: Puzzle) = la.isEmpty() || listOf(la, lb).filter { it.isNotEmpty() }.any { pat -> " ${pat.trim('%', ' ')} " in p.themes }
+        val pool = puzzles.filter {
+            (themes == null || it.primaryTheme in themes || (secondary && tags(it).any { t -> t in themes })) && it.rating in range && it.id != exclude && lengthOk(it)
+        }
         return (pool.filter { it.id !in solved.value }.ifEmpty { pool }).randomOrNull(random)?.id
     }
-    override suspend fun themeCounts(range: IntRange) = puzzles.filter { it.rating in range }.groupBy { it.primaryTheme }
-        .map { (t, l) -> ThemeCountRow(t, l.size, l.count { it.id in solved.value }) }
+    override suspend fun themeCounts(range: IntRange, secondary: Boolean): List<ThemeCountRow> {
+        val inRange = puzzles.filter { it.rating in range }
+        if (!secondary) return inRange.groupBy { it.primaryTheme }.map { (t, l) -> ThemeCountRow(t, l.size, l.count { it.id in solved.value }) }
+        val keys = com.ivanherboch.chessduck.content.PuzzleThemes.all.map { it.key }.toSet()
+        return inRange.flatMap { p -> tags(p).filter { it in keys }.map { it to p } }.groupBy({ it.first }, { it.second })
+            .map { (t, l) -> ThemeCountRow(t, l.size, l.count { it.id in solved.value }) }
+    }
     /** Nombre de recherches d'identifiant envoyées à la base (recherche différée du catalogue). */
     var searches = 0
     override suspend fun searchIds(query: String, limit: Int): Pair<List<PuzzleHit>, Int> {

@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `4.3.0` (`versionCode = 104`), publiée en release GitHub `v4.3.0`.
+- **Version actuelle** : `4.4.0` (`versionCode = 105`), publiée en release GitHub `v4.4.0`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -208,6 +208,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **4.2.14** : `LessonsCard` : titre « Leçons », « N sur 211 maîtrisées », boutons « Palier N (n) » et « Toutes (211) » (description TalkBack contenant « Ouvrir le catalogue des leçons », utilisée par les tests).
 - **4.2.15** : refonte des Problèmes, étape 1 sur 3 (plan `plan_problemes_3_etapes.md`) : fiabilité, anti-spoiler, réfutation, export, tirage par rowid (voir le Relais ci-dessous).
 - **4.3.0** : refonte des Problèmes, étape 2 sur 3 : Solution et Recommencer, bandeau des coups, catalogue (tirage, sélection épuisée), passerelles vers le Jeu Libre et l'Académie (voir le Relais ci-dessous).
+- **4.4.0** : refonte des Problèmes, étape 3 sur 3 : Room v5 (suivi détaillé, index couvrants, `puzzle_themes`), « Mon niveau », À refaire et Favoris, thèmes secondaires, bilan et longueur (voir le Relais ci-dessous).
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.
@@ -325,6 +326,35 @@ Les détails de chaque version sont dans `docs/release-notes.md` ; les exemples 
 - Tests : `PuzzlesFuzzTest` (Solution, Recommencer, bandeau dans le fuzzing ; solution non comptée et navigable ; sélection épuisée), `ViewModelsTest.academyOpensTheLessonOfAPuzzleTheme`, `AppRobolectricTest.puzzleSolutionAndBridges` (de bout en bout : Solution → Voir la leçon → Recommencer → Continuer contre l'Ordinateur) et `puzzleAfterAnErrorWithLargeFont` (police 1,6), `TabletRobolectricTest.tabletLandscape` (capture `t12_problemes_solution`).
 - Repéré hors périmètre (non corrigé) : depuis un problème, le Jeu Libre annonce « Position de la leçon contre l'ordinateur » et « Partie d'entraînement depuis une leçon » (textes de `PlayScreen`/`PlayViewModel`) ; en grande police, le texte de l'indice 1/2 se replie derrière « Lire la suite » (comportement normal de `FeedbackCard`).
 - Reste pour l'étape 3 : Room v5 (`puzzle_progress` étendu, index couvrants, `puzzle_themes`), « Mon niveau » (ELO tactique), Récents 50 / À refaire / Favoris, thèmes secondaires, bilan tactique et filtre par longueur.
+
+### Relais refonte Problèmes (refonte terminée, v4.4.0)
+- Room v5 (`MIGRATION_4_5`, schéma exporté `5.json`) :
+  - `PuzzleProgress` gagne `status` (`PuzzleOutcome` : NONE, CLEAN, WITH_ERROR, GAVE_UP), `attempts`, `nextReviewAt`, `lastTriedAt` et `bookmarked`. Une ligne n'est « résolue » que si `solvedAt > 0`, et toutes les requêtes filtrent ainsi. `PuzzleProgress.after()` porte la règle : résolution nette = rien à refaire ; erreur ou abandon = à refaire 1 jour plus tard (`REDO_DELAY`).
+  - Index couvrants `index_puzzles_rating_id` et `index_puzzles_primaryTheme_rating_id` ; `themeCounts` est `INDEXED BY` le second.
+  - Entité `PuzzleThemeLink` (table `puzzle_themes`, clé primaire (thème, classement, id), créée WITHOUT ROWID par `PUZZLE_THEMES_SQL`), remplie par `themeLinksSql()` (CTE récursive, 50 thèmes officiels), y compris dans `syncPuzzles` : 419 697 liens.
+  - Base livrée migrée sur place par `scripts/migrate_asset_v5.py`. Empreinte des 150 000 problèmes inchangée ; 42,6 Mo bruts (30,3 avant) ; environ +4 Mo d'APK, mesuré avant de choisir WITHOUT ROWID plutôt qu'une table avec index séparé (+9 Mo).
+- DAO : `probeAll`/`probeInThemes`/`countAll`/… prennent les motifs de longueur `lenA`/`lenB` ; `countLinked`, `idLinkedAt`, `linkedTotals`, `solvedMeta` ; `progressOf`, `bookmarked`, `bookmarks`, `toRedo`, `attempts`, `linkCount`.
+- `PuzzleRepository` :
+  - `randomId(…, secondary, length)` et `themeCounts(range, secondary)` ;
+  - `recordAttempt`, avec `markSolved` qui délègue en résolution nette (séries de l'Académie) ;
+  - `setBookmark`, `bookmarked`, `bookmarks`, `toRedo`, `attempts`.
+- DataStore : `puzzle_elo` (0 = pas encore calculé, il part alors de l'ELO du Jeu Libre), `puzzle_secondary`, `puzzle_length` ; historique des récents porté à 50 (`RECENT_PUZZLES`).
+- `PuzzleThemes` : `MY_LEVEL` (= 5, valeur de `puzzleBand`), `levelRange(elo)` (± 100), `bandLabel`, `LENGTHS`, `lengthPatterns`.
+- `PuzzlesViewModel` :
+  - `PuzzleState.puzzleElo`, `secondary`, `length`, `range` et `filterMatches` (le thème visible tient compte des secondaires) ;
+  - ELO : `tacticElo()` (Elo, K = 32, borné 400–3000), `rate()` une fois par problème et par session, `conclude()` (essai enregistré en NonCancellable) ;
+  - `setSecondary`, `setLength`, `toggleBookmark` ;
+  - flux `bookmarked`, `bookmarks`, `toRedo`, `stats` (`TacticStats.of`).
+- `PuzzlesScreen` : signet sur la ligne d'information, tiroir « Problèmes joués » (Récents, À refaire, Favoris : `PlayedRow`). `PuzzleCatalogSheet` : `TacticCard`, puce « Mon niveau · ELO », longueur, interrupteur des thèmes secondaires, « Tirer un problème » dès que difficulté, longueur ou thèmes secondaires changent.
+- Tests :
+  - `migration4To5KeepsEverything` : base v4 complète, 150 000 problèmes, progression, leçon, partie et test conservés, liens créés, index remplacés ; base livrée v5 vérifiée ;
+  - `upgradeImportsNewPuzzlesAndKeepsProgress` : liens après import ;
+  - `PuzzlesFuzzTest` : ELO, « À refaire », favoris, secondaires, longueur, « Mon niveau », bilan ;
+  - audit des 150 000 problèmes repassé, vert.
+- Repéré hors périmètre, non corrigé :
+  - `SrsScheduler` n'a pas servi : le délai « À refaire » est fixe (1 jour) ;
+  - en grande police, la carte de l'indice se replie derrière « Lire la suite » ;
+  - depuis un problème, le Jeu Libre parle encore de « Position de la leçon ».
 
 ## 7. Limites connues et pistes
 

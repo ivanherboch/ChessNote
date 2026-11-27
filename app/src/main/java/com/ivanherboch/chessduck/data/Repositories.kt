@@ -3,6 +3,8 @@ package com.ivanherboch.chessduck.data
 import kotlin.random.Random
 import android.content.Context
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import com.ivanherboch.chessduck.content.PuzzleThemes
 
 /** Réglages persistés dont les ViewModels ont besoin (implémenté par [Prefs], DataStore). */
 interface SettingsRepository {
@@ -16,6 +18,9 @@ interface SettingsRepository {
     suspend fun setElo(v: Int)
     suspend fun setGameSettings(twoPlayers: Boolean, color: Int, aiElo: Int)
     suspend fun setPuzzleFilter(band: Int, theme: String)
+    suspend fun setPuzzleElo(v: Int)
+    suspend fun setPuzzleSecondary(v: Boolean)
+    suspend fun setPuzzleLength(v: Int)
     /** Place un problème en tête de l'historique des problèmes joués (et le mémorise comme problème courant). */
     suspend fun pushRecentPuzzle(id: String)
     /** Mémorise que le thème de ce problème récent était visible quand il a été joué (anti-spoiler levé). */
@@ -66,13 +71,29 @@ interface PuzzleRepository {
     /**
      * Tire au hasard un problème du filtre ([themes] null = tous les thèmes) dans la tranche [range], autre que
      * [exclude] : un problème non résolu d'abord, sinon un déjà résolu ; null si aucun ne correspond.
+     * [secondary] : le thème peut être secondaire (table puzzle_themes) ; [length] : longueur (PuzzleThemes.LENGTHS).
      */
-    suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random): String?
-    /** Compteurs (problèmes, résolus) par thème principal pour une tranche de classement. */
-    suspend fun themeCounts(range: IntRange): List<ThemeCountRow>
+    suspend fun randomId(
+        themes: List<String>?, range: IntRange, exclude: String, random: Random, secondary: Boolean = false, length: Int = 0,
+    ): String?
+    /** Compteurs (problèmes, résolus) par thème pour une tranche : thème principal, ou tous les thèmes ([secondary]). */
+    suspend fun themeCounts(range: IntRange, secondary: Boolean = false): List<ThemeCountRow>
     /** Recherche d'identifiant : au plus [limit] résultats classés et le nombre total de correspondances. */
     suspend fun searchIds(query: String, limit: Int): Pair<List<PuzzleHit>, Int>
-    suspend fun markSolved(id: String, at: Long = System.currentTimeMillis())
+    /** Problème résolu net (séries de l'Académie) : voir [recordAttempt]. */
+    suspend fun markSolved(id: String, at: Long = System.currentTimeMillis()) = recordAttempt(id, PuzzleOutcome.CLEAN, at)
+    /**
+     * Essai conclu ([outcome] : PuzzleOutcome). Résolu (net ou après une erreur) : compté ; après une erreur ou un
+     * abandon, le problème revient dans « À refaire » le lendemain ; une résolution nette l'en retire. Le favori est gardé.
+     */
+    suspend fun recordAttempt(id: String, outcome: Int, at: Long = System.currentTimeMillis())
+    suspend fun setBookmark(id: String, on: Boolean)
+    fun bookmarked(id: String): Flow<Boolean>
+    fun bookmarks(): Flow<List<Puzzle>>
+    /** « À refaire » : (problème, date prévue), par date. */
+    fun toRedo(): Flow<List<Pair<Puzzle, Long>>>
+    /** Essais conclus et thème principal de chaque problème (bilan tactique). */
+    fun attempts(): Flow<List<AttemptRow>>
     fun solvedIds(): Flow<List<String>>
     /** Nombre de problèmes résolus. */
     fun solvedCount(): Flow<Int>
@@ -118,33 +139,64 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
      * hasard (lecture bornée, instantanée même en mode Libre) ; si elles ne trouvent rien (thème rare, presque tout
      * résolu), repli exact sur le comptage puis la lecture à un rang tiré au hasard, résolus compris en dernier recours.
      */
-    override suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random): String? {
+    override suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random, secondary: Boolean, length: Int): String? {
+        val (la, lb) = PuzzleThemes.lengthPatterns(length)
+        val lo = range.first
+        val hi = range.last
+        // Thèmes secondaires : tirage exact sur la table de liaison (indexée par thème et classement).
+        if (secondary && themes != null) {
+            for (includeSolved in listOf(false, true)) {
+                val n = dao.countLinked(themes, lo, hi, exclude, includeSolved, la, lb)
+                if (n > 0) return dao.idLinkedAt(themes, lo, hi, exclude, includeSolved, random.nextInt(n), la, lb)
+            }
+            return null
+        }
         if (maxRow == 0L) maxRow = dao.maxRowId()
         if (maxRow > 0) repeat(PROBE_TRIES) {
             val start = random.nextLong(1, maxRow + 1)
-            val id = if (themes == null) dao.probeAll(start, PROBE_WINDOW, range.first, range.last, exclude)
-            else dao.probeInThemes(start, PROBE_WINDOW, themes, range.first, range.last, exclude)
+            val id = if (themes == null) dao.probeAll(start, PROBE_WINDOW, lo, hi, exclude, la, lb)
+            else dao.probeInThemes(start, PROBE_WINDOW, themes, lo, hi, exclude, la, lb)
             if (id != null) return id
         }
         for (includeSolved in listOf(false, true)) {
-            val n = if (themes == null) dao.countAll(range.first, range.last, exclude, includeSolved)
-            else dao.countInThemes(themes, range.first, range.last, exclude, includeSolved)
+            val n = if (themes == null) dao.countAll(lo, hi, exclude, includeSolved, la, lb)
+            else dao.countInThemes(themes, lo, hi, exclude, includeSolved, la, lb)
             if (n == 0) continue
             val k = random.nextInt(n)
-            return if (themes == null) dao.idAllAt(range.first, range.last, exclude, includeSolved, k)
-            else dao.idInThemesAt(themes, range.first, range.last, exclude, includeSolved, k)
+            return if (themes == null) dao.idAllAt(lo, hi, exclude, includeSolved, k, la, lb)
+            else dao.idInThemesAt(themes, lo, hi, exclude, includeSolved, k, la, lb)
         }
         return null
     }
 
-    override suspend fun themeCounts(range: IntRange) = dao.themeCounts(range.first, range.last)
+    override suspend fun themeCounts(range: IntRange, secondary: Boolean): List<ThemeCountRow> {
+        if (!secondary) return dao.themeCounts(range.first, range.last)
+        // Tous les thèmes officiels de chaque problème : un même problème compte dans plusieurs thèmes.
+        val solved = HashMap<String, Int>()
+        for (m in dao.solvedMeta(range.first, range.last)) for (t in m.themes.trim().split(' ')) solved.merge(t, 1, Int::plus)
+        return dao.linkedTotals(range.first, range.last).map { ThemeCountRow(it.theme, it.total, solved[it.theme] ?: 0) }
+    }
 
     override suspend fun searchIds(query: String, limit: Int): Pair<List<PuzzleHit>, Int> {
         val pattern = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         return dao.searchIds(pattern, query, limit) to dao.countIds(pattern)
     }
     override suspend fun sliceCastling(start: Int, n: Int) = dao.sliceCastling(start, n)
-    override suspend fun markSolved(id: String, at: Long) = dao.markSolved(PuzzleProgress(id, at))
+    override suspend fun recordAttempt(id: String, outcome: Int, at: Long) {
+        val old = dao.progressOf(id) ?: PuzzleProgress(id, 0)
+        dao.markSolved(PuzzleProgress.after(old, outcome, at))
+    }
+    override suspend fun setBookmark(id: String, on: Boolean) {
+        val old = dao.progressOf(id) ?: PuzzleProgress(id, 0)
+        dao.markSolved(old.copy(bookmarked = on))
+    }
+    override fun bookmarked(id: String) = dao.bookmarked(id)
+    override fun bookmarks() = dao.bookmarks()
+    override fun toRedo(): Flow<List<Pair<Puzzle, Long>>> = dao.toRedo().map { rows ->
+        val byId = if (rows.isEmpty()) emptyMap() else dao.byIds(rows.map { it.puzzleId }).associateBy { it.id }
+        rows.mapNotNull { r -> byId[r.puzzleId]?.let { it to r.nextReviewAt } }
+    }
+    override fun attempts() = dao.attempts()
     override fun solvedIds() = dao.solvedIds()
     override fun solvedCount() = dao.solvedCount()
     override fun solvedAmong(ids: List<String>) = dao.solvedAmong(ids)

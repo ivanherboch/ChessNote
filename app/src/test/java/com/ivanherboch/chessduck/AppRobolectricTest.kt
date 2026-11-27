@@ -127,6 +127,10 @@ class AppRobolectricTest {
         rule.onNodeWithText("Solution").assertExists()
         rule.onNodeWithText("Montrer le coup").assertExists()
         shot("3m_grande_police_erreur")
+        // Catalogue en grande police : bilan tactique, Mon niveau, longueur, thèmes secondaires.
+        rule.onNodeWithContentDescription("Catalogue des problèmes", substring = true).performClick(); settle(1500)
+        rule.onNodeWithText("Bilan tactique").assertExists()
+        shot("3n_catalogue_grande_police")
     }
 
     /** Solution de 10 coups (#9zsfc) : en 4:5 comme en 1:1, toutes les cartes tiennent dans l'image, au-dessus de la légende. */
@@ -534,6 +538,69 @@ class AppRobolectricTest {
         Unit
     }
 
+    /**
+     * Migration 4 → 5 : une base v4 complète (schéma exporté 4.json, les 150 000 problèmes de la base livrée, une
+     * progression, une leçon, une partie, un test) est ouverte par Room, qui applique MIGRATION_4_5 et vérifie le schéma
+     * v5. Tout est conservé ; les problèmes résolus deviennent des résolutions nettes ; les liens de thèmes sont créés.
+     * La base livrée elle-même (migrée sur place en v5) est vérifiée aussi.
+     */
+    @Test
+    fun migration4To5KeepsEverything(): Unit = runBlocking {
+        val ctx: android.content.Context = ApplicationProvider.getApplicationContext()
+        val root = generateSequence(File("").absoluteFile) { it.parentFile }.first { File(it, "settings.gradle.kts").exists() }
+        val schema = org.json.JSONObject(File(root, "app/schemas/com.ivanherboch.chessduck.data.DuckDatabase/4.json").readText()).getJSONObject("database")
+        val asset = File(ctx.cacheDir, "livree.db").apply { ctx.assets.open("chessduck.db").use { i -> outputStream().use { i.copyTo(it) } } }
+        val name = "chessduck-v4.db"
+        ctx.deleteDatabase(name)
+        val path = ctx.getDatabasePath(name).apply { parentFile?.mkdirs() }
+        android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(path, null).use { sql ->
+            val entities = schema.getJSONArray("entities")
+            for (i in 0 until entities.length()) {
+                val e = entities.getJSONObject(i)
+                val table = e.getString("tableName")
+                sql.execSQL(e.getString("createSql").replace("\${TABLE_NAME}", table))
+                val idx = e.optJSONArray("indices") ?: org.json.JSONArray()
+                for (k in 0 until idx.length()) sql.execSQL(idx.getJSONObject(k).getString("createSql").replace("\${TABLE_NAME}", table))
+            }
+            val setup = schema.getJSONArray("setupQueries")
+            for (i in 0 until setup.length()) sql.execSQL(setup.getString(i))
+            sql.execSQL("INSERT OR REPLACE INTO room_master_table (id, identity_hash) VALUES (42, '${schema.getString("identityHash")}')")
+            sql.execSQL("ATTACH DATABASE ? AS livree", arrayOf<Any>(asset.path))
+            sql.execSQL("INSERT INTO puzzles SELECT id, fen, moves, rating, popularity, plays, themes, primaryTheme FROM livree.puzzles")
+            sql.execSQL("DETACH DATABASE livree")
+            sql.execSQL("INSERT INTO puzzle_progress (puzzleId, solvedAt) VALUES ('0000D', 77)")
+            sql.execSQL("INSERT INTO lesson_progress (lessonId, masteredAt, stars) VALUES (7, 123, 3)")
+            sql.execSQL(
+                "INSERT INTO games (date, opponent, vsComputer, playerWhite, result, outcome, reason, eloBefore, eloAfter, moves, analysis, whiteName, blackName, opponentElo, startFen) " +
+                    "VALUES (1, 'Ordinateur 1200', 1, 1, '1-0', 1, 'abandon', 1200, 1216, 'e2e4', '', 'Ivan', 'Ordinateur', 1200, '')",
+            )
+            sql.execSQL("INSERT INTO academy_assessments (kind, level, score, total, passed, completedAt) VALUES ('exam', 2, 8, 10, 1, 5)")
+            sql.version = 4
+        }
+        asset.delete()
+        val db = DuckDatabase.create(ctx, name)
+        assertEquals(150_000, db.puzzles().count())
+        assertEquals(419_697, db.puzzles().linkCount())
+        val p = db.puzzles().progressOf("0000D")!!
+        assertEquals(77L, p.solvedAt)
+        assertEquals(com.ivanherboch.chessduck.data.PuzzleOutcome.CLEAN, p.status)
+        assertEquals(listOf("0000D"), db.puzzles().solvedIds().first())
+        assertEquals(listOf(7), db.user().masteredLessons().first())
+        assertEquals("Ivan", db.user().games().first().single().whiteName)
+        assertEquals(1, db.user().assessments().first().size)
+        // Index couvrants en place, anciens index supprimés.
+        val indexes = db.openHelper.readableDatabase.query("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'puzzles'").use { c ->
+            buildList { while (c.moveToNext()) add(c.getString(0)) }
+        }
+        assertTrue(indexes.toString(), "index_puzzles_rating_id" in indexes && "index_puzzles_primaryTheme_rating_id" in indexes && "index_puzzles_rating" !in indexes)
+        db.close()
+        ctx.deleteDatabase(name)
+        // Base livrée v5 (celle de l'application) : mêmes 150 000 problèmes et liens.
+        val app = ApplicationProvider.getApplicationContext<ChessDuckApp>()
+        assertEquals(150_000, app.db.puzzles().count())
+        assertEquals(419_697, app.db.puzzles().linkCount())
+    }
+
     @Test
     fun upgradeImportsNewPuzzlesAndKeepsProgress() = runBlocking {
         val old = File(System.getenv("OLD_DB") ?: "/opt/work/old50k.db")
@@ -551,6 +618,8 @@ class AppRobolectricTest {
         assertEquals(true, DuckDatabase.syncPuzzles(ctx, db))
         assertEquals(150_000, db.puzzles().count())
         assertEquals(listOf("0000D"), db.puzzles().solvedIds().first())
+        // v5 : les problèmes importés ont aussi leurs liens de thèmes (thèmes secondaires).
+        assertEquals(419_697, db.puzzles().linkCount())
         // Migrations 1 → 2 → 3 puis import SQL natif : chaque problème a le même thème principal que la règle Kotlin.
         for (pm in db.puzzles().allMeta()) assertEquals(pm.id, com.ivanherboch.chessduck.content.PuzzleThemes.primary(pm.themes).key, pm.primaryTheme)
         db.close()
@@ -971,13 +1040,20 @@ class AppRobolectricTest {
             rule.onNodeWithText("Jeu Libre").assertExists()
         }
         rule.onNodeWithText("Problèmes").performClick(); settle(1500)
-        desc("Problèmes récents").assertExists()
+        desc("Problèmes joués").assertExists()
         // Recherche instantanée par identifiant Lichess.
         desc("Catalogue des problèmes").performClick(); settle(1500)
         rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("0d"); settle(1500); shot("3c_recherche")
         rule.onNodeWithText("#0D1Z6").performClick(); settle(2500)
-        desc("Problèmes récents").performClick(); settle(1000); shot("3d_recents")
+        // Favori : le signet ajoute le problème à l'onglet « Favoris ».
+        desc("Ajouter aux favoris").performClick(); settle(600)
+        desc("Retirer des favoris").assertExists()
+        desc("Problèmes joués").performClick(); settle(1000); shot("3d_recents")
+        rule.onNodeWithText("À refaire").performClick(); settle(600); shot("3d_a_refaire")
+        rule.onNodeWithText("Favoris").performClick(); settle(600); shot("3d_favoris")
+        rule.onNodeWithText("#0D1Z6 · thème masqué", substring = true).assertExists()
         close(); settle(800)
+        desc("Retirer des favoris").performClick(); settle(600)
         desc("Exporter en image").performClick(); settle(1000); shot("3e_exporter")
         close(); settle(800)
         // Thème choisi : chaque tirage aléatoire affiche ce thème (visible : le joueur l'a choisi).

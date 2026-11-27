@@ -7,6 +7,7 @@ import com.ivanherboch.chessduck.util.normalizeForSearch
 import com.ivanherboch.chessduck.ui.DuckTextField
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.border
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.heightIn
@@ -60,6 +61,27 @@ import com.ivanherboch.chessduck.ui.DuckChip
 import com.ivanherboch.chessduck.ui.LocalDuck
 import com.ivanherboch.chessduck.ui.SectionTitle
 
+/** Bilan tactique compact : ELO tactique, précision, série en cours et thèmes les plus manqués. */
+@Composable
+private fun TacticCard(st: TacticStats) {
+    val c = LocalDuck.current
+    Column(
+        Modifier.fillMaxWidth().padding(top = 10.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface).padding(12.dp)
+            .semantics(mergeDescendants = true) {},
+    ) {
+        Text("Bilan tactique", color = c.text, style = MaterialTheme.typography.titleSmall)
+        Text(
+            if (st.tried == 0) "ELO tactique ${st.elo}. Vos statistiques apparaîtront après vos premiers problèmes."
+            else "ELO tactique ${st.elo} · précision ${st.precision} % (${st.clean} sur ${st.tried} sans erreur) · série ${st.streak}",
+            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp),
+        )
+        if (st.missed.isNotEmpty()) Text(
+            "Plus manqués : " + st.missed.joinToString(", ") { (t, n) -> "${PuzzleThemes.byKey[t]?.name ?: t} ($n)" },
+            color = c.goldText, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp),
+        )
+    }
+}
+
 /** Surligne, sans tenir compte de la casse, la partie de [text] qui correspond à [query]. */
 private fun highlight(text: String, query: String, bg: Color, fg: Color): AnnotatedString = buildAnnotatedString {
     append(text)
@@ -72,10 +94,11 @@ private fun highlight(text: String, query: String, bg: Color, fg: Color): Annota
 internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> Unit) {
     val c = LocalDuck.current
     val counts by vm.counts.collectAsStateWithLifecycle()
-    LaunchedEffect(s.band) { vm.loadCounts(s.band) }
+    val stats by vm.stats.collectAsStateWithLifecycle()
+    LaunchedEffect(s.band, s.secondary, s.puzzleElo) { vm.loadCounts(s.band) }
     var query by remember { mutableStateOf("") }
-    // Difficulté à l'ouverture du catalogue : si seule elle change, « Tirer un problème » s'affiche.
-    val bandAtOpen = remember { s.band }
+    // Réglages à l'ouverture du catalogue : si seuls difficulté, longueur ou thèmes secondaires changent, « Tirer un problème » s'affiche.
+    val filtersAtOpen = remember { Triple(s.band, s.length, s.secondary) }
     var notFound by remember { mutableStateOf(false) }
     val sugg by vm.suggestions.collectAsStateWithLifecycle()
 
@@ -109,7 +132,8 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DuckTextField(
                 value = query, onValueChange = { query = it.take(24); notFound = false; vm.search(query) },
-                label = "Identifiant Lichess ou thème",
+                // Court : en grande police, une étiquette sur deux lignes chevaucherait le cadre du champ.
+                label = "Identifiant ou thème",
                 placeholder = "ex. 00sHx, fourchette…",
                 leadingIcon = Icons.Rounded.Search,
                 isError = notFound,
@@ -146,25 +170,35 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
             "Aucun problème « ${query.trim()} » parmi les ${fr(DuckDatabase.PUZZLE_COUNT)} embarqués. Vérifiez l'identifiant (5 lettres ou chiffres, ex. 00sHx) ou cherchez un thème par son nom.",
             color = c.redText, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp),
         )
+        TacticCard(stats)
         SectionTitle("1. Difficulté")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             PuzzleThemes.BANDS.forEachIndexed { i, label ->
                 // Écran « aucun problème » : changer de difficulté relance aussitôt le tirage.
                 DuckChip(label, s.band == i, { vm.setBand(i); if (s.empty) vm.random() })
             }
+            // « Mon niveau » : des problèmes autour de votre ELO tactique, qui suit vos résultats.
+            DuckChip(
+                "Mon niveau · ${s.puzzleElo}", s.band == PuzzleThemes.MY_LEVEL, { vm.setBand(PuzzleThemes.MY_LEVEL); if (s.empty) vm.random() },
+                Modifier.semantics { contentDescription = "Mon niveau : problèmes autour de votre ELO tactique, ${s.puzzleElo}" }, accent = c.green,
+            )
         }
-        // La difficulté seule ne tire pas de problème : un bouton le fait, sans repasser par un thème.
-        if (s.band != bandAtOpen && !s.empty) Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text("Longueur de la solution", color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            PuzzleThemes.LENGTHS.forEachIndexed { i, label -> DuckChip(label, s.length == i, { vm.setLength(i); if (s.empty) vm.random() }) }
+        }
+        // Les réglages seuls ne tirent pas de problème : un bouton le fait, sans repasser par un thème.
+        if (Triple(s.band, s.length, s.secondary) != filtersAtOpen && !s.empty) Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "Enregistrée : elle s'applique au prochain problème aléatoire.", color = c.muted, style = MaterialTheme.typography.bodySmall,
+                "Enregistré : s'applique au prochain problème aléatoire.", color = c.muted, style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.weight(1f).padding(end = 8.dp),
             )
             DuckButton(
                 "Tirer un problème", { vm.random(); onClose() }, accent = c.gold, filled = true, icon = Icons.Rounded.Shuffle,
-                contentDescription = "Tirer un problème de difficulté ${PuzzleThemes.BANDS[s.band]}",
+                contentDescription = "Tirer un problème : ${PuzzleThemes.bandLabel(s.band)}, longueur ${PuzzleThemes.LENGTHS[s.length].lowercase()}",
             )
         } else Text(
-            "Enregistrée immédiatement : elle s'applique au prochain problème aléatoire.",
+            "Enregistrés immédiatement : ils s'appliquent au prochain problème aléatoire.",
             color = c.muted, style = MaterialTheme.typography.bodySmall,
         )
         if (s.allSolvedInFilter) Text(
@@ -173,9 +207,24 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
         )
         SectionTitle("2. Thème — 50 thèmes officiels Lichess")
         Text(
-            "Chaque problème est rangé dans un seul thème : son idée la plus caractéristique. En mode libre, le thème reste masqué jusqu'à la résolution.",
-            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 6.dp),
+            if (s.secondary) "Thèmes secondaires inclus : un problème compte dans chacun de ses thèmes, et le choix d'un thème couvre bien plus de problèmes."
+            else "Chaque problème est rangé dans un seul thème : son idée la plus caractéristique. En mode libre, le thème reste masqué jusqu'à la résolution.",
+            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 4.dp),
         )
+        // Interrupteur : thème principal seulement (par défaut), ou tous les thèmes de chaque problème.
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(s.secondary, role = Role.Switch) { vm.setSecondary(it) }.padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Inclure les thèmes secondaires", color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+            androidx.compose.material3.Switch(
+                checked = s.secondary, onCheckedChange = null,
+                colors = androidx.compose.material3.SwitchDefaults.colors(
+                    checkedThumbColor = c.goldRole.onFill, checkedTrackColor = c.goldRole.fill,
+                    uncheckedThumbColor = c.outlineStrong, uncheckedTrackColor = c.surfaceHi, uncheckedBorderColor = c.outlineStrong,
+                ),
+            )
+        }
         ThemeRow("Tous les thèmes", "Un mélange de toutes les idées, sans indication à l'avance.", counts[""], s.theme.isEmpty(), Icons.Rounded.Shuffle) {
             vm.setFilter(s.band, ""); onClose()
         }

@@ -16,6 +16,8 @@ import com.ivanherboch.chessduck.chess.Move
 import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.content.PuzzleThemes
 import com.ivanherboch.chessduck.data.Puzzle
+import kotlin.math.roundToInt
+import com.ivanherboch.chessduck.data.PuzzleOutcome
 import com.ivanherboch.chessduck.ui.REFUTE_HOLD
 import com.ivanherboch.chessduck.ui.Refutation
 import com.ivanherboch.chessduck.ui.BoardAnim
@@ -70,7 +72,20 @@ data class PuzzleState(
     val revealed: Boolean = false,
     /** Tirage : tous les problèmes non résolus du filtre sont épuisés, un problème déjà résolu est reproposé. */
     val allSolvedInFilter: Boolean = false,
+    /** ELO tactique (« Mon niveau »), mis à jour après chaque problème. */
+    val puzzleElo: Int = 1200,
+    /** Filtre : thèmes secondaires inclus (le thème choisi peut ne pas être le thème principal du problème). */
+    val secondary: Boolean = false,
+    /** Filtre de longueur (PuzzleThemes.LENGTHS). */
+    val length: Int = 0,
 ) {
+    /** Tranche de classement du tirage : la difficulté choisie, ou ± 100 autour de l'ELO tactique (« Mon niveau »). */
+    val range: IntRange get() = if (band == PuzzleThemes.MY_LEVEL) PuzzleThemes.levelRange(puzzleElo) else PuzzleThemes.bandRange(band)
+
+    /** Le filtre de thème s'applique à ce problème (thème principal, ou secondaire si l'option est active). */
+    val filterMatches: Boolean get() = theme.isNotEmpty() && puzzle != null &&
+        (puzzle.primaryTheme == theme || (secondary && " $theme " in puzzle.themes))
+
     /** Problème fini : résolu, ou solution dévoilée (recommencer, problème suivant, passerelles). */
     val over: Boolean get() = solved || revealed
 
@@ -78,7 +93,7 @@ data class PuzzleState(
      * Le thème est visible si le problème est résolu (ou sa solution dévoilée), si le joueur l'a révélé, ou si le filtre choisi est précisément le
      * thème de ce problème (un problème ouvert depuis les récents ou la recherche garde son thème masqué).
      */
-    val themeVisible: Boolean get() = solved || revealed || themeRevealed || (theme.isNotEmpty() && puzzle?.primaryTheme == theme)
+    val themeVisible: Boolean get() = solved || revealed || themeRevealed || filterMatches
 
     val playerWhite: Boolean get() = line?.positions?.getOrNull(1)?.whiteToMove ?: true
 }
@@ -105,9 +120,10 @@ class PuzzlesViewModel(
     val state: StateFlow<PuzzleState> = _state.asStateFlow()
     /** Nombre de problèmes résolus, compté par la base (aucun identifiant chargé en mémoire). */
     val solvedCount = dao.solvedCount().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
-    /** Parmi les problèmes récents (au plus 6), ceux déjà résolus : coche et thème visible dans « Derniers problèmes ». */
+    /** Parmi les problèmes récents et favoris, ceux déjà résolus : coche et thème visible dans « Problèmes joués ». */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val recentSolved = prefs.settings.map { it.recentPuzzles }.distinctUntilChanged()
+    val recentSolved = kotlinx.coroutines.flow.combine(prefs.settings.map { it.recentPuzzles }, dao.bookmarks()) { r, b -> (r + b.map { it.id }).distinct() }
+        .distinctUntilChanged()
         .flatMapLatest { ids -> if (ids.isEmpty()) flowOf(emptyList()) else dao.solvedAmong(ids) }
         .map { it.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
@@ -115,12 +131,26 @@ class PuzzlesViewModel(
     val counts: StateFlow<Map<String, ThemeCount>> = _counts.asStateFlow()
     private val _suggestions = MutableStateFlow(Suggestions())
     val suggestions: StateFlow<Suggestions> = _suggestions.asStateFlow()
-    /** Les 5 derniers problèmes joués avant le problème courant (persistés via DataStore). */
+    /** Les derniers problèmes joués avant le problème courant (au plus [com.ivanherboch.chessduck.data.RECENT_PUZZLES], persistés via DataStore). */
     private val _recents = MutableStateFlow<List<Puzzle>>(emptyList())
     val recents: StateFlow<List<Puzzle>> = _recents.asStateFlow()
     /** Problèmes récents dont le thème était visible quand ils ont été joués : il reste affiché dans « Récents ». */
     val knownThemes: StateFlow<Set<String>> = prefs.settings.map { it.knownThemePuzzles }.distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+    /** Le problème affiché est-il en favori (signet) ? */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val bookmarked: StateFlow<Boolean> = state.map { it.puzzle?.id }.distinctUntilChanged()
+        .flatMapLatest { id -> if (id == null) flowOf(false) else dao.bookmarked(id) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    /** Favoris (onglet du tiroir « Problèmes joués »). */
+    val bookmarks: StateFlow<List<Puzzle>> = dao.bookmarks().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    /** « À refaire » : problèmes manqués ou résolus avec une erreur, avec leur date prévue. */
+    val toRedo: StateFlow<List<Pair<Puzzle, Long>>> = dao.toRedo().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    /** Bilan tactique du catalogue : ELO tactique, précision, série, thèmes les plus manqués. */
+    val stats: StateFlow<TacticStats> = kotlinx.coroutines.flow.combine(dao.attempts(), state.map { it.puzzleElo }.distinctUntilChanged()) { rows, elo ->
+        TacticStats.of(rows, elo)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TacticStats())
+
     private var job: Job? = null
     /** Chargement de problème en cours (tirage, ouverture par identifiant ou suggestion) : un seul à la fois. */
     private var loadJob: Job? = null
@@ -137,6 +167,9 @@ class PuzzlesViewModel(
         // entre-temps annule au lieu d'être écrasé par lui.
         loadJob = viewModelScope.launch {
             val st = prefs.settings.first()
+            // ELO tactique : à la première ouverture, il part de l'ELO du Jeu Libre (borné), puis évolue seul.
+            val elo = st.puzzleElo.takeIf { it > 0 } ?: st.elo.coerceIn(ELO_MIN, ELO_MAX).also { runCatchingSuspend { prefs.setPuzzleElo(it) } }
+            _state.update { it.copy(puzzleElo = elo, secondary = if (filterTouched) it.secondary else st.puzzleSecondary, length = if (filterTouched) it.length else st.puzzleLength) }
             if (!filterTouched) _state.update { it.copy(band = st.puzzleBand, theme = st.puzzleTheme) }
             val id = saved.get<String>(KEY_PUZZLE)?.takeIf { it.isNotEmpty() } ?: st.puzzleId
             val current = if (id.isNotEmpty()) runCatchingSuspend { dao.byId(id) }.getOrNull() else null
@@ -144,7 +177,7 @@ class PuzzlesViewModel(
         }
         viewModelScope.launch {
             prefs.settings.map { it.recentPuzzles }.distinctUntilChanged().collect { ids ->
-                val others = ids.drop(1).take(5)
+                val others = ids.drop(1).take(com.ivanherboch.chessduck.data.RECENT_PUZZLES)
                 val found = if (others.isEmpty()) emptyList() else runCatchingSuspend { dao.byIds(others) }.getOrDefault(emptyList())
                 _recents.value = others.mapNotNull { id -> found.firstOrNull { it.id == id } }
             }
@@ -241,7 +274,7 @@ class PuzzlesViewModel(
 
     private suspend fun drawRandom() {
         val s = state.value
-        val r = PuzzleThemes.bandRange(s.band)
+        val r = s.range
         val cur = s.puzzle?.id ?: ""
         // Tirage indexé en base : difficulté + thème principal du problème, non résolus d'abord.
         // Filtre : un thème précis, un groupe entier (tous les mats, toutes les finales…) ou tous les thèmes.
@@ -251,7 +284,7 @@ class PuzzlesViewModel(
             s.theme.isEmpty() -> null
             else -> listOf(s.theme)
         }
-        val id = runCatchingSuspend { dao.randomId(themes, r, cur, rnd) }.getOrNull()
+        val id = runCatchingSuspend { dao.randomId(themes, r, cur, rnd, s.secondary, s.length) }.getOrNull()
         val p = id?.let { runCatchingSuspend { dao.byId(it) }.getOrNull() }
         // Le tirage ne repropose un problème résolu que lorsqu'il n'en reste aucun autre dans le filtre.
         val allSolved = p != null && runCatchingSuspend { dao.solvedAmong(listOf(p.id)).first().isNotEmpty() }.getOrDefault(false)
@@ -294,11 +327,36 @@ class PuzzlesViewModel(
         random()
     }
 
-    /** Calcule, pour une difficulté, le nombre de problèmes (et de résolus) par thème. */
+    /** Thèmes secondaires inclus ou non (enregistré) : s'applique au prochain tirage et aux compteurs du catalogue. */
+    fun setSecondary(on: Boolean) {
+        filterTouched = true
+        _state.update { it.copy(secondary = on) }
+        viewModelScope.launch { prefs.setPuzzleSecondary(on) }
+    }
+
+    /** Longueur de la solution (enregistrée) : s'applique au prochain tirage. */
+    fun setLength(length: Int) {
+        filterTouched = true
+        _state.update { it.copy(length = length.coerceIn(0, PuzzleThemes.LENGTHS.size - 1)) }
+        viewModelScope.launch { prefs.setPuzzleLength(state.value.length) }
+    }
+
+    /** Favori (signet) du problème affiché : ajouté ou retiré. */
+    fun toggleBookmark() {
+        val id = state.value.puzzle?.id ?: return
+        val on = !bookmarked.value
+        viewModelScope.launch { withContext(NonCancellable) { runCatchingSuspend { dao.setBookmark(id, on) } } }
+    }
+
+    /**
+     * Calcule, pour une difficulté ([band] ; « Mon niveau » : autour de l'ELO tactique), le nombre de problèmes (et de
+     * résolus) par thème : thème principal, ou tous les thèmes si l'option « thèmes secondaires » est active.
+     */
     fun loadCounts(band: Int) {
         countsJob?.cancel()
         countsJob = viewModelScope.launch {
-            val rows = runCatchingSuspend { dao.themeCounts(PuzzleThemes.bandRange(band)) }.getOrDefault(emptyList())
+            val range = state.value.copy(band = band).range
+            val rows = runCatchingSuspend { dao.themeCounts(range, state.value.secondary) }.getOrDefault(emptyList())
             val byTheme = rows.associateBy { it.theme }
             val map = HashMap<String, ThemeCount>()
             for (t in PuzzleThemes.all) map[t.key] = byTheme[t.key]?.let { ThemeCount(it.total, it.solved) } ?: ThemeCount(0, 0)
@@ -329,6 +387,7 @@ class PuzzlesViewModel(
                 message = "Solution : ${full.sans.drop(from).joinToString(" ")}. Ce problème ne compte pas comme résolu : il reviendra plus tard.",
             )
         }
+        conclude(p, PuzzleOutcome.GAVE_UP)
         job = viewModelScope.launch {
             for (i in from until full.size) {
                 delay(700)
@@ -414,10 +473,9 @@ class PuzzlesViewModel(
             }
             if (finished) {
                 // Comme dans les séries de l'Académie : résolu après une erreur, il compte ; avec la flèche de l'indice, non.
-                if (state.value.arrowUsed) return 3
-                // Enregistrement à part : changer aussitôt de problème ou quitter l'écran ne le fait pas perdre.
-                viewModelScope.launch { withContext(NonCancellable) { runCatchingSuspend { dao.markSolved(p.id) } } }
-                return 2
+                val st = state.value
+                conclude(p, if (st.arrowUsed) PuzzleOutcome.GAVE_UP else if (st.hadError) PuzzleOutcome.WITH_ERROR else PuzzleOutcome.CLEAN)
+                return if (st.arrowUsed) 3 else 2
             }
             job = viewModelScope.launch {
                 delay(600)
@@ -455,6 +513,8 @@ class PuzzlesViewModel(
      * « Réessayer » annule immédiatement.
      */
     private fun refute(pos: Position, m: Move, after: Position, cur: Int) {
+        // Première erreur sur ce problème : l'ELO tactique compte un échec (une seule fois par problème).
+        state.value.puzzle?.let { rate(it, 0.0) }
         _state.update {
             it.copy(
                 cursor = cur, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m), hadError = true,
@@ -469,6 +529,27 @@ class PuzzlesViewModel(
             }
             retry()
         }
+    }
+
+    /** Problèmes déjà comptés dans l'ELO tactique pendant cette session (recommencer ne rapporte pas de points). */
+    private val rated = HashSet<String>()
+
+    /** Met à jour l'ELO tactique après le premier résultat d'un problème ([score] 1 : résolu net, 0 : erreur ou abandon). */
+    private fun rate(p: Puzzle, score: Double) {
+        if (!rated.add(p.id)) return
+        val elo = state.value.puzzleElo
+        val next = tacticElo(elo, p.rating, score)
+        _state.update { it.copy(puzzleElo = next) }
+        viewModelScope.launch { withContext(NonCancellable) { runCatchingSuspend { prefs.setPuzzleElo(next) } } }
+    }
+
+    /**
+     * Fin d'un problème : l'essai est enregistré (résolu, à refaire…) à part du travail annulable, pour que passer
+     * aussitôt au suivant ne le perde pas ; l'ELO tactique compte le résultat s'il ne l'a pas déjà fait.
+     */
+    private fun conclude(p: Puzzle, outcome: Int) {
+        rate(p, if (outcome == PuzzleOutcome.CLEAN) 1.0 else 0.0)
+        viewModelScope.launch { withContext(NonCancellable) { runCatchingSuspend { dao.recordAttempt(p.id, outcome) } } }
     }
 
     /** Mauvais coup réfuté (position d'avant, coup) : il glisse en arrière quand la position revient. */
@@ -496,6 +577,16 @@ class PuzzlesViewModel(
     companion object {
         private const val KEY_PUZZLE = "puzzles_current"
         internal const val SEARCH_DEBOUNCE_MS = 150L
+        /** Bornes et coefficient de l'ELO tactique. */
+        const val ELO_MIN = 400
+        const val ELO_MAX = 3000
+        private const val ELO_K = 32.0
+
+        /** ELO tactique après un problème de classement [rating] : formule Elo (K = 32), [score] 1 (réussi) ou 0. */
+        fun tacticElo(elo: Int, rating: Int, score: Double): Int {
+            val expected = 1.0 / (1.0 + Math.pow(10.0, (rating - elo) / 400.0))
+            return (elo + ELO_K * (score - expected)).roundToInt().coerceIn(ELO_MIN, ELO_MAX)
+        }
         private val ID_LIKE = Regex("[A-Za-z0-9]{2,5}")
 
         /** La saisie peut être (le début d') un identifiant Lichess : 2 à 5 lettres ou chiffres. */
@@ -508,5 +599,26 @@ class PuzzlesViewModel(
     /** Enregistre le style choisi ; l'écriture va à son terme même si l'écran se ferme entre-temps. */
     fun saveShareStyle(v: ShareStyle) {
         viewModelScope.launch { withContext(NonCancellable) { prefs.setShareStyle(v.format.name, v.light) } }
+    }
+}
+
+/**
+ * Bilan tactique (catalogue) : ELO tactique, problèmes tentés, résolus nets, précision (en %), série de résolutions
+ * nettes en cours et thèmes les plus manqués (erreur ou abandon), du plus fréquent au moins fréquent.
+ */
+@Immutable
+data class TacticStats(
+    val elo: Int = 1200, val tried: Int = 0, val clean: Int = 0, val streak: Int = 0, val missed: List<Pair<String, Int>> = emptyList(),
+) {
+    val precision: Int get() = if (tried == 0) 0 else clean * 100 / tried
+
+    companion object {
+        fun of(rows: List<com.ivanherboch.chessduck.data.AttemptRow>, elo: Int): TacticStats {
+            val tried = rows.filter { it.status > 0 }
+            val streak = tried.sortedByDescending { it.lastTriedAt }.takeWhile { it.status == PuzzleOutcome.CLEAN }.size
+            val missed = tried.filter { it.status != PuzzleOutcome.CLEAN }.groupingBy { it.theme }.eachCount()
+                .entries.sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key }).take(3).map { it.key to it.value }
+            return TacticStats(elo, tried.size, tried.count { it.status == PuzzleOutcome.CLEAN }, streak, missed)
+        }
     }
 }

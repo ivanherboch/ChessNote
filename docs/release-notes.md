@@ -1,3 +1,18 @@
+## ChessDuck 4.4.0 — Problèmes : « Mon niveau », À refaire, Favoris et thèmes secondaires
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- « Mon niveau » : un ELO tactique propre aux Problèmes. Il part de votre ELO du Jeu Libre et évolue après chaque problème (résolu net, erreur, abandon), une seule fois par problème. La nouvelle puce « Mon niveau · 1250 » de la difficulté tire des problèmes autour de cet ELO. « Tous » et les 4 difficultés restent inchangés.
+- Problèmes joués, en trois onglets :
+  - Récents : les 50 derniers ;
+  - À refaire : un problème manqué (solution vue, flèche de l'indice) ou résolu après une erreur revient ici le lendemain ; le résoudre sans erreur l'en retire ;
+  - Favoris : un signet, à côté du numéro du problème, l'y ajoute.
+- Catalogue :
+  - bilan tactique (ELO tactique, précision, série de résolutions nettes en cours, thèmes les plus manqués) ;
+  - filtre de longueur de la solution (1 coup, court, long) ;
+  - nouvel interrupteur « Inclure les thèmes secondaires » : un thème choisi couvre alors aussi les problèmes où il n'est pas l'idée principale (par exemple 25 666 sacrifices au lieu de quelques centaines). Par défaut, chaque problème reste rangé dans son seul thème principal.
+- Base de données v5 : les 150 000 problèmes et toute votre progression sont conservés à la mise à jour. Les problèmes déjà résolus restent résolus.
+
 ## ChessDuck 4.3.0 — Problèmes : Solution, bandeau des coups et passerelles
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

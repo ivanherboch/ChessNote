@@ -6,6 +6,7 @@ import com.ivanherboch.chessduck.feature.PuzzlesViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -275,6 +276,109 @@ class PuzzlesFuzzTest {
         repo.markSolved(PUZZLE_0000D.id); repo.markSolved(other.id)
         vm.random(); advanceUntilIdle()
         assertTrue(vm.state.value.allSolvedInFilter && vm.state.value.message.contains("résolu tous"))
+    }
+
+    // ---------------------------------------------------------------- Étape 3 : progression adaptative
+
+    /** ELO tactique : formule Elo (K = 32), bornée. */
+    @Test
+    fun tacticEloFollowsTheEloFormula() {
+        assertTrue(PuzzlesViewModel.tacticElo(1200, 1200, 1.0) == 1216)
+        assertTrue(PuzzlesViewModel.tacticElo(1200, 1200, 0.0) == 1184)
+        assertTrue(PuzzlesViewModel.tacticElo(1200, 1600, 1.0) > 1225) // problème difficile réussi : gros gain
+        assertTrue(PuzzlesViewModel.tacticElo(PuzzlesViewModel.ELO_MIN, 3000, 0.0) == PuzzlesViewModel.ELO_MIN)
+    }
+
+    /** Suivi : résolu net (compté, rien à refaire), après une erreur (compté, à refaire demain), abandon (non compté, à refaire). */
+    @Test
+    fun attemptsArePlannedForRedo() {
+        val at = 1_000_000L
+        val d = com.ivanherboch.chessduck.data.PuzzleProgress.REDO_DELAY
+        val o = com.ivanherboch.chessduck.data.PuzzleOutcome
+        val empty = com.ivanherboch.chessduck.data.PuzzleProgress("X", 0, bookmarked = true)
+        val gaveUp = com.ivanherboch.chessduck.data.PuzzleProgress.after(empty, o.GAVE_UP, at)
+        assertTrue(gaveUp.solvedAt == 0L && gaveUp.nextReviewAt == at + d && gaveUp.attempts == 1 && gaveUp.bookmarked)
+        val err = com.ivanherboch.chessduck.data.PuzzleProgress.after(gaveUp, o.WITH_ERROR, at + 5)
+        assertTrue(err.solvedAt == at + 5 && err.nextReviewAt == at + 5 + d && err.attempts == 2)
+        val clean = com.ivanherboch.chessduck.data.PuzzleProgress.after(err, o.CLEAN, at + 9)
+        assertTrue(clean.solvedAt == at + 5 && clean.nextReviewAt == 0L && clean.status == o.CLEAN && clean.bookmarked)
+    }
+
+    /** Problèmes : ELO tactique compté une fois, erreurs et abandons à refaire, résolution nette qui les retire, favoris. */
+    @Test
+    fun outcomesUpdateEloRedoAndBookmarks() = runTest(main) {
+        val repo = FakePuzzles(listOf(PUZZLE_0000D))
+        val prefs = FakeSettings(com.ivanherboch.chessduck.data.Settings(elo = 1300))
+        val vm = PuzzlesViewModel(prefs, repo, FakeEngine())
+        advanceUntilIdle()
+        assertTrue(vm.state.value.puzzleElo == 1300 && prefs.flow.value.puzzleElo == 1300) // parti de l'ELO du Jeu Libre
+        val l = vm.state.value.line!!
+        val wrong = l.positions[1].legalMoves.first { it != l.moves[1] && !l.positions[1].play(it).isCheckmate }
+        vm.onMove(wrong); vm.retry(); advanceUntilIdle()
+        val afterError = vm.state.value.puzzleElo
+        assertTrue(afterError < 1300 && prefs.flow.value.puzzleElo == afterError)
+        vm.onMove(l.moves[1]); advanceUntilIdle(); vm.onMove(l.moves[3]); advanceUntilIdle()
+        assertTrue(vm.state.value.puzzleElo == afterError) // déjà compté : pas de second calcul
+        val p1 = repo.progress.value[PUZZLE_0000D.id]!!
+        assertTrue(p1.status == com.ivanherboch.chessduck.data.PuzzleOutcome.WITH_ERROR && p1.solvedAt > 0 && p1.nextReviewAt > 0)
+        assertTrue(repo.toRedo().first().single().first.id == PUZZLE_0000D.id)
+        // Recommencer et résoudre net : retiré de « À refaire », sans nouveau calcul d'ELO.
+        vm.restart(); advanceUntilIdle()
+        vm.onMove(l.moves[1]); advanceUntilIdle(); vm.onMove(l.moves[3]); advanceUntilIdle()
+        assertTrue(repo.progress.value[PUZZLE_0000D.id]!!.nextReviewAt == 0L && vm.state.value.puzzleElo == afterError)
+        // Favori.
+        val bm = backgroundScope.launch { vm.bookmarked.collect {} }
+        vm.toggleBookmark(); advanceUntilIdle()
+        assertTrue(vm.bookmarked.value && repo.progress.value[PUZZLE_0000D.id]!!.bookmarked)
+        vm.toggleBookmark(); advanceUntilIdle()
+        assertTrue(!vm.bookmarked.value)
+        bm.cancel()
+    }
+
+    /** Partition stricte par défaut ; « thèmes secondaires » : le thème choisi peut être secondaire (tirage, compteurs, affichage). */
+    @Test
+    fun secondaryThemesWidenTheFilter() = runTest(main) {
+        val secondaryFork = PUZZLE_0000D.copy(id = "SF", themes = " crushing fork middlegame pin short ", primaryTheme = "pin")
+        val repo = FakePuzzles(listOf(secondaryFork))
+        val vm = PuzzlesViewModel(FakeSettings(), repo, FakeEngine())
+        advanceUntilIdle()
+        vm.setFilter(0, "fork"); advanceUntilIdle()
+        assertTrue(vm.state.value.empty) // thème principal seulement : aucun problème « fourchette »
+        vm.setSecondary(true); vm.random(); advanceUntilIdle()
+        val s = vm.state.value
+        assertTrue(s.puzzle?.id == "SF" && s.filterMatches && s.themeVisible)
+        assertTrue(repo.themeCounts(0..4000, secondary = true).any { it.theme == "fork" && it.total == 1 })
+        assertTrue(repo.themeCounts(0..4000, secondary = false).none { it.theme == "fork" })
+    }
+
+    /** Longueur : un coup, court, long ; « Mon niveau » : autour de l'ELO tactique. */
+    @Test
+    fun lengthAndMyLevelFilters() = runTest(main) {
+        val one = PUZZLE_0000D.copy(id = "ONE", themes = " mateIn1 oneMove ", primaryTheme = "mateIn1", rating = 900)
+        val short = PUZZLE_0000D.copy(id = "SHO", themes = " fork short ", primaryTheme = "fork", rating = 1500)
+        val long = PUZZLE_0000D.copy(id = "LON", themes = " pin veryLong ", primaryTheme = "pin", rating = 2100)
+        val vm = PuzzlesViewModel(FakeSettings(com.ivanherboch.chessduck.data.Settings(elo = 1520)), FakePuzzles(listOf(one, short, long)), FakeEngine())
+        advanceUntilIdle()
+        for ((len, id) in listOf(1 to "ONE", 2 to "SHO", 3 to "LON")) {
+            vm.setLength(len); vm.random(); advanceUntilIdle()
+            assertTrue("longueur $len", vm.state.value.puzzle?.id == id)
+        }
+        vm.setLength(0); vm.setBand(com.ivanherboch.chessduck.content.PuzzleThemes.MY_LEVEL)
+        repeat(5) { vm.random(); advanceUntilIdle(); assertTrue(vm.state.value.puzzle?.id == "SHO") } // 1520 ± 100
+    }
+
+    /** Bilan tactique : précision, série en cours, thèmes les plus manqués. */
+    @Test
+    fun tacticStatsSummarizeAttempts() {
+        val o = com.ivanherboch.chessduck.data.PuzzleOutcome
+        val rows = listOf(
+            com.ivanherboch.chessduck.data.AttemptRow(o.CLEAN, 1, 50, "fork"), com.ivanherboch.chessduck.data.AttemptRow(o.CLEAN, 1, 40, "pin"),
+            com.ivanherboch.chessduck.data.AttemptRow(o.GAVE_UP, 2, 30, "fork"), com.ivanherboch.chessduck.data.AttemptRow(o.WITH_ERROR, 1, 20, "fork"),
+            com.ivanherboch.chessduck.data.AttemptRow(o.WITH_ERROR, 1, 10, "skewer"),
+        )
+        val st = com.ivanherboch.chessduck.feature.TacticStats.of(rows, 1400)
+        assertTrue(st.tried == 5 && st.clean == 2 && st.precision == 40 && st.streak == 2 && st.elo == 1400)
+        assertTrue(st.missed.first() == ("fork" to 2))
     }
 
     private fun com.ivanherboch.chessduck.feature.PuzzleState.position() = line?.positions?.getOrNull(cursor)

@@ -9,6 +9,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import com.ivanherboch.chessduck.ui.icons.Undo
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.ivanherboch.chessduck.ui.DuckSegmentedRow
+import com.ivanherboch.chessduck.ui.icons.BookmarkBorder
+import com.ivanherboch.chessduck.ui.icons.Bookmark
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.ui.MoveStrip
@@ -112,7 +117,11 @@ fun PuzzlesScreen(
         if (catalog) PuzzleCatalog(vm, s, onClose = { catalog = false; vm.clearSearch() })
         return
     }
-    val type = themeOf(p)
+    // Thèmes secondaires : un problème tiré pour le thème choisi s'affiche sous ce thème (sinon son thème principal).
+    val type = if (s.secondary && s.filterMatches) PuzzleThemes.byKey[s.theme] ?: themeOf(p) else themeOf(p)
+    val bookmarked by vm.bookmarked.collectAsStateWithLifecycle()
+    val bookmarks by vm.bookmarks.collectAsStateWithLifecycle()
+    val toRedo by vm.toRedo.collectAsStateWithLifecycle()
     val visible = s.themeVisible
 
     // Explication brève quand on touche une pièce qui ne peut pas bouger ; effacée au coup suivant.
@@ -132,7 +141,7 @@ fun PuzzlesScreen(
                 )
                 // Une fois le problème fini, l'action principale « Problème suivant » est en bas : ce dé reste discret.
                 DuckIconButton(Icons.Rounded.Casino, "Problème aléatoire", vm::random, accent = c.gold)
-                DuckIconButton(Icons.Rounded.History, "Problèmes récents", { recentSheet = true }, enabled = recents.isNotEmpty())
+                DuckIconButton(Icons.Rounded.History, "Problèmes joués : récents, à refaire, favoris", { recentSheet = true }, enabled = recents.isNotEmpty() || toRedo.isNotEmpty() || bookmarks.isNotEmpty())
                 DuckIconButton(Icons.Rounded.IosShare, "Exporter en image", { shareChoice = true })
             }
             // Ligne d'information toujours lisible en entier : elle passe à la ligne au lieu de se couper.
@@ -148,6 +157,11 @@ fun PuzzlesScreen(
                     (if (visible) type.name else "Thème masqué") + " · ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} ${p.rating} · #${p.id}",
                     color = c.muted, style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(start = 10.dp).weight(1f),
+                )
+                // Favori : le problème se retrouve dans l'onglet « Favoris » des problèmes joués.
+                DuckIconButton(
+                    if (bookmarked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
+                    if (bookmarked) "Retirer des favoris" else "Ajouter aux favoris", vm::toggleBookmark, accent = c.gold, selected = bookmarked,
                 )
             }
         },
@@ -241,23 +255,24 @@ fun PuzzlesScreen(
 
     if (catalog) PuzzleCatalog(vm, s, onClose = { catalog = false; vm.clearSearch() })
     if (recentSheet) {
-        DuckSheet("Derniers problèmes joués", { recentSheet = false }) {
-            for (r in recents) {
-                val done = r.id in solved
-                // Thème visible si le problème est résolu, ou s'il était déjà affiché quand il a été joué.
-                val themeShown = done || r.id in knownThemes
-                Row(
-                    Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
-                        .clickable(role = Role.Button) { recentSheet = false; vm.openPuzzle(r) }.padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        // Le thème d'un problème non résolu et jamais révélé reste masqué (anti-spoiler).
-                        Text("#${r.id} · ${if (themeShown) themeOf(r).name else "thème masqué"}", color = c.text, style = MaterialTheme.typography.titleSmall)
-                        Text("${PuzzleThemes.BANDS[PuzzleThemes.bandOf(r.rating)]} · ${r.rating}", color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    }
-                    if (done) Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = c.greenText, modifier = Modifier.padding(end = 4.dp).size(18.dp))
-                    Text(if (done) "Résolu" else "À résoudre", color = if (done) c.greenText else c.goldText, style = MaterialTheme.typography.labelLarge)
+        DuckSheet("Problèmes joués", { recentSheet = false }) {
+            // Trois listes : les 50 derniers, ceux à refaire (manqués ou résolus avec une erreur), les favoris.
+            var tab by rememberSaveable { mutableIntStateOf(0) }
+            DuckSegmentedRow(listOf("Récents", "À refaire", "Favoris"), tab, { tab = it }, Modifier.fillMaxWidth().padding(bottom = 6.dp))
+            val now = System.currentTimeMillis()
+            when (tab) {
+                0 -> if (recents.isEmpty()) EmptyListText("Les problèmes que vous jouez s'afficheront ici (les 50 derniers).") else for (r in recents) {
+                    val done = r.id in solved
+                    // Thème visible si le problème est résolu, ou s'il était déjà affiché quand il a été joué.
+                    PlayedRow(r, done || r.id in knownThemes, if (done) "Résolu" else "À résoudre", done) { recentSheet = false; vm.openPuzzle(r) }
+                }
+                1 -> if (toRedo.isEmpty()) EmptyListText("Rien à refaire : un problème manqué, ou résolu après une erreur, revient ici le lendemain.") else for ((r, at) in toRedo) {
+                    val days = ((at - now + 86_399_999L) / 86_400_000L).toInt()
+                    PlayedRow(r, true, if (days <= 0) "À refaire" else "Dans $days j", false) { recentSheet = false; vm.openPuzzle(r) }
+                }
+                else -> if (bookmarks.isEmpty()) EmptyListText("Touchez le signet à côté du numéro d'un problème pour le garder ici.") else for (r in bookmarks) {
+                    val done = r.id in solved
+                    PlayedRow(r, done || r.id in knownThemes, if (done) "Résolu" else "À résoudre", done) { recentSheet = false; vm.openPuzzle(r) }
                 }
             }
         }
@@ -315,5 +330,28 @@ private fun themeOf(p: Puzzle) = PuzzleThemes.byKey[p.primaryTheme] ?: PuzzleThe
 private fun filterLabel(band: Int, theme: String, solved: Int): String {
     val name = PuzzleThemes.byKey[theme]?.name ?: PuzzleThemes.groupOf(theme)
     return if (name == null && band == 0) "Libre · ${fr(solved)} résolu${if (solved > 1) "s" else ""}"
-    else listOfNotNull(PuzzleThemes.BANDS[band].takeIf { band > 0 }, name ?: "Tous les thèmes").joinToString(" · ")
+    else listOfNotNull(PuzzleThemes.bandLabel(band).takeIf { band > 0 }, name ?: "Tous les thèmes").joinToString(" · ")
 }
+
+/** Une ligne des problèmes joués : identifiant, thème (masqué tant qu'il n'est pas connu), difficulté et état. */
+@Composable
+private fun PlayedRow(r: Puzzle, themeShown: Boolean, status: String, done: Boolean, onOpen: () -> Unit) {
+    val c = LocalDuck.current
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 3.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface)
+            .clickable(role = Role.Button, onClick = onOpen).padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            // Le thème d'un problème non résolu et jamais révélé reste masqué (anti-spoiler).
+            Text("#${r.id} · ${if (themeShown) themeOf(r).name else "thème masqué"}", color = c.text, style = MaterialTheme.typography.titleSmall)
+            Text("${PuzzleThemes.BANDS[PuzzleThemes.bandOf(r.rating)]} · ${r.rating}", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        }
+        if (done) Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = c.greenText, modifier = Modifier.padding(end = 4.dp).size(18.dp))
+        Text(status, color = if (done) c.greenText else c.goldText, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+private fun EmptyListText(text: String) =
+    Text(text, color = LocalDuck.current.muted, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 12.dp))

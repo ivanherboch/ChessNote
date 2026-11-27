@@ -150,6 +150,29 @@ object PuzzleThemes {
     val groups = listOf(G_MATE, G_TACTIC, G_SPECIAL, G_ATTACK, G_ENDGAME, G_PHASE)
 
     val BANDS = listOf("Tous", "Débutant", "Intermédiaire", "Avancé", "Expert")
+    /** Filtre de longueur du catalogue : toutes, un seul coup, courte (2 coups), longue (3 coups ou plus). */
+    val LENGTHS = listOf("Toutes", "1 coup", "Court", "Long")
+
+    /**
+     * Motifs LIKE de la colonne `themes` pour la longueur [length] (étiquettes Lichess oneMove, short, long, veryLong) :
+     * deux motifs (le second vide si inutile) ; ("", "") : toutes les longueurs.
+     */
+    fun lengthPatterns(length: Int): Pair<String, String> = when (length) {
+        1 -> "% oneMove %" to ""
+        2 -> "% short %" to ""
+        3 -> "% long %" to "% veryLong %"
+        else -> "" to ""
+    }
+
+    /** La puce « Mon niveau » du catalogue : tirage autour de l'ELO tactique du joueur. */
+    const val MY_LEVEL = 5
+
+    /** Libellé d'une difficulté du filtre (« Mon niveau » compris). */
+    fun bandLabel(band: Int): String = if (band == MY_LEVEL) "Mon niveau" else BANDS[band.coerceIn(0, BANDS.size - 1)]
+
+    /** Tranche de « Mon niveau » : ± 100 points autour de l'ELO tactique [elo]. */
+    fun levelRange(elo: Int): IntRange = (elo - 100).coerceAtLeast(0)..(elo + 100)
+
     fun bandRange(band: Int): IntRange = when (band) {
         1 -> 0..1199
         2 -> 1200..1599
