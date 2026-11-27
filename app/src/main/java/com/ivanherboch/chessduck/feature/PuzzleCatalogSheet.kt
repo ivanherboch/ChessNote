@@ -74,6 +74,8 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
     val counts by vm.counts.collectAsStateWithLifecycle()
     LaunchedEffect(s.band) { vm.loadCounts(s.band) }
     var query by remember { mutableStateOf("") }
+    // Difficulté à l'ouverture du catalogue : si seule elle change, « Tirer un problème » s'affiche.
+    val bandAtOpen = remember { s.band }
     var notFound by remember { mutableStateOf(false) }
     val sugg by vm.suggestions.collectAsStateWithLifecycle()
 
@@ -146,11 +148,28 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
         )
         SectionTitle("1. Difficulté")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            PuzzleThemes.BANDS.forEachIndexed { i, label -> DuckChip(label, s.band == i, { vm.setBand(i) }) }
+            PuzzleThemes.BANDS.forEachIndexed { i, label ->
+                // Écran « aucun problème » : changer de difficulté relance aussitôt le tirage.
+                DuckChip(label, s.band == i, { vm.setBand(i); if (s.empty) vm.random() })
+            }
         }
-        Text(
+        // La difficulté seule ne tire pas de problème : un bouton le fait, sans repasser par un thème.
+        if (s.band != bandAtOpen && !s.empty) Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Enregistrée : elle s'applique au prochain problème aléatoire.", color = c.muted, style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
+            )
+            DuckButton(
+                "Tirer un problème", { vm.random(); onClose() }, accent = c.gold, filled = true, icon = Icons.Rounded.Shuffle,
+                contentDescription = "Tirer un problème de difficulté ${PuzzleThemes.BANDS[s.band]}",
+            )
+        } else Text(
             "Enregistrée immédiatement : elle s'applique au prochain problème aléatoire.",
             color = c.muted, style = MaterialTheme.typography.bodySmall,
+        )
+        if (s.allSolvedInFilter) Text(
+            "Tous les problèmes non résolus de cette sélection sont épuisés : le tirage repropose des problèmes déjà résolus. Changez de difficulté ou de thème pour en découvrir d'autres.",
+            color = c.goldText, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp),
         )
         SectionTitle("2. Thème — 50 thèmes officiels Lichess")
         Text(

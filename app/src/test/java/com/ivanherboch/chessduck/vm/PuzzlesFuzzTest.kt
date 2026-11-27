@@ -62,6 +62,9 @@ class PuzzlesFuzzTest {
                     a < 88 -> { vm.holdRefutation(); "garder" }
                     a < 93 -> { vm.random(); "aléatoire" }
                     a < 95 -> { vm.revealTheme(); "thème" }
+                    a < 97 -> { vm.solution(); "solution" }
+                    a < 98 -> { vm.restart(); "recommencer" }
+                    a < 99 -> { vm.goTo(r.nextInt(0, (s.progress + 1).coerceAtLeast(1))); "bandeau" }
                     else -> { vm.setFilter(r.nextInt(5), listOf("", "mateIn1", "hangingPiece").random(r)); "filtre" }
                 }
                 if (r.nextInt(3) == 0) { advanceTimeBy(r.nextLong(0, 700)); runCurrent() } else advanceUntilIdle()
@@ -69,13 +72,16 @@ class PuzzlesFuzzTest {
                 val l = t.line ?: return@repeat
                 if (t.cursor > t.progress) problems += "seed $seed pas $step : curseur après la progression (${log.takeLast(4)})"
                 if (t.progress > l.size) problems += "seed $seed pas $step : progression hors ligne (${log.takeLast(4)})"
-                if (t.progress == l.size && !t.solved && t.refute == null) problems += "seed $seed pas $step : ligne finie mais pas résolu (${log.takeLast(4)})"
-                if (t.solved && t.progress != l.size) problems += "seed $seed pas $step : résolu avant la fin de la ligne (${log.takeLast(4)})"
+                if (t.progress == l.size && !t.solved && !t.revealed && t.refute == null) problems += "seed $seed pas $step : ligne finie mais pas résolu (${log.takeLast(4)})"
+                if (t.revealed && t.solved) problems += "seed $seed pas $step : solution dévoilée comptée comme résolue (${log.takeLast(4)})"
+                if (t.revealed && vm.canPlay(t)) problems += "seed $seed pas $step : jouable après la solution (${log.takeLast(4)})"
+                                if (t.solved && t.progress != l.size) problems += "seed $seed pas $step : résolu avant la fin de la ligne (${log.takeLast(4)})"
                 if (t.cursor < t.progress && vm.canPlay(t)) problems += "seed $seed pas $step : jouable depuis un coup précédent (${log.takeLast(4)})"
             }
             advanceUntilIdle()
             // Quel que soit l'état laissé, le problème affiché se termine en jouant la solution.
             vm.retry(); advanceUntilIdle()
+            if (vm.state.value.revealed) { vm.restart(); advanceUntilIdle() }
             while (vm.state.value.cursor < vm.state.value.progress) { vm.forward() }
             var guard = 0
             while (!vm.state.value.solved && guard++ < 20) {
@@ -229,6 +235,46 @@ class PuzzlesFuzzTest {
         engine.scripted[key(a2)] = com.ivanherboch.chessduck.engine.SearchResult(k, listOf(com.ivanherboch.chessduck.engine.PvLine(k, -(com.ivanherboch.chessduck.engine.MATE - 5))))
         val r2 = com.ivanherboch.chessduck.feature.RefutationLogic.reply(engine, pos, slow, minShow = 0)
         assertTrue(r2.text, r2.text.contains("mate aussi"))
+    }
+
+    /** « Solution » après une erreur : toute la ligne se déroule, navigable, sans compter le problème ; « Recommencer » remet tout à zéro. */
+    @Test
+    fun solutionRevealsTheLineWithoutCountingAndRestartResets() = runTest(main) {
+        val repo = FakePuzzles(listOf(PUZZLE_0000D))
+        val vm = PuzzlesViewModel(FakeSettings(), repo, FakeEngine())
+        advanceUntilIdle()
+        val l = vm.state.value.line!!
+        vm.solution() // pas encore d'erreur : sans effet
+        assertTrue(!vm.state.value.revealed)
+        val wrong = l.positions[1].legalMoves.first { it != l.moves[1] && !l.positions[1].play(it).isCheckmate }
+        vm.onMove(wrong); vm.retry(); advanceUntilIdle()
+        assertTrue(vm.state.value.hadError)
+        vm.hint(); vm.hint()
+        vm.solution(); advanceUntilIdle()
+        val s = vm.state.value
+        assertTrue(s.revealed && !s.solved && s.progress == l.size && s.cursor == l.size && s.themeVisible)
+        assertTrue(s.message, s.message.contains("ne compte pas"))
+        assertTrue(repo.solvedIds().first().isEmpty() && !vm.canPlay(s))
+        vm.goTo(1); assertTrue(vm.state.value.cursor == 1)
+        vm.forward(); vm.forward(); assertTrue(vm.state.value.cursor == 3)
+        vm.restart(); advanceUntilIdle()
+        val r = vm.state.value
+        assertTrue(!r.revealed && !r.hadError && !r.arrowUsed && r.hintStage == 0 && r.progress == 1)
+        vm.onMove(l.moves[1]); advanceUntilIdle(); vm.onMove(l.moves[3]); advanceUntilIdle()
+        assertTrue(vm.state.value.solved && repo.solvedIds().first() == listOf(PUZZLE_0000D.id))
+    }
+
+    /** Tous les problèmes du filtre déjà résolus : le tirage en repropose un, et le dit. */
+    @Test
+    fun drawingWhenEverythingIsSolvedSaysSo() = runTest(main) {
+        val other = PUZZLE_0000D.copy(id = "0000E")
+        val repo = FakePuzzles(listOf(PUZZLE_0000D, other))
+        val vm = PuzzlesViewModel(FakeSettings(), repo, FakeEngine())
+        advanceUntilIdle()
+        assertTrue(!vm.state.value.allSolvedInFilter)
+        repo.markSolved(PUZZLE_0000D.id); repo.markSolved(other.id)
+        vm.random(); advanceUntilIdle()
+        assertTrue(vm.state.value.allSolvedInFilter && vm.state.value.message.contains("résolu tous"))
     }
 
     private fun com.ivanherboch.chessduck.feature.PuzzleState.position() = line?.positions?.getOrNull(cursor)

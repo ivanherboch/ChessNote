@@ -425,10 +425,16 @@ fun InfoPill(text: String, modifier: Modifier = Modifier, icon: ImageVector? = n
 /** Libellé du bouton Indice selon le nombre d'indices déjà révélés (0, 1 ou 2). */
 fun hintLabel(stage: Int) = if (stage >= 2) "Indice utilisé" else "Indice ${stage + 1}/2"
 
-/** Bouton Indice commun à l'Académie, aux Problèmes et au Jeu Libre : désactivé une fois les deux indices révélés. */
+/**
+ * Bouton Indice commun à l'Académie, aux Problèmes et au Jeu Libre : désactivé une fois les deux indices révélés.
+ * [nextLabel] : libellé à la place de « Indice 2/2 » quand le second indice a un coût à annoncer.
+ */
 @Composable
-fun HintButton(stage: Int, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) =
-    DuckButton(hintLabel(stage), onClick, modifier, enabled = enabled && stage < 2, accent = LocalDuck.current.green, icon = Icons.Rounded.Lightbulb)
+fun HintButton(stage: Int, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, nextLabel: String? = null) =
+    DuckButton(
+        if (stage == 1 && nextLabel != null) nextLabel else hintLabel(stage), onClick, modifier, enabled = enabled && stage < 2,
+        accent = LocalDuck.current.green, icon = Icons.Rounded.Lightbulb,
+    )
 
 /** Variante compacte du bouton Indice (icône et pastille « 1/2 ») pour une barre d'outils. */
 @Composable

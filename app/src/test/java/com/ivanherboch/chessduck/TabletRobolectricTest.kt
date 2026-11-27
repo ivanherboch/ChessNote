@@ -89,6 +89,16 @@ class TabletRobolectricTest {
     }
 
     /** Téléphone en paysage : l'orientation n'est plus imposée, l'échiquier passe à gauche avec le rail de navigation. */
+    /** Problème [id] affiché et son coup d'introduction joué (la base est lue sur un autre fil, en temps réel). */
+    private fun puzzleReady(pvm: com.ivanherboch.chessduck.feature.PuzzlesViewModel, id: String) {
+        repeat(100) {
+            val st = pvm.state.value
+            if (st.puzzle?.id == id && st.progress >= 1 && st.cursor == st.progress) return
+            settle(200); Thread.sleep(20)
+        }
+        error("problème $id pas prêt : ${pvm.state.value.progress}")
+    }
+
     @Test
     @Config(qualifiers = "w760dp-h360dp-land-xxhdpi")
     fun phoneLandscape() {
@@ -130,6 +140,13 @@ class TabletRobolectricTest {
         rule.onNodeWithText("Mon répertoire").performClick(); settle(1000); shot("t11_atelier_repertoire")
         rule.onNodeWithContentDescription("Revenir à l'accueil de l'Académie").performClick(); settle(800)
         rule.onNodeWithText("Problèmes").performClick(); settle(2500); shot("t3_problemes")
+        // Bandeau des coups sous l'échiquier (deux colonnes) : une erreur, puis Solution.
+        val pvm = androidx.lifecycle.ViewModelProvider(rule.activity, com.ivanherboch.chessduck.DuckViewModels.Factory)[com.ivanherboch.chessduck.feature.PuzzlesViewModel::class.java]
+        rule.runOnIdle { pvm.openById("04ntl") {} }; puzzleReady(pvm, "04ntl")
+        val pl = pvm.state.value.line!!
+        rule.runOnIdle { pvm.onMove(pl.positions[1].legalMoves.first { it != pl.moves[1] && !pl.positions[1].play(it).isCheckmate }) }; settle(300)
+        rule.runOnIdle { pvm.retry() }; settle(600)
+        rule.onNodeWithText("Solution").performClick(); settle(3000); shot("t12_problemes_solution")
         rule.onNodeWithText("Jeu Libre").performClick(); settle(2000); shot("t4_jeu")
         seedGame()
         rule.onNodeWithContentDescription("Historique des parties").performClick(); settle(1200)

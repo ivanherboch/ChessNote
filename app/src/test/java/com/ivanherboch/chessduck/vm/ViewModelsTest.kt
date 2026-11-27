@@ -226,6 +226,27 @@ class ViewModelsTest {
 
     private val puzzleSet = (1..12).map { PUZZLE_0000D.copy(id = "Q$it", rating = 500 + it * 150) }
 
+    /** « Voir la leçon » depuis un problème : la leçon du thème, non maîtrisée et proche du palier, s'ouvre dans Comprendre. */
+    @Test
+    fun academyOpensTheLessonOfAPuzzleTheme() = test {
+        val lessons = FakeLessons()
+        val forks = Lessons.all.filter { it.theme == "fork" }
+        assertTrue(forks.size >= 2)
+        val first = forks.minByOrNull { kotlin.math.abs(it.level - 2) }!!
+        lessons.save(com.ivanherboch.chessduck.data.LessonProgress(first.id, masteredAt = 1, stars = 3))
+        val vm = academy(lessons)
+        advanceUntilIdle()
+        vm.openLessonForTheme("fork"); advanceUntilIdle()
+        val s = vm.state.value
+        assertEquals("fork", Lessons.byId(s.lessonId).theme)
+        assertTrue(s.lessonId != first.id)
+        assertEquals(AcademyRoute.LESSON, s.route)
+        assertFalse(s.challenge)
+        // Thème sans leçon : rien ne change.
+        vm.openLessonForTheme("aucunTheme"); advanceUntilIdle()
+        assertEquals(s.lessonId, vm.state.value.lessonId)
+    }
+
     @Test
     fun academyNextLessonAfterChallengeOpensGuided() = test {
         val vm = academy()

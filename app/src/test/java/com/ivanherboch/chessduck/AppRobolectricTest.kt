@@ -74,6 +74,61 @@ class AppRobolectricTest {
         prefs.setAcademyLevel(2)
     }
 
+    /**
+     * Problèmes, étape 2 : une erreur, « Solution », puis « Voir la leçon » (Académie, leçon de la fourchette) ; retour,
+     * « Recommencer », résolution, puis « Continuer contre l'Ordinateur » (Jeu Libre depuis la position finale).
+     */
+    @Test
+    fun puzzleSolutionAndBridges() {
+        settle(2500)
+        rule.onNodeWithText("Problèmes").performClick(); settle(1500)
+        val pvm = androidx.lifecycle.ViewModelProvider(rule.activity, com.ivanherboch.chessduck.DuckViewModels.Factory)[com.ivanherboch.chessduck.feature.PuzzlesViewModel::class.java]
+        rule.runOnIdle { pvm.openById("04ntl") {} }; puzzleReady(pvm, "04ntl")
+        val l = pvm.state.value.line!!
+        assertEquals("04ntl", pvm.state.value.puzzle?.id)
+        val wrong = l.positions[1].legalMoves.first { it != l.moves[1] && !l.positions[1].play(it).isCheckmate }
+        rule.runOnIdle { pvm.onMove(wrong) }; settle(300)
+        rule.runOnIdle { pvm.retry() }; settle(600)
+        shot("3i_apres_erreur")
+        rule.onNodeWithText("Solution").performClick(); settle(3000)
+        assertTrue(pvm.state.value.revealed && pvm.state.value.progress == l.size)
+        shot("3j_solution")
+        rule.onNodeWithText("Voir la leçon").performClick(); settle(2000)
+        val avm = androidx.lifecycle.ViewModelProvider(rule.activity, com.ivanherboch.chessduck.DuckViewModels.Factory)[com.ivanherboch.chessduck.feature.AcademyViewModel::class.java]
+        assertEquals("fork", com.ivanherboch.chessduck.content.Lessons.byId(avm.state.value.lessonId).theme)
+        rule.onNodeWithText("Comprendre").assertExists()
+        shot("3k_lecon_du_theme")
+        rule.onNodeWithText("Problèmes").performClick(); settle(1500)
+        rule.onNodeWithContentDescription("Recommencer ce problème").performClick(); puzzleReady(pvm, "04ntl")
+        rule.runOnIdle { pvm.onMove(l.moves[1]) }; settle(1200)
+        rule.runOnIdle { pvm.onMove(l.moves[3]) }; settle(800)
+        assertTrue(pvm.state.value.solved)
+        shot("3l_resolu")
+        rule.onNodeWithText("Continuer contre l'Ordinateur").performClick(); settle(2500)
+        val play = androidx.lifecycle.ViewModelProvider(rule.activity, com.ivanherboch.chessduck.DuckViewModels.Factory)[com.ivanherboch.chessduck.feature.PlayViewModel::class.java]
+        assertEquals(l.last.toFen(), play.state.value.line.startFen)
+        assertEquals(pvm.state.value.playerWhite, play.state.value.playerWhite)
+    }
+
+    /** Grande police : bandeau des coups, Indice et Solution sans exception de mise en page ni texte coupé au-dessus de l'échiquier. */
+    @Test
+    @Config(fontScale = 1.6f)
+    fun puzzleAfterAnErrorWithLargeFont() {
+        settle(2500)
+        rule.onNodeWithText("Problèmes").performClick(); settle(1500)
+        val pvm = androidx.lifecycle.ViewModelProvider(rule.activity, com.ivanherboch.chessduck.DuckViewModels.Factory)[com.ivanherboch.chessduck.feature.PuzzlesViewModel::class.java]
+        rule.runOnIdle { pvm.openById("04ntl") {} }; puzzleReady(pvm, "04ntl")
+        val l = pvm.state.value.line!!
+        rule.runOnIdle { pvm.hint() }; settle(300)
+        val wrong = l.positions[1].legalMoves.first { it != l.moves[1] && !l.positions[1].play(it).isCheckmate }
+        rule.runOnIdle { pvm.onMove(wrong) }; settle(300)
+        rule.runOnIdle { pvm.retry() }; settle(600)
+        rule.runOnIdle { pvm.hint() }; settle(300)
+        rule.onNodeWithText("Solution").assertExists()
+        rule.onNodeWithText("Montrer le coup").assertExists()
+        shot("3m_grande_police_erreur")
+    }
+
     /** Solution de 10 coups (#9zsfc) : en 4:5 comme en 1:1, toutes les cartes tiennent dans l'image, au-dessus de la légende. */
     @Test
     fun longSolutionCardFitsTheImage(): Unit = runBlocking {
@@ -307,6 +362,16 @@ class AppRobolectricTest {
                 .fetchSemanticsNodes().isNotEmpty()
             !busy && looper.isIdle && (System.nanoTime() - since) / 1_000_000 >= STABLE_WINDOW_MS
         }
+    }
+
+    /** Problème [id] affiché et son coup d'introduction joué (la base est lue sur un autre fil, en temps réel). */
+    private fun puzzleReady(pvm: com.ivanherboch.chessduck.feature.PuzzlesViewModel, id: String) {
+        repeat(100) {
+            val st = pvm.state.value
+            if (st.puzzle?.id == id && st.progress >= 1 && st.cursor == st.progress) return
+            settle(200); Thread.sleep(20)
+        }
+        error("problème $id pas prêt : ${pvm.state.value.progress}")
     }
 
     private fun shot(name: String) {

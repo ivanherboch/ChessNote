@@ -1,3 +1,20 @@
+## ChessDuck 4.3.0 — Problèmes : Solution, bandeau des coups et passerelles
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Après une erreur, un bouton « Solution » déroule toute la ligne, coup après coup, navigable avec ‹ et ›. Le problème ne compte alors pas comme résolu et reviendra au tirage.
+- Problème fini (résolu ou solution vue) : « Recommencer » le rejoue depuis le coup d'introduction, et « Problème suivant » devient le bouton principal. Le dé du haut ne fait plus doublon.
+- Le bouton de l'indice 2/2 dit ce qu'il coûte : « Montrer le coup (non compté) ».
+- Bandeau des coups sous l'échiquier : les coups déjà joués (jamais la suite de la solution) ; toucher un coup y revient.
+- Le message d'accueil ne répète plus le trait, déjà écrit au-dessus de l'échiquier.
+- Catalogue :
+  - un bouton « Tirer un problème » apparaît quand seule la difficulté change ;
+  - sur l'écran « aucun problème », changer de difficulté relance aussitôt le tirage ;
+  - quand tous les problèmes non résolus d'une sélection sont épuisés, le tirage le dit au lieu de reproposer en silence des problèmes déjà résolus.
+- Nouvelles passerelles, une fois le problème fini :
+  - « Continuer contre l'Ordinateur » ouvre le Jeu Libre depuis la position finale (sauf mat), avec votre camp ;
+  - « Voir la leçon » ouvre dans l'Académie la leçon du thème (de préférence une leçon pas encore maîtrisée, proche de votre palier).
+
 ## ChessDuck 4.2.15 — Problèmes : fiabilité, anti-spoiler et tirage instantané
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

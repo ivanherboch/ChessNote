@@ -64,12 +64,21 @@ data class PuzzleState(
     val arrowUsed: Boolean = false,
     /** Le problème était déjà résolu avant cette ouverture (lu en base à l'ouverture). */
     val alreadySolved: Boolean = false,
+    /** Au moins une erreur sur ce problème : « Solution » est proposée. */
+    val hadError: Boolean = false,
+    /** Solution dévoilée (« Solution ») : la ligne se déroule, navigable, et le problème ne compte pas comme résolu. */
+    val revealed: Boolean = false,
+    /** Tirage : tous les problèmes non résolus du filtre sont épuisés, un problème déjà résolu est reproposé. */
+    val allSolvedInFilter: Boolean = false,
 ) {
+    /** Problème fini : résolu, ou solution dévoilée (recommencer, problème suivant, passerelles). */
+    val over: Boolean get() = solved || revealed
+
     /**
-     * Le thème est visible si le problème est résolu, si le joueur l'a révélé, ou si le filtre choisi est précisément le
+     * Le thème est visible si le problème est résolu (ou sa solution dévoilée), si le joueur l'a révélé, ou si le filtre choisi est précisément le
      * thème de ce problème (un problème ouvert depuis les récents ou la recherche garde son thème masqué).
      */
-    val themeVisible: Boolean get() = solved || themeRevealed || (theme.isNotEmpty() && puzzle?.primaryTheme == theme)
+    val themeVisible: Boolean get() = solved || revealed || themeRevealed || (theme.isNotEmpty() && puzzle?.primaryTheme == theme)
 
     val playerWhite: Boolean get() = line?.positions?.getOrNull(1)?.whiteToMove ?: true
 }
@@ -190,18 +199,20 @@ class PuzzlesViewModel(
         }
     }
 
-    /** Conseil du thème que le joueur a choisi de travailler (si le problème le porte), sinon celui du type du problème. */
-    private fun turnLabel(white: Boolean) = if (white) "Trait aux Blancs" else "Trait aux Noirs"
-
-    private fun show(p: Puzzle) {
+    /**
+     * Affiche [p] depuis le début. [allSolved] : il vient d'un tirage alors que tous les problèmes non résolus du filtre
+     * sont épuisés (la carte le dit). Le trait est déjà écrit au-dessus de l'échiquier : le message ne le répète pas.
+     */
+    private fun show(p: Puzzle, allSolved: Boolean = false) {
         job?.cancel()
         saved[KEY_PUZZLE] = p.id
         val line = runCatching { Line.fromUci(p.fen, p.moves) }.getOrNull() ?: return
-        val white = line.positions[1].whiteToMove
+        val intro = "Après le coup de l'adversaire, trouvez la meilleure suite."
         _state.update {
             it.copy(
                 puzzle = p, line = line, progress = 0, cursor = 0, solved = false, anim = null, hintStage = 0, refute = null, empty = false, arrowUsed = false,
-                alreadySolved = false, themeRevealed = false, message = "${turnLabel(white)} : trouvez la meilleure suite.", tone = Tone.INFO,
+                alreadySolved = false, themeRevealed = false, hadError = false, revealed = false, allSolvedInFilter = allSolved, tone = Tone.INFO,
+                message = if (allSolved) "Vous avez résolu tous les problèmes de cette sélection : en voici un déjà résolu. Élargissez le filtre dans le catalogue pour en découvrir d'autres.\n\n$intro" else intro,
             )
         }
         // Récents, thème connu et « déjà résolu » : à part du coup d'introduction, qui ne les attend pas ; ouvrir aussitôt
@@ -242,7 +253,9 @@ class PuzzlesViewModel(
         }
         val id = runCatchingSuspend { dao.randomId(themes, r, cur, rnd) }.getOrNull()
         val p = id?.let { runCatchingSuspend { dao.byId(it) }.getOrNull() }
-        if (p != null) show(p)
+        // Le tirage ne repropose un problème résolu que lorsqu'il n'en reste aucun autre dans le filtre.
+        val allSolved = p != null && runCatchingSuspend { dao.solvedAmong(listOf(p.id)).first().isNotEmpty() }.getOrDefault(false)
+        if (p != null) show(p, allSolved)
         else _state.update { it.copy(empty = true, tone = Tone.BAD, message = "Aucun problème ne correspond à ces filtres. Élargissez la sélection dans le catalogue.") }
     }
 
@@ -299,6 +312,48 @@ class PuzzlesViewModel(
         }
     }
 
+    /**
+     * « Solution » (après une erreur) : toute la ligne se déroule, coup après coup, puis reste navigable avec ‹ et ›.
+     * Le problème ne compte pas comme résolu et reviendra au tirage.
+     */
+    fun solution() {
+        val s = state.value
+        val p = s.puzzle ?: return
+        if (s.over || s.refute != null || !s.hadError || s.line == null) return
+        job?.cancel()
+        val full = runCatching { Line.fromUci(p.fen, p.moves) }.getOrNull() ?: return
+        val from = s.progress.coerceIn(1, full.size)
+        _state.update {
+            it.copy(
+                line = full, revealed = true, cursor = from, progress = from, hintStage = 0, tone = Tone.GOLD,
+                message = "Solution : ${full.sans.drop(from).joinToString(" ")}. Ce problème ne compte pas comme résolu : il reviendra plus tard.",
+            )
+        }
+        job = viewModelScope.launch {
+            for (i in from until full.size) {
+                delay(700)
+                // Le joueur a reculé pour revoir un coup : la solution avance sans faire sauter l'échiquier.
+                _state.update { if (it.cursor == i) it.copy(cursor = i + 1, progress = i + 1, anim = moveAnim(full.positions[i], full.moves[i])) else it.copy(progress = i + 1) }
+            }
+        }
+    }
+
+    /** « Recommencer » : le problème fini (résolu ou dévoilé) reprend au coup d'introduction, indices et erreurs remis à zéro. */
+    fun restart() {
+        val s = state.value
+        if (s.over) s.puzzle?.let { show(it) }
+    }
+
+    /** Bandeau des coups : va au demi-coup [n] déjà joué (jamais au-delà de la ligne jouée). */
+    fun goTo(n: Int) {
+        val s = state.value
+        val line = s.line ?: return
+        if (s.refute != null) return
+        val t = n.coerceIn(0, s.progress)
+        if (t == s.cursor) return
+        _state.update { it.copy(cursor = t, anim = com.ivanherboch.chessduck.ui.LinePlaybackController.transition(line, s.cursor, t), hintStage = 0) }
+    }
+
     fun back() {
         val s = state.value
         val line = s.line ?: return
@@ -317,7 +372,7 @@ class PuzzlesViewModel(
     fun canPlay(s: PuzzleState): Boolean {
         val line = s.line ?: return false
         // On ne joue qu'au bout de la ligne déjà jouée (pas depuis un coup précédent qu'on revoit), et jamais une fois résolu.
-        return s.refute == null && !s.solved && s.cursor >= 1 && s.cursor < line.size && s.cursor == s.progress &&
+        return s.refute == null && !s.solved && !s.revealed && s.cursor >= 1 && s.cursor < line.size && s.cursor == s.progress &&
             line.positions[s.cursor].whiteToMove == s.playerWhite
     }
 
@@ -328,7 +383,7 @@ class PuzzlesViewModel(
         _state.update {
             it.copy(
                 hintStage = stage, tone = Tone.GOLD, arrowUsed = it.arrowUsed || stage == 2,
-                message = if (stage == 1) "Indice 1/2 : la pièce à jouer est surlignée en vert."
+                message = if (stage == 1) "Indice 1/2 : la pièce à jouer est surlignée en vert. « Montrer le coup » dévoile la flèche, mais le problème ne comptera plus comme résolu."
                 else "Indice 2/2 : la flèche montre le coup à jouer. Ce problème ne comptera pas comme résolu.",
             )
         }
@@ -402,7 +457,7 @@ class PuzzlesViewModel(
     private fun refute(pos: Position, m: Move, after: Position, cur: Int) {
         _state.update {
             it.copy(
-                cursor = cur, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m),
+                cursor = cur, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m), hadError = true,
                 refute = Refutation(after, m, null), refuteUntil = 0L, refuteHold = 0L,
                 message = RefutationLogic.intro(pos, m),
             )

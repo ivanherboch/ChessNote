@@ -844,6 +844,29 @@ class AcademyViewModel(
     }
 
     /**
+     * Pont depuis l'onglet Problèmes (« Voir la leçon ») : ouvre, dans Comprendre, la leçon qui enseigne le thème
+     * [theme] — de préférence une leçon pas encore maîtrisée, la plus proche du palier de l'élève. Sans leçon pour ce
+     * thème, rien ne change.
+     */
+    fun openLessonForTheme(theme: String) {
+        val id = lessonForTheme(theme, emptyMap(), 0)?.id ?: return
+        // Avant toute attente : la restauration de la dernière leçon au démarrage ne doit pas passer devant.
+        openedExplicitly = true
+        viewModelScope.launch {
+            val byId = lessons.progress().first().associateBy { it.lessonId }
+            val level = prefs.settings.first().academyLevel
+            open(lessonForTheme(theme, byId, level)?.id ?: id, guided = true)
+        }
+    }
+
+    /** La leçon du thème [theme] à proposer : non maîtrisée et proche du palier [level] d'abord. */
+    internal fun lessonForTheme(theme: String, progress: Map<Int, LessonProgress>, level: Int): Lesson? {
+        val pool = Lessons.all.filter { it.theme == theme }
+        return pool.filter { progress[it.id]?.mastered != true }.minByOrNull { kotlin.math.abs(it.level - level) }
+            ?: pool.minByOrNull { kotlin.math.abs(it.level - level) }
+    }
+
+    /**
      * Pont depuis la revue de partie : la leçon du lot de [topic] à travailler maintenant (pas encore maîtrisée, ou
      * travaillée il y a le plus longtemps), puis 5 exercices de son thème.
      */

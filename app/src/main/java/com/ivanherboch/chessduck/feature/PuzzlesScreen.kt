@@ -9,6 +9,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import com.ivanherboch.chessduck.ui.icons.Undo
+import com.ivanherboch.chessduck.content.Lessons
+import com.ivanherboch.chessduck.chess.Line
+import com.ivanherboch.chessduck.ui.MoveStrip
+import com.ivanherboch.chessduck.ui.icons.School
+import com.ivanherboch.chessduck.ui.icons.SportsEsports
+import com.ivanherboch.chessduck.ui.icons.RestartAlt
 import com.ivanherboch.chessduck.ui.icons.Casino
 import androidx.compose.material.icons.rounded.CheckCircle
 import com.ivanherboch.chessduck.ui.icons.Extension
@@ -45,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ivanherboch.chessduck.content.PuzzleThemes
@@ -71,7 +78,13 @@ private val frNumber: ThreadLocal<NumberFormat> = ThreadLocal.withInitial { Numb
 fun fr(n: Int): String = frNumber.get()!!.format(n).replace(' ', ' ').replace(' ', ' ')
 
 @Composable
-fun PuzzlesScreen(vm: PuzzlesViewModel) {
+fun PuzzlesScreen(
+    vm: PuzzlesViewModel,
+    /** « Continuer contre l'Ordinateur » : position finale du problème, camp du joueur (Jeu Libre). */
+    onPlayPosition: ((fen: String, playerWhite: Boolean) -> Unit)? = null,
+    /** « Voir la leçon » : la leçon de l'Académie qui enseigne ce thème. */
+    onOpenLesson: ((theme: String) -> Unit)? = null,
+) {
     val s by vm.state.collectAsStateWithLifecycle()
     val solvedCount by vm.solvedCount.collectAsStateWithLifecycle()
     val solved by vm.recentSolved.collectAsStateWithLifecycle()
@@ -117,7 +130,8 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                     accent = c.blue, icon = Icons.Rounded.Extension,
                     contentDescription = "Catalogue des problèmes : $filter, ${fr(solvedCount)} résolus sur ${fr(DuckDatabase.PUZZLE_COUNT)}",
                 )
-                DuckIconButton(Icons.Rounded.Casino, "Problème aléatoire", vm::random, accent = c.gold, filled = s.solved)
+                // Une fois le problème fini, l'action principale « Problème suivant » est en bas : ce dé reste discret.
+                DuckIconButton(Icons.Rounded.Casino, "Problème aléatoire", vm::random, accent = c.gold)
                 DuckIconButton(Icons.Rounded.History, "Problèmes récents", { recentSheet = true }, enabled = recents.isNotEmpty())
                 DuckIconButton(Icons.Rounded.IosShare, "Exporter en image", { shareChoice = true })
             }
@@ -136,6 +150,13 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                     modifier = Modifier.padding(start = 10.dp).weight(1f),
                 )
             }
+        },
+        // Bandeau des coups déjà joués (jamais la suite de la solution) : toucher un coup y revient.
+        underBoard = {
+            MoveStrip(
+                Line(line.startFen, line.moves.take(s.progress)), s.cursor.coerceIn(0, s.progress), Modifier.padding(top = 2.dp),
+                onSelect = { n -> vm.goTo(n) }, emptyText = "Les coups joués s'afficheront ici.",
+            )
         },
         board = {
             val r = s.refute
@@ -173,23 +194,46 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
             val reviewing = s.refute == null && s.cursor < s.progress
             val shown = when {
                 !reviewing -> s.message
-                s.solved -> "Vous revoyez la solution. Touchez › pour avancer jusqu'au dernier coup."
+                s.over -> "Vous revoyez la solution. Touchez › pour avancer jusqu'au dernier coup."
                 else -> "Vous revoyez un coup précédent. Touchez › pour revenir au problème et jouer."
             }
             FeedbackCard(
                 stuck ?: (shown + if (showTip && !reviewing) "\n\nConseil : ${type.tip}" else ""),
                 if (stuck != null) Tone.GOLD else s.tone, Modifier.padding(top = 6.dp).weight(1f),
                 title = if (visible) "Type de problème : ${type.name}" else "Thème masqué (mode libre)",
-                action = if (!visible) ({
-                    DuckButton("Révéler le thème", vm::revealTheme, icon = Icons.Rounded.Visibility, accent = c.blue, variant = ButtonVariant.OUTLINED)
-                }) else null,
+                action = when {
+                    !visible -> ({
+                        DuckButton("Révéler le thème", vm::revealTheme, icon = Icons.Rounded.Visibility, accent = c.blue, variant = ButtonVariant.OUTLINED)
+                    })
+                    s.over -> puzzleBridges(s, line, onPlayPosition, onOpenLesson)
+                    else -> null
+                },
             )
             if (s.refute != null && s.refuteUntil > 0) RefuteCountdown(s.refuteUntil, s.refuteHold, vm::holdRefutation)
             EqualRow(Modifier.padding(vertical = 6.dp)) {
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Coup précédent", vm::back, enabled = s.refute == null && s.cursor > 0)
-                if (s.refute != null) DuckButton("Réessayer", vm::retry, Modifier.weight(1f), accent = c.red, filled = true, icon = Icons.AutoMirrored.Rounded.Undo)
-                else if (s.solved) DuckButton("Problème aléatoire", vm::random, Modifier.weight(1f), accent = c.gold, filled = true, icon = Icons.Rounded.Casino)
-                else HintButton(s.hintStage, vm::hint, Modifier.weight(1f), enabled = vm.canPlay(s))
+                when {
+                    s.refute != null -> DuckButton("Réessayer", vm::retry, Modifier.weight(1f), accent = c.red, filled = true, icon = Icons.AutoMirrored.Rounded.Undo)
+                    s.over -> {
+                        // Fini (résolu ou dévoilé) : le rejouer depuis le coup d'introduction, ou passer au suivant.
+                        DuckIconButton(Icons.Rounded.RestartAlt, "Recommencer ce problème", vm::restart)
+                        DuckButton("Problème suivant", vm::random, Modifier.weight(1f), accent = c.gold, filled = true, icon = Icons.Rounded.Casino)
+                    }
+                    else -> {
+                        // Avant l'indice 2/2, le bouton dit ce qu'il coûte : la flèche montre le coup, le problème ne compte plus.
+                        // Libellé complet s'il a la place ; sinon court (la carte de l'indice 1/2 dit déjà qu'il ne compte pas).
+                        val roomy = !s.hadError && LocalDensity.current.fontScale <= 1.3f
+                        HintButton(
+                            s.hintStage, vm::hint, Modifier.weight(1f), enabled = vm.canPlay(s),
+                            nextLabel = if (roomy) "Montrer le coup (non compté)" else "Montrer le coup",
+                        )
+                        // Après une erreur : la solution complète, sans compter le problème comme résolu.
+                        if (s.hadError) DuckButton(
+                            "Solution", vm::solution, Modifier.weight(0.8f), accent = c.red, variant = ButtonVariant.OUTLINED,
+                            contentDescription = "Voir la solution : le problème ne comptera pas comme résolu",
+                        )
+                    }
+                }
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Coup suivant", vm::forward, enabled = s.refute == null && s.cursor < s.progress)
             }
         },
@@ -231,6 +275,33 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
             },
             onClose = { shareChoice = false },
         )
+    }
+}
+
+/**
+ * Passerelles d'un problème fini : continuer la partie contre l'Ordinateur depuis la position finale (sauf mat), et
+ * ouvrir la leçon de l'Académie qui enseigne son thème (si elle existe). Null si aucune ne s'applique.
+ */
+private fun puzzleBridges(
+    s: PuzzleState, line: Line, onPlayPosition: ((String, Boolean) -> Unit)?, onOpenLesson: ((String) -> Unit)?,
+): (@Composable () -> Unit)? {
+    val theme = s.puzzle?.primaryTheme.orEmpty()
+    val end = line.last
+    val play = onPlayPosition?.takeIf { end.legalMoves.isNotEmpty() }
+    val lesson = onOpenLesson?.takeIf { theme.isNotEmpty() && Lessons.all.any { it.theme == theme } }
+    if (play == null && lesson == null) return null
+    return {
+        val c = LocalDuck.current
+        EqualRow(gap = 8.dp) {
+            if (play != null) DuckButton(
+                "Continuer contre l'Ordinateur", { play(end.toFen(), s.playerWhite) }, Modifier.weight(1f), accent = c.blue, variant = ButtonVariant.OUTLINED,
+                icon = Icons.Rounded.SportsEsports, contentDescription = "Continuer la partie contre l'Ordinateur depuis la position finale",
+            )
+            if (lesson != null) DuckButton(
+                "Voir la leçon", { lesson(theme) }, Modifier.weight(1f), accent = c.green, variant = ButtonVariant.OUTLINED,
+                icon = Icons.Rounded.School, contentDescription = "Voir la leçon de l'Académie sur ce thème",
+            )
+        }
     }
 }
 

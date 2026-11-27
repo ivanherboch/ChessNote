@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `4.2.15` (`versionCode = 103`), publiée en release GitHub `v4.2.15`.
+- **Version actuelle** : `4.3.0` (`versionCode = 104`), publiée en release GitHub `v4.3.0`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -207,6 +207,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **4.2.13** : `PlayViewModel.finishedGeneration` + résultat provisoire « Partie terminée. » posé aussitôt dans `finish` (plus de double enregistrement ni de double ELO) ; `rnd` injectable ; `PlayFuzzTest` à graine fixe (`FUZZ_FROM`/`FUZZ_TO`/`FUZZ_DEBUG`).
 - **4.2.14** : `LessonsCard` : titre « Leçons », « N sur 211 maîtrisées », boutons « Palier N (n) » et « Toutes (211) » (description TalkBack contenant « Ouvrir le catalogue des leçons », utilisée par les tests).
 - **4.2.15** : refonte des Problèmes, étape 1 sur 3 (plan `plan_problemes_3_etapes.md`) : fiabilité, anti-spoiler, réfutation, export, tirage par rowid (voir le Relais ci-dessous).
+- **4.3.0** : refonte des Problèmes, étape 2 sur 3 : Solution et Recommencer, bandeau des coups, catalogue (tirage, sélection épuisée), passerelles vers le Jeu Libre et l'Académie (voir le Relais ci-dessous).
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.
@@ -317,6 +318,13 @@ Les détails de chaque version sont dans `docs/release-notes.md` ; les exemples 
 - Mesures (base réelle, Robolectric) : tirage Libre 0,54 ms (ancien 302 ms), fourchette 0,53 ms, roque (thème rare, repli) 4,2 ms.
 - Repéré hors périmètre (non corrigé) : le message d'accueil répète « Trait aux … » (tâche 2.2) ; le tirage par fenêtre favorise légèrement les problèmes qui suivent un long trou de rowid résolus.
 - Reste pour l'étape 2 : boutons Solution et Recommencer, `MoveStrip`, bouton Dé en double une fois résolu, « Tirer un problème » quand seule la difficulté change, alerte quand tout est résolu dans le filtre, ponts vers le Jeu Libre et l'Académie.
+
+### Relais refonte Problèmes (état après l'étape 2, v4.3.0)
+- Symboles : `PuzzleState.hadError`, `revealed`, `allSolvedInFilter`, `over` (résolu ou dévoilé) ; `themeVisible` inclut `revealed`. `PuzzlesViewModel.solution()` (après une erreur : ligne complète déroulée toutes les 700 ms, non comptée), `restart()` (si `over`), `goTo(n)` (bandeau, borné à `progress`), `show(p, allSolved)` (message d'accueil sans le trait), `drawRandom` détecte un problème déjà résolu tiré (filtre épuisé) ; `canPlay` exige aussi `!revealed`. `PuzzlesScreen(vm, onPlayPosition, onOpenLesson)` : `MoveStrip` en `underBoard` (coups joués seulement), boutons Recommencer / Problème suivant / Solution, `HintButton(nextLabel)` (« Montrer le coup (non compté) », court si Solution est affichée ou en grande police), `puzzleBridges()` dans l'action de la carte. `PuzzleCatalogSheet` : `bandAtOpen`, bouton « Tirer un problème », relance si `empty`, note `allSolvedInFilter`. `AcademyViewModel.openLessonForTheme(theme)` et `lessonForTheme(theme, progress, level)`. `MainActivity` : `TabBridges.lessonTheme`, câblage onglets 1 ↔ 2 → 3. `ui/Common.kt` : paramètre `nextLabel` de `HintButton` (sans effet ailleurs).
+- DataStore et Room : aucune clé nouvelle, Room toujours en version 4.
+- Tests : `PuzzlesFuzzTest` (Solution, Recommencer, bandeau dans le fuzzing ; solution non comptée et navigable ; sélection épuisée), `ViewModelsTest.academyOpensTheLessonOfAPuzzleTheme`, `AppRobolectricTest.puzzleSolutionAndBridges` (de bout en bout : Solution → Voir la leçon → Recommencer → Continuer contre l'Ordinateur) et `puzzleAfterAnErrorWithLargeFont` (police 1,6), `TabletRobolectricTest.tabletLandscape` (capture `t12_problemes_solution`).
+- Repéré hors périmètre (non corrigé) : depuis un problème, le Jeu Libre annonce « Position de la leçon contre l'ordinateur » et « Partie d'entraînement depuis une leçon » (textes de `PlayScreen`/`PlayViewModel`) ; en grande police, le texte de l'indice 1/2 se replie derrière « Lire la suite » (comportement normal de `FeedbackCard`).
+- Reste pour l'étape 3 : Room v5 (`puzzle_progress` étendu, index couvrants, `puzzle_themes`), « Mon niveau » (ELO tactique), Récents 50 / À refaire / Favoris, thèmes secondaires, bilan tactique et filtre par longueur.
 
 ## 7. Limites connues et pistes
 

@@ -276,6 +276,9 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                         LaunchedEffect(bridges.academyTopic) {
                             bridges.academyTopic?.let { t -> avm.trainReviewTopic(t); bridges.academyTopic = null }
                         }
+                        LaunchedEffect(bridges.lessonTheme) {
+                            bridges.lessonTheme?.let { t -> avm.openLessonForTheme(t); bridges.lessonTheme = null }
+                        }
                         AcademyScreen(
                             avm,
                             onTrainTheme = { theme, level -> bridges.trainTheme = theme to level; select(2) },
@@ -288,7 +291,11 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                         LaunchedEffect(bridges.trainTheme) {
                             bridges.trainTheme?.let { (theme, level) -> pvm.train(theme, (level - 1).coerceIn(1, 4)); bridges.trainTheme = null }
                         }
-                        PuzzlesScreen(pvm)
+                        PuzzlesScreen(
+                            pvm,
+                            onPlayPosition = { fen, white -> bridges.playPosition = fen to white; select(3) },
+                            onOpenLesson = { theme -> bridges.lessonTheme = theme; select(1) },
+                        )
                     }
                     else -> {
                         val play = viewModel<PlayViewModel>(factory = DuckViewModels.Factory)
@@ -357,7 +364,7 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
 
 /**
  * Passerelles entre onglets, regroupées : thème à travailler dans Problèmes, position à jouer dans le Jeu Libre,
- * Vision des cases (onglet Notation), point faible repéré par la revue de partie (Académie).
+ * Vision des cases (onglet Notation), point faible repéré par la revue de partie et leçon du thème d'un problème (Académie).
  */
 @Stable
 private class TabBridges {
@@ -365,4 +372,6 @@ private class TabBridges {
     var playPosition by mutableStateOf<Pair<String, Boolean>?>(null)
     var vision by mutableStateOf(false)
     var academyTopic by mutableStateOf<ReviewTopic?>(null)
+    /** Thème d'un problème : l'Académie ouvre la leçon qui l'enseigne (« Voir la leçon »). */
+    var lessonTheme by mutableStateOf<String?>(null)
 }
