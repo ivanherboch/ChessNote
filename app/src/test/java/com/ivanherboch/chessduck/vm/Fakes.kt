@@ -89,7 +89,10 @@ class FakePuzzles(private val puzzles: List<Puzzle>) : PuzzleRepository {
     }
     override suspend fun themeCounts(range: IntRange) = puzzles.filter { it.rating in range }.groupBy { it.primaryTheme }
         .map { (t, l) -> ThemeCountRow(t, l.size, l.count { it.id in solved.value }) }
+    /** Nombre de recherches d'identifiant envoyées à la base (recherche différée du catalogue). */
+    var searches = 0
     override suspend fun searchIds(query: String, limit: Int): Pair<List<PuzzleHit>, Int> {
+        searches++
         val hits = puzzles.filter { it.id.contains(query, ignoreCase = true) }
         return hits.take(limit).map { PuzzleHit(it.id, it.rating, it.primaryTheme) } to hits.size
     }

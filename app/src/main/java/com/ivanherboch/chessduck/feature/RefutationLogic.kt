@@ -4,7 +4,6 @@ import com.ivanherboch.chessduck.chess.Move
 import com.ivanherboch.chessduck.chess.PAWN
 import com.ivanherboch.chessduck.chess.PIECE_NAMES_FR
 import com.ivanherboch.chessduck.chess.Position
-import com.ivanherboch.chessduck.chess.pieceType
 import com.ivanherboch.chessduck.engine.ChessEngine
 import com.ivanherboch.chessduck.engine.isMateScore
 import com.ivanherboch.chessduck.engine.mateIn
@@ -24,8 +23,7 @@ class RefutationReply(val reply: Move?, val position: Position, val text: String
 
 /**
  * Calcul commun de la réfutation (Problèmes, Académie) : l'Ordinateur cherche la meilleure réponse pendant que le mauvais
- * coup reste affiché au moins [minShow] ms ; sans réponse à temps, un coup légal plausible (reprise sur la case) la
- * remplace. Le texte nomme la conséquence : mat, pièce perdue, avantage rendu, égalisation.
+ * coup reste affiché au moins [minShow] ms ; sans réponse à temps, aucune réponse n'est inventée (le texte le dit). Le texte nomme la conséquence : mat, pièce perdue, avantage rendu, égalisation.
  */
 object RefutationLogic {
     const val AUTO_UNDO = " Touchez l'échiquier pour rejouer tout de suite (sinon, le coup s'annule seul)."
@@ -70,15 +68,21 @@ object RefutationLogic {
         }
         val res = runCatchingSuspend { withTimeoutOrNull(1800) { engine.search(after.toFen(), 380) } }.getOrNull()
         delay((minShow - (System.currentTimeMillis() - t0)).coerceAtLeast(0))
+        // L'Ordinateur n'a pas répondu à temps : aucune réponse inventée (pas de flèche sur un coup pris au hasard).
         val reply = res?.best?.takeIf { after.isLegal(it) }
-            ?: after.legalMoves.firstOrNull { it.to == m.to } ?: after.legalMoves.first()
+            ?: return RefutationReply(null, after, "$san n'est pas la solution. L'Ordinateur n'a pas pu calculer la réponse des $opp à temps : cherchez un autre coup.")
         val after2 = after.play(reply)
-        val score = res?.score
-        val captured = after[reply.to]
+        // Score du point de vue du camp qui répond ; négatif : le joueur reste devant malgré tout.
+        val score = res.score
+        // Type de la pièce prise (prise en passant comprise : la case d'arrivée est alors vide).
+        val captured = if (after.isCapture(reply)) after.capturedType(reply) else 0
         val detail = when {
             after2.isCheckmate -> " : échec et mat !"
             score != null && isMateScore(score) && score > 0 -> " et forcent le mat en ${mateIn(score)}."
-            captured != 0 && pieceType(captured) != PAWN -> " et capturent votre ${PIECE_NAMES_FR[pieceType(captured)].lowercase()}."
+            // Le coup du joueur gagnait aussi, autrement : on ne parle pas d'une « pièce capturée » dans un mat inévitable.
+            score != null && isMateScore(score) -> " : $san mate aussi, mais plus lentement (mat en ${-mateIn(score)}). La solution est plus directe."
+            score != null && score <= -300 -> " : $san garde un gros avantage, mais la solution gagne plus nettement."
+            captured != 0 && captured != PAWN -> " et capturent votre ${PIECE_NAMES_FR[captured].lowercase()}."
             captured != 0 -> " et gagnent un pion."
             score != null && score > 150 -> " et prennent l'avantage."
             score != null && score > -80 -> " et égalisent : votre avantage s'est envolé."

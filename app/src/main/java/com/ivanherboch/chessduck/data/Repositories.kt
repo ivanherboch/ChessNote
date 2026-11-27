@@ -110,7 +110,22 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
     override suspend fun slice(start: Int, n: Int) = dao.slice(start, n)
     override suspend fun sliceThemes(start: Int, themes: List<String>, n: Int) = dao.sliceThemes(start, themes, n)
 
+    /** Plus grand rowid de la table (lu une fois, relu après un import du catalogue). */
+    @Volatile private var maxRow = 0L
+
+    /**
+     * Tirage d'un problème non résolu : d'abord quelques fenêtres de [PROBE_WINDOW] lignes à partir d'un rowid tiré au
+     * hasard (lecture bornée, instantanée même en mode Libre) ; si elles ne trouvent rien (thème rare, presque tout
+     * résolu), repli exact sur le comptage puis la lecture à un rang tiré au hasard, résolus compris en dernier recours.
+     */
     override suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random): String? {
+        if (maxRow == 0L) maxRow = dao.maxRowId()
+        if (maxRow > 0) repeat(PROBE_TRIES) {
+            val start = random.nextLong(1, maxRow + 1)
+            val id = if (themes == null) dao.probeAll(start, PROBE_WINDOW, range.first, range.last, exclude)
+            else dao.probeInThemes(start, PROBE_WINDOW, themes, range.first, range.last, exclude)
+            if (id != null) return id
+        }
         for (includeSolved in listOf(false, true)) {
             val n = if (themes == null) dao.countAll(range.first, range.last, exclude, includeSolved)
             else dao.countInThemes(themes, range.first, range.last, exclude, includeSolved)
@@ -133,7 +148,12 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
     override fun solvedIds() = dao.solvedIds()
     override fun solvedCount() = dao.solvedCount()
     override fun solvedAmong(ids: List<String>) = dao.solvedAmong(ids)
-    override suspend fun syncCatalogue() = DuckDatabase.syncPuzzles(context, db)
+    override suspend fun syncCatalogue() = DuckDatabase.syncPuzzles(context, db).also { if (it) maxRow = 0L }
+
+    private companion object {
+        const val PROBE_WINDOW = 3000
+        const val PROBE_TRIES = 4
+    }
 }
 
 class RoomGameRepository(private val db: DuckDatabase) : GameRepository {

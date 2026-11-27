@@ -85,10 +85,14 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
     val themeMatches = remember(q) {
         if (q.length >= 2) PuzzleThemes.all.filter { normalizeForSearch(it.name).contains(q) || normalizeForSearch(it.goal).contains(q) } else emptyList()
     }
-    // « Ouvrir » : l'identifiant exact, sinon l'unique suggestion, sinon le thème reconnu.
+    // « Ouvrir » : une saisie qui ne peut pas être un identifiant (« fourchette ») ouvre le thème reconnu ; sinon
+    // l'identifiant exact, puis l'unique suggestion de cette saisie (jamais celle d'une saisie précédente), puis le thème.
     val open = {
-        vm.openById(query) { ok ->
-            val only = sugg.items.singleOrNull()
+        val typed = query.trim().removePrefix("#")
+        if (!PuzzlesViewModel.looksLikeId(typed)) {
+            if (themeMatches.isNotEmpty()) { vm.setFilter(s.band, themeMatches.first().key); onClose() } else notFound = true
+        } else vm.openById(query) { ok ->
+            val only = sugg.items.singleOrNull()?.takeIf { sugg.query.equals(typed, ignoreCase = true) }
             when {
                 ok -> onClose()
                 only != null -> vm.openSuggestion(only.id) { onClose() }
@@ -121,9 +125,9 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(highlight("#${item.id}", sugg.query, c.goldRole.fill, c.goldRole.onFill), color = c.text, style = MaterialTheme.typography.titleSmall)
-                        Text(item.type, color = c.blueText, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 12.dp).weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text("${item.rating}", color = c.muted, style = MaterialTheme.typography.labelMedium)
+                        // Anti-spoiler : le thème d'un problème n'apparaît pas avant de l'avoir ouvert (identifiant et difficulté seulement).
+                        Text(highlight("#${item.id}", sugg.query, c.goldRole.fill, c.goldRole.onFill), color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+                        Text("${PuzzleThemes.BANDS[PuzzleThemes.bandOf(item.rating)]} · ${item.rating}", color = c.muted, style = MaterialTheme.typography.labelMedium)
                     }
                 }
                 if (sugg.more > 0) Text(
@@ -137,7 +141,7 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
             for (t in themeMatches) ThemeRow(t.name, t.goal, counts[t.key], s.theme == t.key) { vm.setFilter(s.band, t.key); onClose() }
         }
         if (notFound) Text(
-            "Aucun problème « ${query.trim()} » parmi les ${fr(DuckDatabase.PUZZLE_COUNT)} embarqués. Vérifiez l'identifiant (majuscules et minuscules comptent).",
+            "Aucun problème « ${query.trim()} » parmi les ${fr(DuckDatabase.PUZZLE_COUNT)} embarqués. Vérifiez l'identifiant (5 lettres ou chiffres, ex. 00sHx) ou cherchez un thème par son nom.",
             color = c.redText, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp),
         )
         SectionTitle("1. Difficulté")

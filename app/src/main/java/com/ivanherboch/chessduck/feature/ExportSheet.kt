@@ -81,6 +81,8 @@ internal fun ExportOption(label: String, options: List<Pair<String, Boolean>>, o
 internal fun ExportCard(
     title: String, description: String, accent: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, preview: ImageBitmap?,
     masked: Boolean = false, enabled: Boolean = true,
+    /** Toucher l'aperçu masqué : l'appelant démasque (et ne calcule l'image qu'à ce moment-là). */
+    onReveal: () -> Unit = {},
     /** Aperçu impossible à générer : message à la place du chargement. */
     failed: Boolean = false,
     /** Cette image est en cours de préparation pour le partage. */
@@ -88,15 +90,14 @@ internal fun ExportCard(
     onShare: () -> Unit, onSave: () -> Unit,
 ) {
     val c = LocalDuck.current
-    // Anti-spoiler : l'aperçu de la solution reste caché tant que le problème n'est pas résolu.
-    var reveal by remember { mutableStateOf(false) }
+    // Anti-spoiler : l'aperçu de la solution reste caché tant que le problème n'est pas résolu ou démasqué.
     var zoom by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().padding(vertical = 5.dp).clip(RoundedCornerShape(DuckRadius.L)).background(c.surface).padding(12.dp)) {
         Row(verticalAlignment = Alignment.Top) {
             Box(Modifier.width(96.dp).height(120.dp).clip(RoundedCornerShape(DuckRadius.S)).background(c.surfaceHi), contentAlignment = Alignment.Center) {
-                if (masked && !reveal) {
+                if (masked) {
                     Column(
-                        Modifier.fillMaxSize().clickable(onClickLabel = "Afficher l'aperçu de la solution") { reveal = true },
+                        Modifier.fillMaxSize().clickable(onClickLabel = "Afficher l'aperçu de la solution") { onReveal() },
                         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
                     ) {
                         Icon(Icons.Rounded.VisibilityOff, contentDescription = null, tint = c.muted, modifier = Modifier.size(24.dp))
@@ -174,18 +175,23 @@ internal fun ExportSheet(
         // Aperçus calculés hors du fil principal, recalculés à chaque changement de réglage ;
         // la clé (style, problème) permet de réutiliser le bitmap à l'export s'il correspond encore.
         // Un rendu en échec donne (clé, null) : l'aperçu affiche alors « indisponible » au lieu de tourner sans fin.
-        val problemShot by produceState<Pair<Any, Bitmap?>?>(null, styleOrNull, p.id) {
+        // « Inclure l'indice » (énoncé) : choix de ce tiroir, l'indice est inclus par défaut.
+        var includeTip by remember { mutableStateOf(true) }
+        // Aperçu de la solution démasqué : il n'est calculé (et donc présent en mémoire) qu'à partir de là, ou une fois résolu.
+        var revealed by remember { mutableStateOf(false) }
+        val showSolution = solved || revealed
+        val problemShot by produceState<Pair<Any, Bitmap?>?>(null, styleOrNull, p.id, includeTip) {
             if (styleOrNull == null) return@produceState
-            val key = style to p.id
-            value = key to withContext(Dispatchers.Default) { runCatching { ShareCard.render(context, p, line.positions[1], playerWhite, line.moves[0], style) }.getOrNull() }
+            val key = Triple(style, p.id, includeTip)
+            value = key to withContext(Dispatchers.Default) { runCatching { ShareCard.render(context, p, line.positions[1], playerWhite, line.moves[0], style, includeTip) }.getOrNull() }
         }
-        val solutionShot by produceState<Pair<Any, Bitmap?>?>(null, styleOrNull, p.id) {
-            if (styleOrNull == null) return@produceState
+        val solutionShot by produceState<Pair<Any, Bitmap?>?>(null, styleOrNull, p.id, showSolution) {
+            if (styleOrNull == null || !showSolution) return@produceState
             val key = style to p.id
             value = key to withContext(Dispatchers.Default) { runCatching { ShareCard.renderSolution(context, p, style) }.getOrNull() }
         }
         val key = style to p.id
-        val problemDone = problemShot?.takeIf { it.first == key }
+        val problemDone = problemShot?.takeIf { it.first == Triple(style, p.id, includeTip) }
         val solutionDone = solutionShot?.takeIf { it.first == key }
         val problemReady = problemDone?.second
         val solutionReady = solutionDone?.second
@@ -210,14 +216,16 @@ internal fun ExportSheet(
             color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 6.dp),
         )
         ExportOption("Fond", listOf("Sombre" to !style.light, "Clair" to style.light)) { i -> setStyle(style.copy(light = i == 1)) }
+        ExportOption("Indice", listOf("Inclure" to includeTip, "Sans" to !includeTip)) { i -> includeTip = i == 0 }
         ExportCard(
-            "Le problème", "L'énoncé seul : le défi, l'échiquier, la difficulté et un indice — sans la solution.", c.blue, Icons.Rounded.Extension, problemPreview,
+            "Le problème", if (includeTip) "L'énoncé seul : le défi, l'échiquier, la difficulté et un indice — sans la solution."
+            else "L'énoncé seul : le défi, l'échiquier et la difficulté — sans indice ni solution.", c.blue, Icons.Rounded.Extension, problemPreview,
             enabled = !exporting, failed = problemDone != null && problemReady == null, busy = exporting && sharing == 1,
-            onShare = { share(1) { ShareCard.share(context, p, line.positions[1], playerWhite, line.moves[0], style, problemReady) } },
-            onSave = { status = null; export { status = ShareCard.saveProblem(context, p, line.positions[1], playerWhite, line.moves[0], style, problemReady)?.let { true to it } ?: failed } },
+            onShare = { share(1) { ShareCard.share(context, p, line.positions[1], playerWhite, line.moves[0], style, problemReady, includeTip) } },
+            onSave = { status = null; export { status = ShareCard.saveProblem(context, p, line.positions[1], playerWhite, line.moves[0], style, problemReady, includeTip)?.let { true to it } ?: failed } },
         )
         ExportCard(
-            "La solution", "Une carte par coup : flèches, échecs (+), mat (#), pièces prises et conclusion.", c.green, Icons.Rounded.CheckCircle, solutionPreview, masked = !solved,
+            "La solution", "Une carte par coup : flèches, échecs (+), mat (#), pièces prises et conclusion.", c.green, Icons.Rounded.CheckCircle, solutionPreview, masked = !showSolution, onReveal = { revealed = true },
             enabled = !exporting, failed = solutionDone != null && solutionReady == null, busy = exporting && sharing == 2,
             onShare = { share(2) { ShareCard.shareSolution(context, p, style, solutionReady) } },
             onSave = { status = null; export { status = ShareCard.saveSolution(context, p, style, solutionReady)?.let { true to it } ?: failed } },

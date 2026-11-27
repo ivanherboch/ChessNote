@@ -62,9 +62,14 @@ data class PuzzleState(
     val refuteHold: Long = 0L,
     /** La flèche de l'indice 2/2 a montré un coup : le problème, même terminé, ne compte pas comme résolu. */
     val arrowUsed: Boolean = false,
+    /** Le problème était déjà résolu avant cette ouverture (lu en base à l'ouverture). */
+    val alreadySolved: Boolean = false,
 ) {
-    /** Le thème est visible si le joueur l'a choisi lui-même, l'a révélé, ou a résolu le problème. */
-    val themeVisible: Boolean get() = solved || themeRevealed || PuzzleThemes.byKey.containsKey(theme)
+    /**
+     * Le thème est visible si le problème est résolu, si le joueur l'a révélé, ou si le filtre choisi est précisément le
+     * thème de ce problème (un problème ouvert depuis les récents ou la recherche garde son thème masqué).
+     */
+    val themeVisible: Boolean get() = solved || themeRevealed || (theme.isNotEmpty() && puzzle?.primaryTheme == theme)
 
     val playerWhite: Boolean get() = line?.positions?.getOrNull(1)?.whiteToMove ?: true
 }
@@ -113,13 +118,20 @@ class PuzzlesViewModel(
     private var countsJob: Job? = null
     private var searchJob: Job? = null
 
+    /** Le filtre a été changé (catalogue, « S'entraîner sur ce thème ») : celui enregistré ne doit plus l'écraser. */
+    private var filterTouched = false
+
     init {
-        viewModelScope.launch {
+        // Le moteur démarre en tâche de fond : la première réfutation d'un mauvais coup n'attend pas son lancement.
+        viewModelScope.launch { runCatchingSuspend { kotlinx.coroutines.withTimeoutOrNull(10_000) { engine.search(com.ivanherboch.chessduck.chess.START_FEN, 50) } } }
+        // Problème de départ : un chargement comme les autres (loadJob), qu'un « S'entraîner sur ce thème » arrivé
+        // entre-temps annule au lieu d'être écrasé par lui.
+        loadJob = viewModelScope.launch {
             val st = prefs.settings.first()
-            _state.update { it.copy(band = st.puzzleBand, theme = st.puzzleTheme) }
+            if (!filterTouched) _state.update { it.copy(band = st.puzzleBand, theme = st.puzzleTheme) }
             val id = saved.get<String>(KEY_PUZZLE)?.takeIf { it.isNotEmpty() } ?: st.puzzleId
             val current = if (id.isNotEmpty()) runCatchingSuspend { dao.byId(id) }.getOrNull() else null
-            if (current != null) show(current) else random()
+            if (current != null) show(current) else drawRandom()
         }
         viewModelScope.launch {
             prefs.settings.map { it.recentPuzzles }.distinctUntilChanged().collect { ids ->
@@ -130,7 +142,13 @@ class PuzzlesViewModel(
         }
         // Après une mise à jour de l'application, les nouveaux problèmes du catalogue sont importés (SQL natif).
         // Tirage, compteurs et recherche interrogent directement la base indexée : rien n'est chargé en mémoire.
-        viewModelScope.launch(Dispatchers.IO) { dao.syncCatalogue() }
+        viewModelScope.launch(Dispatchers.IO) {
+            // Des problèmes ont été importés : un écran « aucun problème » se relance, et les compteurs se recalculent.
+            if (runCatchingSuspend { dao.syncCatalogue() }.getOrDefault(false)) withContext(Dispatchers.Main) {
+                if (state.value.empty) random()
+                if (_counts.value.isNotEmpty()) loadCounts(state.value.band)
+            }
+        }
     }
 
     /**
@@ -140,8 +158,11 @@ class PuzzlesViewModel(
     fun search(raw: String) {
         searchJob?.cancel()
         val q = raw.trim().removePrefix("#").lowercase()
-        if (q.isEmpty()) { _suggestions.value = Suggestions(); return }
+        // Une saisie qui ne peut pas être un identifiant (« fourchette ») ne lance aucune requête en base.
+        if (q.isEmpty() || !looksLikeId(q)) { _suggestions.value = Suggestions(); return }
         searchJob = viewModelScope.launch {
+            // On attend que la frappe se pose : une seule requête pour « 00s », pas une par lettre.
+            delay(SEARCH_DEBOUNCE_MS)
             val (hits, total) = runCatchingSuspend { dao.searchIds(q, 5) }.getOrDefault(emptyList<PuzzleHit>() to 0)
             _suggestions.value = Suggestions(
                 raw.trim().removePrefix("#"),
@@ -180,13 +201,22 @@ class PuzzlesViewModel(
         _state.update {
             it.copy(
                 puzzle = p, line = line, progress = 0, cursor = 0, solved = false, anim = null, hintStage = 0, refute = null, empty = false, arrowUsed = false,
-                themeRevealed = false, message = "${turnLabel(white)} : trouvez la meilleure suite.", tone = Tone.INFO,
+                alreadySolved = false, themeRevealed = false, message = "${turnLabel(white)} : trouvez la meilleure suite.", tone = Tone.INFO,
             )
         }
+        // Récents, thème connu et « déjà résolu » : à part du coup d'introduction, qui ne les attend pas ; ouvrir aussitôt
+        // un autre problème ne les annule pas.
+        val themeShown = state.value.themeVisible
+        viewModelScope.launch {
+            runCatchingSuspend { prefs.pushRecentPuzzle(p.id) }
+            // Thème déjà affiché (filtre sur ce thème précis) : il le restera dans la liste des récents.
+            if (themeShown) runCatchingSuspend { prefs.markThemeKnown(p.id) }
+        }
+        viewModelScope.launch {
+            val before = runCatchingSuspend { dao.solvedAmong(listOf(p.id)).first().isNotEmpty() }.getOrDefault(false)
+            if (before) _state.update { if (it.puzzle?.id == p.id) it.copy(alreadySolved = true) else it }
+        }
         job = viewModelScope.launch {
-            prefs.pushRecentPuzzle(p.id)
-            // Thème déjà affiché (filtre sur un thème précis) : il le restera dans la liste des récents.
-            if (state.value.themeVisible) prefs.markThemeKnown(p.id)
             delay(600)
             _state.update { it.copy(progress = 1, cursor = 1, anim = moveAnim(line.positions[0], line.moves[0])) }
         }
@@ -195,23 +225,25 @@ class PuzzlesViewModel(
     /** Tire un problème non résolu correspondant aux filtres actifs. */
     fun random() {
         loadJob?.cancel()
-        loadJob = viewModelScope.launch {
-            val s = state.value
-            val r = PuzzleThemes.bandRange(s.band)
-            val cur = s.puzzle?.id ?: ""
-            // Tirage indexé en base : difficulté + thème principal du problème, non résolus d'abord.
-            // Filtre : un thème précis, un groupe entier (tous les mats, toutes les finales…) ou tous les thèmes.
-            val group = PuzzleThemes.groupOf(s.theme)
-            val themes = when {
-                group != null -> PuzzleThemes.all.filter { it.group == group }.map { it.key }
-                s.theme.isEmpty() -> null
-                else -> listOf(s.theme)
-            }
-            val id = runCatchingSuspend { dao.randomId(themes, r, cur, rnd) }.getOrNull()
-            val p = id?.let { runCatchingSuspend { dao.byId(it) }.getOrNull() }
-            if (p != null) show(p)
-            else _state.update { it.copy(empty = true, tone = Tone.BAD, message = "Aucun problème ne correspond à ces filtres. Élargissez la sélection dans le catalogue.") }
+        loadJob = viewModelScope.launch { drawRandom() }
+    }
+
+    private suspend fun drawRandom() {
+        val s = state.value
+        val r = PuzzleThemes.bandRange(s.band)
+        val cur = s.puzzle?.id ?: ""
+        // Tirage indexé en base : difficulté + thème principal du problème, non résolus d'abord.
+        // Filtre : un thème précis, un groupe entier (tous les mats, toutes les finales…) ou tous les thèmes.
+        val group = PuzzleThemes.groupOf(s.theme)
+        val themes = when {
+            group != null -> PuzzleThemes.all.filter { it.group == group }.map { it.key }
+            s.theme.isEmpty() -> null
+            else -> listOf(s.theme)
         }
+        val id = runCatchingSuspend { dao.randomId(themes, r, cur, rnd) }.getOrNull()
+        val p = id?.let { runCatchingSuspend { dao.byId(it) }.getOrNull() }
+        if (p != null) show(p)
+        else _state.update { it.copy(empty = true, tone = Tone.BAD, message = "Aucun problème ne correspond à ces filtres. Élargissez la sélection dans le catalogue.") }
     }
 
     /** Ouvre un problème par son identifiant Lichess (ex. « 00sHx ») ; renvoie faux s'il n'est pas embarqué. */
@@ -233,6 +265,7 @@ class PuzzlesViewModel(
 
     /** Change la difficulté sans tirer de problème : le filtre s'applique au prochain tirage aléatoire. */
     fun setBand(band: Int) {
+        filterTouched = true
         _state.update { it.copy(band = band) }
         viewModelScope.launch { prefs.setPuzzleFilter(band, state.value.theme) }
     }
@@ -242,6 +275,7 @@ class PuzzlesViewModel(
     fun train(theme: String, band: Int) = setFilter(band, theme)
 
     fun setFilter(band: Int, theme: String) {
+        filterTouched = true
         _state.update { it.copy(band = band, theme = theme) }
         viewModelScope.launch { prefs.setPuzzleFilter(band, theme) }
         random()
@@ -282,7 +316,8 @@ class PuzzlesViewModel(
 
     fun canPlay(s: PuzzleState): Boolean {
         val line = s.line ?: return false
-        return s.refute == null && s.cursor >= 1 && s.cursor < line.size && s.cursor <= s.progress &&
+        // On ne joue qu'au bout de la ligne déjà jouée (pas depuis un coup précédent qu'on revoit), et jamais une fois résolu.
+        return s.refute == null && !s.solved && s.cursor >= 1 && s.cursor < line.size && s.cursor == s.progress &&
             line.positions[s.cursor].whiteToMove == s.playerWhite
     }
 
@@ -299,7 +334,7 @@ class PuzzlesViewModel(
         }
     }
 
-    /** Coup du joueur. Renvoie 1 (bon coup), 2 (problème résolu) ou -1 (erreur). */
+    /** Coup du joueur. Renvoie 1 (bon coup), 2 (problème résolu), 3 (terminé avec la flèche de l'indice, non compté) ou -1 (erreur). */
     fun onMove(m: Move): Int {
         val s = state.value
         val line = s.line ?: return 0
@@ -308,6 +343,7 @@ class PuzzlesViewModel(
         job?.cancel()
         val cur = s.cursor
         val pos = line.positions[cur]
+        if (!pos.isLegal(m)) return 0
         val expected = line.moves[cur]
         val after = pos.play(m)
         if (m == expected || after.isCheckmate) {
@@ -317,13 +353,15 @@ class PuzzlesViewModel(
             _state.update {
                 it.copy(
                     line = newLine, cursor = cur + 1, progress = cur + 1, anim = moveAnim(pos, m), hintStage = 0,
-                    solved = it.solved || finished, tone = Tone.GOOD,
-                    message = if (finished) solvedMessage(p, it.arrowUsed) else "${newLine.sans[cur]} — bon coup ! La suite arrive…",
+                    solved = it.solved || finished, tone = if (finished && it.arrowUsed) Tone.GOLD else Tone.GOOD,
+                    message = if (finished) solvedMessage(p, it.arrowUsed, it.alreadySolved) else "${newLine.sans[cur]} — bon coup ! La suite arrive…",
                 )
             }
             if (finished) {
                 // Comme dans les séries de l'Académie : résolu après une erreur, il compte ; avec la flèche de l'indice, non.
-                if (!state.value.arrowUsed) viewModelScope.launch { dao.markSolved(p.id) }
+                if (state.value.arrowUsed) return 3
+                // Enregistrement à part : changer aussitôt de problème ou quitter l'écran ne le fait pas perdre.
+                viewModelScope.launch { withContext(NonCancellable) { runCatchingSuspend { dao.markSolved(p.id) } } }
                 return 2
             }
             job = viewModelScope.launch {
@@ -345,9 +383,14 @@ class PuzzlesViewModel(
         return -1
     }
 
-    private fun solvedMessage(p: Puzzle, arrow: Boolean): String {
+    private fun solvedMessage(p: Puzzle, arrow: Boolean, already: Boolean): String {
         val themes = p.themes.trim().split(' ').mapNotNull { PuzzleThemes.byKey[it]?.name }.take(4)
-        return (if (arrow) "Terminé avec la flèche de l'indice : ce problème ne compte pas comme résolu, il reviendra plus tard. " else "Problème résolu ! ") + (if (themes.isNotEmpty()) "Thèmes : ${themes.joinToString(", ")}. " else "") +
+        return when {
+            arrow && already -> "Terminé avec la flèche de l'indice. Vous aviez déjà résolu ce problème : il reste compté comme résolu. "
+            arrow -> "Terminé avec la flèche de l'indice : ce problème ne compte pas comme résolu, il reviendra plus tard. "
+            already -> "Problème résolu ! (déjà résolu auparavant) "
+            else -> "Problème résolu ! "
+        } + (if (themes.isNotEmpty()) "Thèmes : ${themes.joinToString(", ")}. " else "") +
             "Touchez « Problème aléatoire » pour le suivant."
     }
 
@@ -359,7 +402,7 @@ class PuzzlesViewModel(
     private fun refute(pos: Position, m: Move, after: Position, cur: Int) {
         _state.update {
             it.copy(
-                progress = minOf(it.progress, cur).coerceAtLeast(cur), cursor = cur, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m),
+                cursor = cur, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m),
                 refute = Refutation(after, m, null), refuteUntil = 0L, refuteHold = 0L,
                 message = RefutationLogic.intro(pos, m),
             )
@@ -395,8 +438,13 @@ class PuzzlesViewModel(
         }
     }
 
-    private companion object {
-        const val KEY_PUZZLE = "puzzles_current"
+    companion object {
+        private const val KEY_PUZZLE = "puzzles_current"
+        internal const val SEARCH_DEBOUNCE_MS = 150L
+        private val ID_LIKE = Regex("[A-Za-z0-9]{2,5}")
+
+        /** La saisie peut être (le début d') un identifiant Lichess : 2 à 5 lettres ou chiffres. */
+        fun looksLikeId(text: String): Boolean = ID_LIKE.matches(text.trim().removePrefix("#"))
     }
 
     /** Style d'image enregistré (format, fond), lu à l'ouverture du tiroir d'export. */

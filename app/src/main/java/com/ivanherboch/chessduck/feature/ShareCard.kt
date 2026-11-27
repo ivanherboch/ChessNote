@@ -414,7 +414,7 @@ object ShareCard {
      * Énoncé : l'échiquier occupe presque toute la largeur ; au-dessus, le défi ; en dessous, l'indice
      * (avec le thème) dans une carte compacte, puis un pied de page discret.
      */
-    fun render(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle()): Bitmap {
+    fun render(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle(), includeTip: Boolean = true): Bitmap {
         val pal = Pal(style.colors)
         val square = style.format == ShareFormat.SQUARE
         val h = style.format.height
@@ -428,7 +428,8 @@ object ShareCard {
         val tipSize = 28f
         val tipLineH = tipSize * 1.32f
         val label = if (mate || theme.tip.isEmpty()) "Indice :" else "Indice · ${theme.name} :"
-        val tipText = if (theme.tip.isNotEmpty()) "$label ${theme.tip}" else ""
+        // « Inclure l'indice » décoché : l'énoncé seul, sans le thème ni son conseil.
+        val tipText = if (includeTip && theme.tip.isNotEmpty()) "$label ${theme.tip}" else ""
         val tip = if (tipText.isNotEmpty()) probe.wrap(tipText, tipSize, W - 2 * M - 48f) else emptyList()
         val tipH = if (tip.isEmpty()) 0f else 28f + tip.size * tipLineH
         val top = headerHeight(title.size, titleSize) + 6f
@@ -506,7 +507,7 @@ object ShareCard {
 
         // Choix de la grille qui donne les plus grands échiquiers.
         val detailed = n <= 2
-        val titleSz = if (n == 1) 40f else if (n <= 4) 34f else 30f
+        val titleSz = if (n == 1) 40f else if (n <= 4) 34f else if (n <= 6) 30f else 26f
         val textSize = if (n == 1) 30f else if (n <= 2) 26f else 24f
         val lineH = textSize * 1.28f
         val pad = if (n == 1) 18f else 10f
@@ -521,6 +522,8 @@ object ShareCard {
             return (0 until n).maxOf { k ->
                 val st = steps[k]
                 var hh = titleSz * 1.2f + 6f
+                // Grille compacte : la réponse adverse qui ne tient pas à côté du coup passe sur sa propre ligne.
+                if (!detailed && st.replySan != null && !replyInline(probe, st, titleSz, w)) hh += titleSz * 1.05f
                 if (detailed) {
                     hh += probe.wrap(describe(st.before, st.move, st.san), textSize, w).size * lineH
                     if (st.reply != null && st.replySan != null) hh += probe.wrap(replyText(st), textSize, w - textSize * 0.8f).size * lineH
@@ -534,9 +537,11 @@ object ShareCard {
             val panelH = (gridH - (rows - 1) * gap) / rows
             return minOf(textW, panelH - 2 * pad - 10f - captionH(cols))
         }
-        val cols = (1..minOf(n, 3)).maxByOrNull { sideFor(it) } ?: 1
+        // Longues solutions (jusqu'à 10 coups) : jusqu'à 5 colonnes, pour que tout tienne sans déborder de l'image.
+        val cols = (1..minOf(n, if (n > 6) 5 else 3)).maxByOrNull { sideFor(it) } ?: 1
         val (rows, panelW, textW) = layout(cols)
-        val side = sideFor(cols).coerceAtLeast(120f)
+        // Jamais de taille minimale imposée qui pousserait les cartes hors de l'image.
+        val side = sideFor(cols).coerceAtLeast(1f)
         val capH = captionH(cols)
         val panelH = 2 * pad + side + 10f + capH
         val gridTop = top + ((gridH - rows * panelH - (rows - 1) * gap) / 2).coerceAtLeast(0f)
@@ -575,8 +580,10 @@ object ShareCard {
                     st.san.endsWith("+") -> g.badge("+", dx + s * 0.80f, dy + s * 0.20f, s * 0.22f, pal.goldFill, pal.onGold)
                 }
                 // « x » : prise, en haut à gauche de la case d'arrivée (coup du joueur et réponse adverse).
-                if (st.before.isCapture(st.move)) g.badge("x", dx + s * 0.20f, dy + s * 0.20f, s * 0.22f, pal.text, pal.bgTop)
-                st.reply?.takeIf { after.isCapture(it) }?.let { r ->
+                val took = st.before.isCapture(st.move)
+                if (took) g.badge("x", dx + s * 0.20f, dy + s * 0.20f, s * 0.22f, pal.text, pal.bgTop)
+                // Reprise sur la même case : un seul badge (deux se superposeraient).
+                st.reply?.takeIf { after.isCapture(it) && !(took && it.to == st.move.to) }?.let { r ->
                     val (rx, ry) = at(r.to)
                     g.badge("x", rx + s * 0.20f, ry + s * 0.20f, s * 0.22f, pal.text, pal.bgTop)
                 }
@@ -589,14 +596,21 @@ object ShareCard {
                 // Pièce prise, colorée à l'opposé de celle qui joue.
                 val victim = st.before.capturedType(st.move).let { t -> if (t == 0) 0 else t + if (isWhite(st.before[st.move.from])) BLACK else 0 }
                 val ps = titleSz * 1.05f
+                var replyBelow = false
                 if (!detailed && st.replySan != null) {
-                    // La réponse rétrécit pour ne jamais chevaucher la vignette de la pièce prise.
-                    val rx = sanX + g.width(st.san, titleSz, bold = true) + 12f
-                    val room = bx + textW - (if (victim != 0) ps + 8f else 0f) - rx
                     val reply = "— ${st.replySan}"
                     val full = titleSz * 0.85f
-                    val size = (full * room / g.width(reply, full, bold = true)).coerceAtMost(full)
-                    if (size >= titleSz * 0.5f) g.text(reply, rx, ty0, size, pal.redText, bold = true)
+                    if (replyInline(probe, st, titleSz, textW)) {
+                        // À côté du coup, sans jamais chevaucher la vignette de la pièce prise.
+                        val rx = sanX + g.width(st.san, titleSz, bold = true) + 12f
+                        val room = bx + textW - (if (victim != 0) ps + 8f else 0f) - rx
+                        g.text(reply, rx, ty0, (full * room / g.width(reply, full, bold = true)).coerceAtMost(full), pal.redText, bold = true)
+                    } else {
+                        // Sur sa propre ligne, sous le coup : la réponse adverse n'est jamais omise.
+                        replyBelow = true
+                        val size = (full * textW / g.width(reply, full, bold = true)).coerceAtMost(full)
+                        g.text(reply, bx, ty0 + titleSz * 1.05f, size, pal.redText, bold = true)
+                    }
                 }
                 if (victim != 0) {
                     val px = bx + textW - ps
@@ -608,7 +622,7 @@ object ShareCard {
                     g.cv.drawBitmap(g.piece(victim), null, RectF(px, py, px + ps, py + ps), g.paint)
                     if (detailed) g.text("prend", px - 10f, ty0 - titleSz * 0.12f, textSize * 0.9f, pal.muted, align = Paint.Align.RIGHT)
                 }
-                var ty = ty0 + titleSz * 0.25f
+                var ty = ty0 + titleSz * 0.25f + if (replyBelow) titleSz * 1.05f else 0f
                 if (detailed) {
                     for (l in probe.wrap(describe(st.before, st.move, st.san), textSize, textW)) { ty += lineH; g.text(l, bx, ty, textSize, pal.text) }
                     if (st.reply != null && st.replySan != null) {
@@ -621,8 +635,11 @@ object ShareCard {
                 }
                 if (last) {
                     ty += 10f
-                    if (st.san.endsWith("#")) g.pill("Échec et mat !", bx, ty, textSize, pal.goldFill, pal.onGold)
-                    else g.pill("Avantage décisif", bx, ty, textSize, pal.greenFill, pal.onGreen)
+                    val label = if (st.san.endsWith("#")) "Échec et mat !" else "Avantage décisif"
+                    // La pastille rétrécit si la carte est étroite (5 colonnes) : elle ne déborde jamais de sa carte.
+                    val pillSize = (textSize * textW / (g.width(label, textSize, bold = true) + textSize * 1.4f)).coerceAtMost(textSize)
+                    if (st.san.endsWith("#")) g.pill(label, bx, ty, pillSize, pal.goldFill, pal.onGold)
+                    else g.pill(label, bx, ty, pillSize, pal.greenFill, pal.onGreen)
                 }
                 x += panelW + gap
             }
@@ -630,6 +647,7 @@ object ShareCard {
         }
         // Légende des symboles
         val ly = h - FOOTER_H - 18f
+        lastSolutionGrid = SolutionGrid(cols, rows, side, gridTop, gridTop + rows * panelH + (rows - 1) * gap, (W - minOf(n, cols) * panelW - (minOf(n, cols) - 1) * gap) / 2, ly - 15f, h.toFloat())
         g.paint.style = Paint.Style.FILL
         g.paint.color = pal.green; g.cv.drawRoundRect(RectF(M, ly - 15f, M + 48f, ly - 3f), 6f, 6f, g.paint)
         g.text("votre coup", M + 58f, ly, 25f, pal.muted)
@@ -645,27 +663,45 @@ object ShareCard {
         return bmp
     }
 
+    /**
+     * Grille compacte : la réponse « — Cxd5 » tient-elle à côté du coup (au moins aux deux tiers de sa taille), en
+     * laissant la place de la vignette de la pièce prise ?
+     */
+    private fun replyInline(probe: TextMetrics, st: Step, titleSz: Float, textW: Float): Boolean {
+        val reply = "— ${st.replySan ?: return true}"
+        val br = titleSz * 0.5f
+        val used = 2 * br + 10f + probe.width(st.san, titleSz, bold = true) + 12f +
+            (if (st.before.isCapture(st.move)) titleSz * 1.05f + 8f else 0f)
+        val full = titleSz * 0.85f
+        return (full * (textW - used) / probe.width(reply, full, bold = true)) >= full * 0.67f
+    }
+
+    /** Géométrie de la dernière solution rendue (tests : aucune carte ne déborde de l'image ni ne couvre la légende). */
+    internal class SolutionGrid(val cols: Int, val rows: Int, val side: Float, val top: Float, val bottom: Float, val left: Float, val legendTop: Float, val height: Float)
+
+    @Volatile internal var lastSolutionGrid: SolutionGrid? = null
+
     private fun replyText(st: Step) =
         "Réponse : ${st.replySan} — ${describe(st.before.play(st.move), st.reply!!, st.replySan!!).replaceFirstChar { it.lowercase() }}"
 
     // ---------------------------------------------------------------- Envoi (voir ShareExporter)
 
     /** Image de l'énoncé : réutilise [ready] (aperçu déjà calculé) sinon la génère sur Dispatchers.Default. */
-    private suspend fun problemBitmap(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle, ready: Bitmap?) =
-        ready ?: withContext(Dispatchers.Default) { render(context, puzzle, position, playerWhite, lastMove, style) }
+    private suspend fun problemBitmap(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle, ready: Bitmap?, includeTip: Boolean) =
+        ready ?: withContext(Dispatchers.Default) { render(context, puzzle, position, playerWhite, lastMove, style, includeTip) }
 
     private suspend fun solutionBitmap(context: Context, puzzle: Puzzle, style: ShareStyle, ready: Bitmap?) =
         ready ?: withContext(Dispatchers.Default) { renderSolution(context, puzzle, style) }
 
-    suspend fun saveProblem(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle(), ready: Bitmap? = null): String? =
-        ShareExporter.save(context, problemBitmap(context, puzzle, position, playerWhite, lastMove, style, ready), "chessduck-${puzzle.id}.png")
+    suspend fun saveProblem(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle(), ready: Bitmap? = null, includeTip: Boolean = true): String? =
+        ShareExporter.save(context, problemBitmap(context, puzzle, position, playerWhite, lastMove, style, ready, includeTip), "chessduck-${puzzle.id}.png")
 
     suspend fun saveSolution(context: Context, puzzle: Puzzle, style: ShareStyle = ShareStyle(), ready: Bitmap? = null): String? =
         ShareExporter.save(context, solutionBitmap(context, puzzle, style, ready), "chessduck-${puzzle.id}-solution.png")
 
-    suspend fun share(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle(), ready: Bitmap? = null): Boolean =
+    suspend fun share(context: Context, puzzle: Puzzle, position: Position, playerWhite: Boolean, lastMove: Move?, style: ShareStyle = ShareStyle(), ready: Bitmap? = null, includeTip: Boolean = true): Boolean =
         ShareExporter.send(
-            context, problemBitmap(context, puzzle, position, playerWhite, lastMove, style, ready), "chessduck-${puzzle.id}.png",
+            context, problemBitmap(context, puzzle, position, playerWhite, lastMove, style, ready, includeTip), "chessduck-${puzzle.id}.png",
             challenge(puzzle, Line.fromUci(puzzle.fen, puzzle.moves), playerWhite) + ". Saurez-vous trouver la solution ?", "Partager le problème",
         )
 

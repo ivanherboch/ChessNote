@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `4.2.14` (`versionCode = 102`), publiée en release GitHub `v4.2.14`.
+- **Version actuelle** : `4.2.15` (`versionCode = 103`), publiée en release GitHub `v4.2.15`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -206,6 +206,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **4.2.12** : `LessonsCard(masteredCount, level, onCatalog)` : bouton « Palier N » (catalogue filtré sur le palier), boutons sous le titre si `fontScale > 1.3`.
 - **4.2.13** : `PlayViewModel.finishedGeneration` + résultat provisoire « Partie terminée. » posé aussitôt dans `finish` (plus de double enregistrement ni de double ELO) ; `rnd` injectable ; `PlayFuzzTest` à graine fixe (`FUZZ_FROM`/`FUZZ_TO`/`FUZZ_DEBUG`).
 - **4.2.14** : `LessonsCard` : titre « Leçons », « N sur 211 maîtrisées », boutons « Palier N (n) » et « Toutes (211) » (description TalkBack contenant « Ouvrir le catalogue des leçons », utilisée par les tests).
+- **4.2.15** : refonte des Problèmes, étape 1 sur 3 (plan `plan_problemes_3_etapes.md`) : fiabilité, anti-spoiler, réfutation, export, tirage par rowid (voir le Relais ci-dessous).
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.
@@ -309,6 +310,13 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 Les détails de chaque version sont dans `docs/release-notes.md` ; les exemples d'images partagées dans `docs/screenshots/`.
 
 ---
+
+### Relais refonte Problèmes (état après l'étape 1, v4.2.15)
+- Symboles : `PuzzleState.alreadySolved`, `themeVisible` (filtre == `puzzle.primaryTheme`) ; `PuzzlesViewModel` : `filterTouched`, `loadJob` porte aussi le chargement de départ, `drawRandom()`, `looksLikeId()`, `SEARCH_DEBOUNCE_MS` (150), préchauffage du moteur dans `init`, `onMove` renvoie 3 (fin avec la flèche), `canPlay` exige `!solved && cursor == progress`, `refute` ne tronque plus `progress`, `markSolved` en `NonCancellable`, rafraîchissement après `syncCatalogue()`. `PuzzlesScreen` : `reserveKey = p.id`, trait réel en position 0, message « Vous revoyez… », conseil en INFO et GOOD. `PuzzleCatalogSheet` : suggestions sans thème, priorité au thème si la saisie n'est pas un identifiant. `RefutationLogic.reply` : `capturedType` (prise en passant), mats et scores décisifs avant la prise, `reply = null` si le moteur ne répond pas. `ShareCard` : jusqu'à 5 colonnes au-delà de 6 coups, `replyInline` (réponse sur une 2e ligne sinon), badge « x » dédoublonné, pastille ajustée, `render(includeTip)`, `lastSolutionGrid` (tests). `ExportSheet` : option « Indice », `onReveal` (aperçu de la solution calculé seulement une fois démasqué ou résolu). `PuzzleDao.maxRowId`, `probeAll`, `probeInThemes` ; `RoomPuzzleRepository.randomId` : 4 fenêtres de 3 000 rowid, puis repli exact.
+- DataStore et Room : aucune clé nouvelle, Room toujours en version 4 (requêtes DAO seulement).
+- Mesures (base réelle, Robolectric) : tirage Libre 0,54 ms (ancien 302 ms), fourchette 0,53 ms, roque (thème rare, repli) 4,2 ms.
+- Repéré hors périmètre (non corrigé) : le message d'accueil répète « Trait aux … » (tâche 2.2) ; le tirage par fenêtre favorise légèrement les problèmes qui suivent un long trou de rowid résolus.
+- Reste pour l'étape 2 : boutons Solution et Recommencer, `MoveStrip`, bouton Dé en double une fois résolu, « Tirer un problème » quand seule la difficulté change, alerte quand tout est résolu dans le filtre, ponts vers le Jeu Libre et l'Académie.
 
 ## 7. Limites connues et pistes
 

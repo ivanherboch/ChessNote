@@ -134,7 +134,30 @@ interface PuzzleDao {
     @Query("SELECT * FROM puzzles WHERE rowid >= :start AND primaryTheme IN (:themes) LIMIT :n")
     suspend fun sliceThemes(start: Int, themes: List<String>, n: Int): List<Puzzle>
 
-    // ---- Tirage aléatoire indexé : comptage puis lecture à un rang tiré au hasard ----
+    // ---- Tirage aléatoire rapide : une fenêtre de rowid à partir d'un point tiré au hasard ----
+
+    @Query("SELECT IFNULL(MAX(rowid), 0) FROM puzzles")
+    suspend fun maxRowId(): Long
+
+    /**
+     * Premier problème non résolu de la tranche, dans les [window] lignes qui suivent le rowid [start] : lecture bornée,
+     * quelle que soit la taille de la base (environ un millième de seconde au lieu d'un comptage complet).
+     */
+    @Query(
+        "SELECT id FROM (SELECT id, rating FROM puzzles WHERE rowid >= :start ORDER BY rowid LIMIT :window) " +
+            "WHERE rating BETWEEN :lo AND :hi AND id != :exclude AND id NOT IN (SELECT puzzleId FROM puzzle_progress) LIMIT 1",
+    )
+    suspend fun probeAll(start: Long, window: Int, lo: Int, hi: Int, exclude: String): String?
+
+    /** Comme [probeAll], limité aux problèmes dont le thème principal est l'un de [themes]. */
+    @Query(
+        "SELECT id FROM (SELECT id, rating, primaryTheme FROM puzzles WHERE rowid >= :start ORDER BY rowid LIMIT :window) " +
+            "WHERE primaryTheme IN (:themes) AND rating BETWEEN :lo AND :hi AND id != :exclude " +
+            "AND id NOT IN (SELECT puzzleId FROM puzzle_progress) LIMIT 1",
+    )
+    suspend fun probeInThemes(start: Long, window: Int, themes: List<String>, lo: Int, hi: Int, exclude: String): String?
+
+    // ---- Tirage exact (repli) : comptage puis lecture à un rang tiré au hasard ----
 
     @Query(
         "SELECT COUNT(*) FROM puzzles WHERE primaryTheme IN (:themes) AND rating BETWEEN :lo AND :hi AND id != :exclude " +

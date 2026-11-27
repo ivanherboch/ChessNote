@@ -106,6 +106,8 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
     var stuck by remember(s.puzzle?.id, s.cursor, s.refute) { mutableStateOf<String?>(null) }
     ModuleLayout(
         bottomMin = 170.dp,
+        // Nouveau problème : la réserve de hauteur sous l'échiquier se recalcule (message et conseil de longueurs différentes).
+        reserveKey = p.id,
         top = {
             Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 // Le filtre actif plutôt qu'un compteur « 0 / 150 000 » décourageant.
@@ -121,9 +123,11 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
             }
             // Ligne d'information toujours lisible en entier : elle passe à la ligne au lieu de se couper.
             Row(Modifier.fillMaxWidth().heightIn(min = 32.dp).padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                SideDot(s.playerWhite)
+                // Le vrai trait de la position affichée : avant le coup d'introduction, c'est l'adversaire qui joue.
+                val turnWhite = if (s.cursor == 0) line.positions[0].whiteToMove else s.playerWhite
+                SideDot(turnWhite)
                 Text(
-                    if (s.playerWhite) "Trait aux Blancs" else "Trait aux Noirs", color = c.text, style = MaterialTheme.typography.titleSmall,
+                    if (turnWhite) "Trait aux Blancs" else "Trait aux Noirs", color = c.text, style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(start = 6.dp),
                 )
                 Text(
@@ -153,6 +157,7 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
                 // Réfutation affichée : un toucher sur l'échiquier remet tout de suite la position pour rejouer.
                 onSquareTap = if (r != null) { _ -> vm.retry() } else null,
                 onMove = { m ->
+                    // 3 : terminé avec la flèche de l'indice, sans la vibration de réussite (le problème ne compte pas).
                     when (vm.onMove(m)) {
                         2 -> fb?.success()
                         -1 -> fb?.error()
@@ -163,9 +168,16 @@ fun PuzzlesScreen(vm: PuzzlesViewModel) {
         bottom = {
             // Anti-spoiler : en mode libre (tous les thèmes ou une famille), le thème et son conseil
             // restent masqués jusqu'à la résolution, sauf demande explicite.
-            val showTip = visible && s.refute == null && !s.solved && s.tone == Tone.INFO
+            val showTip = visible && s.refute == null && !s.solved && (s.tone == Tone.INFO || s.tone == Tone.GOOD)
+            // On revoit un coup précédent : la carte le dit, et comment revenir au problème.
+            val reviewing = s.refute == null && s.cursor < s.progress
+            val shown = when {
+                !reviewing -> s.message
+                s.solved -> "Vous revoyez la solution. Touchez › pour avancer jusqu'au dernier coup."
+                else -> "Vous revoyez un coup précédent. Touchez › pour revenir au problème et jouer."
+            }
             FeedbackCard(
-                stuck ?: (s.message + if (showTip) "\n\nConseil : ${type.tip}" else ""),
+                stuck ?: (shown + if (showTip && !reviewing) "\n\nConseil : ${type.tip}" else ""),
                 if (stuck != null) Tone.GOLD else s.tone, Modifier.padding(top = 6.dp).weight(1f),
                 title = if (visible) "Type de problème : ${type.name}" else "Thème masqué (mode libre)",
                 action = if (!visible) ({

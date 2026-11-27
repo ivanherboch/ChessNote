@@ -74,6 +74,52 @@ class AppRobolectricTest {
         prefs.setAcademyLevel(2)
     }
 
+    /** Solution de 10 coups (#9zsfc) : en 4:5 comme en 1:1, toutes les cartes tiennent dans l'image, au-dessus de la légende. */
+    @Test
+    fun longSolutionCardFitsTheImage(): Unit = runBlocking {
+        val app = ApplicationProvider.getApplicationContext<ChessDuckApp>()
+        val pz = app.db.puzzles().byId("9zsfc") ?: error("problème 9zsfc absent de la base embarquée")
+        val dir = File(System.getenv("SHOT_DIR") ?: "build/screenshots").apply { mkdirs() }
+        for (fmt in com.ivanherboch.chessduck.feature.ShareFormat.values()) {
+            val img = com.ivanherboch.chessduck.feature.ShareCard.renderSolution(app, pz, com.ivanherboch.chessduck.feature.ShareStyle(fmt))
+            val g = com.ivanherboch.chessduck.feature.ShareCard.lastSolutionGrid!!
+            assertTrue("${fmt.name} : ${g.cols} colonnes, ${g.rows} rangées, bas ${g.bottom} / légende ${g.legendTop}", g.bottom <= g.legendTop && g.left >= 0f && g.side >= 100f)
+            assertEquals(fmt.height, img.height)
+            File(dir, "partage_9zsfc_${fmt.name.lowercase()}.png").outputStream().use { img.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        }
+        // Énoncé sans l'indice (option du tiroir d'export).
+        val l = com.ivanherboch.chessduck.chess.Line.fromUci(pz.fen, pz.moves)
+        val bare = com.ivanherboch.chessduck.feature.ShareCard.render(app, pz, l.positions[1], l.positions[1].whiteToMove, l.moves[0], includeTip = false)
+        File(dir, "partage_9zsfc_sans_indice.png").outputStream().use { bare.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+    }
+
+    /** Tirage aléatoire sur la vraie base de 150 000 problèmes : rapide en mode Libre comme sur un thème. */
+    @Test
+    fun randomDrawIsFastOnTheRealDatabase(): Unit = runBlocking {
+        val app = ApplicationProvider.getApplicationContext<ChessDuckApp>()
+        val repo = com.ivanherboch.chessduck.data.RoomPuzzleRepository(app, app.db)
+        val rnd = kotlin.random.Random(7)
+        repo.randomId(null, 0..4000, "", rnd) // ouverture de la base, lecture du rowid maximal
+        fun time(themes: List<String>?, range: IntRange): Double {
+            val t0 = System.nanoTime()
+            repeat(30) { assertNotNull(kotlinx.coroutines.runBlocking { repo.randomId(themes, range, "", rnd) }) }
+            return (System.nanoTime() - t0) / 30 / 1e6
+        }
+        val free = time(null, 0..4000)
+        val fork = time(listOf("fork"), 1200..1599)
+        val rare = time(listOf("castling"), 0..1199)
+        // Ancien tirage exact (comptage puis rang), pour comparaison.
+        val t0 = System.nanoTime()
+        repeat(5) {
+            val n = app.db.puzzles().countAll(0, 4000, "", false)
+            app.db.puzzles().idAllAt(0, 4000, "", false, rnd.nextInt(n))
+        }
+        val old = (System.nanoTime() - t0) / 5 / 1e6
+        println("Tirage : libre %.2f ms, fourchette %.2f ms, roque %.2f ms ; ancien libre %.1f ms".format(free, fork, rare, old))
+        assertTrue("libre $free ms", free < 15.0)
+        assertTrue("fourchette $fork ms", fork < 15.0)
+    }
+
     /** Ajoute une courte partie terminée à l'historique de l'application (mat du berger). */
     /**
      * Partie perdue par le joueur (Noirs) sur une gaffe : le cavalier en f6 permet le mat en f7. L'analyse est

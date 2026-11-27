@@ -1,3 +1,28 @@
+## ChessDuck 4.2.15 — Problèmes : fiabilité, anti-spoiler et tirage instantané
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Tirage aléatoire instantané : moins d'une milliseconde en mode Libre, contre environ 300 ms avant (mesuré sur la base de 150 000 problèmes).
+- Résolution plus sûre :
+  - on ne joue qu'au bout de la ligne déjà jouée ; en revoyant un coup précédent, la carte le dit (« Touchez › pour revenir au problème ») ;
+  - un mauvais coup n'efface plus la suite déjà trouvée ;
+  - avant le coup d'introduction, le trait affiché est le vrai (celui de l'adversaire).
+- Problème terminé avec la flèche de l'indice : ton doré, sans vibration de réussite ; s'il était déjà résolu auparavant, le message le précise.
+- Anti-spoiler :
+  - le thème n'est affiché d'office que si votre filtre est précisément ce thème ;
+  - les suggestions de recherche ne montrent plus le thème, seulement l'identifiant et la difficulté ;
+  - l'aperçu de la solution n'est calculé qu'une fois démasqué.
+- Recherche du catalogue : un mot (« fourchette ») ouvre le thème au lieu d'être pris pour un identifiant ; la base n'est interrogée qu'une fois la frappe posée.
+- Réfutation des mauvais coups :
+  - la prise en passant est bien nommée ;
+  - un coup qui gagnait aussi, ou matait plus lentement, est expliqué comme tel ;
+  - si l'Ordinateur ne répond pas à temps, aucune réponse n'est inventée.
+- Export en image :
+  - les solutions de 7 à 10 coups tiennent dans l'image (jusqu'à 5 colonnes, en 4:5 comme en 1:1) ;
+  - la réponse adverse n'est plus jamais omise ;
+  - un seul badge « x » par case ;
+  - nouvelle option « Indice : Inclure / Sans » pour l'énoncé.
+
 ## ChessDuck 4.2.14 — carte « Leçons » plus claire
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
