@@ -282,7 +282,7 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                         AcademyScreen(
                             avm,
                             onTrainTheme = { theme, level -> bridges.trainTheme = theme to level; select(2) },
-                            onPlayPosition = { fen, white -> bridges.playPosition = fen to white; select(3) },
+                            onPlayPosition = { fen, white -> bridges.playPosition = Triple(fen, white, com.ivanherboch.chessduck.feature.PositionOrigin.LESSON); select(3) },
                             onVision = { bridges.vision = true; select(0) },
                         )
                     }
@@ -293,7 +293,7 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                         }
                         PuzzlesScreen(
                             pvm,
-                            onPlayPosition = { fen, white -> bridges.playPosition = fen to white; select(3) },
+                            onPlayPosition = { fen, white -> bridges.playPosition = Triple(fen, white, com.ivanherboch.chessduck.feature.PositionOrigin.PUZZLE); select(3) },
                             onOpenLesson = { theme -> bridges.lessonTheme = theme; select(1) },
                         )
                     }
@@ -301,7 +301,7 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
                         val play = viewModel<PlayViewModel>(factory = DuckViewModels.Factory)
                         val review = viewModel<GameReviewViewModel>(factory = DuckViewModels.Factory)
                         LaunchedEffect(bridges.playPosition) {
-                            bridges.playPosition?.let { (fen, white) -> review.close(); play.startFromPosition(fen, white); bridges.playPosition = null }
+                            bridges.playPosition?.let { (fen, white, origin) -> review.close(); play.startFromPosition(fen, white, origin); bridges.playPosition = null }
                         }
                         PlayScreen(play, review, onTrainTopic = { t -> bridges.academyTopic = t; select(1) })
                     }
@@ -369,7 +369,7 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
 @Stable
 private class TabBridges {
     var trainTheme by mutableStateOf<Pair<String, Int>?>(null)
-    var playPosition by mutableStateOf<Pair<String, Boolean>?>(null)
+    var playPosition by mutableStateOf<Triple<String, Boolean, com.ivanherboch.chessduck.feature.PositionOrigin>?>(null)
     var vision by mutableStateOf(false)
     var academyTopic by mutableStateOf<ReviewTopic?>(null)
     /** Thème d'un problème : l'Académie ouvre la leçon qui l'enseigne (« Voir la leçon »). */

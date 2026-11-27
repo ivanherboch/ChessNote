@@ -127,7 +127,8 @@ fun PuzzlesScreen(
     // Explication brève quand on touche une pièce qui ne peut pas bouger ; effacée au coup suivant.
     var stuck by remember(s.puzzle?.id, s.cursor, s.refute) { mutableStateOf<String?>(null) }
     ModuleLayout(
-        bottomMin = 170.dp,
+        // Grande police : plus de hauteur pour la carte, pour que l'indice ou la réfutation se lisent sans « Lire la suite ».
+        bottomMin = if (LocalDensity.current.fontScale > 1.3f) 240.dp else 170.dp,
         // Nouveau problème : la réserve de hauteur sous l'échiquier se recalcule (message et conseil de longueurs différentes).
         reserveKey = p.id,
         top = {
@@ -144,19 +145,20 @@ fun PuzzlesScreen(
                 DuckIconButton(Icons.Rounded.History, "Problèmes joués : récents, à refaire, favoris", { recentSheet = true }, enabled = recents.isNotEmpty() || toRedo.isNotEmpty() || bookmarks.isNotEmpty())
                 DuckIconButton(Icons.Rounded.IosShare, "Exporter en image", { shareChoice = true })
             }
-            // Ligne d'information toujours lisible en entier : elle passe à la ligne au lieu de se couper.
+            // Ligne d'information toujours lisible en entier : elle passe à la ligne au lieu de se couper. En grande police,
+            // le trait et le signet restent sur une ligne et les détails passent dessous (sinon cinq lignes étroites).
+            val large = LocalDensity.current.fontScale > 1.3f
+            // Le vrai trait de la position affichée : avant le coup d'introduction, c'est l'adversaire qui joue.
+            val turnWhite = if (s.cursor == 0) line.positions[0].whiteToMove else s.playerWhite
+            val details = (if (visible) type.name else "Thème masqué") + " · ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} ${p.rating} · #${p.id}"
             Row(Modifier.fillMaxWidth().heightIn(min = 32.dp).padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                // Le vrai trait de la position affichée : avant le coup d'introduction, c'est l'adversaire qui joue.
-                val turnWhite = if (s.cursor == 0) line.positions[0].whiteToMove else s.playerWhite
                 SideDot(turnWhite)
                 Text(
                     if (turnWhite) "Trait aux Blancs" else "Trait aux Noirs", color = c.text, style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(start = 6.dp),
+                    modifier = Modifier.padding(start = 6.dp).then(if (large) Modifier.weight(1f) else Modifier),
                 )
-                Text(
-                    (if (visible) type.name else "Thème masqué") + " · ${PuzzleThemes.BANDS[PuzzleThemes.bandOf(p.rating)]} ${p.rating} · #${p.id}",
-                    color = c.muted, style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(start = 10.dp).weight(1f),
+                if (!large) Text(
+                    details, color = c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 10.dp).weight(1f),
                 )
                 // Favori : le problème se retrouve dans l'onglet « Favoris » des problèmes joués.
                 DuckIconButton(
@@ -164,6 +166,7 @@ fun PuzzlesScreen(
                     if (bookmarked) "Retirer des favoris" else "Ajouter aux favoris", vm::toggleBookmark, accent = c.gold, selected = bookmarked,
                 )
             }
+            if (large) Text(details, color = c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.fillMaxWidth())
         },
         // Bandeau des coups déjà joués (jamais la suite de la solution) : toucher un coup y revient.
         underBoard = {
@@ -266,7 +269,7 @@ fun PuzzlesScreen(
                     // Thème visible si le problème est résolu, ou s'il était déjà affiché quand il a été joué.
                     PlayedRow(r, done || r.id in knownThemes, if (done) "Résolu" else "À résoudre", done) { recentSheet = false; vm.openPuzzle(r) }
                 }
-                1 -> if (toRedo.isEmpty()) EmptyListText("Rien à refaire : un problème manqué, ou résolu après une erreur, revient ici le lendemain.") else for ((r, at) in toRedo) {
+                1 -> if (toRedo.isEmpty()) EmptyListText("Rien à refaire : un problème manqué, ou résolu après une erreur, revient ici le lendemain, puis à intervalles croissants (7, 30, 90 jours) tant qu'il n'est pas solide.") else for ((r, at) in toRedo) {
                     val days = ((at - now + 86_399_999L) / 86_400_000L).toInt()
                     PlayedRow(r, true, if (days <= 0) "À refaire" else "Dans $days j", false) { recentSheet = false; vm.openPuzzle(r) }
                 }

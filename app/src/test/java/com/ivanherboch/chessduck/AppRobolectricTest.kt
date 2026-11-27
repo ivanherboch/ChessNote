@@ -108,6 +108,8 @@ class AppRobolectricTest {
         val play = androidx.lifecycle.ViewModelProvider(rule.activity, com.ivanherboch.chessduck.DuckViewModels.Factory)[com.ivanherboch.chessduck.feature.PlayViewModel::class.java]
         assertEquals(l.last.toFen(), play.state.value.line.startFen)
         assertEquals(pvm.state.value.playerWhite, play.state.value.playerWhite)
+        // Le Jeu Libre dit d'où vient la position : un problème, pas une leçon.
+        assertEquals(com.ivanherboch.chessduck.feature.PositionOrigin.PUZZLE, play.state.value.origin)
     }
 
     /** Grande police : bandeau des coups, Indice et Solution sans exception de mise en page ni texte coupé au-dessus de l'échiquier. */

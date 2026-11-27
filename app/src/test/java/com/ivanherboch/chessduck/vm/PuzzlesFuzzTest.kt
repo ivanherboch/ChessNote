@@ -300,8 +300,20 @@ class PuzzlesFuzzTest {
         assertTrue(gaveUp.solvedAt == 0L && gaveUp.nextReviewAt == at + d && gaveUp.attempts == 1 && gaveUp.bookmarked)
         val err = com.ivanherboch.chessduck.data.PuzzleProgress.after(gaveUp, o.WITH_ERROR, at + 5)
         assertTrue(err.solvedAt == at + 5 && err.nextReviewAt == at + 5 + d && err.attempts == 2)
+        // Résolu net alors qu'il était à refaire : intervalle suivant (7 jours), puis 30, 90, et retiré de la liste.
         val clean = com.ivanherboch.chessduck.data.PuzzleProgress.after(err, o.CLEAN, at + 9)
-        assertTrue(clean.solvedAt == at + 5 && clean.nextReviewAt == 0L && clean.status == o.CLEAN && clean.bookmarked)
+        assertTrue(clean.solvedAt == at + 5 && clean.nextReviewAt == at + 9 + 7 * d && clean.status == o.CLEAN && clean.bookmarked)
+        var p = clean
+        var t = at + 9
+        for (days in listOf(30, 90)) { t += 1; p = com.ivanherboch.chessduck.data.PuzzleProgress.after(p, o.CLEAN, t); assertTrue(p.nextReviewAt == t + days * d) }
+        p = com.ivanherboch.chessduck.data.PuzzleProgress.after(p, o.CLEAN, t + 1)
+        assertTrue(p.nextReviewAt == 0L)
+        // Une erreur garde l'intervalle en cours ; un abandon le remet à un jour.
+        val at7 = com.ivanherboch.chessduck.data.PuzzleProgress.after(clean, o.WITH_ERROR, at + 20)
+        assertTrue(at7.nextReviewAt == at + 20 + 7 * d)
+        assertTrue(com.ivanherboch.chessduck.data.PuzzleProgress.after(at7, o.GAVE_UP, at + 30).nextReviewAt == at + 30 + d)
+        // Résolu net du premier coup : rien à refaire.
+        assertTrue(com.ivanherboch.chessduck.data.PuzzleProgress.after(empty, o.CLEAN, at).nextReviewAt == 0L)
     }
 
     /** Problèmes : ELO tactique compté une fois, erreurs et abandons à refaire, résolution nette qui les retire, favoris. */
@@ -322,10 +334,11 @@ class PuzzlesFuzzTest {
         val p1 = repo.progress.value[PUZZLE_0000D.id]!!
         assertTrue(p1.status == com.ivanherboch.chessduck.data.PuzzleOutcome.WITH_ERROR && p1.solvedAt > 0 && p1.nextReviewAt > 0)
         assertTrue(repo.toRedo().first().single().first.id == PUZZLE_0000D.id)
-        // Recommencer et résoudre net : retiré de « À refaire », sans nouveau calcul d'ELO.
+        // Recommencer et résoudre net : la révision s'espace (7 jours, comme dans l'Académie), sans nouveau calcul d'ELO.
         vm.restart(); advanceUntilIdle()
         vm.onMove(l.moves[1]); advanceUntilIdle(); vm.onMove(l.moves[3]); advanceUntilIdle()
-        assertTrue(repo.progress.value[PUZZLE_0000D.id]!!.nextReviewAt == 0L && vm.state.value.puzzleElo == afterError)
+        val p2 = repo.progress.value[PUZZLE_0000D.id]!!
+        assertTrue(p2.nextReviewAt - p2.lastTriedAt == 7 * com.ivanherboch.chessduck.data.PuzzleProgress.REDO_DELAY && vm.state.value.puzzleElo == afterError)
         // Favori.
         val bm = backgroundScope.launch { vm.bookmarked.collect {} }
         vm.toggleBookmark(); advanceUntilIdle()

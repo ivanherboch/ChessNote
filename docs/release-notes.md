@@ -1,3 +1,12 @@
+## ChessDuck 4.4.1 — finitions des Problèmes
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- « À refaire » suit la répétition espacée de l'Académie. Un problème manqué revient le lendemain. Le résoudre sans erreur l'espace à 7, 30 puis 90 jours avant de le retirer. Une erreur garde l'intervalle en cours, une solution vue le remet à un jour.
+- Tirage aléatoire plus équitable : il choisit au hasard parmi les problèmes trouvés, au lieu de prendre toujours le premier (qui favorisait ceux placés après une longue suite de problèmes résolus).
+- « Continuer contre l'Ordinateur » depuis un problème : le Jeu Libre parle maintenant de « Position du problème » et de « Partie d'entraînement depuis un problème », et non plus d'une leçon.
+- Grande police : l'indice et la réfutation se lisent en entier sous l'échiquier, sans « Lire la suite ». Le trait et le signet restent sur une ligne, les détails du problème passent dessous.
+
 ## ChessDuck 4.4.0 — Problèmes : « Mon niveau », À refaire, Favoris et thèmes secondaires
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

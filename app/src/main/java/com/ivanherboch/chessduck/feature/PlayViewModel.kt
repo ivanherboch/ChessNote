@@ -57,6 +57,8 @@ data class PlayState(
      * réflexe ; au plus [coachLeft] fois par partie.
      */
     val coached: Boolean = false,
+    /** Partie depuis une position : d'où elle vient (leçon de l'Académie ou problème), pour le dire au joueur. */
+    val origin: PositionOrigin = PositionOrigin.LESSON,
     val coachLeft: Int = 0,
     /** Le coup de l'élève est en cours de vérification (partie accompagnée). */
     val checking: Boolean = false,
@@ -162,7 +164,7 @@ class PlayViewModel(
      * [playerWhite]. C'est une partie d'entraînement : elle est enregistrée avec sa position de départ, sans changer l'ELO.
      * L'Ordinateur joue au niveau du palier de l'Académie (et non au réglage du Jeu Libre).
      */
-    fun startFromPosition(fen: String, playerWhite: Boolean) {
+    fun startFromPosition(fen: String, playerWhite: Boolean, origin: PositionOrigin = PositionOrigin.LESSON) {
         val start = runCatching { Line(fen) }.getOrNull() ?: return
         abandonInProgress()
         applyJob?.cancel()
@@ -173,7 +175,7 @@ class PlayViewModel(
             _state.update {
                 PlayState(
                     line = start, playerWhite = playerWhite, twoPlayers = false, aiElo = positionElo(st.academyLevel), flipped = !playerWhite, evalOn = it.evalOn,
-                    coached = true, coachLeft = COACH_STOPS,
+                    coached = true, coachLeft = COACH_STOPS, origin = origin,
                 )
             }
             if (start.last.whiteToMove != playerWhite) aiMove() else precompute()
@@ -496,7 +498,7 @@ class PlayViewModel(
                         thinking = false,
                         result = GameResult(
                             head + when {
-                                s.fromPosition -> " Partie d'entraînement depuis une leçon : l'ELO ne change pas."
+                                s.fromPosition -> " Partie d'entraînement depuis ${s.origin.fromText} : l'ELO ne change pas."
                                 s.netUsed -> " Le filet de sécurité vous a arrêté : la partie ne compte pas pour l'ELO."
                                 else -> " ELO ${st.elo} → $newElo ($delta)."
                             },
@@ -564,4 +566,15 @@ fun positionElo(level: Int): Int = when (level.coerceIn(1, 5)) {
     3 -> 1300
     4 -> 1700
     else -> 2100
+}
+
+/** Origine d'une partie lancée depuis une position (« Jouer cette position », « Continuer contre l'Ordinateur »). */
+enum class PositionOrigin(
+    /** « depuis une leçon », « depuis un problème ». */
+    val fromText: String,
+    /** « Position de la leçon », « Position du problème ». */
+    val title: String,
+) {
+    LESSON("une leçon", "Position de la leçon"),
+    PUZZLE("un problème", "Position du problème"),
 }

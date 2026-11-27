@@ -2,6 +2,7 @@ package com.ivanherboch.chessduck.data
 
 import android.database.sqlite.SQLiteDatabase
 import com.ivanherboch.chessduck.content.PuzzleThemes
+import com.ivanherboch.chessduck.feature.SrsScheduler
 import kotlin.coroutines.cancellation.CancellationException
 import android.content.Context
 import androidx.room.ColumnInfo
@@ -60,18 +61,36 @@ data class PuzzleProgress(
 ) {
     companion object {
         /** Une journée : un problème manqué revient dans « À refaire » le lendemain. */
-        const val REDO_DELAY = 86_400_000L
+        const val REDO_DELAY = SrsScheduler.DAY
 
-        /** Suivi après un essai conclu [outcome] à l'instant [at] (favori conservé). */
+        /**
+         * Suivi après un essai conclu [outcome] à l'instant [at] (favori conservé). « À refaire » suit la répétition
+         * espacée de l'Académie ([SrsScheduler.INTERVAL_DAYS] : 1, 7, 30 puis 90 jours) : un abandon remet à un jour ;
+         * une erreur garde l'intervalle en cours (au moins un jour) ; une résolution nette d'un problème à refaire passe à
+         * l'intervalle suivant, puis le retire de la liste après le dernier. Résolu net sans avoir jamais été manqué : rien à refaire.
+         */
         fun after(old: PuzzleProgress, outcome: Int, at: Long): PuzzleProgress {
             val solved = outcome == PuzzleOutcome.CLEAN || outcome == PuzzleOutcome.WITH_ERROR
+            val days = SrsScheduler.INTERVAL_DAYS
+            // Intervalle en cours (en jours, d'après la dernière planification) et son rang dans la suite ; -1 : pas planifié.
+            val stage = if (old.nextReviewAt > 0 && old.lastTriedAt > 0) {
+                days.indexOf(((old.nextReviewAt - old.lastTriedAt + REDO_DELAY / 2) / REDO_DELAY).toInt())
+            } else -1
+            val next = when (outcome) {
+                PuzzleOutcome.GAVE_UP -> at + days[0] * REDO_DELAY
+                PuzzleOutcome.WITH_ERROR -> at + days[stage.coerceAtLeast(0)] * REDO_DELAY
+                else -> if (stage < 0 || stage + 1 >= days.size) 0 else at + days[stage + 1] * REDO_DELAY
+            }
             return old.copy(
                 solvedAt = if (solved && old.solvedAt <= 0) at else old.solvedAt, status = outcome, attempts = old.attempts + 1,
-                lastTriedAt = at, nextReviewAt = if (outcome == PuzzleOutcome.CLEAN) 0 else at + REDO_DELAY,
+                lastTriedAt = at, nextReviewAt = next,
             )
         }
     }
 }
+
+/** Candidats lus par fenêtre de tirage, parmi lesquels un problème est choisi au hasard. */
+const val PROBE_PICK = 200
 
 /** Issue d'un essai de problème (colonne [PuzzleProgress.status]). */
 object PuzzleOutcome {
@@ -191,24 +210,26 @@ interface PuzzleDao {
     suspend fun maxRowId(): Long
 
     /**
-     * Premier problème non résolu de la tranche, dans les [window] lignes qui suivent le rowid [start] : lecture bornée,
-     * quelle que soit la taille de la base (environ un millième de seconde au lieu d'un comptage complet).
+     * Problèmes non résolus de la tranche (au plus [PROBE_PICK]) dans les [window] lignes qui suivent le rowid [start] :
+     * lecture bornée, quelle que soit la taille de la base (environ un millième de seconde au lieu d'un comptage
+     * complet). Le tirage choisit au hasard parmi eux : prendre toujours le premier favoriserait les problèmes qui
+     * suivent une longue suite de problèmes résolus ou hors filtre.
      */
     @Query(
         "SELECT id FROM (SELECT id, rating, themes FROM puzzles WHERE rowid >= :start ORDER BY rowid LIMIT :window) " +
             "WHERE rating BETWEEN :lo AND :hi AND id != :exclude AND id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0) " +
-            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB) LIMIT 1",
+            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB) LIMIT $PROBE_PICK",
     )
-    suspend fun probeAll(start: Long, window: Int, lo: Int, hi: Int, exclude: String, lenA: String = "", lenB: String = ""): String?
+    suspend fun probeAll(start: Long, window: Int, lo: Int, hi: Int, exclude: String, lenA: String = "", lenB: String = ""): List<String>
 
     /** Comme [probeAll], limité aux problèmes dont le thème principal est l'un de [themes]. */
     @Query(
         "SELECT id FROM (SELECT id, rating, primaryTheme, themes FROM puzzles WHERE rowid >= :start ORDER BY rowid LIMIT :window) " +
             "WHERE primaryTheme IN (:themes) AND rating BETWEEN :lo AND :hi AND id != :exclude " +
             "AND id NOT IN (SELECT puzzleId FROM puzzle_progress WHERE solvedAt > 0) " +
-            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB) LIMIT 1",
+            "AND (:lenA = '' OR themes LIKE :lenA OR themes LIKE :lenB) LIMIT $PROBE_PICK",
     )
-    suspend fun probeInThemes(start: Long, window: Int, themes: List<String>, lo: Int, hi: Int, exclude: String, lenA: String = "", lenB: String = ""): String?
+    suspend fun probeInThemes(start: Long, window: Int, themes: List<String>, lo: Int, hi: Int, exclude: String, lenA: String = "", lenB: String = ""): List<String>
 
     // ---- Tirage exact (repli) : comptage puis lecture à un rang tiré au hasard ----
 

@@ -442,7 +442,7 @@ class PuzzlesViewModel(
         _state.update {
             it.copy(
                 hintStage = stage, tone = Tone.GOLD, arrowUsed = it.arrowUsed || stage == 2,
-                message = if (stage == 1) "Indice 1/2 : la pièce à jouer est surlignée en vert. « Montrer le coup » dévoile la flèche, mais le problème ne comptera plus comme résolu."
+                message = if (stage == 1) "Indice 1/2 : la pièce à jouer est en vert. Montrer le coup : problème non compté."
                 else "Indice 2/2 : la flèche montre le coup à jouer. Ce problème ne comptera pas comme résolu.",
             )
         }

@@ -298,7 +298,7 @@ private fun liveStatus(s: PlayState, p1: String, p2: String): Pair<String, Tone>
     }
     val check = if (pos.inCheck) "Échec ! " else ""
     return if (s.twoPlayers) "${check}À ${if (pos.whiteToMove) p1 else p2} de jouer (les $side)." to Tone.INFO
-    else if (s.line.size == 0 && s.fromPosition) "Position de la leçon contre l'ordinateur (${s.aiElo} ELO). Vous jouez les $side. Partie d'entraînement : l'ELO ne change pas." +
+    else if (s.line.size == 0 && s.fromPosition) "${s.origin.title} contre l'ordinateur (${s.aiElo} ELO). Vous jouez les $side. Partie d'entraînement : l'ELO ne change pas." +
         (if (s.coached) " Partie accompagnée : l'Ordinateur vous arrête avant une grosse erreur, $COACH_STOPS fois au plus." else "") to Tone.INFO
     else if (s.line.size == 0) "Nouvelle partie contre l'ordinateur (${s.aiElo} ELO). Vous jouez les $side : à vous de commencer !" +
         (if (s.coached) " Filet de sécurité actif : l'Ordinateur arrête une gaffe avant qu'elle soit jouée (la partie ne compte alors plus pour l'ELO)." else "") to Tone.INFO

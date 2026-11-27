@@ -154,9 +154,9 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
         if (maxRow == 0L) maxRow = dao.maxRowId()
         if (maxRow > 0) repeat(PROBE_TRIES) {
             val start = random.nextLong(1, maxRow + 1)
-            val id = if (themes == null) dao.probeAll(start, PROBE_WINDOW, lo, hi, exclude, la, lb)
+            val ids = if (themes == null) dao.probeAll(start, PROBE_WINDOW, lo, hi, exclude, la, lb)
             else dao.probeInThemes(start, PROBE_WINDOW, themes, lo, hi, exclude, la, lb)
-            if (id != null) return id
+            if (ids.isNotEmpty()) return ids[random.nextInt(ids.size)]
         }
         for (includeSolved in listOf(false, true)) {
             val n = if (themes == null) dao.countAll(lo, hi, exclude, includeSolved, la, lb)
