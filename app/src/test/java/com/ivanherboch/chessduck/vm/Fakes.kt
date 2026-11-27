@@ -113,6 +113,10 @@ class FakePuzzles(private val puzzles: List<Puzzle>) : PuzzleRepository {
         }
         return (pool.filter { it.id !in solved.value }.ifEmpty { pool }).randomOrNull(random)?.id
     }
+    override suspend fun linkedCount(themes: List<String>, range: IntRange): ThemeCountRow {
+        val l = puzzles.filter { it.rating in range && tags(it).any { t -> t in themes } }
+        return ThemeCountRow("", l.size, l.count { it.id in solved.value })
+    }
     override suspend fun themeCounts(range: IntRange, secondary: Boolean): List<ThemeCountRow> {
         val inRange = puzzles.filter { it.rating in range }
         if (!secondary) return inRange.groupBy { it.primaryTheme }.map { (t, l) -> ThemeCountRow(t, l.size, l.count { it.id in solved.value }) }

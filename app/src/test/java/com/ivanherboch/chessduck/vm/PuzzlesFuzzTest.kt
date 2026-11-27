@@ -362,6 +362,10 @@ class PuzzlesFuzzTest {
         assertTrue(s.puzzle?.id == "SF" && s.filterMatches && s.themeVisible)
         assertTrue(repo.themeCounts(0..4000, secondary = true).any { it.theme == "fork" && it.total == 1 })
         assertTrue(repo.themeCounts(0..4000, secondary = false).none { it.theme == "fork" })
+        // « Tous les thèmes » et les familles comptent les problèmes distincts, même avec plusieurs thèmes chacun.
+        vm.loadCounts(0); advanceUntilIdle()
+        assertTrue(vm.counts.value[""]?.total == 1)
+        assertTrue(vm.counts.value.filterKeys { it != "" && it !in com.ivanherboch.chessduck.content.PuzzleThemes.byKey }.values.all { it.total <= 1 })
     }
 
     /** Longueur : un coup, court, long ; « Mon niveau » : autour de l'ELO tactique. */

@@ -360,10 +360,16 @@ class PuzzlesViewModel(
             val byTheme = rows.associateBy { it.theme }
             val map = HashMap<String, ThemeCount>()
             for (t in PuzzleThemes.all) map[t.key] = byTheme[t.key]?.let { ThemeCount(it.total, it.solved) } ?: ThemeCount(0, 0)
-            map[""] = ThemeCount(rows.sumOf { it.total }, rows.sumOf { it.solved })
+            // Thèmes secondaires : un problème compte dans chacun de ses thèmes, donc additionner les thèmes compterait
+            // plusieurs fois le même problème. « Tous les thèmes » et les familles comptent les problèmes distincts.
+            val secondary = state.value.secondary
+            val all = if (secondary) runCatchingSuspend { dao.themeCounts(range, false) }.getOrDefault(emptyList()) else rows
+            map[""] = ThemeCount(all.sumOf { it.total }, all.sumOf { it.solved })
             for (g in PuzzleThemes.groups) {
                 val keys = PuzzleThemes.all.filter { it.group == g }.map { it.key }
-                map[PuzzleThemes.groupKey(g)] = ThemeCount(keys.sumOf { map.getValue(it).total }, keys.sumOf { map.getValue(it).solved })
+                map[PuzzleThemes.groupKey(g)] = if (secondary) {
+                    runCatchingSuspend { dao.linkedCount(keys, range) }.getOrNull()?.let { ThemeCount(it.total, it.solved) } ?: ThemeCount(0, 0)
+                } else ThemeCount(keys.sumOf { map.getValue(it).total }, keys.sumOf { map.getValue(it).solved })
             }
             val res: Map<String, ThemeCount> = map
             _counts.value = res

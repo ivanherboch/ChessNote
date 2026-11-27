@@ -78,6 +78,11 @@ interface PuzzleRepository {
     ): String?
     /** Compteurs (problèmes, résolus) par thème pour une tranche : thème principal, ou tous les thèmes ([secondary]). */
     suspend fun themeCounts(range: IntRange, secondary: Boolean = false): List<ThemeCountRow>
+    /**
+     * Thèmes secondaires inclus : nombre de problèmes distincts (et de résolus) portant au moins un des [themes] dans la
+     * tranche (une famille), chaque problème compté une seule fois même s'il a plusieurs de ces thèmes.
+     */
+    suspend fun linkedCount(themes: List<String>, range: IntRange): ThemeCountRow
     /** Recherche d'identifiant : au plus [limit] résultats classés et le nombre total de correspondances. */
     suspend fun searchIds(query: String, limit: Int): Pair<List<PuzzleHit>, Int>
     /** Problème résolu net (séries de l'Académie) : voir [recordAttempt]. */
@@ -167,6 +172,14 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
             else dao.idInThemesAt(themes, lo, hi, exclude, includeSolved, k, la, lb)
         }
         return null
+    }
+
+    override suspend fun linkedCount(themes: List<String>, range: IntRange): ThemeCountRow {
+        val total = dao.countLinkedTotal(themes, range.first, range.last)
+        // Résolus : les problèmes résolus (peu nombreux) dont au moins un thème est dans la famille.
+        val keys = themes.toSet()
+        val solved = dao.solvedMeta(range.first, range.last).count { m -> m.themes.trim().split(' ').any { it in keys } }
+        return ThemeCountRow("", total, solved)
     }
 
     override suspend fun themeCounts(range: IntRange, secondary: Boolean): List<ThemeCountRow> {

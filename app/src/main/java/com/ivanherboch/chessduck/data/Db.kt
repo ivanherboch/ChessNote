@@ -363,6 +363,10 @@ interface PuzzleDao {
     )
     suspend fun solvedMeta(lo: Int, hi: Int): List<PuzzleMeta>
 
+    /** Problèmes distincts portant au moins un des [themes] dans la tranche (lecture de la seule table de liaison). */
+    @Query("SELECT COUNT(DISTINCT puzzleId) FROM puzzle_themes WHERE theme IN (:themes) AND rating BETWEEN :lo AND :hi")
+    suspend fun countLinkedTotal(themes: List<String>, lo: Int, hi: Int): Int
+
     @Query("SELECT COUNT(*) FROM puzzle_themes")
     suspend fun linkCount(): Int
 }

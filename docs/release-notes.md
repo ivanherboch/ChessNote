@@ -1,3 +1,9 @@
+## ChessDuck 4.4.3 — compteurs justes avec les thèmes secondaires
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Catalogue, « Inclure les thèmes secondaires » coché : « Tous les thèmes » affiche bien 150 000 problèmes (et non 419 697, qui était le nombre de liens problème → thème), et chaque famille compte ses problèmes une seule fois même quand ils ont plusieurs de ses thèmes. Les compteurs par thème, eux, étaient déjà justes.
+
 ## ChessDuck 4.4.2 — Problèmes : échiquier plus grand
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
