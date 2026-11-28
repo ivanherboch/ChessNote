@@ -3,6 +3,7 @@ package com.ivanherboch.chessduck.feature
 import androidx.compose.runtime.Immutable
 import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.chess.Move
+import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.content.Lesson
 import com.ivanherboch.chessduck.content.Lessons
 import com.ivanherboch.chessduck.content.LessonCategory
@@ -20,7 +21,8 @@ data class Pulse(val id: Long, val good: Boolean)
 enum class PracticeKind { LESSON, REVIEW, ONLY_MOVE, PLACEMENT, EXAM }
 
 /**
- * Série de problèmes inédits. Un problème compte s'il est résolu sans erreur et sans l'indice qui montre le coup.
+ * Série de problèmes inédits. Un problème compte s'il est résolu, même après une erreur, tant que la flèche de
+ * l'indice 2/2 (qui montre le coup) n'a pas servi ; « Solution » le compte comme manqué.
  */
 @Immutable
 data class Practice(
@@ -53,6 +55,8 @@ data class Practice(
     val hadError: Boolean = false,
     /** Demi-coups déjà joués du problème (on peut revenir en arrière et avancer jusque-là). */
     val progress: Int = 0,
+    /** Mauvais coup en cours de réfutation (position d'avant, coup) : il glisse en arrière au retour. */
+    val missed: Pair<Position, Move>? = null,
 ) {
     val heroWhite: Boolean get() = line?.positions?.get(0)?.whiteToMove == false
     val score: Int get() = results.count { it }
@@ -159,6 +163,25 @@ data class AcademyState(
     val dailyRunning: Boolean = false,
     /** Une étape de la séance du jour vient d'être terminée : le bandeau « Suite de la séance » s'affiche. */
     val dailyPrompt: Boolean = false,
+    /** Orchestration de la séance en cours (non affichée directement). */
+    val session: SessionContext = SessionContext(),
+)
+
+/**
+ * Orchestration de la séance en cours, gardée dans [AcademyState] pour qu'aucun drapeau ne vive hors du flux d'état.
+ */
+@Immutable
+data class SessionContext(
+    /** Finale lancée depuis une leçon (validation) : identifiant de la leçon ; null sinon. */
+    val endgameLesson: Int? = null,
+    /** Finale lancée par une révision. */
+    val endgameReview: Boolean = false,
+    /** La série de problèmes en cours vient du travail d'un point faible (et non de Pratiquer). */
+    val topicSeries: Boolean = false,
+    /** Révision réussie sans erreur ni indice : l'intervalle s'allonge ; avec hésitation, il reste le même. */
+    val reviewFluent: Boolean = true,
+    /** Mauvais coup réfuté du Défi (position d'avant, coup) : il glisse en arrière quand la position revient. */
+    val missed: Pair<Position, Move>? = null,
 )
 
 /** Étapes de la séance du jour, dans l'ordre. */

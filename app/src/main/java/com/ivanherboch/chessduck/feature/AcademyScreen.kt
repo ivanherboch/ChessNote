@@ -251,7 +251,7 @@ fun AcademyScreen(
                 when {
                     egs != null -> EndgamePanel(vm, egs, s.review, stuck, s.lessonPractice)
                     rxs != null -> ReflexPanel(vm, rxs)
-                    pr != null -> PracticePanel(vm, pr, s.review, stuck, s.lessonPractice)
+                    pr != null -> PracticePanel(vm, pr, s.review, stuck, s.lessonPractice, fromCaller = s.sessionFrom != null)
                     quiz != null -> QuizPanel(vm, l, quiz, toPractice = !s.challenge)
                     !s.challenge -> {
                         // Progression dans la leçon : chaque coup est cliquable (sur tablette, tableau complet sous le commentaire).

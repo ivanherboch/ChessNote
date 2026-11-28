@@ -174,7 +174,8 @@ internal class PracticeSeries(
     /**
      * Coup de l'élève dans la série, comme dans les Problèmes : la solution (ou tout mat immédiat) avance ; un autre
      * coup est joué puis réfuté par l'Ordinateur (flèche rouge, compte à rebours) et l'élève réessaie. Un problème
-     * résolu après une erreur, ou avec la flèche de l'indice, ne compte pas : le seuil de validation reste exigeant.
+     * résolu compte, même après une erreur, tant que la flèche de l'indice 2/2 n'a pas servi ; « Solution » le compte
+     * comme manqué.
      */
     fun practiceMove(m: Move) {
         val pr = state.value.practice ?: return
@@ -233,13 +234,13 @@ internal class PracticeSeries(
     private fun refutePractice(pr: Practice, pos: Position, m: Move) {
         host.pulse(false)
         val after = pos.play(m)
-        practiceMissed = pos to m
         // Une erreur ne fait pas manquer le problème : il compte encore s'il est résolu sans la flèche de l'indice.
         val extra = " Trouvez la solution : le problème comptera encore."
         _state.update { s ->
             s.copy(
                 practice = pr.copy(
                     hadError = true, hintStage = 0, tone = Tone.BAD, anim = moveAnim(pos, m), refute = Refutation(after, m), refuteUntil = 0L, refuteHold = 0L,
+                    missed = pos to m,
                     message = RefutationLogic.intro(pos, m),
                 ),
             )
@@ -255,9 +256,6 @@ internal class PracticeSeries(
         }
     }
 
-    /** Mauvais coup de la série en cours de réfutation (position d'avant, coup) : il glisse en arrière au retour. */
-    private var practiceMissed: Pair<Position, Move>? = null
-
     /** « Réessayer » : annule tout de suite le mauvais coup et revient à la position du problème. */
     fun retryPractice() {
         val pr = state.value.practice ?: return
@@ -266,7 +264,7 @@ internal class PracticeSeries(
         _state.update { s ->
             s.copy(
                 practice = pr.copy(
-                    refute = null, refuteUntil = 0L, anim = practiceMissed?.let { (p, m) -> undoAnim(p, m) }, tone = Tone.INFO,
+                    refute = null, refuteUntil = 0L, anim = pr.missed?.let { (p, m) -> undoAnim(p, m) }, tone = Tone.INFO,
                     message = "Position rétablie : à vous de rejouer. Besoin d'aide ? Indice, ou Solution.",
                 ),
             )

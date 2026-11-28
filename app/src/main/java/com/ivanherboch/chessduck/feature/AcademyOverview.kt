@@ -44,8 +44,9 @@ internal class AcademyOverview(
         AcademyHome(
             level = st.academyLevel, placementDone = st.placementDone, due = srs.due(list),
             recommended = srs.recommended(Lessons.all, byId, st.academyLevel)?.id,
-            continueId = current.takeIf { id -> byId[id]?.let { !it.mastered && (it.stars > 0 || it.practiceTotal > 0) } == true }
-                ?: srs.continueLesson(Lessons.all, byId, current)?.id,
+            // Leçon commencée (Comprendre terminé compris) : la dernière ouverte d'abord, sinon la première du cursus.
+            continueId = current.takeIf { id -> SrsScheduler.started(byId[id], id in st.understoodIds) }
+                ?: srs.continueLesson(Lessons.all, byId, current, st.understoodIds)?.id,
             examsPassed = tests.filter { it.kind == "exam" && it.passed }.map { it.level }.toSet(),
             endgamesDone = Lessons.all.filter { it.drill.isNotEmpty() && byId[it.id]?.mastered == true }.mapNotNull { EndgameFamily.of(it.drill) }.toSet(),
             levelMastered = Lessons.all.count { it.level == st.academyLevel && byId[it.id]?.mastered == true },

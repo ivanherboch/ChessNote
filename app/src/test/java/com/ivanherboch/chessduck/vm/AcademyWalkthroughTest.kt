@@ -69,6 +69,10 @@ class AcademyWalkthroughTest {
                     if (l.kind != LessonKind.MODEL_GAME && s.stars != 3) problems += "${l.id} v$v : ${s.stars} étoiles sans erreur"
                     if (l.kind == LessonKind.MODEL_GAME && s.guessMax == 0) problems += "${l.id} v$v : partie modèle sans coup à deviner"
                     if (Regex("\\bnull\\b").containsMatchIn(s.message)) problems += "${l.id} v$v : « null » dans le message : ${s.message.lines().filter { "null" in it }}"
+                    // Bilan concis : dernier commentaire, règle, score et maîtrise, sans l'historique des coups.
+                    val paragraphs = s.message.split("\n\n").size
+                    if (paragraphs > 5) problems += "${l.id} v$v : bilan de $paragraphs paragraphes"
+                    if (!s.message.contains("À retenir")) problems += "${l.id} v$v : bilan sans « À retenir »"
                 }
             }
             if (lessons.progress(l.id)?.mastered != true) problems += "${l.id} ${l.title} : pas maîtrisée après un Pratiquer parfait"

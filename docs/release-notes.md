@@ -1,3 +1,11 @@
+## ChessDuck 4.4.9 — Académie plus lisible et plus cohérente
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Pratiquer (parties modèles, leçons à coups clés) : les commentaires ne s'empilent plus dans la carte. Pendant les coups joués seuls, elle garde votre dernier coup et le commentaire du coup en cours. À la fin, le bilan tient en quelques lignes (dernier commentaire, « À retenir », score et maîtrise) : plus besoin de « Lire la suite », et l'échiquier garde sa taille.
+- Une leçon dont vous avez terminé Comprendre est « En cours » partout : dans son en-tête, dans le catalogue, et à « Continuer » sur l'accueil et dans la séance du jour.
+- Leçon 1 (L'échiquier et la notation) : les deux « À vous : jouez… » de Comprendre, où l'échiquier ne se joue pas, deviennent « Coup suivant des Blancs : … ».
+
 ## ChessDuck 4.4.8 — fiabilité : partie gardée, compteurs rapides
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

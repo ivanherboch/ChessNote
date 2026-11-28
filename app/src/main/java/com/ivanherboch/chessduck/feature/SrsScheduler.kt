@@ -49,11 +49,21 @@ class SrsScheduler(private val clock: () -> Long = System::currentTimeMillis) {
             ?: open.filter { it.level > level }.minByOrNull { it.level } ?: open.minByOrNull { it.level }
     }
 
-    /** Leçon commencée (Défi ou exercices déjà tentés) mais pas encore maîtrisée, autre que [current]. */
-    fun continueLesson(lessons: List<Lesson>, progress: Map<Int, LessonProgress>, current: Int): Lesson? =
-        lessons.firstOrNull { l -> l.id != current && progress[l.id]?.let { !it.mastered && (it.stars > 0 || it.practiceTotal > 0) } == true }
+    /**
+     * Leçon commencée mais pas encore maîtrisée, autre que [current] : Comprendre terminé ([understood]) ou Pratiquer
+     * déjà tenté (voir [started]).
+     */
+    fun continueLesson(lessons: List<Lesson>, progress: Map<Int, LessonProgress>, current: Int, understood: Set<Int> = emptySet()): Lesson? =
+        lessons.firstOrNull { l -> l.id != current && started(progress[l.id], l.id in understood) }
 
     companion object {
+        /**
+         * Leçon « En cours » : pas encore maîtrisée, et Comprendre terminé ou Pratiquer tenté (étoiles, exercices ou
+         * erreurs). Même règle partout : en-tête de leçon, catalogue et « Continuer » de l'accueil et de la séance du jour.
+         */
+        fun started(p: LessonProgress?, understood: Boolean): Boolean =
+            p?.mastered != true && (understood || (p != null && (p.stars > 0 || p.practiceTotal > 0 || p.errors > 0)))
+
         const val DAY = 86_400_000L
         val INTERVAL_DAYS = listOf(1, 7, 30, 90)
     }

@@ -1483,10 +1483,45 @@ class ViewModelsTest {
         vm.setChallenge(true)
         assertTrue(vm.state.value.keyMoments) // coups clés par défaut
         assertTrue(vm.state.value.message, vm.state.value.message.contains("coups clés"))
-        playChallenge(vm)
+        // Pendant la partie, la carte garde au plus le retour sur le coup deviné et le dernier coup joué seul.
+        var most = 0
+        advanceUntilIdle()
+        val firstReply = vm.state.value.message
+        while (!vm.state.value.done) {
+            vm.challengeMove(vm.line().moves[vm.state.value.cursor])
+            advanceUntilIdle()
+            if (!vm.state.value.done) most = maxOf(most, vm.state.value.message.split("\n\n").size)
+        }
+        assertTrue("$most paragraphes empilés", most <= 2)
         // Seuls les moments clés sont devinés (3 points chacun) ; les autres coups se sont joués seuls.
         assertEquals(3 * l.pauseSteps.size, vm.state.value.guessMax)
         assertEquals(vm.state.value.guessMax, vm.state.value.guessScore)
+        // Bilan concis : dernier commentaire, règle à retenir, score ; pas l'historique de la partie.
+        val end = vm.state.value.message
+        assertTrue(end, end.contains("À retenir") && end.contains("Score : ${vm.state.value.guessScore} points"))
+        assertTrue(end, end.split("\n\n").size <= 4 && (firstReply.isEmpty() || !end.contains(firstReply)))
+    }
+
+    /**
+     * Comprendre terminé (sans Pratiquer) : la leçon est « En cours » dans son en-tête et dans le catalogue (même
+     * fonction), et l'accueil la propose à « Continuer », comme la séance du jour.
+     */
+    @Test
+    fun understoodLessonIsStartedEverywhere() = test {
+        val vm = academy()
+        backgroundScope.launch { vm.home.collect {} }
+        backgroundScope.launch { vm.daily.collect {} }
+        advanceUntilIdle()
+        val l = Lessons.all.first { it.id == 117 }
+        vm.open(l.id, guided = true); advanceUntilIdle()
+        vm.last(); advanceUntilIdle()
+        assertTrue(l.id in vm.understood.value)
+        assertEquals(com.ivanherboch.chessduck.feature.STATUS_STARTED, com.ivanherboch.chessduck.feature.lessonStatus(vm.progress.value[l.id], l.id in vm.understood.value))
+        assertEquals(l.id, vm.home.value.continueId)
+        assertTrue(vm.daily.value.lessonStarted && vm.daily.value.lessonId == l.id)
+        // Une autre leçon ouverte ensuite : la leçon comprise reste proposée à « Continuer ».
+        vm.open(118); advanceUntilIdle()
+        assertEquals(l.id, vm.home.value.continueId)
     }
 
     @Test

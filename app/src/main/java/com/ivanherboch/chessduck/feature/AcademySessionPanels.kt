@@ -124,7 +124,11 @@ private fun QuizChoice(text: String, right: Boolean, what: String) {
 
 /** Série de problèmes : problème en cours, bilan et commandes (aucune lecture vocale pendant les exercices). */
 @Composable
-internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, review: ReviewSession?, stuck: String? = null, inLesson: Boolean = false) {
+internal fun ColumnScope.PracticePanel(
+    vm: AcademyViewModel, pr: Practice, review: ReviewSession?, stuck: String? = null, inLesson: Boolean = false,
+    /** Séance lancée depuis l'accueil ou l'Atelier (état déjà collecté par l'écran) : « Retour » y ramène. */
+    fromCaller: Boolean = false,
+) {
     val c = LocalDuck.current
     val name = when (pr.kind) {
         PracticeKind.LESSON -> "Pratique"
@@ -150,7 +154,7 @@ internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, revie
                 DuckButton(
                     when {
                         inLesson -> "Revoir les coups"
-                        vm.state.value.sessionFrom != null -> "Retour"
+                        fromCaller -> "Retour"
                         else -> "Revenir à la leçon"
                     },
                     vm::closePractice, Modifier.weight(1f), icon = if (inLesson) Icons.Rounded.Visibility else Icons.AutoMirrored.Rounded.ArrowBack,

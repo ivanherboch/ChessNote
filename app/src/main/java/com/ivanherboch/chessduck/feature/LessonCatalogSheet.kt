@@ -73,6 +73,8 @@ internal fun LessonCatalog(
 ) {
     val c = LocalDuck.current
     val progress by vm.progress.collectAsStateWithLifecycle()
+    // Comprendre terminé : la leçon est « En cours », comme dans son en-tête.
+    val understood by vm.understood.collectAsStateWithLifecycle()
     val home by vm.home.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf("") }
     // Catégorie : filtre du ViewModel (conservé, il oriente aussi Leçon précédente / suivante) ; il n'ouvre aucune leçon.
@@ -176,7 +178,7 @@ internal fun LessonCatalog(
             val state = when {
                 p != null && vm.srs.isDue(p) -> "À revoir"
                 item.id in mastered -> STATUS_MASTERED
-                lessonStatus(p) == STATUS_STARTED -> STATUS_STARTED
+                lessonStatus(p, item.id in understood) == STATUS_STARTED -> STATUS_STARTED
                 item.id == home.recommended -> "Conseillée"
                 else -> null
             }

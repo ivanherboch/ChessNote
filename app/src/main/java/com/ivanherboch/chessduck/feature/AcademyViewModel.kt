@@ -82,9 +82,9 @@ class AcademyViewModel(
     /** Une leçon a été ouverte par un pont avant la fin de la restauration de l'état au démarrage. */
     private var openedExplicitly = false
     private var pulses = 0L
-    /** Finale jouée lancée depuis une leçon (validation) ou une révision. */
-    private var endgameLesson: Int? = null
-    private var endgameReview = false
+    /** Contexte de la séance en cours (finale de leçon ou de révision, série d'un point faible…), porté par l'état. */
+    private val ctx: SessionContext get() = state.value.session
+    private fun setSession(f: (SessionContext) -> SessionContext) = _state.update { it.copy(session = f(it.session)) }
 
     /** Finales jouables contre l'Ordinateur. */
     val endgame = EndgameTrainer(viewModelScope, engine, random, onFinished = ::endgameFinished, work = work ?: EmptyCoroutineContext)
@@ -101,12 +101,12 @@ class AcademyViewModel(
         object : PracticeHost {
             override val mutableState get() = _state
             override val lesson get() = this@AcademyViewModel.lesson
-            override val reviewFluent get() = this@AcademyViewModel.reviewFluent
+            override val reviewFluent get() = this@AcademyViewModel.ctx.reviewFluent
             override fun pulse(good: Boolean) = this@AcademyViewModel.pulse(good)
             override fun warmEngine() = this@AcademyViewModel.warmEngine()
             override fun cancelAll() = this@AcademyViewModel.cancelAll()
             override fun backToCaller() = this@AcademyViewModel.backToCaller()
-            override fun lessonSeriesDone() = markDaily(if (topicSeries) DailyStep.PUZZLES else DailyStep.LESSON)
+            override fun lessonSeriesDone() = markDaily(if (ctx.topicSeries) DailyStep.PUZZLES else DailyStep.LESSON)
             override suspend fun saveProgress(id: Int, update: (LessonProgress) -> LessonProgress) = this@AcademyViewModel.saveProgress(id, update)
             override suspend fun completeReview(success: Boolean, fluent: Boolean) = this@AcademyViewModel.completeReview(success, fluent)
         },
@@ -345,7 +345,7 @@ class AcademyViewModel(
      * toujours la ligne.
      */
     private fun startPractising() {
-        topicSeries = false
+        setSession { it.copy(topicSeries = false) }
         val s = state.value
         if (s.review != null || s.repertoire != null) return startChallenge()
         val l = lesson
@@ -560,13 +560,16 @@ class AcademyViewModel(
     }
 
     /**
-     * Joue les réponses adverses jusqu'au prochain coup du joueur, en ajoutant leur commentaire au message,
-     * puis conclut la leçon si elle est finie (le dernier commentaire et sa règle « À retenir » restent affichés).
+     * Joue les réponses adverses jusqu'au prochain coup du joueur, puis conclut la leçon si elle est finie. Le message
+     * garde le retour sur le coup du joueur et seulement le commentaire du dernier coup joué seul : sur une partie modèle
+     * ou des coups clés (plusieurs demi-coups d'affilée), les commentaires ne s'empilent pas dans la carte.
      */
     private fun advanceOpponent() {
         playback.launch {
             val ln = line()
             val tx = texts()
+            // Retour sur le coup que le joueur vient de jouer (ou vide au début de l'exercice).
+            val base = state.value.message
             while (state.value.cursor < ln.size && !heroToMove(state.value.cursor)) {
                 delay(650)
                 val cur = state.value.cursor
@@ -576,7 +579,7 @@ class AcademyViewModel(
                 _state.update {
                     it.copy(
                         cursor = cur + 1, anim = moveAnim(ln.positions[cur], ln.moves[cur]), hintStage = 0,
-                        message = if (it.message.isEmpty()) reply else it.message + "\n\n" + reply,
+                        message = if (base.isEmpty()) reply else base + "\n\n" + reply,
                     )
                 }
             }
@@ -594,9 +597,11 @@ class AcademyViewModel(
             s.errors <= 1 && s.maxHint <= 1 -> 2
             else -> 1
         }
-        val takeaway = if (s.message.contains("À retenir")) "" else "\n\nÀ retenir : ${l.takeaway}"
+        // Bilan concis : le dernier commentaire, la règle à retenir, puis le score et la maîtrise (ajoutés plus bas).
+        val last = s.message.substringAfterLast("\n\n")
+        val takeaway = if (last.contains("À retenir")) "" else "\n\nÀ retenir : ${l.takeaway}"
         val scoreText = if (model) "\n\nScore : ${s.guessScore} points sur ${s.guessMax}." else ""
-        _state.update { it.copy(done = true, stars = stars, tone = Tone.GOOD, message = it.message + takeaway + scoreText) }
+        _state.update { it.copy(done = true, stars = stars, tone = Tone.GOOD, message = last + takeaway + scoreText) }
         // Séances : révision du jour ou répertoire.
         state.value.repertoire?.let { return repertoireResult(stars >= 2, fluent = stars == 3) }
         if (state.value.review != null) return reviewChallengeDone(stars >= 2, fluent = stars == 3)
@@ -772,7 +777,7 @@ class AcademyViewModel(
     private suspend fun refute(pos: Position, m: Move) {
         pulse(false)
         val after = pos.play(m)
-        missed = pos to m
+        setSession { it.copy(missed = pos to m) }
         _state.update {
             it.copy(
                 judging = false, errors = it.errors + 1, tone = Tone.BAD, tentative = null, anim = null,
@@ -785,16 +790,13 @@ class AcademyViewModel(
         resumeAtMiss()
     }
 
-    /** Mauvais coup réfuté (position d'avant, coup) : il glisse en arrière quand la position revient. */
-    private var missed: Pair<Position, Move>? = null
-
     /** « Réessayer » : annule le mauvais coup et revient à la position d'avant l'erreur. */
     fun resumeAtMiss() {
         if (state.value.refute == null) return
         judgeJob?.cancel()
         _state.update {
             it.copy(
-                refute = null, refuteUntil = 0L, anim = missed?.let { (p, m) -> undoAnim(p, m) }, tone = Tone.INFO,
+                refute = null, refuteUntil = 0L, anim = ctx.missed?.let { (p, m) -> undoAnim(p, m) }, tone = Tone.INFO,
                 message = "Position rétablie : à vous de retrouver le bon coup.",
             )
         }
@@ -837,7 +839,7 @@ class AcademyViewModel(
         openedExplicitly = true
         open(lessonId, guided = true)
         if (theme.isEmpty()) return
-        topicSeries = true
+        setSession { it.copy(topicSeries = true) }
         viewModelScope.launch {
             val level = prefs.settings.first().academyLevel.coerceAtLeast(2)
             startSeries(PracticeKind.LESSON, List(PRACTICE_SIZE) { PuzzleSpec(listOf(theme), AcademyAssessments.levelRange(level)) }, level)
@@ -907,9 +909,6 @@ class AcademyViewModel(
 
     // ---- Séance du jour ----
 
-    /** La série de problèmes en cours vient du travail d'un point faible (et non de Pratiquer). */
-    private var topicSeries = false
-
     private fun today(): Long = java.time.Instant.ofEpochMilli(srs.now()).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toEpochDay()
 
     /** Plan de la séance du jour, recalculé à chaque changement (révisions dues, leçon, points faibles, journal). */
@@ -975,8 +974,7 @@ class AcademyViewModel(
     fun goHome() {
         cancelAll()
         narrator.stop()
-        endgameLesson = null
-        endgameReview = false
+        setSession { it.copy(endgameLesson = null, endgameReview = false) }
         _state.update {
             it.copy(
                 route = AcademyRoute.HOME, sessionFrom = null, playing = false, challenge = false, lessonPractice = false, practice = null,
@@ -1011,23 +1009,21 @@ class AcademyViewModel(
         if (!fromLesson) enterSession()
         cancelAll()
         narrator.stop()
-        endgameLesson = if (fromLesson) lesson.id else null
-        endgameReview = false
+        setSession { it.copy(endgameLesson = if (fromLesson) lesson.id else null, endgameReview = false) }
         _state.update { it.copy(quiz = null, practice = null, sessionFlipped = false) }
         endgame.start(family, total)
     }
 
     fun closeEndgame() {
         endgame.stop()
-        endgameLesson = null
-        endgameReview = false
+        setSession { it.copy(endgameLesson = null, endgameReview = false) }
         backToCaller()
         backToLesson()
     }
 
     private suspend fun endgameFinished(family: EndgameFamily, score: Int, total: Int) {
-        if (endgameReview) return completeReview(score == total, reviewFluent)
-        val id = endgameLesson ?: return
+        if (ctx.endgameReview) return completeReview(score == total, ctx.reviewFluent)
+        val id = ctx.endgameLesson ?: return
         markDaily(DailyStep.LESSON)
         val passed = score >= EndgameTrainer.PASS
         // Pratiquer réussi (3 positions sur 5) : la leçon est maîtrisée.
@@ -1048,8 +1044,8 @@ class AcademyViewModel(
         // Série ou finale de Pratiquer : la leçon reste à l'écran, avec ses modes Comprendre | Pratiquer.
         if (s.challenge && s.lessonPractice) return null
         return when {
-            eg != null && endgameReview && s.review != null -> SessionTitle("Révision ${s.review.index + 1} sur ${s.review.queue.size} · 1 position", l.title)
-            eg != null && endgameLesson != null -> SessionTitle("Finale de validation · ${eg.total} positions", l.title)
+            eg != null && s.session.endgameReview && s.review != null -> SessionTitle("Révision ${s.review.index + 1} sur ${s.review.queue.size} · 1 position", l.title)
+            eg != null && s.session.endgameLesson != null -> SessionTitle("Finale de validation · ${eg.total} positions", l.title)
             eg != null -> SessionTitle("Entraînement", "Finale : ${eg.family.label}")
             rx != null -> SessionTitle("Entraînement", rx.kind.label)
             pr?.kind == PracticeKind.ONLY_MOVE -> SessionTitle("Entraînement", "Le seul coup")
@@ -1138,27 +1134,22 @@ class AcademyViewModel(
         val r = state.value.review ?: return
         val l = Lessons.byId(r.queue[index])
         val mode = practiceMode(l)
-        reviewFluent = true
-        endgameLesson = null
-        endgameReview = false
+        setSession { it.copy(reviewFluent = true, endgameLesson = null, endgameReview = false) }
         _state.update { it.copy(review = r.copy(index = index), challenge = mode == PracticeMode.MOVES) }
         open(l.id, save = false, session = true)
         when (mode) {
             PracticeMode.PUZZLES -> startSeries(PracticeKind.REVIEW, listOf(PuzzleSpec(listOf(l.theme), AcademyAssessments.levelRange(l.level))), l.level)
             PracticeMode.ENDGAME -> {
                 startEndgame(EndgameFamily.of(l.drill)!!, total = 1)
-                endgameReview = true
+                setSession { it.copy(endgameReview = true) }
             }
             PracticeMode.MOVES -> Unit // la ligne (ou ses coups clés) se rejoue aussitôt : open() a lancé l'exercice
         }
     }
 
-    /** Révision réussie sans erreur ni indice : l'intervalle s'allonge ; avec hésitation, il reste le même. */
-    private var reviewFluent = true
-
     /** Révision rejouée (ligne ou coups clés) : l'épreuve unique est terminée, le calendrier est mis à jour aussitôt. */
     private suspend fun reviewChallengeDone(success: Boolean, fluent: Boolean) {
-        reviewFluent = fluent
+        setSession { it.copy(reviewFluent = fluent) }
         completeReview(success, fluent)
     }
 
@@ -1182,8 +1173,7 @@ class AcademyViewModel(
         val r = state.value.review ?: return
         // Passage à la révision suivante : la finale se ferme sans quitter la séance (la séance continue).
         endgame.stop()
-        endgameLesson = null
-        endgameReview = false
+        setSession { it.copy(endgameLesson = null, endgameReview = false) }
         _state.update { it.copy(practice = null) }
         if (r.index + 1 < r.queue.size) openReview(r.index + 1)
         else {

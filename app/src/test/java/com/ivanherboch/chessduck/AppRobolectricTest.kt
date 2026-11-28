@@ -289,9 +289,10 @@ class AppRobolectricTest {
         shot("2z_defi_dame_choisie")
         cell("d2").performTouchInput { click() }; settle(3500)
         shot("2z_defi_apres_prise")
-        rule.onAllNodesWithText("La dame capture le fou", substring = true).fetchSemanticsNodes().let {
-            assertTrue("la prise Qxd2 doit être acceptée", it.isNotEmpty())
-        }
+        // La prise est acceptée : la dame blanche est en d2 et l'exercice se conclut (bilan concis, sans l'historique).
+        val d2 = cell("d2").fetchSemanticsNode().config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.ContentDescription)?.firstOrNull().orEmpty()
+        assertTrue("la prise Qxd2 doit être acceptée : $d2", d2.contains("dame", ignoreCase = true) && d2.contains("blanc", ignoreCase = true))
+        rule.onNodeWithText("Exercice terminé", substring = true).assertExists()
     }
 
     /** Finale contre l'Ordinateur : toucher son roi montre ses destinations, puis toucher une destination joue le coup. */
