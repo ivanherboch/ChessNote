@@ -1,5 +1,10 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.RetryButton
+import com.ivanherboch.chessduck.ui.NextButton
+import com.ivanherboch.chessduck.ui.ScoredHintButton
+import com.ivanherboch.chessduck.ui.SolutionButton
+import com.ivanherboch.chessduck.ui.RestartSeriesButton
 import com.ivanherboch.chessduck.chess.Position
 import com.ivanherboch.chessduck.ui.icons.Undo
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
@@ -88,7 +93,7 @@ internal fun ColumnScope.QuizPanel(vm: AcademyViewModel, l: Lesson, q: QuizState
     }
     if (picked != null && picked != q.correct) EqualRow(Modifier.padding(vertical = 6.dp)) {
         DuckButton("Revoir la leçon", vm::closeQuiz, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
-        DuckButton("Réessayer", vm::retryQuiz, Modifier.weight(1f), accent = c.gold, filled = true, icon = Icons.Rounded.RestartAlt)
+        RetryButton(vm::retryQuiz, Modifier.weight(1f), contentDescription = "Réessayer la question")
     }
     if (picked != null && picked == q.correct) EqualRow(Modifier.padding(vertical = 6.dp)) {
         DuckButton("Revoir la leçon", vm::closeQuiz, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
@@ -151,20 +156,16 @@ internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, revie
                     vm::closePractice, Modifier.weight(1f), icon = if (inLesson) Icons.Rounded.Visibility else Icons.AutoMirrored.Rounded.ArrowBack,
                 )
                 if (pr.kind == PracticeKind.LESSON && pr.score >= 4) DuckButton("Leçon suivante", { vm.closePractice(); vm.nextLesson(guided = true) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward)
-                else if (pr.kind == PracticeKind.LESSON || pr.kind == PracticeKind.ONLY_MOVE) DuckButton(
-                    "Retenter", if (pr.kind == PracticeKind.LESSON) vm::startPractice else vm::startOnlyMove, Modifier.weight(1f),
-                    accent = c.green, filled = true, icon = Icons.Rounded.RestartAlt,
+                else if (pr.kind == PracticeKind.LESSON || pr.kind == PracticeKind.ONLY_MOVE) RestartSeriesButton(
+                    if (pr.kind == PracticeKind.LESSON) vm::startPractice else vm::startOnlyMove, Modifier.weight(1f),
                 )
             }
-            pr.refute != null -> DuckButton("Réessayer", vm::retryPractice, Modifier.weight(1f), accent = c.red, filled = true, icon = Icons.AutoMirrored.Rounded.Undo)
-            pr.failed || pr.solved -> DuckButton(
-                if (pr.index + 1 < pr.ids.size) "Problème suivant" else "Voir le bilan", vm::nextPractice, Modifier.weight(1f),
-                accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward,
-            )
+            pr.refute != null -> RetryButton(vm::retryPractice, Modifier.weight(1f))
+            pr.failed || pr.solved -> NextButton(if (pr.index + 1 < pr.ids.size) "Problème suivant" else "Voir le bilan", vm::nextPractice, Modifier.weight(1f))
             else -> {
-                HintButton(pr.hintStage, vm::practiceHint, Modifier.weight(1f), enabled = !pr.loading)
-                // Après une première erreur, la solution peut être montrée (le problème compte alors comme manqué).
-                if (pr.hadError) DuckButton("Solution", vm::practiceSolution, Modifier.weight(1f), icon = Icons.Rounded.Visibility)
+                // Mêmes boutons que les Problèmes : l'indice annonce ce que coûte la flèche ; après une erreur, la solution.
+                ScoredHintButton(pr.hintStage, vm::practiceHint, Modifier.weight(1f), enabled = !pr.loading, crowded = pr.hadError)
+                if (pr.hadError) SolutionButton(vm::practiceSolution, Modifier.weight(1f), "Voir la solution : le problème comptera comme manqué")
             }
         }
         if (nav) DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Coup suivant", vm::practiceForward, enabled = pr.refute == null && pr.cursor < pr.progress)
@@ -176,9 +177,8 @@ internal fun ColumnScope.PracticePanel(vm: AcademyViewModel, pr: Practice, revie
 internal fun ReviewNextButton(vm: AcademyViewModel, r: ReviewSession, modifier: Modifier) {
     val c = LocalDuck.current
     val last = r.index + 1 >= r.queue.size
-    DuckButton(
+    NextButton(
         if (last) "Terminer les révisions" else "Révision suivante", { vm.nextReview(); if (last) vm.closeReviews() }, modifier,
-        accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward,
     )
 }
 
@@ -285,13 +285,11 @@ internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, 
                     "Leçon suivante", { vm.closeEndgame(); vm.nextLesson(guided = true) }, Modifier.weight(1f), accent = c.green, filled = true,
                     icon = Icons.AutoMirrored.Rounded.ArrowForward,
                 )
-                else DuckButton(
-                    "Retenter", { vm.closeEndgame(); vm.setChallenge(true) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.Rounded.RestartAlt,
-                )
+                else RestartSeriesButton({ vm.closeEndgame(); vm.setChallenge(true) }, Modifier.weight(1f))
             }
             eg.finished -> {
                 DuckButton("Fermer", vm::closeEndgame, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
-                DuckButton("Recommencer", { vm.startEndgame(eg.family) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.Rounded.RestartAlt)
+                RestartSeriesButton({ vm.startEndgame(eg.family) }, Modifier.weight(1f))
             }
             eg.over -> {
                 // Position perdue : on peut la rejouer pour s'entraîner (le score de la série ne change pas).
@@ -301,10 +299,7 @@ internal fun ColumnScope.EndgamePanel(vm: AcademyViewModel, eg: EndgameSession, 
                     contentDescription = if (eg.before != null) "Revenir juste avant l'erreur pour s'entraîner, sans changer le score"
                     else "Rejouer cette position pour s'entraîner, sans changer le score",
                 )
-                DuckButton(
-                    if (eg.index + 1 < eg.total) "Position suivante" else "Voir le bilan", vm.endgame::next, Modifier.weight(1.4f),
-                    accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward,
-                )
+                NextButton(if (eg.index + 1 < eg.total) "Position suivante" else "Voir le bilan", vm.endgame::next, Modifier.weight(1.4f))
             }
             else -> {
                 // Indice en deux temps, comme dans les Problèmes : la pièce, puis la flèche (sans nouvelle recherche).
@@ -332,13 +327,10 @@ internal fun ColumnScope.ReflexPanel(vm: AcademyViewModel, rx: ReflexSession) {
         when {
             rx.finished -> {
                 DuckButton("Fermer", vm::closeReflex, Modifier.weight(1f), icon = Icons.AutoMirrored.Rounded.ArrowBack)
-                DuckButton("Recommencer", { vm.startReflex(rx.kind) }, Modifier.weight(1f), accent = c.green, filled = true, icon = Icons.Rounded.RestartAlt)
+                RestartSeriesButton({ vm.startReflex(rx.kind) }, Modifier.weight(1f))
             }
             rx.answered -> {
-                DuckButton(
-                    if (rx.index + 1 < rx.total) "Question suivante" else "Voir le bilan", vm.reflex::next, Modifier.weight(1.4f),
-                    accent = c.green, filled = true, icon = Icons.AutoMirrored.Rounded.ArrowForward,
-                )
+                NextButton(if (rx.index + 1 < rx.total) "Question suivante" else "Voir le bilan", vm.reflex::next, Modifier.weight(1.4f))
             }
             rx.capture != null -> {
                 DuckButton("Oui, je prends", { vm.reflex.answer(true) }, Modifier.weight(1f), accent = c.green, filled = true)
@@ -350,13 +342,10 @@ internal fun ColumnScope.ReflexPanel(vm: AcademyViewModel, rx: ReflexSession) {
                 DuckIconButton(Icons.AutoMirrored.Rounded.VolumeUp, "Réécouter les coups annoncés", vm::replayBlind, accent = c.blue)
                 // Aide en deux temps : voir la position après les coups (réponse hors score), puis la solution.
                 if (!rx.shown) DuckButton(
-                    "Voir la position", vm.reflex::showBoard, Modifier.weight(1.3f), icon = Icons.Rounded.Visibility,
+                    "Voir la position", vm.reflex::showBoard, Modifier.weight(1.3f),
                     contentDescription = "Voir la position après les coups annoncés ; la réponse ne comptera plus",
                 )
-                DuckButton(
-                    "Solution", vm.reflex::giveUp, Modifier.weight(1f), accent = c.gold, icon = Icons.Rounded.Lightbulb,
-                    contentDescription = "Voir la solution ; la question compte comme manquée",
-                )
+                SolutionButton(vm.reflex::giveUp, Modifier.weight(1f), "Voir la solution : la question comptera comme manquée")
             }
             // Menace à toucher : la réponse se donne sur l'échiquier, aucun bouton ici.
             else -> Unit

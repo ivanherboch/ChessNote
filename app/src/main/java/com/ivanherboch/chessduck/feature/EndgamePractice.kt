@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.HintText
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.CoroutineContext
@@ -431,7 +432,7 @@ class EndgameTrainer(
         if (!s.heroToMove || s.hinting) return
         // Second temps : la flèche du coup déjà trouvé, sans nouvelle recherche.
         if (s.hint != null && s.hintStage == 1) {
-            _state.value = s.copy(hintStage = 2, tone = Tone.GOLD, message = "Indice 2/2 : suivez la flèche verte.")
+            _state.value = s.copy(hintStage = 2, tone = Tone.GOLD, message = HintText.ARROW)
             return
         }
         if (s.hint != null) return
@@ -447,7 +448,7 @@ class EndgameTrainer(
                 if (cur == null || cur.position?.toFen() != fen) cur?.copy(hinting = false)
                 else cur.copy(
                     hinting = false, hint = best, hintStage = if (best != null) 1 else 0, tone = Tone.GOLD,
-                    message = if (best != null) "Indice 1/2 : la pièce à jouer est surlignée en vert." else "Indice indisponible.",
+                    message = if (best != null) HintText.PIECE else "Indice indisponible.",
                 )
             }
         }

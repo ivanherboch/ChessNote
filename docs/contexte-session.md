@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `4.4.6` (`versionCode = 111`), publiée en release GitHub `v4.4.6`.
+- **Version actuelle** : `4.4.7` (`versionCode = 112`), publiée en release GitHub `v4.4.7`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -215,6 +215,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **4.4.4** : compteurs du catalogue avec filtre de longueur : `PuzzleDao.metaWithLength` + `countByLength` (un passage, thèmes/familles/total avec résolus, ~1,6 s sur la vraie base en Robolectric), `PuzzleRepository.lengthCounts`, cache `lengthCache` dans le ViewModel ; phrase explicative sous les puces de longueur.
 - **4.4.5** : longueur par nombre réel de demi-coups (`PuzzleThemes.lengthPlies`, paramètres DAO `minPly`/`maxPly` sur `length(moves) - length(replace(moves, ' ', '')) + 1`) au lieu des étiquettes Lichess (26 incohérentes, dont #Cex55).
 - **4.4.6** : interrupteur « Inclure les thèmes secondaires » supprimé (préférence `puzzle_secondary`, `setSecondary`, `linkedCount`/`countLinkedTotal`) ; `drawRandom` tire d'abord un problème non résolu du thème principal, puis par relais un non résolu où le thème est secondaire (`randomId(..., onlyUnsolved = true)`, `PuzzleState.secondary` + message « apparaît aussi »), puis un résolu ; compteurs toujours stricts.
+- **4.4.7** : boutons d'action communs dans `ui/ActionButtons.kt` (`NextButton`, `RetryButton`, `RestartSeriesButton`, `SolutionButton`, `ScoredHintButton`) et textes d'indice `HintText` (PIECE, ARROW, `scored`, `plain`), utilisés par Problèmes, Pratiquer, leçon, finales, réflexes et Jeu Libre. Tout nouveau bouton de ce type doit passer par eux. `DuckButton` efface son icône si elle couperait un mot du libellé (`IconAndLabel`, mesure de la largeur intrinsèque minimale).
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.

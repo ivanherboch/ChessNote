@@ -359,6 +359,8 @@ class PuzzlesFuzzTest {
         val repo = FakePuzzles(listOf(mainFork, secondaryFork))
         val vm = PuzzlesViewModel(FakeSettings(), repo, FakeEngine())
         advanceUntilIdle()
+        // Le tirage écarte le problème affiché : on part de SF pour que MF soit le seul candidat principal.
+        vm.openPuzzle(secondaryFork); advanceUntilIdle()
         vm.setFilter(0, "fork"); advanceUntilIdle()
         assertTrue(vm.state.value.puzzle?.id == "MF" && !vm.state.value.secondary) // l'idée principale d'abord
         repo.markSolved("MF")

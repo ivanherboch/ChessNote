@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.ui
 
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.layout.Layout
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -158,15 +160,42 @@ fun DuckButton(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (icon != null) {
-            Icon(icon, contentDescription = null, tint = col.fg, modifier = Modifier.size(20.dp))
-            if (label.isNotEmpty()) Spacer(Modifier.width(6.dp))
-        }
-        if (label.isNotEmpty()) {
-            Text(
-                label, color = col.fg, style = MaterialTheme.typography.labelLarge, maxLines = 2,
+        IconAndLabel(icon, label, col.fg)
+    }
+}
+
+/**
+ * Icône puis libellé d'un [DuckButton]. Si l'icône obligeait à couper un mot du libellé (grande police, rangée chargée),
+ * elle s'efface : le libellé reste entier et lisible, dans tous les modes.
+ */
+@Composable
+private fun IconAndLabel(icon: ImageVector?, label: String, color: Color) {
+    Layout(
+        content = {
+            if (icon != null) Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+            if (label.isNotEmpty()) Text(
+                label, color = color, style = MaterialTheme.typography.labelLarge, maxLines = 2,
                 overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
             )
+        },
+    ) { ms, c ->
+        val iconM = if (icon != null) ms.first() else null
+        val textM = if (label.isNotEmpty()) ms.last() else null
+        val gap = if (iconM != null && textM != null) 6.dp.roundToPx() else 0
+        // Le mot le plus long du libellé (largeur intrinsèque minimale) doit tenir à côté de l'icône.
+        val showIcon = iconM != null && (textM == null || !c.hasBoundedWidth ||
+            20.dp.roundToPx() + gap + textM.minIntrinsicWidth(Constraints.Infinity) <= c.maxWidth)
+        val ip = if (showIcon) iconM!!.measure(Constraints()) else null
+        val used = if (ip != null) ip.width + if (textM != null) gap else 0 else 0
+        val tp = textM?.measure(
+            Constraints(maxWidth = if (c.hasBoundedWidth) (c.maxWidth - used).coerceAtLeast(0) else Constraints.Infinity, maxHeight = c.maxHeight),
+        )
+        val w = (used + (tp?.width ?: 0)).coerceIn(c.minWidth, c.maxWidth)
+        val h = maxOf(ip?.height ?: 0, tp?.height ?: 0).coerceIn(c.minHeight, c.maxHeight)
+        layout(w, h) {
+            val x0 = (w - used - (tp?.width ?: 0)) / 2
+            ip?.placeRelative(x0, (h - ip.height) / 2)
+            tp?.placeRelative(x0 + used, (h - tp.height) / 2)
         }
     }
 }

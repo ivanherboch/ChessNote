@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.HintText
 import com.ivanherboch.chessduck.content.PuzzleThemes
 import com.ivanherboch.chessduck.chess.Line
 import com.ivanherboch.chessduck.chess.Move
@@ -320,7 +321,7 @@ internal class PracticeSeries(
             s.copy(
                 practice = pr.copy(
                     hintStage = stage, arrowUsed = pr.arrowUsed || stage == 2, tone = Tone.GOLD,
-                    message = if (stage == 1) "Indice 1/2 : la pièce à jouer est surlignée en vert." else "Indice 2/2 : la flèche montre le coup ; ce problème ne comptera pas.",
+                    message = HintText.scored(stage),
                 ),
             )
         }

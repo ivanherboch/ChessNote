@@ -1,3 +1,17 @@
+## ChessDuck 4.4.7 — mêmes boutons dans tous les modes
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Problèmes : le bouton « Solution » est identique à celui de Pratiquer dans l'Académie : même style, icône en forme d'œil, même largeur que le bouton Indice.
+- Un même geste a désormais partout le même aspect :
+  - « Problème suivant », « Position suivante », « Question suivante », « Leçon suivante » : vert plein avec une flèche. Dans les Problèmes, « Problème suivant » était doré avec un dé.
+  - « Réessayer » après une erreur : rouge plein, y compris après une mauvaise réponse à la question de fin de leçon.
+  - « Recommencer » une série terminée : vert plein. « Retenter » devient « Recommencer ».
+  - « Solution » : le même bouton dans les Problèmes, Pratiquer et le Calcul à l'aveugle.
+- Pratiquer annonce, comme les Problèmes, ce que coûte le second indice : « Montrer le coup (non compté) ».
+- Textes des indices harmonisés : « Indice 1/2 : la pièce à jouer est surlignée en vert. », puis « Indice 2/2 : la flèche montre le coup à jouer. ». Dans les exercices notés, chaque texte précise que la flèche fait perdre le problème. En Jeu Libre, l'indice 2/2 nomme aussi le coup.
+- Grande police : quand l'icône d'un bouton obligerait à couper un mot du libellé, elle s'efface et le libellé reste entier. Par exemple, « Montrer le coup » et « Solution » ne sont plus coupés. La règle vaut pour tous les boutons de l'application.
+
 ## ChessDuck 4.4.6 — thèmes secondaires automatiques
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

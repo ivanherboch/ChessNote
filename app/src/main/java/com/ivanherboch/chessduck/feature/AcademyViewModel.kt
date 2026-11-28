@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.HintText
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.withTimeoutOrNull
 import androidx.lifecycle.SavedStateHandle
@@ -818,7 +819,7 @@ class AcademyViewModel(
         _state.update {
             it.copy(
                 hintStage = stage, maxHint = maxOf(it.maxHint, stage), tone = Tone.GOLD,
-                message = if (stage == 1) "Indice 1/2 : la pièce à jouer est surlignée en vert." else "Indice 2/2 : suivez la flèche.",
+                message = HintText.plain(stage),
             )
         }
     }

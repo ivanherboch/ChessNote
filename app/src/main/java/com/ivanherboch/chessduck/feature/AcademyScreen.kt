@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.RetryButton
+import com.ivanherboch.chessduck.ui.NextButton
 import com.ivanherboch.chessduck.ui.DuckRadius
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -369,17 +371,13 @@ fun AcademyScreen(
                             val review = s.review
                             val rep = s.repertoire
                             when {
-                                s.refute != null -> DuckButton(
-                                    "Réessayer", vm::resumeAtMiss, Modifier.weight(1f), accent = c.red, filled = true,
-                                    icon = Icons.AutoMirrored.Rounded.Undo, contentDescription = "Réessayer : revenir avant le coup manqué",
-                                )
+                                s.refute != null -> RetryButton(vm::resumeAtMiss, Modifier.weight(1f))
                                 s.done && review != null -> ReviewNextButton(vm, review, Modifier.weight(1f))
                                 s.done && rep != null -> {
                                     val lastItem = rep.index + 1 >= rep.items.size
-                                    DuckButton(
+                                    NextButton(
                                         if (lastItem) "Terminer (${rep.results.count { it }} sur ${rep.items.size})" else "Ouverture suivante",
-                                        { vm.nextRepertoire(); if (lastItem) vm.closeRepertoire() }, Modifier.weight(1f), accent = c.green, filled = true,
-                                        icon = Icons.AutoMirrored.Rounded.ArrowForward,
+                                        { vm.nextRepertoire(); if (lastItem) vm.closeRepertoire() }, Modifier.weight(1f),
                                     )
                                 }
                                 s.done -> {
@@ -392,10 +390,7 @@ fun AcademyScreen(
                                     if (quizPending) DuckButton(
                                         "Question de fin", vm::startQuiz, Modifier.weight(1.2f), accent = c.gold, filled = true, icon = Icons.Rounded.Lightbulb,
                                     )
-                                    else DuckButton(
-                                        "Leçon suivante", { vm.nextLesson(guided = true) }, Modifier.weight(1.2f), accent = c.green, filled = true,
-                                        icon = Icons.AutoMirrored.Rounded.ArrowForward,
-                                    )
+                                    else NextButton("Leçon suivante", { vm.nextLesson(guided = true) }, Modifier.weight(1.2f))
                                 }
                                 model -> {
                                     DuckIconButton(Icons.Rounded.RestartAlt, "Recommencer l'exercice", vm::restartChallenge)

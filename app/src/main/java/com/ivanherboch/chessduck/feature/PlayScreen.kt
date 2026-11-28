@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.HintText
 import com.ivanherboch.chessduck.ui.icons.Shield
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.heightIn
@@ -289,8 +290,8 @@ private fun liveStatus(s: PlayState, p1: String, p2: String): Pair<String, Tone>
     if (s.thinking) return "L'ordinateur (${s.aiElo} ELO) réfléchit…" to Tone.NEUTRAL
     if (s.canPlay && s.hintStage > 0) {
         val h = s.hint ?: return "Calcul en cours, l'indice s'affiche dans un instant…" to Tone.GOLD
-        return if (s.hintStage == 1) "Indice 1/2 : la pièce à jouer est surlignée en vert. Touchez encore pour voir le coup." to Tone.GOLD
-        else "Indice 2/2 : coup suggéré ${pos.san(h)}." to Tone.GOLD
+        return if (s.hintStage == 1) "${HintText.PIECE} Touchez encore pour voir le coup." to Tone.GOLD
+        else "${HintText.ARROW} Coup suggéré : ${pos.san(h)}." to Tone.GOLD
     }
     if (s.cursor < s.line.size) {
         return if (s.canPlay) "$at, trait aux $side. Jouez un autre coup ici pour reprendre la partie depuis cette position." to Tone.INFO

@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck.feature
 
+import com.ivanherboch.chessduck.ui.RetryButton
+import com.ivanherboch.chessduck.ui.NextButton
+import com.ivanherboch.chessduck.ui.ScoredHintButton
+import com.ivanherboch.chessduck.ui.SolutionButton
 import androidx.compose.runtime.rememberCoroutineScope
 import com.ivanherboch.chessduck.ui.DuckRadius
 import androidx.compose.foundation.layout.fillMaxSize
@@ -223,25 +227,16 @@ fun PuzzlesScreen(
             EqualRow(Modifier.padding(vertical = 6.dp)) {
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Coup précédent", vm::back, enabled = s.refute == null && s.cursor > 0)
                 when {
-                    s.refute != null -> DuckButton("Réessayer", vm::retry, Modifier.weight(1f), accent = c.red, filled = true, icon = Icons.AutoMirrored.Rounded.Undo)
+                    s.refute != null -> RetryButton(vm::retry, Modifier.weight(1f))
                     s.over -> {
                         // Fini (résolu ou dévoilé) : le rejouer depuis le coup d'introduction, ou passer au suivant.
                         DuckIconButton(Icons.Rounded.RestartAlt, "Recommencer ce problème", vm::restart)
-                        DuckButton("Problème suivant", vm::random, Modifier.weight(1f), accent = c.gold, filled = true, icon = Icons.Rounded.Casino)
+                        NextButton("Problème suivant", vm::random, Modifier.weight(1f))
                     }
                     else -> {
-                        // Avant l'indice 2/2, le bouton dit ce qu'il coûte : la flèche montre le coup, le problème ne compte plus.
-                        // Libellé complet s'il a la place ; sinon court (la carte de l'indice 1/2 dit déjà qu'il ne compte pas).
-                        val roomy = !s.hadError && LocalDensity.current.fontScale <= 1.3f
-                        HintButton(
-                            s.hintStage, vm::hint, Modifier.weight(1f), enabled = vm.canPlay(s),
-                            nextLabel = if (roomy) "Montrer le coup (non compté)" else "Montrer le coup",
-                        )
-                        // Après une erreur : la solution complète, sans compter le problème comme résolu.
-                        if (s.hadError) DuckButton(
-                            "Solution", vm::solution, Modifier.weight(0.8f), accent = c.red, variant = ButtonVariant.OUTLINED,
-                            contentDescription = "Voir la solution : le problème ne comptera pas comme résolu",
-                        )
+                        // Mêmes boutons que Pratiquer (Académie) : l'indice annonce ce que coûte la flèche ; après une erreur, la solution.
+                        ScoredHintButton(s.hintStage, vm::hint, Modifier.weight(1f), enabled = vm.canPlay(s), crowded = s.hadError)
+                        if (s.hadError) SolutionButton(vm::solution, Modifier.weight(1f), "Voir la solution : le problème ne comptera pas comme résolu")
                     }
                 }
                 DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Coup suivant", vm::forward, enabled = s.refute == null && s.cursor < s.progress)
