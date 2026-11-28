@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck
 
+import com.ivanherboch.chessduck.data.UserBackup
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.ViewModelProvider
@@ -44,6 +45,8 @@ class AppContainer(context: Context, val scope: CoroutineScope) {
     val puzzles: PuzzleRepository by lazy { RoomPuzzleRepository(appContext, db) }
     val games: GameRepository by lazy { RoomGameRepository(db) }
     val lessons: LessonProgressRepository by lazy { RoomLessonProgressRepository(db) }
+    /** Export et import de la progression (Paramètres, « Sauvegarde hors-ligne »). */
+    val backup: UserBackup by lazy { UserBackup(db, prefs) }
     private val engineLazy = lazy { Stockfish(appContext) }
     val engine: ChessEngine by engineLazy
     private val analysisLazy = lazy { GameAnalysisService(engine, games, scope) }

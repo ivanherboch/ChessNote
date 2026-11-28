@@ -1,3 +1,11 @@
+import java.util.Properties
+
+/** Secret de signature : variable d'environnement, sinon keystore.properties (non versionné), sinon null. */
+val signingProps = Properties().apply {
+    rootProject.file("keystore.properties").takeIf { it.isFile }?.inputStream()?.use { load(it) }
+}
+fun secret(name: String): String? = System.getenv(name)?.takeIf { it.isNotBlank() } ?: signingProps.getProperty(name)?.takeIf { it.isNotBlank() }
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -13,18 +21,20 @@ android {
         applicationId = "com.ivanherboch.chessduck"
         minSdk = 26
         targetSdk = 35
-        versionCode = 117
-        versionName = "4.6.0"
+        versionCode = 118
+        versionName = "4.7.0"
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
     }
 
     signingConfigs {
-        // Clé de démonstration versionnée pour produire un APK installable directement.
+        // Signature : d'abord les variables CHESSDUCK_* (environnement, ou keystore.properties non versionné), sinon la
+        // clé de démonstration versionnée. Ce repli garde le certificat actuel tant que la rotation (Phase B, voir
+        // docs/contexte-session.md) n'a pas eu lieu : les mises à jour s'installent sans désinstaller l'application.
         create("release") {
-            storeFile = rootProject.file("keystore/chessduck-release.jks")
-            storePassword = "chessduck"
-            keyAlias = "chessduck"
-            keyPassword = "chessduck"
+            storeFile = rootProject.file(secret("CHESSDUCK_STORE_FILE") ?: "keystore/chessduck-release.jks")
+            storePassword = secret("CHESSDUCK_STORE_PASSWORD") ?: "chessduck"
+            keyAlias = secret("CHESSDUCK_KEY_ALIAS") ?: "chessduck"
+            keyPassword = secret("CHESSDUCK_KEY_PASSWORD") ?: "chessduck"
         }
     }
 

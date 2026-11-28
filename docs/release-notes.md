@@ -1,3 +1,15 @@
+## ChessDuck 4.7.0 — sauvegarde hors-ligne
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Paramètres, nouvelle section « Sauvegarde hors-ligne » :
+  - « Exporter ma progression » enregistre dans un fichier tout ce que vous avez fait : leçons, problèmes résolus, à refaire et favoris, parties et leurs analyses, tests, ELO, série de la séance du jour, réglages ;
+  - « Importer une sauvegarde » la restaure, par exemple sur un nouveau téléphone, après confirmation ;
+  - un fichier abîmé ou d'un autre format est refusé, sans rien modifier ;
+  - aucun réseau ni aucune permission de stockage : c'est vous qui choisissez où le fichier va.
+- Sauvegarde Android : la base des problèmes (plus de 25 Mo) faisait échouer toute la sauvegarde automatique. Elle en est exclue, et vos réglages sont de nouveau sauvegardés par Android. Pour la progression, utilisez le fichier ci-dessus.
+- Paramètres, Réinitialisation : « Réinitialiser mon ELO tactique », qui repart de votre ELO du Jeu Libre.
+
 ## ChessDuck 4.6.0 — paysage, grande police et couleurs
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

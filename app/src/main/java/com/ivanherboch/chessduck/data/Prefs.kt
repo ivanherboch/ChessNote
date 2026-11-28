@@ -1,5 +1,10 @@
 package com.ivanherboch.chessduck.data
 
+import kotlinx.coroutines.flow.first
+import androidx.datastore.preferences.core.stringSetPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
+import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.migrations.SharedPreferencesView
 import androidx.datastore.migrations.SharedPreferencesMigration
@@ -175,6 +180,25 @@ class Prefs(private val context: Context) : SettingsRepository {
         val lesson = intPreferencesKey("lesson_id")
         val academyLevel = intPreferencesKey("academy_level")
         val placementDone = booleanPreferencesKey("academy_placement_done")
+    }
+
+    /** Sauvegarde hors-ligne : toutes les préférences telles qu'enregistrées (nom → valeur). */
+    suspend fun snapshot(): Map<String, Any> = context.store.data.first().asMap().mapKeys { it.key.name }
+
+    /** Restauration d'une sauvegarde : les préférences sont remplacées par [values] (types déjà vérifiés). */
+    suspend fun restore(values: Map<String, Any>) {
+        context.store.edit { p ->
+            p.clear()
+            for ((k, v) in values) when (v) {
+                is Boolean -> p[booleanPreferencesKey(k)] = v
+                is Int -> p[intPreferencesKey(k)] = v
+                is Long -> p[longPreferencesKey(k)] = v
+                is Float -> p[floatPreferencesKey(k)] = v
+                is Double -> p[doublePreferencesKey(k)] = v
+                is String -> p[stringPreferencesKey(k)] = v
+                is Set<*> -> p[stringSetPreferencesKey(k)] = v.filterIsInstance<String>().toSet()
+            }
+        }
     }
 
     override val settings: Flow<Settings> = context.store.data.map { p ->

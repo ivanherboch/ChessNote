@@ -11,3 +11,9 @@ dist/
 # Python
 __pycache__/
 *.pyc
+
+# Signature privée (Phase B) : jamais dans le dépôt ; seule la clé de démonstration actuelle reste versionnée.
+keystore.properties
+*.jks
+*.keystore
+!keystore/chessduck-release.jks

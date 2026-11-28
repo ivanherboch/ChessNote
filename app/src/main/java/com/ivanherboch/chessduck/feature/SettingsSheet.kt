@@ -1,5 +1,11 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import com.ivanherboch.chessduck.ui.icons.Download
+import com.ivanherboch.chessduck.ui.icons.Folder
 import androidx.compose.foundation.layout.IntrinsicSize
 import com.ivanherboch.chessduck.ui.icons.Replay
 import com.ivanherboch.chessduck.ui.ConfirmDialog
@@ -162,6 +168,22 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
     val st = settings ?: return
     val c = LocalDuck.current
     var resetElo by remember { mutableStateOf(false) }
+    var resetPuzzleElo by remember { mutableStateOf(false) }
+    // Sauvegarde hors-ligne : fichier JSON choisi par l'utilisateur (aucune permission de stockage).
+    val backup = remember { (context.applicationContext as? com.ivanherboch.chessduck.ChessDuckApp)?.container?.backup }
+    var backupStatus by remember { mutableStateOf<String?>(null) }
+    var pendingImport by remember { mutableStateOf<android.net.Uri?>(null) }
+    val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "" }
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null && backup != null) scope.launch {
+            backupStatus = runCatching {
+                val json = backup.exportJson(version)
+                withContext(Dispatchers.IO) { context.contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) } ?: error("fichier") }
+                "Progression exportée : gardez ce fichier en lieu sûr (cloud, ordinateur)."
+            }.getOrElse { "L'export n'a pas abouti : choisissez un autre emplacement." }
+        }
+    }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) pendingImport = uri }
     DuckSheet("Paramètres", onClose) {
         // Le mode enfant change toute l'application : c'est le premier choix proposé.
         SectionTitle("Mode enfant")
@@ -229,13 +251,33 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
             color = c.muted, style = MaterialTheme.typography.bodySmall,
         )
 
+        // Sauvegarde Android : la base des problèmes (plus de 25 Mo) en est exclue ; ce fichier garde toute la progression.
+        SectionTitle("Sauvegarde hors-ligne")
+        Text(
+            "Un fichier qui garde toute votre progression : leçons, problèmes, parties, tests, ELO et réglages. " +
+                "Pour changer de téléphone ou réinstaller sans rien perdre.",
+            color = c.muted, style = MaterialTheme.typography.bodySmall,
+        )
+        DuckButton(
+            "Exporter ma progression", { backupStatus = null; exportLauncher.launch("chessduck-sauvegarde-${java.time.LocalDate.now()}.json") },
+            Modifier.fillMaxWidth().padding(top = 6.dp), enabled = backup != null, icon = Icons.Rounded.Download,
+        )
+        DuckButton(
+            "Importer une sauvegarde", { backupStatus = null; importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
+            Modifier.fillMaxWidth().padding(top = 6.dp), enabled = backup != null, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Folder,
+        )
+        backupStatus?.let { Text(it, color = c.text, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp)) }
+
         // Action irréversible : tout en bas, à l'écart des réglages courants.
         SectionTitle("Réinitialisation")
         DuckButton(
             "Réinitialiser mon ELO", { resetElo = true }, Modifier.fillMaxWidth(),
             enabled = st.elo != DEFAULT_ELO, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Replay,
         )
-        val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "" }
+        DuckButton(
+            "Réinitialiser mon ELO tactique (${st.puzzleElo.takeIf { it > 0 } ?: "–"})", { resetPuzzleElo = true }, Modifier.fillMaxWidth().padding(top = 6.dp),
+            enabled = st.puzzleElo > 0, variant = ButtonVariant.OUTLINED, icon = Icons.Rounded.Replay,
+        )
         Text(
             "© Ivan Herboch, 2026 · v$version", color = c.muted, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
@@ -245,6 +287,29 @@ fun SettingsSheet(prefs: SettingsRepository, narrator: Narrator, scope: Coroutin
         "Réinitialiser votre ELO ?", "Votre classement repartira de $DEFAULT_ELO. L'historique des parties est conservé.",
         "Réinitialiser", { resetElo = false; scope.launch { prefs.setElo(DEFAULT_ELO) } }, { resetElo = false },
     )
+    if (resetPuzzleElo) ConfirmDialog(
+        "Réinitialiser votre ELO tactique ?", "Il repartira de votre ELO du Jeu Libre (${st.elo}). Les problèmes résolus restent comptés.",
+        // 0 : « pas encore calculé » ; l'écran Problèmes le recalcule aussitôt depuis l'ELO du Jeu Libre.
+        "Réinitialiser", { resetPuzzleElo = false; scope.launch { prefs.setPuzzleElo(0) } }, { resetPuzzleElo = false },
+    )
+    pendingImport?.let { uri ->
+        ConfirmDialog(
+            "Importer cette sauvegarde ?", "Votre progression actuelle sur ce téléphone sera remplacée par celle du fichier. Exportez-la d'abord si vous voulez la garder.",
+            "Importer", {
+                pendingImport = null
+                if (backup != null) scope.launch {
+                    backupStatus = try {
+                        val text = withContext(Dispatchers.IO) { context.contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } } ?: error("fichier")
+                        "Sauvegarde importée : ${backup.importJson(text).summary()}."
+                    } catch (e: com.ivanherboch.chessduck.data.BackupFormatException) {
+                        e.message
+                    } catch (e: Exception) {
+                        "Impossible de lire ce fichier : rien n'a été modifié."
+                    }
+                }
+            }, { pendingImport = null },
+        )
+    }
 }
 
 /** Matière de l'échiquier : quatre aperçus de 2 × 2 cases, sélection unique. */

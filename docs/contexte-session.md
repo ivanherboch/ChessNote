@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `4.6.0` (`versionCode = 117`), publiée en release GitHub `v4.6.0`.
+- **Version actuelle** : `4.7.0` (`versionCode = 118`), publiée en release GitHub `v4.7.0`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -21,12 +21,15 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 | Onglet | Contenu |
 |---|---|
 | Notation | Exercices de notation anglaise FIDE (SAN) sur positions réelles ; niveaux Tous / Bases / Prises / Roques ; clavier virtuel ; indices 1/2 et 2/2 ; diagnostic pédagogique ; séries et record ; Mémo Anglais |
-| Académie | 113 leçons (37 ouvertures, 38 milieux de partie, 38 finales) en mode Guidé (lecture commentée) et mode Défi (le joueur joue les coups d'un camp) ; maîtrise enregistrée en base ; catalogue filtrable et recherchable |
-| Problèmes | 150 000 problèmes Lichess (CC0), 50 thèmes officiels regroupés en 6 familles, **un seul thème principal par problème** (`PuzzleThemes.primary`) ; anti-spoiler (thème masqué en mode libre, bouton « Révéler le thème ») ; réfutation temporisée (`REFUTE_HOLD = 4000 ms`) avec « Réessayer » ; indice en 2 temps ; 5 derniers problèmes ; recherche par identifiant ; export PNG (énoncé + solution) |
-| Jeu Libre | Contre l'ordinateur (Stockfish, 600–2400 ELO, fautes « humaines » sous 1350) ou à 2 joueurs ; ELO FIDE (K = 32) ; jauge d'évaluation ; annuler son coup ; historique ; revue commentée en langage naturel avec annotations `!!` `!` `?!` `?` `??`, mats manqués en 1 et 2 |
+| Académie | 211 leçons en 6 catégories (16 bases, 53 ouvertures, 61 milieux de partie, 18 stratégie, 55 finales, 8 parties modèles) : Comprendre (démonstration commentée, voix) puis Pratiquer (coups, problèmes du thème ou finale contre l'Ordinateur) ; révisions espacées, séance du jour, Atelier (finales, réflexes, répertoire, tests) ; catalogue filtrable et recherchable |
+| Problèmes | 150 000 problèmes Lichess (CC0), 50 thèmes officiels regroupés en 6 familles, **un seul thème principal par problème** (`PuzzleThemes.primary`) ; anti-spoiler (thème masqué en mode libre, bouton « Révéler le thème ») ; réfutation sereine (`REFUTE_HOLD = 8000 ms`, jauge or) avec « Réessayer » ; indice en 2 temps ; « Mon niveau » (ELO tactique), longueur, relais par thème secondaire ; Problèmes joués (50 récents, À refaire, Favoris) ; recherche par identifiant ; export PNG (énoncé + solution) |
+| Jeu Libre | Contre l'ordinateur (Stockfish, 600–2400 ELO, fautes « humaines » sous 1350) ou à 2 joueurs ; partie libre par défaut (filet de sécurité, sans ELO) ou classée (ELO FIDE, K = 32, sortie du classement par une aide) ; partie en cours gardée si Android ferme l'application ; jauge d'évaluation ; annuler son coup ; historique ; revue commentée en langage naturel avec annotations `!!` `!` `?!` `?` `??`, mats manqués en 1 et 2 |
 | Mode enfant | Activé dans les Paramètres : écran clair et coloré (police Fredoka), 2 joueurs, cavalier en forme de girafe, leçons animées du déplacement de chaque pièce, confirmation avant de quitter ; la partie enfant est effacée à la sortie mais la partie du Jeu Libre est conservée |
 
-Téléphone : portrait. Tablette (plus petite largeur ≥ 600 dp) : paysage, deux colonnes (échiquier à gauche, commandes à droite).
+Téléphone : portrait, ou paysage compact (`LocalCompactHeight` : rail de navigation avec Paramètres, sans en-tête). Tablette : deux colonnes en paysage (échiquier à gauche, commandes à droite).
+
+**Sauvegarde** : `data/UserBackup.kt` (JSON, Paramètres > « Sauvegarde hors-ligne ») ; `chessduck.db` exclue de la
+sauvegarde Android (`res/xml/backup_rules.xml`, `data_extraction_rules.xml`).
 
 ---
 
@@ -43,10 +46,11 @@ Paquet racine : `app/src/main/java/com/ivanherboch/chessduck/`
   SAN/FEN/UCI, `hasAttacker`, `key` en cache, `sanBody`), `PieceFr.kt` (`PieceLexiconFr` : noms, genres, articles, possessifs).
 - `content/` — `PuzzleThemes.kt` (50 thèmes, `PRIORITY`, `primary`, `primaryIndex`, `primarySql`), `Lessons.kt` +
   `LessonsOpenings/Middlegames/Endgames.kt` (**générés**, coups en UCI, voir §5).
-- `data/` — `Db.kt` (Room **v4** : entités `Puzzle` avec colonne indexée `primaryTheme`, `PuzzleProgress`, `LessonProgress`
+- `data/` — `Db.kt` (Room **v5** : entités `Puzzle` (index couvrants `rating,id` et `primaryTheme,rating,id`), `PuzzleThemeLink` (`puzzle_themes`), `PuzzleProgress` (statut, essais, À refaire, favori), `LessonProgress`
   (étoiles, erreurs, indices, exercices, champs de révision), `GameRecord` (+ `startFen`), `AcademyAssessment` ;
-  migrations 1→2→3→4 ; `syncPuzzles` par `ATTACH` + `INSERT OR IGNORE`), `Prefs.kt` (DataStore « chessduck »,
-  migration depuis les SharedPreferences `share_style`), `Repositories.kt` (interfaces `SettingsRepository`,
+  migrations 1→2→3→4→5 ; `syncPuzzles` par `ATTACH` + `INSERT OR IGNORE`), `Prefs.kt` (DataStore « chessduck »,
+  migrations depuis les SharedPreferences `share_style` et `PlayDefaultsMigration` ; `snapshot`/`restore` pour la sauvegarde),
+  `UserBackup.kt` (export/import JSON de la progression), `Repositories.kt` (interfaces `SettingsRepository`,
   `PuzzleRepository`, `GameRepository`, `LessonProgressRepository` et implémentations Room).
 - `engine/Stockfish.kt` — interface `ChessEngine` ; `Stockfish` (UCI, recherches sérialisées et annulables,
   resynchronisation `isready` après annulation, options renvoyées seulement si elles changent).
@@ -221,6 +225,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **4.5.0** : audit v4.4.7, étape 3. `Settings` : `ratedGame = false`, `safetyNet = true`, `aiElo = 600` (installation vierge) ; `setRatedGame` (coupe le filet), `setSafetyNet(true)` repasse en libre. `FakeSettings` et `@Before` Robolectric : élève engagé (classée, 1200, sans filet). `PlayState.rated`/`unratedBy`/`notice` (sauvegardés) ; `unrate()` sur indice 2/2, annulation, filet ; `setRatedGame` ; partie hors ELO enregistrée avec `eloAfter = 0` (« Hors ELO » dans `HistorySheet`). `GameSettingsSheet` : section « Enjeu ». `REFUTE_HOLD = 8000`, jauge or. `ExportSheet(themeVisible)`, « À refaire » sans thème non révélé, pastille d'échéance. `VisionSession.filter` + `setVisionFilter` + puces. Hors périmètre traité : message du relais quand le problème passé était le dernier (`skippedLast`), bilan de leçon sur les 2 derniers commentaires, KDoc de `Stockfish.close()` (redémarrage voulu).
 - **4.5.1** : `PlayDefaultsMigration` (DataStore, une fois, tant que `play_rated_game` est absent) : magasin vide → libre/filet/600 ; sinon → classée sauf filet stocké, `ai_elo` 1200 si absent. Corrige la 4.5.0, qui appliquait les nouveaux défauts aux utilisateurs existants n'ayant jamais touché ces réglages.
 - **4.6.0** : audit v4.4.7, étape 4. `LocalCompactHeight` (deux colonnes et hauteur < 480 dp, `isCompactHeight`) : pas d'en-tête global, Paramètres en bas du `NavigationRail` défilable ; Notation : rangée haute 48, pièces 40, `KEY_ROW_COMPACT = 34`. Grande police (> 1,3) : touches de pièces sans ligne anglaise, `FlowRow` des pastilles, niveau court, « Réponse… ». `MoveStrip` : bande de 48 dp (fond dessiné en retrait). `BoardTheme.TOURNAMENT_SELECT` (bleu) hors `colorBlind` ; `DuckColors.colorBlind` (Bleu-Orange) ; `annotationColor(a, colorBlind)`. `DailyBanner` dans une `Column` au-dessus de `ModuleLayout` ; haut-parleur `VolumeUp` + `selected = speaking`. Hors périmètre traité : en-tête du Jeu Libre en grande police (libellés courts, description TalkBack complète).
+- **4.7.0** : audit v4.4.7, étape 5. `UserBackup` (JSON : leçons, problèmes, parties, tests, préférences typées ; import vérifié puis restauration en transaction ; `BackupFormatException`) ; DAO `all*`/`clear*`/`insert*` ; `Prefs.snapshot`/`restore` ; Paramètres : « Sauvegarde hors-ligne » (CreateDocument/OpenDocument) et « Réinitialiser mon ELO tactique » (`puzzleElo = 0`, suivi par `PuzzlesViewModel`). `backup_rules.xml` + `data_extraction_rules.xml` excluent `chessduck.db`. Signature : `CHESSDUCK_*` (environnement ou `keystore.properties`), repli sur `keystore/chessduck-release.jks`. `.github/workflows/ci.yml` (tests à chaque push et PR). README et §1-§2 alignés (211 leçons, Room v5).
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.
@@ -380,3 +385,28 @@ Les détails de chaque version sont dans `docs/release-notes.md` ; les exemples 
 2. Après chaque changement : tests unitaires, puis contrôle visuel des captures d'écran concernées.
 3. Build release avant de livrer ; publier une nouvelle version si l'utilisateur doit pouvoir tester.
 4. Répondre à l'utilisateur en français, de façon concise : ce qui a changé, le lien de téléchargement, les limites éventuelles.
+
+---
+
+## Phase B — rotation du certificat de signature
+
+Aujourd'hui (Phase A), la clé `keystore/chessduck-release.jks` et son mot de passe sont dans le dépôt : n'importe qui
+pourrait signer un APK que les téléphones accepteraient comme une mise à jour de ChessDuck. Changer de clé fait échouer
+la mise à jour (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`) : il faut désinstaller, ce qui efface la progression. D'où l'ordre :
+
+1. **Fait (4.7.0)** : la sauvegarde hors-ligne existe ; la signature lit d'abord `CHESSDUCK_STORE_FILE`,
+   `CHESSDUCK_STORE_PASSWORD`, `CHESSDUCK_KEY_ALIAS`, `CHESSDUCK_KEY_PASSWORD` (environnement ou `keystore.properties`,
+   ignoré par Git), sinon la clé de démonstration.
+2. **Annoncer** dans les notes de version, une ou deux versions à l'avance : « exportez votre progression ».
+3. **Créer la clé privée**, hors du dépôt :
+   `keytool -genkeypair -v -keystore chessduck-private.jks -alias chessduck -keyalg RSA -keysize 4096 -validity 10000`.
+4. **La donner à GitHub Actions** : secrets `CHESSDUCK_KEYSTORE_BASE64` (`base64 -w0 chessduck-private.jks`),
+   `CHESSDUCK_STORE_PASSWORD`, `CHESSDUCK_KEY_ALIAS`, `CHESSDUCK_KEY_PASSWORD` ; un workflow de construction décode le
+   fichier dans `$RUNNER_TEMP`, exporte `CHESSDUCK_STORE_FILE`, puis lance `./gradlew :app:assembleRelease`.
+5. **Publier la première version signée par la nouvelle clé** en expliquant : exporter la progression, désinstaller,
+   installer, importer la sauvegarde.
+6. **Ensuite** seulement : retirer `keystore/chessduck-release.jks` et le repli de `app/build.gradle.kts`, et changer le
+   mot de passe s'il avait servi ailleurs. L'historique Git garde l'ancienne clé : elle doit être considérée comme publique.
+
+Alternative : Google Play App Signing, qui gère la clé de diffusion (seule la clé d'envoi reste à protéger).
+

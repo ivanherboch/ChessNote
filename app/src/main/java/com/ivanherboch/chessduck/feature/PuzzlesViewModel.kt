@@ -181,6 +181,14 @@ class PuzzlesViewModel(
             val current = if (id.isNotEmpty()) runCatchingSuspend { dao.byId(id) }.getOrNull() else null
             if (current != null) show(current) else drawRandom()
         }
+        // ELO tactique changé hors de l'écran (réinitialisation, import d'une sauvegarde) : suivi aussitôt ; 0 repart de
+        // l'ELO du Jeu Libre.
+        viewModelScope.launch {
+            prefs.settings.map { it.puzzleElo to it.elo }.distinctUntilChanged().collect { (pe, elo) ->
+                if (pe > 0) _state.update { if (it.puzzleElo != pe) it.copy(puzzleElo = pe) else it }
+                else runCatchingSuspend { prefs.setPuzzleElo(elo.coerceIn(ELO_MIN, ELO_MAX)) }
+            }
+        }
         viewModelScope.launch {
             prefs.settings.map { it.recentPuzzles }.distinctUntilChanged().collect { ids ->
                 val others = ids.drop(1).take(com.ivanherboch.chessduck.data.RECENT_PUZZLES)

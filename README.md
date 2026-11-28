@@ -5,15 +5,20 @@ Application Android francophone d'apprentissage, d'entraînement et de jeu aux �
 
 | Module | Contenu |
 |---|---|
-| ⌨️ Notation | Exercices de notation anglaise FIDE (SAN) sur positions réelles, clavier virtuel, diagnostic pédagogique, Mémo Anglais |
-| 🎓 Académie | 113 leçons (37 ouvertures, 38 milieux de partie, 38 finales) en Mode Guidé et Mode Défi |
-| 🧩 Problèmes | 150 000 problèmes Lichess hors-ligne, 50 thèmes, réfutation temporisée, indice en 2 temps, partage PNG |
-| ⚔️ Jeu Libre | Ordinateur local (Stockfish) 600–2400 ELO, 2 joueurs, ELO FIDE (K = 32), historique et revue annotée |
+| ⌨️ Notation | Exercices de notation anglaise FIDE (SAN) sur positions réelles, clavier virtuel, diagnostic pédagogique, Mémo Anglais, Vision des cases |
+| 🎓 Académie | 211 leçons en 6 catégories (16 bases, 53 ouvertures, 61 milieux de partie, 18 stratégie, 55 finales, 8 parties modèles) : Comprendre (démonstration commentée, voix hors-ligne) puis Pratiquer ; révisions espacées, séance du jour, finales et réflexes contre l'Ordinateur, tests de palier |
+| 🧩 Problèmes | 150 000 problèmes Lichess hors-ligne, 50 thèmes, « Mon niveau » (ELO tactique), longueur de solution, À refaire et Favoris, réfutation sereine, indice en 2 temps, partage PNG |
+| ⚔️ Jeu Libre | Ordinateur local (Stockfish) 600–2400 ELO, partie libre (par défaut, avec filet de sécurité) ou classée (ELO FIDE, K = 32), 2 joueurs, historique et revue annotée |
 | 🧒 Mode enfant | Écran joyeux à 2 joueurs, grand échiquier, cavalier-girafe, leçons animées du déplacement de chaque pièce (Paramètres) |
 
-Téléphone : portrait. Tablette (plus petite largeur ≥ 600 dp) : paysage, échiquier à gauche et commandes à droite.
+Téléphone : portrait, ou paysage compact (rail de navigation, sans en-tête). Tablette : deux colonnes en paysage, échiquier à gauche et commandes à droite.
+
+**Sauvegarde** : Paramètres > « Sauvegarde hors-ligne » exporte toute la progression (leçons, problèmes, parties, tests, ELO,
+réglages) dans un fichier JSON et la réimporte, sans réseau ni permission. La base des problèmes est exclue de la
+sauvegarde Android (plus de 25 Mo), qui garde ainsi les réglages.
 
 Chaque APK poussé dans `releases/` est publié automatiquement en release GitHub (`.github/workflows/release.yml`).
+Chaque push et chaque pull request lancent tous les tests (`.github/workflows/ci.yml`).
 
 ## Compiler
 
@@ -23,6 +28,10 @@ Chaque APK poussé dans `releases/` est publié automatiquement en release GitHu
 ```
 
 Prérequis : JDK 17+, SDK Android 35. Le NDK n'est nécessaire que pour recompiler Stockfish.
+
+Signature : les variables `CHESSDUCK_STORE_FILE`, `CHESSDUCK_STORE_PASSWORD`, `CHESSDUCK_KEY_ALIAS` et
+`CHESSDUCK_KEY_PASSWORD` (environnement ou `keystore.properties`, non versionné) priment ; à défaut, la clé de
+démonstration `keystore/chessduck-release.jks` est utilisée (voir la Phase B dans `docs/contexte-session.md`).
 
 ## Données et scripts
 

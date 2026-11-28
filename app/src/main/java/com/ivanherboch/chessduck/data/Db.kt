@@ -372,6 +372,17 @@ interface PuzzleDao {
     @Query("SELECT COUNT(*) FROM puzzle_themes")
     suspend fun linkCount(): Int
 
+    // ---- Sauvegarde hors-ligne (UserBackup) : seulement la progression, jamais le catalogue des problèmes ----
+
+    @Query("SELECT * FROM puzzle_progress")
+    suspend fun allProgress(): List<PuzzleProgress>
+
+    @Query("DELETE FROM puzzle_progress")
+    suspend fun clearProgress()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertProgress(rows: List<PuzzleProgress>)
+
     /** Essai conclu : lecture puis écriture de la progression dans une seule transaction (aucune écriture perdue). */
     @Transaction
     suspend fun recordAttempt(id: String, outcome: Int, at: Long) {
@@ -418,6 +429,35 @@ interface UserDao {
 
     @Query("SELECT * FROM games ORDER BY date DESC")
     fun games(): Flow<List<GameRecord>>
+
+    // ---- Sauvegarde hors-ligne (UserBackup) ----
+
+    @Query("SELECT * FROM lesson_progress")
+    suspend fun allLessons(): List<LessonProgress>
+
+    @Query("SELECT * FROM games ORDER BY id")
+    suspend fun allGames(): List<GameRecord>
+
+    @Query("SELECT * FROM academy_assessments ORDER BY id")
+    suspend fun allAssessments(): List<AcademyAssessment>
+
+    @Query("DELETE FROM lesson_progress")
+    suspend fun clearLessons()
+
+    @Query("DELETE FROM games")
+    suspend fun clearGames()
+
+    @Query("DELETE FROM academy_assessments")
+    suspend fun clearAssessments()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLessons(rows: List<LessonProgress>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertGames(rows: List<GameRecord>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAssessments(rows: List<AcademyAssessment>)
 
     @Query("SELECT outcome, COUNT(*) AS n FROM games WHERE vsComputer = 1 GROUP BY outcome")
     fun tally(): Flow<List<Tally>>
