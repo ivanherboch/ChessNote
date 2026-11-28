@@ -198,7 +198,9 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                 s.line, s.cursor, Modifier.padding(top = 2.dp), onSelect = vm::goTo, onPrev = vm::back, onNext = vm::forward,
                 prevEnabled = s.cursor > 0 && !s.thinking && !s.checking, nextEnabled = s.cursor < s.line.size && !s.thinking && !s.checking,
             )
-            val (msg, tone) = liveStatus(s, st.pseudo, st.pseudo2)
+            val (status, tone) = liveStatus(s, st.pseudo, st.pseudo2)
+            // Partie sortie du classement : annoncée une fois, au-dessus du statut, jusqu'au coup suivant.
+            val msg = s.notice?.takeIf { s.result == null && s.warning == null }?.let { "$it\n\n$status" } ?: status
             // Tablette : message compact puis tableau complet des coups, comme dans la revue.
             FeedbackCard(stuck ?: msg, if (stuck != null) Tone.GOLD else tone, Modifier.padding(top = 4.dp).then(if (wide) Modifier.heightIn(max = 180.dp) else Modifier.weight(1f)))
             if (wide) MoveTable(s.line, s.cursor, emptyList(), { if (!s.thinking && !s.checking) vm.goTo(it) }, Modifier.padding(top = 6.dp).weight(1f))
@@ -262,6 +264,7 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
     }
     if (gameSettings) GameSettingsSheet(
         st.twoPlayers, st.colorChoice, st.aiElo, st.safetyNet, onSafetyNet = vm::setSafetyNet, onClose = { gameSettings = false },
+        rated = st.ratedGame, onRated = vm::setRatedGame,
     ) { two, color, elo ->
         gameSettings = false
         if (st.confirmActions && s.inProgress) pendingSettings = Triple(two, color, elo) else vm.applySettings(two, color, elo)
@@ -271,8 +274,9 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
 /** Ce que devient la partie en cours si l'on en commence une autre. */
 private fun quitText(s: PlayState): String = when {
     s.twoPlayers -> "La partie en cours sera perdue (elle n'est pas enregistrée)."
-    s.fromPosition || s.netUsed -> "La partie en cours comptera comme un abandon (enregistrée dans l'historique, sans effet sur l'ELO)."
-    else -> "La partie en cours comptera comme un abandon : une défaite, et votre ELO sera mis à jour."
+    s.rated -> "La partie en cours est classée : elle comptera comme un abandon, une défaite, et votre ELO sera mis à jour."
+    // Partie libre, position de leçon ou partie aidée : jamais de défaite pour l'ELO.
+    else -> "La partie en cours sera rangée dans l'historique, sans effet sur votre ELO."
 }
 
 private fun liveStatus(s: PlayState, p1: String, p2: String): Pair<String, Tone> {

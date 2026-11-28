@@ -45,6 +45,9 @@ class TabletRobolectricTest {
         prefs.setKidMode(false)
         prefs.setLesson(1)
         prefs.setAcademyLevel(2)
+        // Jeu Libre d'un élève déjà engagé : partie classée à 1200, sans filet (les défauts sans stress ont leurs tests).
+        prefs.setGameSettings(false, 0, 1200)
+        prefs.setRatedGame(true)
     }
 
     /** Ajoute une courte partie terminée à l'historique de l'application (mat du berger). */

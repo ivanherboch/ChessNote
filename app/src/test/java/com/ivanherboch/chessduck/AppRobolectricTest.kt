@@ -74,6 +74,9 @@ class AppRobolectricTest {
         // Scénarios écrits pour un élève déjà engagé : leçon « Les trois principes de l'ouverture », palier 2.
         prefs.setLesson(1)
         prefs.setAcademyLevel(2)
+        // Jeu Libre d'un élève déjà engagé : partie classée à 1200, sans filet (les défauts sans stress ont leurs tests).
+        prefs.setGameSettings(false, 0, 1200)
+        prefs.setRatedGame(true)
     }
 
     /**

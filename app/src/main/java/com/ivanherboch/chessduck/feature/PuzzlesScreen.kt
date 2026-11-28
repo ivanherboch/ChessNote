@@ -145,7 +145,13 @@ fun PuzzlesScreen(
                 )
                 // Une fois le problème fini, l'action principale « Problème suivant » est en bas : ce dé reste discret.
                 DuckIconButton(Icons.Rounded.Casino, "Problème aléatoire", vm::random, accent = c.gold)
-                DuckIconButton(Icons.Rounded.History, "Problèmes joués : récents, à refaire, favoris", { recentSheet = true }, enabled = recents.isNotEmpty() || toRedo.isNotEmpty() || bookmarks.isNotEmpty())
+                // Pastille : problèmes « À refaire » arrivés à échéance aujourd'hui.
+                val due = toRedo.count { it.second <= System.currentTimeMillis() }
+                DuckIconButton(
+                    Icons.Rounded.History, "Problèmes joués : récents, à refaire, favoris" + if (due > 0) ", $due à refaire aujourd'hui" else "",
+                    { recentSheet = true }, enabled = recents.isNotEmpty() || toRedo.isNotEmpty() || bookmarks.isNotEmpty(),
+                    badge = if (due > 0) "$due" else null,
+                )
                 DuckIconButton(Icons.Rounded.IosShare, "Exporter en image", { shareChoice = true })
             }
             // Ligne d'information toujours lisible en entier : elle passe à la ligne au lieu de se couper. En grande police,
@@ -259,7 +265,8 @@ fun PuzzlesScreen(
                 }
                 1 -> if (toRedo.isEmpty()) EmptyListText("Rien à refaire : un problème manqué, ou résolu après une erreur, revient ici le lendemain, puis à intervalles croissants (7, 30, 90 jours) tant qu'il n'est pas solide.") else for ((r, at) in toRedo) {
                     val days = ((at - now + 86_399_999L) / 86_400_000L).toInt()
-                    PlayedRow(r, true, if (days <= 0) "À refaire" else "Dans $days j", false) { recentSheet = false; vm.openPuzzle(r) }
+                    // Thème caché sauf s'il avait été révélé : le motif ne se devine pas juste avant de retenter.
+                    PlayedRow(r, r.id in knownThemes, if (days <= 0) "À refaire" else "Dans $days j", false) { recentSheet = false; vm.openPuzzle(r) }
                 }
                 else -> if (bookmarks.isEmpty()) EmptyListText("Touchez le signet à côté du numéro d'un problème pour le garder ici.") else for (r in bookmarks) {
                     val done = r.id in solved
@@ -271,6 +278,8 @@ fun PuzzlesScreen(
     if (shareChoice) {
         ExportSheet(
             p, line, s.playerWhite, s.solved, exporting,
+            // Mode libre, thème encore masqué : l'aperçu de l'énoncé ne l'écrit pas (indice décoché par défaut).
+            themeVisible = s.themeVisible,
             loadStyle = vm::shareStyle,
             saveStyle = vm::saveShareStyle,
             onExport = { block ->

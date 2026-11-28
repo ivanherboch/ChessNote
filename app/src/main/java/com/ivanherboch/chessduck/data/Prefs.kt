@@ -66,8 +66,10 @@ data class Settings(
     val understoodIds: Set<Int> = emptySet(),
     /** Séance du jour : étapes faites aujourd'hui et série de jours. */
     val daily: DailyLog = DailyLog(),
-    /** Jeu Libre : filet de sécurité (l'Ordinateur arrête une gaffe nette avant qu'elle soit jouée). */
-    val safetyNet: Boolean = false,
+    /** Jeu Libre : filet de sécurité (l'Ordinateur arrête une gaffe nette avant qu'elle soit jouée). Actif d'emblée. */
+    val safetyNet: Boolean = true,
+    /** Jeu Libre : partie classée (compte pour l'ELO) ; par défaut, partie libre, sans enjeu. */
+    val ratedGame: Boolean = false,
     /** Gaffes arrêtées par le filet (elles comptent dans « À travailler »). */
     val netEvents: List<NetEvent> = emptyList(),
     val pseudo: String = "Joueur",
@@ -77,7 +79,8 @@ data class Settings(
     val twoPlayers: Boolean = false,
     /** 0 = Blancs, 1 = Aléatoire, 2 = Noirs. */
     val colorChoice: Int = 0,
-    val aiElo: Int = 1200,
+    /** Niveau de l'Ordinateur : 600 (débutant) par défaut, comme le palier 1 de l'Académie. */
+    val aiElo: Int = 600,
     /** 0 = Tous, 1 = Débutant, 2 = Intermédiaire, 3 = Avancé, 4 = Expert. */
     val puzzleBand: Int = 0,
     val puzzleTheme: String = "",
@@ -127,6 +130,7 @@ class Prefs(private val context: Context) : SettingsRepository {
         val understood = stringPreferencesKey("academy_understood_ids")
         val daily = stringPreferencesKey("academy_daily")
         val safetyNet = booleanPreferencesKey("play_safety_net")
+        val ratedGame = booleanPreferencesKey("play_rated_game")
         val netEvents = stringPreferencesKey("play_net_events")
         val pseudo = stringPreferencesKey("pseudo")
         val pseudo2 = stringPreferencesKey("pseudo2")
@@ -165,14 +169,15 @@ class Prefs(private val context: Context) : SettingsRepository {
             lessonWorkedAt = decodeWorked(p[K.workedAt]),
             understoodIds = (p[K.understood] ?: "").split(',').mapNotNull { it.trim().toIntOrNull() }.toSet(),
             daily = DailyLog.decode(p[K.daily]),
-            safetyNet = p[K.safetyNet] ?: false,
+            safetyNet = p[K.safetyNet] ?: true,
+            ratedGame = p[K.ratedGame] ?: false,
             netEvents = decodeNetEvents(p[K.netEvents]),
             pseudo = p[K.pseudo] ?: "Joueur",
             pseudo2 = p[K.pseudo2] ?: "Joueur 2",
             elo = p[K.elo] ?: DEFAULT_ELO,
             twoPlayers = p[K.twoPlayers] ?: false,
             colorChoice = p[K.color] ?: 0,
-            aiElo = p[K.aiElo] ?: 1200,
+            aiElo = p[K.aiElo] ?: 600,
             puzzleBand = p[K.band] ?: 0,
             puzzleTheme = p[K.theme] ?: "",
             puzzleElo = p[K.puzzleElo] ?: 0,
@@ -226,7 +231,10 @@ class Prefs(private val context: Context) : SettingsRepository {
     override suspend fun markDailyStep(step: String, today: Long, required: Set<String>) { context.store.edit { p ->
         p[K.daily] = DailyLog.decode(p[K.daily]).mark(step, today, required).encode()
     } }
-    override suspend fun setSafetyNet(on: Boolean) { context.store.edit { it[K.safetyNet] = on } }
+    // Le filet de sécurité est une aide : l'activer repasse en partie libre (une partie classée se joue sans filet).
+    override suspend fun setSafetyNet(on: Boolean) { context.store.edit { it[K.safetyNet] = on; if (on) it[K.ratedGame] = false } }
+    // Partie classée : le filet de sécurité est coupé en même temps (une partie classée se joue sans aide).
+    override suspend fun setRatedGame(on: Boolean) { context.store.edit { it[K.ratedGame] = on; if (on) it[K.safetyNet] = false } }
     override suspend fun addNetEvent(topic: String, at: Long) { context.store.edit { p ->
         p[K.netEvents] = encodeNetEvents((decodeNetEvents(p[K.netEvents]) + NetEvent(topic, at)).takeLast(NET_EVENTS_MAX))
     } }

@@ -139,16 +139,24 @@ class NotationViewModel(
 
     private fun ask(score: Int, total: Int, kind: VisionKind? = null): VisionSession {
         val q = SquareVision.question(rnd, kind)
-        return VisionSession(q, score = score, total = total, message = SquareVision.prompt(q))
+        return VisionSession(q, score = score, total = total, message = SquareVision.prompt(q), filter = kind)
     }
 
+    /** Vision des cases : [kind] choisit l'exercice (null : tous) et reste retenu pour les questions suivantes. */
     fun startVision(kind: VisionKind? = null) { _vision.value = ask(0, 0, kind) }
+
+    /** Change d'exercice en cours de séance (score gardé) : une nouvelle question du type choisi. */
+    fun setVisionFilter(kind: VisionKind?) {
+        val v = _vision.value ?: return
+        if (v.filter == kind) return
+        _vision.value = ask(v.score, v.total, kind)
+    }
 
     fun closeVision() { _vision.value = null }
 
     fun nextVision() {
         val v = _vision.value ?: return
-        if (v.answered) _vision.value = ask(v.score, v.total)
+        if (v.answered) _vision.value = ask(v.score, v.total, v.filter)
     }
 
     private fun judge(v: VisionSession, ok: Boolean, text: String, tapped: Int = -1) {

@@ -158,6 +158,8 @@ internal fun ExportSheet(
     playerWhite: Boolean,
     solved: Boolean,
     exporting: Boolean,
+    /** Thème connu du joueur : sinon, l'indice (qui nomme le thème) est décoché par défaut. */
+    themeVisible: Boolean = true,
     loadStyle: suspend () -> ShareStyle,
     saveStyle: (ShareStyle) -> Unit,
     onExport: (suspend () -> Unit) -> Unit,
@@ -176,7 +178,7 @@ internal fun ExportSheet(
         // la clé (style, problème) permet de réutiliser le bitmap à l'export s'il correspond encore.
         // Un rendu en échec donne (clé, null) : l'aperçu affiche alors « indisponible » au lieu de tourner sans fin.
         // « Inclure l'indice » (énoncé) : choix de ce tiroir, l'indice est inclus par défaut.
-        var includeTip by remember { mutableStateOf(true) }
+        var includeTip by remember { mutableStateOf(themeVisible) }
         // Aperçu de la solution démasqué : il n'est calculé (et donc présent en mémoire) qu'à partir de là, ou une fois résolu.
         var revealed by remember { mutableStateOf(false) }
         val showSolution = solved || revealed

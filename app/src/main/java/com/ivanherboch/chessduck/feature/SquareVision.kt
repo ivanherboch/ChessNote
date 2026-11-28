@@ -35,6 +35,8 @@ data class VisionSession(
     val total: Int = 0,
     val message: String = "",
     val tone: Tone = Tone.INFO,
+    /** Exercice choisi (null : tous, en alternance) : les questions suivantes restent de ce type. */
+    val filter: VisionKind? = null,
 ) {
     /** Échiquier affiché : vide, avec le cavalier sur sa case de départ pour le chemin du cavalier (position mise en cache). */
     val position: Position

@@ -49,7 +49,10 @@ internal fun GameSettingsSheet(
     twoPlayers: Boolean, color: Int, aiElo: Int,
     /** Filet de sécurité : appliqué tout de suite (partie en cours comprise) et mémorisé. */
     safetyNet: Boolean, onSafetyNet: (Boolean) -> Unit,
-    onClose: () -> Unit, onApply: (Boolean, Int, Int) -> Unit,
+    onClose: () -> Unit,
+    /** Partie classée (ELO) ou libre : appliqué tout de suite et mémorisé (voir PlayViewModel.setRatedGame). */
+    rated: Boolean = false, onRated: (Boolean) -> Unit = {},
+    onApply: (Boolean, Int, Int) -> Unit,
 ) {
     val c = LocalDuck.current
     var two by remember { mutableStateOf(twoPlayers) }
@@ -78,6 +81,18 @@ internal fun GameSettingsSheet(
                 Text("600 · débutant", color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                 Text("2400 · maître", color = c.muted, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
             }
+            // Enjeu : partie libre (par défaut, sans stress) ou classée. Appliqué aussitôt, sans relancer la partie.
+            SectionTitle("Enjeu")
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                DuckChip("Partie libre (sans ELO)", !rated, { onRated(false) })
+                DuckChip("Partie classée (ELO)", rated, { onRated(true) })
+            }
+            Text(
+                if (rated) "Votre ELO évolue, sans filet de sécurité. Annuler un coup, demander la flèche de l'indice ou activer le filet " +
+                    "sort la partie du classement. Le classement commence à la prochaine partie."
+                else "Aucun enjeu : votre ELO ne change pas, et toutes les aides sont permises.",
+                color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp),
+            )
             // Filet de sécurité : interrupteur appliqué aussitôt, sans relancer la partie.
             Row(
                 Modifier.fillMaxWidth().padding(top = 12.dp).heightIn(min = 56.dp)
@@ -88,7 +103,7 @@ internal fun GameSettingsSheet(
                 Column(Modifier.padding(horizontal = 10.dp).weight(1f)) {
                     Text("Filet de sécurité", color = c.text, style = MaterialTheme.typography.titleSmall)
                     Text(
-                        "L'Ordinateur arrête une gaffe nette avant qu'elle soit jouée et vous dit pourquoi. La partie ne compte alors plus pour l'ELO.",
+                        "L'Ordinateur arrête une gaffe nette avant qu'elle soit jouée et vous dit pourquoi. L'activer repasse en partie libre.",
                         color = c.muted, style = MaterialTheme.typography.bodySmall,
                     )
                 }

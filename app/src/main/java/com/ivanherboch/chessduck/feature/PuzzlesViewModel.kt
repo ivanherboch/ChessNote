@@ -242,7 +242,7 @@ class PuzzlesViewModel(
      * Affiche [p] depuis le début. [allSolved] : il vient d'un tirage alors que tous les problèmes non résolus du filtre
      * sont épuisés (la carte le dit). Le trait est déjà écrit au-dessus de l'échiquier : le message ne le répète pas.
      */
-    private fun show(p: Puzzle, allSolved: Boolean = false, viaSecondary: Boolean = false) {
+    private fun show(p: Puzzle, allSolved: Boolean = false, viaSecondary: Boolean = false, skippedLast: Boolean = false) {
         job?.cancel()
         saved[KEY_PUZZLE] = p.id
         val line = runCatching { Line.fromUci(p.fen, p.moves) }.getOrNull() ?: return
@@ -253,7 +253,10 @@ class PuzzlesViewModel(
                 alreadySolved = false, themeRevealed = false, hadError = false, revealed = false, allSolvedInFilter = allSolved, tone = Tone.INFO,
                 secondary = viaSecondary,
                 message = when {
+                    // Le problème qu'on vient de passer était le dernier non résolu : le message ne prétend pas que tout est résolu.
+                    allSolved && skippedLast -> "Le problème que vous venez de passer était le dernier non résolu de cette sélection : en voici un déjà résolu. Vous le retrouverez dans « Problèmes joués ».\n\n$intro"
                     allSolved -> "Vous avez résolu tous les problèmes de cette sélection : en voici un déjà résolu. Élargissez le filtre dans le catalogue pour en découvrir d'autres.\n\n$intro"
+                    viaSecondary && skippedLast -> "Le problème que vous venez de passer était le dernier, à ce niveau, dont « ${themeName(it.theme)} » est l'idée principale : en voici un où ce thème apparaît aussi, au milieu d'autres idées.\n\n$intro"
                     viaSecondary -> "Vous avez résolu tous les problèmes dont « ${themeName(it.theme)} » est l'idée principale à ce niveau : en voici un où ce thème apparaît aussi, au milieu d'autres idées.\n\n$intro"
                     else -> intro
                 },
@@ -300,6 +303,17 @@ class PuzzlesViewModel(
         // 3. sinon seulement, un problème déjà résolu.
         var viaSecondary = false
         var id = runCatchingSuspend { dao.randomId(themes, r, cur, rnd, false, s.length, onlyUnsolved = true) }.getOrNull()
+        // Aucun autre problème non résolu : celui qu'on passe était-il le dernier ? (le tirage l'écarte)
+        // Dans le filtre par son thème principal (skippedPrimary), ou aussi par le relais des thèmes secondaires (skippedAny).
+        var skippedPrimary = false
+        var skippedAny = false
+        s.puzzle?.takeIf { id == null }?.let { p0 ->
+            val (la, lb) = PuzzleThemes.lengthPlies(s.length)
+            val pending = p0.rating in r && (la == 0 || p0.moves.trim().split(' ').size in la..lb) &&
+                runCatchingSuspend { dao.solvedAmong(listOf(p0.id)).first().isEmpty() }.getOrDefault(false)
+            skippedPrimary = pending && (themes == null || p0.primaryTheme in themes)
+            skippedAny = skippedPrimary || (pending && s.secondary && themes != null && themes.any { " $it " in p0.themes })
+        }
         if (id == null && themes != null) {
             id = runCatchingSuspend { dao.randomId(themes, r, cur, rnd, true, s.length, onlyUnsolved = true) }.getOrNull()
             viaSecondary = id != null
@@ -308,7 +322,7 @@ class PuzzlesViewModel(
         val p = id?.let { runCatchingSuspend { dao.byId(it) }.getOrNull() }
         // Le tirage ne repropose un problème résolu que lorsqu'il n'en reste aucun autre dans le filtre.
         val allSolved = p != null && runCatchingSuspend { dao.solvedAmong(listOf(p.id)).first().isNotEmpty() }.getOrDefault(false)
-        if (p != null) show(p, allSolved, viaSecondary)
+        if (p != null) show(p, allSolved, viaSecondary, skippedLast = if (allSolved) skippedAny else skippedPrimary)
         else _state.update { it.copy(empty = true, tone = Tone.BAD, message = "Aucun problème ne correspond à ces filtres. Élargissez la sélection dans le catalogue.") }
     }
 
@@ -523,7 +537,7 @@ class PuzzlesViewModel(
             already -> "Problème résolu ! (déjà résolu auparavant) "
             else -> "Problème résolu ! "
         } + (if (themes.isNotEmpty()) "Thèmes : ${themes.joinToString(", ")}. " else "") +
-            "Touchez « Problème aléatoire » pour le suivant."
+            "Touchez « Problème suivant » pour continuer."
     }
 
     /**

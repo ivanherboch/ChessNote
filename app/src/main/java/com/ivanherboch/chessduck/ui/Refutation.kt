@@ -32,14 +32,17 @@ import com.ivanherboch.chessduck.ui.icons.Pause
 @Immutable
 data class Refutation(val position: Position, val last: Move, val arrow: Move? = null)
 
-/** Durée d'affichage de la réfutation avant l'annulation automatique. */
-const val REFUTE_HOLD = 4000L
+/** Durée d'affichage de la réfutation avant le retour automatique : 8 s, le temps de lire sans se presser. */
+const val REFUTE_HOLD = 8000L
 
 /** Flèche rouge de la réfutation, aux couleurs de la palette active (daltonisme compris). */
 @Composable
 fun refuteArrow(r: Refutation?): Arrow? = r?.arrow?.let { Arrow(it.from, it.to, LocalDuck.current.red) }
 
-/** Compte à rebours visuel avant l'annulation automatique d'une réfutation ; le bouton pause le suspend. */
+/**
+ * Jauge apaisée (or, sans urgence) avant le retour automatique à la position d'avant l'erreur ; le bouton Pause garde
+ * la réfutation affichée.
+ */
 @Composable
 fun RefuteCountdown(until: Long, hold: Long, onHold: () -> Unit) {
     val c = LocalDuck.current
@@ -50,11 +53,11 @@ fun RefuteCountdown(until: Long, hold: Long, onHold: () -> Unit) {
     }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         LinearProgressIndicator(
-            progress = { progress.value }, color = c.redRole.fill, trackColor = c.surfaceHi,
+            progress = { progress.value }, color = c.goldRole.fill, trackColor = c.surfaceHi,
             // Barre pleine et continue : ni écart entre la partie remplie et le reste, ni point final (style Material 3 par défaut).
             gapSize = 0.dp, drawStopIndicator = {},
             modifier = Modifier.weight(1f).height(4.dp).clip(RoundedCornerShape(2.dp))
-                .semantics { contentDescription = "Annulation automatique du coup imminente" },
+                .semantics { contentDescription = "Retour automatique à la position ; touchez Pause pour garder la réfutation affichée" },
         )
         DuckIconButton(Icons.Rounded.Pause, "Garder la position affichée", onHold, Modifier.padding(start = 8.dp))
     }

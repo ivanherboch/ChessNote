@@ -64,7 +64,8 @@ class PlayFuzzTest {
             val r = Random(seed)
             val games = FakeGames()
             val engine = NoisyEngine()
-            val prefs = FakeSettings(Settings(colorChoice = r.nextInt(3), aiElo = listOf(800, 1200, 1600).random(r), safetyNet = r.nextBoolean()))
+            val net = r.nextBoolean()
+            val prefs = FakeSettings(Settings(colorChoice = r.nextInt(3), aiElo = listOf(800, 1200, 1600).random(r), safetyNet = net, ratedGame = !net && r.nextBoolean()))
             val vm = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope), Random(seed * 7919))
             advanceUntilIdle()
             var finished = 0
@@ -107,7 +108,8 @@ class PlayFuzzTest {
                     if (!t.result!!.text.startsWith("Partie interrompue")) finished++
                     advanceUntilIdle()
                     val elo = prefs.flow.value.elo
-                    val unrated = t.twoPlayers || t.fromPosition || t.netUsed
+                    // Hors classement : 2 joueurs, partie libre, position de leçon, ou partie classée sortie par une aide.
+                    val unrated = t.twoPlayers || !t.rated || t.fromPosition || t.netUsed
                     // Une partie classée quittée dans la même étape (abandon) a pu, elle, changer l'ELO.
                     if (unrated && !quit && elo != eloBefore) problems += "seed $seed pas $step : ELO changé par une partie hors classement (${t.result!!.text})"
                     eloBefore = elo
@@ -136,7 +138,7 @@ class PlayFuzzTest {
     fun quittingAGameInProgressCountsAsResignation() = runTest(main) {
         val games = FakeGames()
         val engine = FakeEngine()
-        val prefs = FakeSettings(Settings(colorChoice = 0, aiElo = 1200))
+        val prefs = FakeSettings(Settings(colorChoice = 0, aiElo = 1200, ratedGame = true, safetyNet = false))
         val vm = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope))
         advanceUntilIdle()
         // Pas encore d'échange : rien n'est enregistré.
@@ -154,7 +156,7 @@ class PlayFuzzTest {
     fun aGameIsRecordedOnceEvenWhenQuitRightAfterItsEnd() = runTest(main) {
         val games = FakeGames()
         val engine = FakeEngine()
-        val prefs = FakeSettings(Settings(colorChoice = 0, aiElo = 1200))
+        val prefs = FakeSettings(Settings(colorChoice = 0, aiElo = 1200, ratedGame = true, safetyNet = false))
         val vm = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope), Random(1))
         advanceUntilIdle()
         vm.playerMove(com.ivanherboch.chessduck.chess.Move.fromUci("e2e4")); advanceUntilIdle()

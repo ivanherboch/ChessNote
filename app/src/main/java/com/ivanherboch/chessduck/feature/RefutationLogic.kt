@@ -26,7 +26,7 @@ class RefutationReply(val reply: Move?, val position: Position, val text: String
  * coup reste affiché au moins [minShow] ms ; sans réponse à temps, aucune réponse n'est inventée (le texte le dit). Le texte nomme la conséquence : mat, pièce perdue, avantage rendu, égalisation.
  */
 object RefutationLogic {
-    const val AUTO_UNDO = " Touchez l'échiquier pour rejouer tout de suite (sinon, le coup s'annule seul)."
+    const val AUTO_UNDO = " Prenez le temps de regarder : la position revient d'elle-même, ou touchez l'échiquier pour rejouer tout de suite."
 
     /** Camp qui réfute le coup joué en [pos] (l'adversaire de celui qui a le trait). */
     fun opponentName(pos: Position): String = if (pos.whiteToMove) "Noirs" else "Blancs"

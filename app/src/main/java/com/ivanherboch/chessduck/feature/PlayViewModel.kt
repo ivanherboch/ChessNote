@@ -67,6 +67,15 @@ data class PlayState(
     val warning: CoachWarning? = null,
     /** Partie normale : le filet de sécurité a arrêté au moins une gaffe ; la partie ne compte plus pour l'ELO. */
     val netUsed: Boolean = false,
+    /**
+     * Partie classée : lancée avec le réglage « Partie classée », elle compte pour l'ELO tant qu'aucune aide ne l'en sort
+     * (coup annulé, flèche de l'indice, filet de sécurité). Faux : partie libre, l'ELO ne change jamais.
+     */
+    val rated: Boolean = false,
+    /** Pourquoi une partie classée ne compte plus pour l'ELO (« vous avez annulé un coup »…) ; null sinon. */
+    val unratedBy: String? = null,
+    /** Annonce ponctuelle au-dessus du statut (partie sortie du classement), effacée au coup suivant. */
+    val notice: String? = null,
 ) {
     /** Partie d'entraînement lancée depuis une position de l'Académie : elle ne compte pas pour l'ELO. */
     val fromPosition: Boolean get() = line.startFen != START_FEN
@@ -146,6 +155,8 @@ class PlayViewModel(
         saved[K_COACHED] = s.coached
         saved[K_COACH_LEFT] = s.coachLeft
         saved[K_NET] = s.netUsed
+        saved[K_RATED] = s.rated
+        saved[K_UNRATED_BY] = s.unratedBy
         saved[K_ORIGIN] = s.origin.name
     }
 
@@ -161,6 +172,7 @@ class PlayViewModel(
             aiElo = saved.get<Int>(K_ELO) ?: 1200, flipped = saved.get<Boolean>(K_FLIPPED) ?: false,
             evalOn = saved.get<Boolean>(K_EVAL) ?: false, coached = saved.get<Boolean>(K_COACHED) ?: false,
             coachLeft = saved.get<Int>(K_COACH_LEFT) ?: 0, netUsed = saved.get<Boolean>(K_NET) ?: false,
+            rated = saved.get<Boolean>(K_RATED) ?: false, unratedBy = saved.get<String>(K_UNRATED_BY),
             origin = saved.get<String>(K_ORIGIN)?.let { o -> PositionOrigin.entries.firstOrNull { it.name == o } } ?: PositionOrigin.LESSON,
         )
     }
@@ -178,7 +190,9 @@ class PlayViewModel(
         const val K_COACH_LEFT = "play_coach_left"
         const val K_NET = "play_net_used"
         const val K_ORIGIN = "play_origin"
-        val SAVED_KEYS = listOf(K_FEN, K_MOVES, K_CURSOR, K_WHITE, K_TWO, K_ELO, K_FLIPPED, K_EVAL, K_COACHED, K_COACH_LEFT, K_NET, K_ORIGIN)
+        const val K_RATED = "play_rated"
+        const val K_UNRATED_BY = "play_unrated_by"
+        val SAVED_KEYS = listOf(K_FEN, K_MOVES, K_CURSOR, K_WHITE, K_TWO, K_ELO, K_FLIPPED, K_EVAL, K_COACHED, K_COACH_LEFT, K_NET, K_ORIGIN, K_RATED, K_UNRATED_BY)
     }
 
     fun applySettings(twoPlayers: Boolean, color: Int, aiElo: Int) {
@@ -224,6 +238,8 @@ class PlayViewModel(
             PlayState(
                 playerWhite = playerWhite, twoPlayers = st.twoPlayers, aiElo = st.aiElo, flipped = !playerWhite,
                 evalOn = it.evalOn, coached = st.safetyNet && !st.twoPlayers, coachLeft = Int.MAX_VALUE,
+                // Partie classée seulement si le réglage le demande, et sans filet (le filet en sort la partie).
+                rated = st.ratedGame && !st.twoPlayers && !st.safetyNet,
             )
         }
         if (!st.twoPlayers && !playerWhite) aiMove() else precompute()
@@ -263,7 +279,29 @@ class PlayViewModel(
     fun hint() {
         val s = state.value
         if (!s.canPlay) return
-        _state.update { it.copy(hintStage = (it.hintStage + 1).coerceAtMost(2)) }
+        val stage = (s.hintStage + 1).coerceAtMost(2)
+        _state.update { it.copy(hintStage = stage) }
+        if (stage == 2) unrate("vous avez demandé la flèche de l'indice")
+    }
+
+    /**
+     * Partie classée qui reçoit une aide (coup annulé, flèche de l'indice, filet) : elle continue en partie libre, sans
+     * effet sur l'ELO, et le dit une fois, sereinement.
+     */
+    private fun unrate(why: String) {
+        if (!state.value.rated) return
+        _state.update {
+            it.copy(rated = false, unratedBy = why, notice = "Cette partie ne compte plus pour l'ELO ($why) : jouez-la tranquillement jusqu'au bout.")
+        }
+    }
+
+    /** « Paramètres de partie » : partie classée ou libre. La partie libre s'applique aussitôt, la classée à la prochaine partie. */
+    fun setRatedGame(on: Boolean) {
+        viewModelScope.launch { prefs.setRatedGame(on) }
+        val s = state.value
+        if (!on) return unrate("vous êtes passé en partie libre")
+        // Partie classée : sans filet de sécurité (coupé aussi dans les réglages).
+        if (s.coached && !s.fromPosition && !s.twoPlayers) toggleCoach()
     }
 
     fun playerMove(m: Move) {
@@ -285,6 +323,7 @@ class PlayViewModel(
         coachJob?.cancel()
         val on = !s.coached
         _state.update { it.copy(coached = on, coachLeft = if (it.fromPosition) it.coachLeft else Int.MAX_VALUE, warning = null, checking = false) }
+        if (on) unrate("vous avez activé le filet de sécurité")
         if (s.checking) afterMove()
         if (!s.fromPosition) viewModelScope.launch { prefs.setSafetyNet(on) }
     }
@@ -369,6 +408,7 @@ class PlayViewModel(
                     // La gaffe est retirée : la pièce revient (animation inverse), la position d'avant est rejouable.
                     line = s.line, cursor = cur, anim = undoAnim(pos, m), analysis = it.analysis.filterKeys { k -> k <= cur },
                     checking = false, coachLeft = it.coachLeft - 1, netUsed = it.netUsed || net,
+                    rated = it.rated && !net, unratedBy = if (it.rated && net) "le filet de sécurité vous a arrêté" else it.unratedBy,
                     warning = CoachWarning(m, coachText(pos.san(m), after, reply, net), reason?.text, reply, showWhy = again && reason != null, best = reason?.best),
                 )
             }
@@ -383,7 +423,7 @@ class PlayViewModel(
         val nl = s.line.copy(cur)
         nl.push(m)
         _state.update {
-            it.copy(line = nl, cursor = nl.size, anim = moveAnim(s.position, m), hintStage = 0, analysis = it.analysis.filterKeys { k -> k <= cur })
+            it.copy(line = nl, cursor = nl.size, anim = moveAnim(s.position, m), hintStage = 0, notice = null, analysis = it.analysis.filterKeys { k -> k <= cur })
         }
         afterMove()
     }
@@ -480,6 +520,7 @@ class PlayViewModel(
         aiJob?.cancel()
         stopCoach()
         goTo(t)
+        if (!state.value.twoPlayers) unrate("vous avez annulé un coup")
     }
 
     private fun navigate(delta: Int) {
@@ -553,8 +594,8 @@ class PlayViewModel(
                 analyzer.start(record, line)
             } else {
                 val outcome = if (s.playerWhite) whiteResult else -whiteResult
-                // Partie d'entraînement (position de leçon) ou filet de sécurité utilisé : l'ELO ne change pas.
-                val rated = !s.fromPosition && !s.netUsed
+                // Seule une partie classée, sans aide, change l'ELO (partie libre, position de leçon, filet : jamais).
+                val rated = s.rated && !s.fromPosition && !s.netUsed
                 val newElo = if (!rated) st.elo else GameLogic.newElo(st.elo, s.aiElo, (outcome + 1) / 2.0)
                 val diff = newElo - st.elo
                 val delta = if (diff >= 0) "+$diff" else "−${-diff}"
@@ -569,8 +610,9 @@ class PlayViewModel(
                         result = GameResult(
                             head + when {
                                 s.fromPosition -> " Partie d'entraînement depuis ${s.origin.fromText} : l'ELO ne change pas."
-                                s.netUsed -> " Le filet de sécurité vous a arrêté : la partie ne compte pas pour l'ELO."
-                                else -> " ELO ${st.elo} → $newElo ($delta)."
+                                rated -> " ELO ${st.elo} → $newElo ($delta)."
+                                s.unratedBy != null -> " Partie sortie du classement (${s.unratedBy}) : l'ELO ne change pas."
+                                else -> " Partie libre : l'ELO ne change pas."
                             },
                             if (outcome == 1) Tone.GOOD else if (outcome == 0) Tone.GOLD else Tone.BAD,
                         ),
@@ -579,7 +621,9 @@ class PlayViewModel(
                 if (rated) prefs.setElo(newElo)
                 var record = GameRecord(
                         date = System.currentTimeMillis(), opponent = "Ordinateur ${s.aiElo}", vsComputer = true, playerWhite = s.playerWhite,
-                        result = resultStr, outcome = outcome, reason = reason, eloBefore = st.elo, eloAfter = newElo, moves = line.uciMoves(), analysis = analysis,
+                        result = resultStr, outcome = outcome, reason = reason, eloBefore = st.elo,
+                        // Hors ELO (partie libre, position, aide) : eloAfter = 0, comme opponentElo = 0 pour les parties à deux.
+                        eloAfter = if (rated) newElo else 0, moves = line.uciMoves(), analysis = analysis,
                         whiteName = if (s.playerWhite) st.pseudo else COMPUTER, blackName = if (s.playerWhite) COMPUTER else st.pseudo, opponentElo = s.aiElo,
                         startFen = if (s.fromPosition) line.startFen else "",
                     )

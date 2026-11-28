@@ -34,8 +34,10 @@ interface SettingsRepository {
     suspend fun markUnderstood(lessonId: Int)
     /** Séance du jour : l'étape [step] est faite [today] ; la série avance quand toutes les étapes [required] le sont. */
     suspend fun markDailyStep(step: String, today: Long, required: Set<String>)
-    /** Jeu Libre : active ou coupe le filet de sécurité. */
+    /** Jeu Libre : active ou coupe le filet de sécurité ; l'activer repasse en partie libre. */
     suspend fun setSafetyNet(on: Boolean)
+    /** Partie classée (ELO) ou partie libre ; passer en partie classée coupe aussi le filet de sécurité. */
+    suspend fun setRatedGame(on: Boolean)
     /** Une gaffe ([topic], nom de ReviewTopic) a été arrêtée par le filet de sécurité. */
     suspend fun addNetEvent(topic: String, at: Long)
 

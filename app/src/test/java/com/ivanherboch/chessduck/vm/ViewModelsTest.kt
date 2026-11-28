@@ -1270,7 +1270,8 @@ class ViewModelsTest {
         val elo = prefs.settings.first().elo
         vm.resign(); advanceUntilIdle()
         assertEquals(elo, prefs.settings.first().elo)
-        assertTrue(vm.state.value.result!!.text, "filet de sécurité" in vm.state.value.result!!.text)
+        // Avec le filet, la partie est libre : l'ELO ne change pas.
+        assertTrue(vm.state.value.result!!.text, "l'ELO ne change pas" in vm.state.value.result!!.text)
         // Le couper est mémorisé pour les parties suivantes.
         vm.newGame(); advanceUntilIdle()
         vm.toggleCoach(); advanceUntilIdle()
@@ -1384,7 +1385,7 @@ class ViewModelsTest {
         advanceUntilIdle()
         val record = games.stored.value.single()
         assertEquals(fen, record.startFen)
-        assertEquals(record.eloBefore, record.eloAfter)
+        assertEquals(0, record.eloAfter) // hors ELO : l'historique affiche « Hors ELO »
         assertEquals(1200, prefs.settings.first().elo)
         assertTrue(vm.state.value.result!!.text.contains("l'ELO ne change pas"))
         val rv = GameReviewViewModel(analysis)
@@ -1614,6 +1615,108 @@ class ViewModelsTest {
         vm.viewModelScope.coroutineContext.job.cancelAndJoin()
     }
 
+    /** « Toucher la case » lancé depuis la leçon 1 : les questions suivantes restent du même exercice ; les puces le changent. */
+    @Test
+    fun visionKeepsTheChosenExercise() = test {
+        val vm = NotationViewModel(FakeSettings(), FakePuzzles(emptyList()))
+        vm.startVision(com.ivanherboch.chessduck.feature.VisionKind.TOUCH)
+        repeat(12) {
+            assertEquals(com.ivanherboch.chessduck.feature.VisionKind.TOUCH, vm.vision.value!!.question.kind)
+            vm.tapVision(vm.vision.value!!.question.square)
+            vm.nextVision()
+        }
+        assertEquals(12, vm.vision.value!!.score)
+        // Puce « Cavalier » : score gardé, questions du cavalier ; « Tous » : alternance libre.
+        vm.setVisionFilter(com.ivanherboch.chessduck.feature.VisionKind.KNIGHT)
+        assertEquals(12, vm.vision.value!!.score)
+        repeat(6) {
+            assertEquals(com.ivanherboch.chessduck.feature.VisionKind.KNIGHT, vm.vision.value!!.question.kind)
+            val q = vm.vision.value!!.question
+            vm.answerKnight(com.ivanherboch.chessduck.feature.SquareVision.knightDistance(q.square, q.target))
+            vm.nextVision()
+        }
+        vm.setVisionFilter(null)
+        val kinds = HashSet<com.ivanherboch.chessduck.feature.VisionKind>()
+        repeat(40) {
+            kinds += vm.vision.value!!.question.kind
+            vm.tapVision(0); vm.answerColor(true); vm.answerKnight(1)
+            vm.nextVision()
+        }
+        assertTrue(kinds.size > 1)
+    }
+
+    /**
+     * Installation vierge : partie libre (sans ELO) contre un Ordinateur à 600, filet de sécurité actif. Abandonner ou
+     * relancer n'est jamais une défaite pour l'ELO ; l'historique affiche « Hors ELO » (eloAfter = 0).
+     */
+    @Test
+    fun freshInstallPlaysAFreeGameWithTheSafetyNet() = test {
+        val fresh = Settings()
+        assertTrue(!fresh.ratedGame && fresh.safetyNet && fresh.aiElo == 600)
+        val games = FakeGames()
+        val engine = FakeEngine()
+        val prefs = FakeSettings(fresh.copy(colorChoice = 0))
+        val vm = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope))
+        advanceUntilIdle()
+        val s = vm.state.value
+        assertTrue(!s.rated && s.coached && s.aiElo == 600)
+        val elo = prefs.flow.value.elo
+        vm.playerMove(Move.fromUci("e2e4")); advanceUntilIdle()
+        vm.applySettings(false, 0, 900); advanceUntilIdle() // changer de niveau en cours de partie : aucune défaite ELO
+        assertEquals(elo, prefs.flow.value.elo)
+        assertEquals(0, games.stored.value.single().eloAfter)
+        vm.playerMove(Move.fromUci("d2d4")); advanceUntilIdle()
+        vm.resign(); advanceUntilIdle()
+        assertEquals(elo, prefs.flow.value.elo)
+        assertTrue(vm.state.value.result!!.text, vm.state.value.result!!.text.contains("Partie libre"))
+    }
+
+    /**
+     * Partie classée : sans filet. Annuler un coup, demander la flèche de l'indice ou activer le filet la sort du
+     * classement (annoncé une fois) ; passer en partie classée coupe le filet.
+     */
+    @Test
+    fun ratedGameBecomesUnratedWithHelp() = test {
+        val games = FakeGames()
+        val engine = FakeEngine()
+        val prefs = FakeSettings(Settings(colorChoice = 0, aiElo = 1200, ratedGame = true, safetyNet = false))
+        val vm = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope))
+        advanceUntilIdle()
+        val elo = prefs.flow.value.elo
+        // 1. La flèche de l'indice.
+        assertTrue(vm.state.value.rated)
+        vm.playerMove(Move.fromUci("e2e4")); advanceUntilIdle()
+        vm.hint(); assertTrue(vm.state.value.rated) // la pièce seule : la partie reste classée
+        vm.hint(); assertTrue(!vm.state.value.rated && vm.state.value.notice!!.contains("ne compte plus pour l'ELO"))
+        vm.playerMove(Move.fromUci("d2d4")); advanceUntilIdle()
+        assertEquals(null, vm.state.value.notice) // annonce effacée au coup suivant
+        vm.resign(); advanceUntilIdle()
+        assertEquals(elo, prefs.flow.value.elo)
+        assertTrue(vm.state.value.result!!.text.contains("sortie du classement"))
+        // 2. Un coup annulé.
+        vm.newGame(); advanceUntilIdle()
+        assertTrue(vm.state.value.rated)
+        vm.playerMove(Move.fromUci("e2e4")); advanceUntilIdle()
+        vm.undoMove(); advanceUntilIdle()
+        assertTrue(!vm.state.value.rated)
+        vm.newGame(); advanceUntilIdle() // partie sortie du classement : la quitter ne coûte rien
+        assertEquals(elo, prefs.flow.value.elo)
+        // 3. Le filet activé : la partie sort du classement, et le réglage repasse en partie libre.
+        vm.playerMove(Move.fromUci("e2e4")); advanceUntilIdle()
+        vm.setSafetyNet(true); advanceUntilIdle()
+        assertTrue(!vm.state.value.rated && !prefs.flow.value.ratedGame)
+        // 4. Repasser en partie classée coupe le filet (réglage et partie en cours).
+        vm.setRatedGame(true); advanceUntilIdle()
+        assertTrue(prefs.flow.value.ratedGame && !prefs.flow.value.safetyNet && !vm.state.value.coached)
+        vm.newGame(); advanceUntilIdle()
+        assertTrue(vm.state.value.rated)
+        // Une partie classée quittée est une défaite (seul cas où l'ELO baisse).
+        vm.playerMove(Move.fromUci("e2e4")); advanceUntilIdle()
+        vm.newGame(); advanceUntilIdle()
+        assertTrue(prefs.flow.value.elo < elo)
+        assertTrue(games.stored.value.last().eloAfter == prefs.flow.value.elo)
+    }
+
     /** Vision des cases : couleur (échiquier masqué), toucher la case, chemin du cavalier ; aucun chronomètre. */
     @Test
     fun notationSquareVision() = test {
@@ -1685,7 +1788,7 @@ class ViewModelsTest {
     fun playComputerRepliesAndStaleMoveIsIgnored() = test {
         val games = FakeGames()
         val engine = FakeEngine()
-        val settings = FakeSettings(Settings(colorChoice = 0, aiElo = 1500))
+        val settings = FakeSettings(Settings(colorChoice = 0, aiElo = 1500, ratedGame = true, safetyNet = false))
         val vm = PlayViewModel(settings, games, engine, GameAnalysisService(engine, games, backgroundScope))
         advanceUntilIdle()
         vm.playerMove(Move.fromUci("e2e4"))

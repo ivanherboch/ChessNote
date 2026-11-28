@@ -68,7 +68,10 @@ internal fun HistorySheet(games: List<GameRecord>, onClose: () -> Unit, onDelete
                         else -> "Nulle" to c.goldText
                     }
                     Text(label, color = col, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                    if (g.vsComputer) {
+                    // Partie hors classement (libre, position de leçon, aide) : « Hors ELO », sans fausse variation « +0 ».
+                    if (g.vsComputer && (g.startFen.isNotEmpty() || g.eloAfter == 0)) {
+                        Text("Hors ELO", color = c.muted, style = MaterialTheme.typography.labelLarge)
+                    } else if (g.vsComputer) {
                         val d = g.eloAfter - g.eloBefore
                         Text("ELO ${g.eloAfter} (${if (d >= 0) "+$d" else "−${-d}"})", color = if (d >= 0) c.greenText else c.redText, style = MaterialTheme.typography.labelLarge)
                     }

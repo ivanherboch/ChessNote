@@ -26,7 +26,11 @@ import kotlin.random.Random
 
 /** Réglages en mémoire. */
 /** Réglages en mémoire. Par défaut, ceux d'un élève déjà engagé (leçon 1, palier 2) : les tests visent la logique. */
-class FakeSettings(initial: Settings = Settings(lessonId = 1, academyLevel = 2)) : SettingsRepository {
+/**
+ * Réglages en mémoire. Par défaut, un élève déjà engagé (leçon 1, palier 2, partie classée à 1200 sans filet) :
+ * les défauts d'une installation vierge ont leurs propres tests.
+ */
+class FakeSettings(initial: Settings = Settings(lessonId = 1, academyLevel = 2, ratedGame = true, safetyNet = false, aiElo = 1200)) : SettingsRepository {
     val flow = MutableStateFlow(initial)
     override val settings: Flow<Settings> = flow
     override suspend fun setNotationBest(v: Int) = flow.update { if (v > it.notationBest) it.copy(notationBest = v) else it }
@@ -47,7 +51,8 @@ class FakeSettings(initial: Settings = Settings(lessonId = 1, academyLevel = 2))
     override suspend fun markThemeKnown(id: String) = flow.update { it.copy(knownThemePuzzles = it.knownThemePuzzles + id) }
     override suspend fun markVariantDone(key: String) = flow.update { it.copy(variantsDone = it.variantsDone + key) }
     override suspend fun markDailyStep(step: String, today: Long, required: Set<String>) = flow.update { it.copy(daily = it.daily.mark(step, today, required)) }
-    override suspend fun setSafetyNet(on: Boolean) = flow.update { it.copy(safetyNet = on) }
+    override suspend fun setSafetyNet(on: Boolean) = flow.update { it.copy(safetyNet = on, ratedGame = if (on) false else it.ratedGame) }
+    override suspend fun setRatedGame(on: Boolean) = flow.update { it.copy(ratedGame = on, safetyNet = if (on) false else it.safetyNet) }
     override suspend fun addNetEvent(topic: String, at: Long) = flow.update {
         it.copy(netEvents = (it.netEvents + com.ivanherboch.chessduck.data.NetEvent(topic, at)).takeLast(com.ivanherboch.chessduck.data.NET_EVENTS_MAX))
     }

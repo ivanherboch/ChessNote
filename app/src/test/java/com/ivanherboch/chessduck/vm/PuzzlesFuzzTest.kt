@@ -363,11 +363,19 @@ class PuzzlesFuzzTest {
         vm.openPuzzle(secondaryFork); advanceUntilIdle()
         vm.setFilter(0, "fork"); advanceUntilIdle()
         assertTrue(vm.state.value.puzzle?.id == "MF" && !vm.state.value.secondary) // l'idée principale d'abord
+        // MF passé sans être résolu : c'était le dernier principal, le relais le dit sans prétendre qu'il est résolu.
+        vm.random(); advanceUntilIdle()
+        assertTrue(vm.state.value.message, vm.state.value.puzzle?.id == "SF" && vm.state.value.message.contains("que vous venez de passer"))
+        vm.openPuzzle(mainFork); advanceUntilIdle()
         repo.markSolved("MF")
         vm.random(); advanceUntilIdle()
         val s = vm.state.value
         assertTrue(s.puzzle?.id == "SF" && s.secondary && s.filterMatches && s.themeVisible)
         assertTrue(s.message, s.message.contains("apparaît aussi"))
+        // Passer SF sans le résoudre : il était le dernier non résolu, le message ne prétend pas que tout est résolu.
+        vm.random(); advanceUntilIdle()
+        assertTrue(vm.state.value.message, vm.state.value.allSolvedInFilter && vm.state.value.message.contains("que vous venez de passer"))
+        vm.openPuzzle(secondaryFork); advanceUntilIdle()
         // Tout résolu : un problème déjà résolu, et le message le dit.
         repo.markSolved("SF")
         vm.random(); advanceUntilIdle()

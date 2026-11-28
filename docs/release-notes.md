@@ -1,3 +1,21 @@
+## ChessDuck 4.5.0 — sans stress par défaut
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Jeu Libre, nouvelle installation : partie libre (sans ELO) contre un Ordinateur à 600 (débutant), filet de sécurité actif. Vos réglages actuels ne changent pas.
+- Paramètres de partie, nouvelle section « Enjeu » : « Partie libre (sans ELO) » ou « Partie classée (ELO) ».
+  - En partie libre, rien ne compte pour l'ELO : changer de niveau ou recommencer n'est jamais une défaite.
+  - Une partie classée se joue sans filet. Annuler un coup, demander la flèche de l'indice ou activer le filet la fait sortir du classement, et un message le dit une fois.
+- Historique : une partie hors classement affiche « Hors ELO » au lieu de « ELO 1200 (+0) ».
+- Réfutation d'une erreur (Problèmes, Académie) : 8 secondes au lieu de 4 avant le retour à la position, avec une jauge dorée et un texte apaisé.
+- Problèmes :
+  - l'export en image d'un problème au thème masqué ne montre plus l'indice par défaut ;
+  - l'onglet « À refaire » cache le thème avant que vous retentiez le problème ;
+  - le bouton « Problèmes joués » affiche le nombre de problèmes à refaire aujourd'hui.
+- Problèmes : quand vous passez le dernier problème non résolu d'un thème, le message ne prétend plus que tout est résolu.
+- Vision des cases : l'exercice choisi est gardé d'une question à l'autre (« Toucher la case » depuis la leçon 1). Des puces Tous, Toucher, Couleur et Cavalier permettent d'en changer.
+- Académie : le bilan de fin d'exercice garde votre dernier coup et la réponse qui l'a suivi.
+
 ## ChessDuck 4.4.9 — Académie plus lisible et plus cohérente
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

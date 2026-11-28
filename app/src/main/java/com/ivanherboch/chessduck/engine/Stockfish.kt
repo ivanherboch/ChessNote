@@ -120,7 +120,8 @@ class Stockfish(private val executable: File) : ChessEngine, Closeable {
     /**
      * Libère le moteur (fermeture propre des flux et du processus natif). Si une recherche tient le verrou, seul le
      * processus est détruit : son flux se ferme, la recherche se termine d'elle-même et remet les champs à zéro
-     * sous le verrou (aucun champ n'est modifié ici pendant qu'un autre thread s'en sert).
+     * sous le verrou (aucun champ n'est modifié ici pendant qu'un autre thread s'en sert). Le moteur n'est pas condamné :
+     * il redémarre de lui-même à la recherche suivante (voir AppContainer.release, nouvelle activité dans le même processus).
      */
     override fun close() {
         if (mutex.tryLock()) {

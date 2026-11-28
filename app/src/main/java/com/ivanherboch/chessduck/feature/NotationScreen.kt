@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import com.ivanherboch.chessduck.ui.DuckChip
 import com.ivanherboch.chessduck.ui.SessionHeader
 import com.ivanherboch.chessduck.chess.BISHOP
 import com.ivanherboch.chessduck.ui.DuckRadius
@@ -271,7 +274,18 @@ private fun VisionLayout(vm: NotationViewModel, v: VisionSession) {
     ModuleLayout(
         bottomMin = 200.dp,
         top = {
-            SessionHeader("Vision des cases", vm::closeVision, backLabel = "Revenir à la notation")
+            Column {
+                SessionHeader("Vision des cases", vm::closeVision, backLabel = "Revenir à la notation")
+                // Exercice au choix, retenu pour les questions suivantes ; une seule ligne, défilable en grande police.
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    for ((label, kind) in listOf("Tous" to null, "Toucher" to VisionKind.TOUCH, "Couleur" to VisionKind.COLOR, "Cavalier" to VisionKind.KNIGHT)) {
+                        DuckChip(label, v.filter == kind, { vm.setVisionFilter(kind) })
+                    }
+                }
+            }
         },
         board = {
             if (q.kind == VisionKind.COLOR && !v.answered) {

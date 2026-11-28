@@ -597,8 +597,9 @@ class AcademyViewModel(
             s.errors <= 1 && s.maxHint <= 1 -> 2
             else -> 1
         }
-        // Bilan concis : le dernier commentaire, la règle à retenir, puis le score et la maîtrise (ajoutés plus bas).
-        val last = s.message.substringAfterLast("\n\n")
+        // Bilan concis : les deux derniers commentaires (le coup du joueur et la réponse qui l'a suivi, s'il y en a une),
+        // la règle à retenir, puis le score et la maîtrise (ajoutés plus bas).
+        val last = s.message.split("\n\n").takeLast(2).joinToString("\n\n")
         val takeaway = if (last.contains("À retenir")) "" else "\n\nÀ retenir : ${l.takeaway}"
         val scoreText = if (model) "\n\nScore : ${s.guessScore} points sur ${s.guessMax}." else ""
         _state.update { it.copy(done = true, stars = stars, tone = Tone.GOOD, message = last + takeaway + scoreText) }
