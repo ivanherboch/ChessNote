@@ -1144,6 +1144,52 @@ class ViewModelsTest {
         assertTrue(vm.state.value.message, vm.state.value.message.contains("Leçon maîtrisée"))
     }
 
+    /**
+     * Android arrête l'application en pleine partie : recréé avec le même SavedStateHandle, le Jeu Libre reprend la
+     * partie intacte (coups, couleur, niveau, vue), sans l'enregistrer comme abandon. Une position demandée ensuite
+     * (« Jouer cette position ») reste prioritaire.
+     */
+    @Test
+    fun aGameInProgressSurvivesProcessDeath() = test {
+        val games = FakeGames()
+        val engine = FakeEngine()
+        val prefs = FakeSettings(Settings(colorChoice = 0, aiElo = 1500))
+        val saved = SavedStateHandle()
+        val first = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope), Random(1), saved)
+        advanceUntilIdle()
+        first.playerMove(Move.fromUci("e2e4")); advanceUntilIdle()
+        first.playerMove(Move.fromUci("d2d4")); advanceUntilIdle()
+        first.flip(); first.toggleEval(); advanceUntilIdle()
+        val before = first.state.value
+        assertEquals(4, before.line.size)
+        // Nouveau ViewModel, même état sauvegardé : comme après la mort du processus.
+        val again = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope), Random(2), saved)
+        advanceUntilIdle()
+        val s = again.state.value
+        assertEquals(before.line.uciMoves(), s.line.uciMoves())
+        assertEquals(before.cursor, s.cursor)
+        assertTrue(s.playerWhite && s.aiElo == 1500 && s.flipped == before.flipped && s.evalOn && s.result == null)
+        assertTrue("aucun abandon enregistré", games.stored.value.isEmpty())
+        // La partie continue : l'Ordinateur répond au coup suivant.
+        assertTrue(s.canPlay)
+        again.playerMove(Move.fromUci("g1f3")); advanceUntilIdle()
+        assertEquals(6, again.state.value.line.size)
+        // Une partie terminée efface la sauvegarde : la recréation suivante repart d'une nouvelle partie.
+        again.resign(); advanceUntilIdle()
+        val third = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope), Random(3), saved)
+        advanceUntilIdle()
+        assertEquals(0, third.state.value.line.size)
+        // « Jouer cette position » l'emporte sur une partie reprise.
+        val fourth = PlayViewModel(prefs, games, engine, GameAnalysisService(engine, games, backgroundScope), Random(4), SavedStateHandle().also {
+            it["play_start_fen"] = com.ivanherboch.chessduck.chess.START_FEN; it["play_moves"] = "e2e4 e7e5"; it["play_white"] = true
+        })
+        advanceUntilIdle()
+        assertEquals(2, fourth.state.value.line.size)
+        val fen = "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1"
+        fourth.startFromPosition(fen, playerWhite = true); advanceUntilIdle()
+        assertEquals(fen, fourth.state.value.line.startFen)
+    }
+
     /** « Jouer cette position » : partie d'entraînement sans ELO, enregistrée avec sa position de départ et relue en revue. */
     @Test
     fun coachedGameStopsABlunderBeforeItIsPlayed() = test {

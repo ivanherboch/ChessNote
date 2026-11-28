@@ -42,6 +42,21 @@ class ChessTest {
         return n
     }
 
+    /** Nulle par manque de matériel : fous tous de même couleur de cases (règle FIDE), mais pas de fous opposés ni de cavalier. */
+    @Test
+    fun sameColouredBishopsCannotMate() {
+        // Fou blanc en c1 (case noire) contre fou noir en f8 (case noire) : nulle.
+        assertTrue(Position.fromFen("5b1k/8/8/8/8/8/8/K1B5 w - - 0 1").insufficientMaterial)
+        // Deux fous blancs de même couleur (c1, e3 : cases noires) contre un fou noir en h6 (case noire) : nulle.
+        assertTrue(Position.fromFen("7k/8/7b/8/8/4B3/8/K1B5 w - - 0 1").insufficientMaterial)
+        // Fous de couleurs opposées (c1 noire, f1 blanche) : un mat reste possible.
+        assertFalse(Position.fromFen("7k/8/8/8/8/8/8/K1B2B2 w - - 0 1").insufficientMaterial)
+        // Fou et cavalier : mat possible.
+        assertFalse(Position.fromFen("7k/8/8/8/8/8/8/K1B1N3 w - - 0 1").insufficientMaterial)
+        // Une seule pièce mineure : nulle, comme avant.
+        assertTrue(Position.fromFen("7k/8/8/8/8/8/8/K3N3 w - - 0 1").insufficientMaterial)
+    }
+
     @Test
     fun perftReferencePositions() {
         assertEquals(197281, perft(Position.fromFen(START_FEN), 4))

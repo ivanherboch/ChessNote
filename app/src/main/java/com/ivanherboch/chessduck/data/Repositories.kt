@@ -78,14 +78,11 @@ interface PuzzleRepository {
         /** Vrai : aucun problème déjà résolu en dernier recours (null s'il ne reste que des résolus). */
         onlyUnsolved: Boolean = false,
     ): String?
-    /** Compteurs (problèmes, résolus) par thème pour une tranche : thème principal, ou tous les thèmes ([secondary]). */
-    suspend fun themeCounts(range: IntRange, secondary: Boolean = false): List<ThemeCountRow>
     /**
-     * Compteurs du catalogue quand un filtre de longueur est actif : un seul passage sur les problèmes de la tranche et
-     * de la longueur [length], d'où chaque thème (principal, ou tous ses thèmes si [secondary]), chaque famille
-     * ([groups] : clé → thèmes, problèmes distincts) et le total ("") avec leurs résolus. Clé → (problèmes, résolus).
+     * Compteurs (problèmes, résolus) par thème principal pour une tranche, limités à la longueur de solution [length]
+     * (index de PuzzleThemes.LENGTHS ; 0 = toutes). Agrégés par la base.
      */
-    suspend fun lengthCounts(range: IntRange, length: Int, secondary: Boolean, groups: Map<String, List<String>>): Map<String, ThemeCountRow>
+    suspend fun themeCounts(range: IntRange, length: Int = 0): List<ThemeCountRow>
     /** Recherche d'identifiant : au plus [limit] résultats classés et le nombre total de correspondances. */
     suspend fun searchIds(query: String, limit: Int): Pair<List<PuzzleHit>, Int>
     /** Problème résolu net (séries de l'Académie) : voir [recordAttempt]. */
@@ -178,16 +175,10 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
         return null
     }
 
-    override suspend fun lengthCounts(range: IntRange, length: Int, secondary: Boolean, groups: Map<String, List<String>>): Map<String, ThemeCountRow> =
-        countByLength(dao.metaWithLength(range.first, range.last, PuzzleThemes.lengthPlies(length).first, PuzzleThemes.lengthPlies(length).second),
-            dao.solvedIds().first().toSet(), secondary, groups)
-
-    override suspend fun themeCounts(range: IntRange, secondary: Boolean): List<ThemeCountRow> {
-        if (!secondary) return dao.themeCounts(range.first, range.last)
-        // Tous les thèmes officiels de chaque problème : un même problème compte dans plusieurs thèmes.
-        val solved = HashMap<String, Int>()
-        for (m in dao.solvedMeta(range.first, range.last)) for (t in m.themes.trim().split(' ')) solved.merge(t, 1, Int::plus)
-        return dao.linkedTotals(range.first, range.last).map { ThemeCountRow(it.theme, it.total, solved[it.theme] ?: 0) }
+    override suspend fun themeCounts(range: IntRange, length: Int): List<ThemeCountRow> {
+        if (length == 0) return dao.themeCounts(range.first, range.last)
+        val (minPly, maxPly) = PuzzleThemes.lengthPlies(length)
+        return dao.themeCountsWithLength(range.first, range.last, minPly, maxPly)
     }
 
     override suspend fun searchIds(query: String, limit: Int): Pair<List<PuzzleHit>, Int> {
@@ -195,14 +186,8 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
         return dao.searchIds(pattern, query, limit) to dao.countIds(pattern)
     }
     override suspend fun sliceCastling(start: Int, n: Int) = dao.sliceCastling(start, n)
-    override suspend fun recordAttempt(id: String, outcome: Int, at: Long) {
-        val old = dao.progressOf(id) ?: PuzzleProgress(id, 0)
-        dao.markSolved(PuzzleProgress.after(old, outcome, at))
-    }
-    override suspend fun setBookmark(id: String, on: Boolean) {
-        val old = dao.progressOf(id) ?: PuzzleProgress(id, 0)
-        dao.markSolved(old.copy(bookmarked = on))
-    }
+    override suspend fun recordAttempt(id: String, outcome: Int, at: Long) = dao.recordAttempt(id, outcome, at)
+    override suspend fun setBookmark(id: String, on: Boolean) = dao.setBookmark(id, on)
     override fun bookmarked(id: String) = dao.bookmarked(id)
     override fun bookmarks() = dao.bookmarks()
     override fun toRedo(): Flow<List<Pair<Puzzle, Long>>> = dao.toRedo().map { rows ->
@@ -238,26 +223,4 @@ class RoomLessonProgressRepository(private val db: DuckDatabase) : LessonProgres
     override suspend fun save(p: LessonProgress) = dao.saveLesson(p)
     override suspend fun saveAssessment(a: AcademyAssessment) = dao.insertAssessment(a)
     override fun assessments() = dao.assessments()
-}
-
-/**
- * Compteurs par thème, par famille et au total d'une liste de problèmes (déjà filtrée), chacun avec ses résolus :
- * thème principal seulement, ou tous les thèmes officiels ([secondary]) ; une famille compte ses problèmes distincts.
- */
-internal fun countByLength(
-    metas: List<PuzzleMeta>, solved: Set<String>, secondary: Boolean, groups: Map<String, List<String>>,
-): Map<String, ThemeCountRow> {
-    val keys = PuzzleThemes.all.map { it.key }.toSet()
-    val total = HashMap<String, Int>()
-    val done = HashMap<String, Int>()
-    fun add(k: String, s: Boolean) { total.merge(k, 1, Int::plus); if (s) done.merge(k, 1, Int::plus) }
-    val groupOfTheme = groups.flatMap { (g, ts) -> ts.map { it to g } }.groupBy({ it.first }, { it.second })
-    for (m in metas) {
-        val s = m.id in solved
-        add("", s)
-        val tags = if (secondary) m.themes.trim().split(' ').filter { it in keys }.toSet() else setOf(m.primaryTheme)
-        for (t in tags) add(t, s)
-        for (g in tags.flatMap { groupOfTheme[it].orEmpty() }.toSet()) add(g, s)
-    }
-    return total.mapValues { (k, n) -> ThemeCountRow(k, n, done[k] ?: 0) }
 }

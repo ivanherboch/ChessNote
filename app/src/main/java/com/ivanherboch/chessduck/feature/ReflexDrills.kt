@@ -29,6 +29,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.random.Random
 
+/** Une question de réflexes : menace, prise ou calcul à l'aveugle. */
+sealed interface ReflexItem
+
 /**
  * « Quelle est la menace ? » : l'adversaire vient de jouer [lastMove] ; il menace de prendre la pièce en [target]
  * (attaquée depuis [attacker]). [threats] : toutes les pièces menacées (cible, attaquant) ; une fourchette en compte
@@ -38,20 +41,20 @@ import kotlin.random.Random
 data class ThreatItem(
     val position: Position, val lastMove: Move, val target: Int, val attacker: Int, val explanation: String,
     val threats: List<Pair<Int, Int>> = listOf(target to attacker),
-) {
+) : ReflexItem {
     val targets: List<Int> get() = threats.map { it.first }
 }
 
 /** « Puis-je prendre ? » : la prise [capture] est-elle bonne ([good]) ? */
 @Immutable
-data class CaptureItem(val position: Position, val capture: Move, val good: Boolean, val explanation: String)
+data class CaptureItem(val position: Position, val capture: Move, val good: Boolean, val explanation: String) : ReflexItem
 
 /**
  * « Calcul à l'aveugle » : depuis [start], deux demi-coups sont annoncés sans être joués sur l'échiquier ; l'élève
  * trouve le coup suivant ([expected]) dans la position [after] qu'il doit se représenter.
  */
 @Immutable
-data class BlindItem(val start: Position, val announced: List<String>, val after: Position, val expected: Move, val answer: String)
+data class BlindItem(val start: Position, val announced: List<String>, val after: Position, val expected: Move, val answer: String) : ReflexItem
 
 /** Exercices de réflexes générés automatiquement à partir des problèmes embarqués. */
 object ReflexDrills {
@@ -235,7 +238,11 @@ class ReflexTrainer(
     private val _state = MutableStateFlow<ReflexSession?>(null)
     val state: StateFlow<ReflexSession?> = _state.asStateFlow()
     private var job: Job? = null
-    private val queue = ArrayList<Any>()
+    /**
+     * Questions de la séance : liste immuable, construite hors du fil principal puis publiée en une fois (lue ensuite
+     * sur le fil principal). @Volatile : la nouvelle liste est visible de tous les fils dès son affectation.
+     */
+    @Volatile private var queue: List<ReflexItem> = emptyList()
     /** L'Ordinateur a répondu jusqu'ici ; s'il se tait une fois, on garde le verdict matériel pour la séance. */
     private var engineOk = true
 
@@ -244,7 +251,8 @@ class ReflexTrainer(
         _state.value = ReflexSession(kind, total = total, message = "Préparation des exercices…")
         job = scope.launch {
             // Préparation (lecture des problèmes, analyse des positions) hors du fil principal.
-            withContext(work) { prepare(kind, level, total) }
+            queue = emptyList()
+            queue = withContext(work) { prepare(kind, level, total) }
             if (queue.isEmpty()) {
                 _state.value = ReflexSession(kind, total = 0, loading = false, finished = true, message = "Aucun exercice disponible pour ce palier.")
                 return@launch
@@ -254,9 +262,9 @@ class ReflexTrainer(
         }
     }
 
-    /** Remplit la file des questions : problèmes du palier, positions analysées et, si possible, confirmées par l'Ordinateur. */
-    private suspend fun prepare(kind: ReflexKind, level: Int, total: Int) {
-        queue.clear()
+    /** Prépare les questions : problèmes du palier, positions analysées et, si possible, confirmées par l'Ordinateur. */
+    private suspend fun prepare(kind: ReflexKind, level: Int, total: Int): List<ReflexItem> {
+        val items = ArrayList<ReflexItem>()
         engineOk = true
         val range = AcademyAssessments.levelRange(level)
         val themes = when (kind) {
@@ -266,18 +274,19 @@ class ReflexTrainer(
         }
         var exclude = ""
         repeat(total * 8) {
-            if (queue.size >= total) return@repeat
+            if (items.size >= total) return@repeat
             val id = runCatchingSuspend { puzzles.randomId(themes, range, exclude, random) }.getOrNull() ?: return@repeat
             exclude = id
             val p = runCatchingSuspend { puzzles.byId(id) }.getOrNull() ?: return@repeat
-            val item: Any? = when (kind) {
+            val item: ReflexItem? = when (kind) {
                 ReflexKind.THREAT -> ReflexDrills.threatFrom(p)?.takeIf { threatConfirmed(it) }
                 ReflexKind.CAPTURE -> runCatching { Line.fromUci(p.fen, p.moves).positions[1] }.getOrNull()
                     ?.let { ReflexDrills.captureFrom(it, random) }?.let { confirmed(it) }
                 ReflexKind.BLIND -> ReflexDrills.blindFrom(p)
             }
-            if (item != null && queue.none { it == item }) queue.add(item)
+            if (item != null && items.none { it == item }) items.add(item)
         }
+        return items
     }
 
     /**
@@ -313,7 +322,7 @@ class ReflexTrainer(
     }
 
     private fun show(index: Int) {
-        val item = queue[index]
+        val item = queue.getOrNull(index) ?: return
         val blind = item as? BlindItem
         _state.update {
             val prompt = "Question ${index + 1} sur ${queue.size}. ${it?.kind?.question.orEmpty()}" +

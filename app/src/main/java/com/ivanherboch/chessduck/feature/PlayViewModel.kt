@@ -1,6 +1,7 @@
 package com.ivanherboch.chessduck.feature
 
 import androidx.compose.runtime.Immutable
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.ivanherboch.chessduck.engine.ChessEngine
 import com.ivanherboch.chessduck.data.GameRepository
@@ -85,6 +86,8 @@ class PlayViewModel(
     private val analyzer: GameAnalysisService,
     /** Hasard (couleur tirée au sort, fautes de l'Ordinateur faible) ; fixé dans les tests pour rejouer un cas. */
     private val rnd: Random = Random(System.nanoTime()),
+    /** Partie en cours, gardée si Android arrête l'application en arrière-plan (appel, autre application). */
+    private val saved: SavedStateHandle = SavedStateHandle(),
 ) : ViewModel() {
     private val _state = MutableStateFlow(PlayState())
     val state: StateFlow<PlayState> = _state.asStateFlow()
@@ -106,9 +109,76 @@ class PlayViewModel(
     /** Lecture automatique de la revue de partie. */
 
     init {
-        // Partie de départ : comme toute mise en place, elle passe par applyJob, si bien qu'une position demandée
-        // aussitôt (« Jouer cette position » à la première ouverture du Jeu Libre) l'annule au lieu d'être écrasée par elle.
-        applyJob = viewModelScope.launch { newGame(prefs.settings.first()) }
+        val restored = restore()
+        if (restored != null) {
+            // Application relancée par Android : la partie interrompue reprend là où elle en était (ni abandon ni perte).
+            gameGeneration++
+            _state.value = restored
+            if (!restored.twoPlayers && restored.line.last.whiteToMove != restored.playerWhite && restored.cursor == restored.line.size) aiMove()
+            else precompute()
+        } else {
+            // Partie de départ : comme toute mise en place, elle passe par applyJob, si bien qu'une position demandée
+            // aussitôt (« Jouer cette position » à la première ouverture du Jeu Libre) l'annule au lieu d'être écrasée par elle.
+            applyJob = viewModelScope.launch { newGame(prefs.settings.first()) }
+        }
+        viewModelScope.launch { state.collect(::save) }
+    }
+
+    /**
+     * Garde la partie non terminée dans [saved] (quelques chaînes et nombres). Un coup en cours de vérification par le
+     * filet n'est pas gardé : à la reprise, l'élève le rejoue. Une partie terminée ou vide efface la sauvegarde.
+     */
+    private fun save(s: PlayState) {
+        val keep = s.result == null && (s.line.size > 0 || s.fromPosition)
+        if (!keep) {
+            if (saved.contains(K_MOVES)) SAVED_KEYS.forEach { saved.remove<Any>(it) }
+            return
+        }
+        val size = if (s.checking) s.line.size - 1 else s.line.size
+        saved[K_FEN] = s.line.startFen
+        saved[K_MOVES] = s.line.uciMoves(size)
+        saved[K_CURSOR] = s.cursor.coerceAtMost(size)
+        saved[K_WHITE] = s.playerWhite
+        saved[K_TWO] = s.twoPlayers
+        saved[K_ELO] = s.aiElo
+        saved[K_FLIPPED] = s.flipped
+        saved[K_EVAL] = s.evalOn
+        saved[K_COACHED] = s.coached
+        saved[K_COACH_LEFT] = s.coachLeft
+        saved[K_NET] = s.netUsed
+        saved[K_ORIGIN] = s.origin.name
+    }
+
+    /** Partie sauvegardée par [save], ou null (aucune, ou illisible). */
+    private fun restore(): PlayState? {
+        val moves = saved.get<String>(K_MOVES) ?: return null
+        val fen = saved.get<String>(K_FEN) ?: return null
+        val line = runCatching { Line.fromUci(fen, moves) }.getOrNull() ?: return null
+        if (line.end() != GameEnd.NONE) return null
+        return PlayState(
+            line = line, cursor = (saved.get<Int>(K_CURSOR) ?: line.size).coerceIn(0, line.size),
+            playerWhite = saved.get<Boolean>(K_WHITE) ?: true, twoPlayers = saved.get<Boolean>(K_TWO) ?: false,
+            aiElo = saved.get<Int>(K_ELO) ?: 1200, flipped = saved.get<Boolean>(K_FLIPPED) ?: false,
+            evalOn = saved.get<Boolean>(K_EVAL) ?: false, coached = saved.get<Boolean>(K_COACHED) ?: false,
+            coachLeft = saved.get<Int>(K_COACH_LEFT) ?: 0, netUsed = saved.get<Boolean>(K_NET) ?: false,
+            origin = saved.get<String>(K_ORIGIN)?.let { o -> PositionOrigin.entries.firstOrNull { it.name == o } } ?: PositionOrigin.LESSON,
+        )
+    }
+
+    private companion object {
+        const val K_FEN = "play_start_fen"
+        const val K_MOVES = "play_moves"
+        const val K_CURSOR = "play_cursor"
+        const val K_WHITE = "play_white"
+        const val K_TWO = "play_two_players"
+        const val K_ELO = "play_ai_elo"
+        const val K_FLIPPED = "play_flipped"
+        const val K_EVAL = "play_eval"
+        const val K_COACHED = "play_coached"
+        const val K_COACH_LEFT = "play_coach_left"
+        const val K_NET = "play_net_used"
+        const val K_ORIGIN = "play_origin"
+        val SAVED_KEYS = listOf(K_FEN, K_MOVES, K_CURSOR, K_WHITE, K_TWO, K_ELO, K_FLIPPED, K_EVAL, K_COACHED, K_COACH_LEFT, K_NET, K_ORIGIN)
     }
 
     fun applySettings(twoPlayers: Boolean, color: Int, aiElo: Int) {

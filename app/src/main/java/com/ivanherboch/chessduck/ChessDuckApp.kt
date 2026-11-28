@@ -84,7 +84,7 @@ object DuckViewModels {
         initializer { container().let { NotationViewModel(it.settings, it.puzzles) } }
         initializer { container().let { AcademyViewModel(it.settings, it.lessons, it.narrator, it.engine, it.puzzles, createSavedStateHandle(), games = it.games, work = kotlinx.coroutines.Dispatchers.Default) } }
         initializer { container().let { PuzzlesViewModel(it.settings, it.puzzles, it.engine, createSavedStateHandle()) } }
-        initializer { container().let { PlayViewModel(it.settings, it.games, it.engine, it.analysis) } }
+        initializer { container().let { PlayViewModel(it.settings, it.games, it.engine, it.analysis, saved = createSavedStateHandle()) } }
         initializer { GameReviewViewModel(container().analysis) }
         initializer { container().let { KidViewModel(it.settings, it.narrator) } }
     }

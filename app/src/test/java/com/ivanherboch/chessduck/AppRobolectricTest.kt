@@ -1,5 +1,7 @@
 package com.ivanherboch.chessduck
 
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.test.onFirst
 import android.os.Looper
 import androidx.activity.compose.setContent
@@ -177,18 +179,53 @@ class AppRobolectricTest {
         }
         val old = (System.nanoTime() - t0) / 5 / 1e6
         println("Tirage : libre %.2f ms, fourchette %.2f ms, roque %.2f ms ; ancien libre %.1f ms".format(free, fork, rare, old))
-        // Compteurs du catalogue avec un filtre de longueur (« Long » : 61 570 problèmes de 3 coups ou plus).
-        val groups = com.ivanherboch.chessduck.content.PuzzleThemes.groups.associate { g ->
-            com.ivanherboch.chessduck.content.PuzzleThemes.groupKey(g) to com.ivanherboch.chessduck.content.PuzzleThemes.all.filter { it.group == g }.map { it.key }
+        // Compteurs du catalogue avec un filtre de longueur (« Long » : 61 570 problèmes de 3 coups ou plus), agrégés en SQL.
+        // Quelques problèmes longs résolus : les résolus doivent suivre exactement le même filtre.
+        val sample = ArrayList<Triple<String, String, Int>>() // id, thème principal, demi-coups
+        app.db.openHelper.readableDatabase.query("SELECT id, primaryTheme, moves FROM puzzles").use { c ->
+            while (c.moveToNext()) sample += Triple(c.getString(0), c.getString(1), c.getString(2).trim().split(' ').size)
         }
+        val solvedIds = sample.filterIndexed { i, _ -> i % 997 == 0 }.map { it.first }.toSet()
+        for (id in solvedIds) repo.recordAttempt(id, com.ivanherboch.chessduck.data.PuzzleOutcome.CLEAN, 1L)
         val l0 = System.nanoTime()
-        val long = repo.lengthCounts(0..4000, 3, false, groups)
+        val long = repo.themeCounts(0..4000, 3)
         val lengthMs = (System.nanoTime() - l0) / 1e6
         println("Compteurs « Long » : %.0f ms".format(lengthMs))
-        assertEquals(61_570, long[""]?.total)
-        assertNull(long["mateIn1"])
+        assertEquals(61_570, long.sumOf { it.total })
+        assertNull(long.firstOrNull { it.theme == "mateIn1" })
+        // Exactitude : mêmes totaux et résolus par thème qu'un comptage direct en Kotlin, pour chaque longueur.
+        for (length in 1 until com.ivanherboch.chessduck.content.PuzzleThemes.LENGTHS.size) {
+            val (a, b) = com.ivanherboch.chessduck.content.PuzzleThemes.lengthPlies(length)
+            val expected = sample.filter { it.third in a..b }.groupBy { it.second }
+                .mapValues { (_, l) -> l.size to l.count { it.first in solvedIds } }
+            val actual = repo.themeCounts(0..4000, length).associate { it.theme to (it.total to it.solved) }
+            assertEquals("longueur $length", expected, actual)
+        }
         assertTrue("libre $free ms", free < 15.0)
         assertTrue("fourchette $fork ms", fork < 15.0)
+    }
+
+    /**
+     * Favori et fin de problème au même moment, des dizaines de fois : chaque écriture lit et réécrit la progression dans
+     * une transaction, si bien qu'aucune ne perd l'autre (le favori reste, le problème reste résolu).
+     */
+    @Test
+    fun bookmarkAndAttemptNeverOverwriteEachOther(): Unit = runBlocking {
+        val app = ApplicationProvider.getApplicationContext<ChessDuckApp>()
+        val repo = com.ivanherboch.chessduck.data.RoomPuzzleRepository(app, app.db)
+        val ids = app.db.puzzles().slice(1, 40).map { it.id }
+        coroutineScope {
+            for ((i, id) in ids.withIndex()) {
+                launch(kotlinx.coroutines.Dispatchers.IO) { repo.setBookmark(id, true) }
+                launch(kotlinx.coroutines.Dispatchers.IO) { repo.recordAttempt(id, com.ivanherboch.chessduck.data.PuzzleOutcome.CLEAN, 1_000L + i) }
+            }
+        }
+        for (id in ids) {
+            val p = app.db.puzzles().progressOf(id)
+            assertNotNull(id, p)
+            assertTrue("$id : favori perdu", p!!.bookmarked)
+            assertTrue("$id : résolution perdue", p.solvedAt > 0)
+        }
     }
 
     /** Ajoute une courte partie terminée à l'historique de l'application (mat du berger). */

@@ -14,6 +14,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import kotlinx.coroutines.Dispatchers
@@ -278,6 +279,22 @@ interface PuzzleDao {
     suspend fun themeCounts(lo: Int, hi: Int): List<ThemeCountRow>
 
     /**
+     * Mêmes compteurs que [themeCounts], limités aux solutions de [minPly] à [maxPly] demi-coups (coup adverse compris) :
+     * agrégés en SQL, sans charger les problèmes en mémoire.
+     */
+    @Query(
+        "SELECT t.theme AS theme, t.total AS total, IFNULL(s.solved, 0) AS solved FROM " +
+            "(SELECT primaryTheme AS theme, COUNT(*) AS total FROM puzzles " +
+            "WHERE rating BETWEEN :lo AND :hi AND (length(moves) - length(replace(moves, ' ', '')) + 1) BETWEEN :minPly AND :maxPly " +
+            "GROUP BY primaryTheme) t " +
+            "LEFT JOIN (SELECT p.primaryTheme AS theme, COUNT(*) AS solved FROM puzzle_progress pp " +
+            "CROSS JOIN puzzles p ON p.id = pp.puzzleId WHERE pp.solvedAt > 0 AND p.rating BETWEEN :lo AND :hi " +
+            "AND (length(p.moves) - length(replace(p.moves, ' ', '')) + 1) BETWEEN :minPly AND :maxPly GROUP BY p.primaryTheme) s " +
+            "ON s.theme = t.theme",
+    )
+    suspend fun themeCountsWithLength(lo: Int, hi: Int, minPly: Int, maxPly: Int): List<ThemeCountRow>
+
+    /**
      * Recherche d'identifiant insensible à la casse : identique, puis préfixe, puis contenu (ordre du catalogue).
      * [pattern] est déjà échappé (\\, %, _).
      */
@@ -352,26 +369,22 @@ interface PuzzleDao {
     )
     suspend fun idLinkedAt(themes: List<String>, lo: Int, hi: Int, exclude: String, includeSolved: Boolean, offset: Int, minPly: Int, maxPly: Int): String?
 
-    /** Problèmes par thème officiel (principal ou secondaire) dans une tranche : la table de liaison sert d'index. */
-    @Query("SELECT theme AS theme, COUNT(*) AS total, 0 AS solved FROM puzzle_themes WHERE rating BETWEEN :lo AND :hi GROUP BY theme")
-    suspend fun linkedTotals(lo: Int, hi: Int): List<ThemeCountRow>
-
-    /** Problèmes résolus de la tranche avec tous leurs thèmes (peu nombreux : comptés par thème en Kotlin). */
-    @Query(
-        "SELECT p.id AS id, p.rating AS rating, p.themes AS themes, p.primaryTheme AS primaryTheme FROM puzzle_progress pp " +
-            "CROSS JOIN puzzles p ON p.id = pp.puzzleId WHERE pp.solvedAt > 0 AND p.rating BETWEEN :lo AND :hi",
-    )
-    suspend fun solvedMeta(lo: Int, hi: Int): List<PuzzleMeta>
-
-    /** Problèmes d'une tranche dont la solution compte entre [minPly] et [maxPly] demi-coups (coup adverse compris). */
-    @Query(
-        "SELECT id, rating, themes, primaryTheme FROM puzzles WHERE rating BETWEEN :lo AND :hi " +
-            "AND (length(moves) - length(replace(moves, ' ', '')) + 1) BETWEEN :minPly AND :maxPly",
-    )
-    suspend fun metaWithLength(lo: Int, hi: Int, minPly: Int, maxPly: Int): List<PuzzleMeta>
-
     @Query("SELECT COUNT(*) FROM puzzle_themes")
     suspend fun linkCount(): Int
+
+    /** Essai conclu : lecture puis écriture de la progression dans une seule transaction (aucune écriture perdue). */
+    @Transaction
+    suspend fun recordAttempt(id: String, outcome: Int, at: Long) {
+        val old = progressOf(id) ?: PuzzleProgress(id, 0)
+        markSolved(PuzzleProgress.after(old, outcome, at))
+    }
+
+    /** Favori : lecture puis écriture dans une seule transaction (une fin de problème simultanée est conservée). */
+    @Transaction
+    suspend fun setBookmark(id: String, on: Boolean) {
+        val old = progressOf(id) ?: PuzzleProgress(id, 0)
+        markSolved(old.copy(bookmarked = on))
+    }
 }
 
 @Dao

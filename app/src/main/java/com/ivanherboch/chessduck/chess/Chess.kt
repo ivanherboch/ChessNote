@@ -283,15 +283,23 @@ class Position(
 
     val isCheckmate: Boolean get() = inCheck && legalMoves.isEmpty()
 
+    /**
+     * Aucun mat possible (règle FIDE) : rois seuls, une seule pièce mineure, ou seulement des fous (d'un camp ou des
+     * deux, en nombre quelconque) tous sur des cases de même couleur.
+     */
     val insufficientMaterial: Boolean
         get() {
             var minors = 0
-            for (p in board) when (p and 7) {
+            var knights = 0
+            var lightBishops = 0
+            var darkBishops = 0
+            for (sq in board.indices) when (board[sq] and 7) {
                 0, KING -> {}
-                KNIGHT, BISHOP -> minors++
+                KNIGHT -> { minors++; knights++ }
+                BISHOP -> { minors++; if ((fileOf(sq) + rankOf(sq)) % 2 == 1) lightBishops++ else darkBishops++ }
                 else -> return false
             }
-            return minors <= 1
+            return minors <= 1 || (knights == 0 && (lightBishops == 0 || darkBishops == 0))
         }
 
     /**

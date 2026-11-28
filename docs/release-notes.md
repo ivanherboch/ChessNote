@@ -1,3 +1,13 @@
+## ChessDuck 4.4.8 — fiabilité : partie gardée, compteurs rapides
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Jeu Libre : une partie en cours n'est plus perdue quand Android ferme l'application en arrière-plan (appel, autre application). Elle reprend telle quelle : coups, couleur, niveau de l'Ordinateur, sens de l'échiquier, jauge et filet de sécurité. Elle ne compte pas comme un abandon.
+- Catalogue des problèmes : avec un filtre de longueur, les compteurs sont calculés directement par la base de données. Ils sont environ cinq fois plus rapides et n'occupent plus la mémoire, pour des nombres identiques.
+- Favori et fin de problème au même instant : les deux sont toujours enregistrés, aucun n'efface l'autre.
+- Règles : une partie où il ne reste que des fous, tous sur des cases de même couleur, est déclarée nulle (aucun mat possible, règle FIDE).
+- Stabilité : fermeture plus sûre de l'Ordinateur pendant une recherche, et préparation des exercices de Réflexes sans accès concurrent.
+
 ## ChessDuck 4.4.7 — mêmes boutons dans tous les modes
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

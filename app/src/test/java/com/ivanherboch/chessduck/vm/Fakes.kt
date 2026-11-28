@@ -112,18 +112,10 @@ class FakePuzzles(private val puzzles: List<Puzzle>) : PuzzleRepository {
         }
         return (pool.filter { it.id !in solved.value }.ifEmpty { if (onlyUnsolved) emptyList() else pool }).randomOrNull(random)?.id
     }
-    override suspend fun lengthCounts(range: IntRange, length: Int, secondary: Boolean, groups: Map<String, List<String>>): Map<String, ThemeCountRow> {
+    override suspend fun themeCounts(range: IntRange, length: Int): List<ThemeCountRow> {
         val (la, lb) = com.ivanherboch.chessduck.content.PuzzleThemes.lengthPlies(length)
-        val metas = puzzles.filter { p -> p.rating in range && p.moves.trim().split(' ').size in la..lb }
-            .map { com.ivanherboch.chessduck.data.PuzzleMeta(it.id, it.rating, it.themes, it.primaryTheme) }
-        return com.ivanherboch.chessduck.data.countByLength(metas, solved.value, secondary, groups)
-    }
-    override suspend fun themeCounts(range: IntRange, secondary: Boolean): List<ThemeCountRow> {
-        val inRange = puzzles.filter { it.rating in range }
-        if (!secondary) return inRange.groupBy { it.primaryTheme }.map { (t, l) -> ThemeCountRow(t, l.size, l.count { it.id in solved.value }) }
-        val keys = com.ivanherboch.chessduck.content.PuzzleThemes.all.map { it.key }.toSet()
-        return inRange.flatMap { p -> tags(p).filter { it in keys }.map { it to p } }.groupBy({ it.first }, { it.second })
-            .map { (t, l) -> ThemeCountRow(t, l.size, l.count { it.id in solved.value }) }
+        return puzzles.filter { it.rating in range && (la == 0 || it.moves.trim().split(' ').size in la..lb) }
+            .groupBy { it.primaryTheme }.map { (t, l) -> ThemeCountRow(t, l.size, l.count { it.id in solved.value }) }
     }
     /** Nombre de recherches d'identifiant envoyées à la base (recherche différée du catalogue). */
     var searches = 0

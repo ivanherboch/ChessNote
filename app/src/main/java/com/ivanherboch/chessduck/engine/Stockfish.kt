@@ -55,7 +55,8 @@ class Stockfish(private val executable: File) : ChessEngine, Closeable {
     constructor(context: Context) : this(File(context.applicationInfo.nativeLibraryDir, "libstockfish.so"))
 
     private val mutex = Mutex()
-    private var process: Process? = null
+    /** Lu sans verrou par [close] (arrêt forcé pendant une recherche) : seule la référence est partagée. */
+    @Volatile private var process: Process? = null
     private var out: BufferedWriter? = null
     private var lines = Channel<String>(Channel.UNLIMITED)
 
@@ -116,12 +117,16 @@ class Stockfish(private val executable: File) : ChessEngine, Closeable {
         sentLimit = null; sentElo = null; sentMultiPv = null
     }
 
-    /** Libère le moteur (fermeture propre des flux et du processus natif). */
+    /**
+     * Libère le moteur (fermeture propre des flux et du processus natif). Si une recherche tient le verrou, seul le
+     * processus est détruit : son flux se ferme, la recherche se termine d'elle-même et remet les champs à zéro
+     * sous le verrou (aucun champ n'est modifié ici pendant qu'un autre thread s'en sert).
+     */
     override fun close() {
         if (mutex.tryLock()) {
             try { shutdown() } finally { mutex.unlock() }
         } else {
-            shutdown(force = true)
+            runCatching { process?.destroyForcibly() }
         }
     }
 

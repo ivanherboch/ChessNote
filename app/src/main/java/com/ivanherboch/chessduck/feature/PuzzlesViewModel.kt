@@ -370,19 +370,11 @@ class PuzzlesViewModel(
         countsJob = viewModelScope.launch {
             val range = state.value.copy(band = band).range
             val length = state.value.length
-            // Filtre de longueur : les compteurs le respectent (un seul passage sur les problèmes de cette longueur).
-            if (length != 0) {
-                // Calcul d'environ une seconde : gardé tant que la tranche, la longueur et le nombre de résolus ne changent pas.
-                val key = listOf(range, length, solvedCount.value)
-                lengthCache?.takeIf { it.first == key }?.let { _counts.value = it.second; return@launch }
-                val groups = PuzzleThemes.groups.associate { g -> PuzzleThemes.groupKey(g) to PuzzleThemes.all.filter { it.group == g }.map { it.key } }
-                val rows = runCatchingSuspend { dao.lengthCounts(range, length, false, groups) }.getOrNull() ?: return@launch
-                val res = (PuzzleThemes.all.map { it.key } + groups.keys + "").associateWith { k -> rows[k]?.let { ThemeCount(it.total, it.solved) } ?: ThemeCount(0, 0) }
-                lengthCache = key to res
-                _counts.value = res
-                return@launch
-            }
-            val rows = runCatchingSuspend { dao.themeCounts(range) }.getOrDefault(emptyList())
+            // Avec un filtre de longueur, le calcul parcourt toute la tranche : gardé tant que la tranche, la longueur et le
+            // nombre de résolus ne changent pas.
+            val key = listOf(range, length, solvedCount.value)
+            if (length != 0) lengthCache?.takeIf { it.first == key }?.let { _counts.value = it.second; return@launch }
+            val rows = runCatchingSuspend { dao.themeCounts(range, length) }.getOrNull() ?: return@launch
             val byTheme = rows.associateBy { it.theme }
             val map = HashMap<String, ThemeCount>()
             for (t in PuzzleThemes.all) map[t.key] = byTheme[t.key]?.let { ThemeCount(it.total, it.solved) } ?: ThemeCount(0, 0)
@@ -393,6 +385,7 @@ class PuzzlesViewModel(
                 map[PuzzleThemes.groupKey(g)] = ThemeCount(keys.sumOf { map.getValue(it).total }, keys.sumOf { map.getValue(it).solved })
             }
             val res: Map<String, ThemeCount> = map
+            if (length != 0) lengthCache = key to res
             _counts.value = res
         }
     }
