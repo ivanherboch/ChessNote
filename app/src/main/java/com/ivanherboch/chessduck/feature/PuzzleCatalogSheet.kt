@@ -7,7 +7,6 @@ import com.ivanherboch.chessduck.util.normalizeForSearch
 import com.ivanherboch.chessduck.ui.DuckTextField
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.border
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.heightIn
@@ -95,10 +94,10 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
     val c = LocalDuck.current
     val counts by vm.counts.collectAsStateWithLifecycle()
     val stats by vm.stats.collectAsStateWithLifecycle()
-    LaunchedEffect(s.band, s.secondary, s.puzzleElo, s.length) { vm.loadCounts(s.band) }
+    LaunchedEffect(s.band, s.puzzleElo, s.length) { vm.loadCounts(s.band) }
     var query by remember { mutableStateOf("") }
-    // Réglages à l'ouverture du catalogue : si seuls difficulté, longueur ou thèmes secondaires changent, « Tirer un problème » s'affiche.
-    val filtersAtOpen = remember { Triple(s.band, s.length, s.secondary) }
+    // Réglages à l'ouverture du catalogue : si seules la difficulté ou la longueur changent, « Tirer un problème » s'affiche.
+    val filtersAtOpen = remember { s.band to s.length }
     var notFound by remember { mutableStateOf(false) }
     val sugg by vm.suggestions.collectAsStateWithLifecycle()
 
@@ -196,7 +195,7 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
             color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp),
         )
         // Les réglages seuls ne tirent pas de problème : un bouton le fait, sans repasser par un thème.
-        if (Triple(s.band, s.length, s.secondary) != filtersAtOpen && !s.empty) Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        if ((s.band to s.length) != filtersAtOpen && !s.empty) Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "Enregistré : s'applique au prochain problème aléatoire.", color = c.muted, style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.weight(1f).padding(end = 8.dp),
@@ -215,24 +214,10 @@ internal fun PuzzleCatalog(vm: PuzzlesViewModel, s: PuzzleState, onClose: () -> 
         )
         SectionTitle("2. Thème — 50 thèmes officiels Lichess")
         Text(
-            if (s.secondary) "Thèmes secondaires inclus : un problème compte dans chacun de ses thèmes, et le choix d'un thème couvre bien plus de problèmes."
-            else "Chaque problème est rangé dans un seul thème : son idée la plus caractéristique. En mode libre, le thème reste masqué jusqu'à la résolution.",
-            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 4.dp),
+            "Chaque problème est rangé dans un seul thème : son idée la plus caractéristique. Quand tous ceux d'un thème sont résolus " +
+                "à votre niveau, le tirage continue avec les problèmes où ce thème apparaît aussi. En mode libre, le thème reste masqué jusqu'à la résolution.",
+            color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 6.dp),
         )
-        // Interrupteur : thème principal seulement (par défaut), ou tous les thèmes de chaque problème.
-        Row(
-            Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(s.secondary, role = Role.Switch) { vm.setSecondary(it) }.padding(vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("Inclure les thèmes secondaires", color = c.text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-            androidx.compose.material3.Switch(
-                checked = s.secondary, onCheckedChange = null,
-                colors = androidx.compose.material3.SwitchDefaults.colors(
-                    checkedThumbColor = c.goldRole.onFill, checkedTrackColor = c.goldRole.fill,
-                    uncheckedThumbColor = c.outlineStrong, uncheckedTrackColor = c.surfaceHi, uncheckedBorderColor = c.outlineStrong,
-                ),
-            )
-        }
         ThemeRow("Tous les thèmes", "Un mélange de toutes les idées, sans indication à l'avance.", counts[""], s.theme.isEmpty(), Icons.Rounded.Shuffle) {
             vm.setFilter(s.band, ""); onClose()
         }

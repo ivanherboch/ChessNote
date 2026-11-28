@@ -74,7 +74,10 @@ data class PuzzleState(
     val allSolvedInFilter: Boolean = false,
     /** ELO tactique (« Mon niveau »), mis à jour après chaque problème. */
     val puzzleElo: Int = 1200,
-    /** Filtre : thèmes secondaires inclus (le thème choisi peut ne pas être le thème principal du problème). */
+    /**
+     * Problème tiré par un thème secondaire : tous ceux dont le thème choisi est l'idée principale sont résolus à ce niveau,
+     * le tirage passe alors à ceux où il apparaît aussi (le thème choisi reste affiché).
+     */
     val secondary: Boolean = false,
     /** Filtre de longueur (PuzzleThemes.LENGTHS). */
     val length: Int = 0,
@@ -155,7 +158,7 @@ class PuzzlesViewModel(
     /** Chargement de problème en cours (tirage, ouverture par identifiant ou suggestion) : un seul à la fois. */
     private var loadJob: Job? = null
     private var countsJob: Job? = null
-    /** Derniers compteurs calculés avec un filtre de longueur, et leur clé (tranche, longueur, option, résolus). */
+    /** Derniers compteurs calculés avec un filtre de longueur, et leur clé (tranche, longueur, résolus). */
     private var lengthCache: Pair<List<Any>, Map<String, ThemeCount>>? = null
     private var searchJob: Job? = null
 
@@ -171,7 +174,7 @@ class PuzzlesViewModel(
             val st = prefs.settings.first()
             // ELO tactique : à la première ouverture, il part de l'ELO du Jeu Libre (borné), puis évolue seul.
             val elo = st.puzzleElo.takeIf { it > 0 } ?: st.elo.coerceIn(ELO_MIN, ELO_MAX).also { runCatchingSuspend { prefs.setPuzzleElo(it) } }
-            _state.update { it.copy(puzzleElo = elo, secondary = if (filterTouched) it.secondary else st.puzzleSecondary, length = if (filterTouched) it.length else st.puzzleLength) }
+            _state.update { it.copy(puzzleElo = elo, length = if (filterTouched) it.length else st.puzzleLength) }
             if (!filterTouched) _state.update { it.copy(band = st.puzzleBand, theme = st.puzzleTheme) }
             val id = saved.get<String>(KEY_PUZZLE)?.takeIf { it.isNotEmpty() } ?: st.puzzleId
             val current = if (id.isNotEmpty()) runCatchingSuspend { dao.byId(id) }.getOrNull() else null
@@ -238,7 +241,7 @@ class PuzzlesViewModel(
      * Affiche [p] depuis le début. [allSolved] : il vient d'un tirage alors que tous les problèmes non résolus du filtre
      * sont épuisés (la carte le dit). Le trait est déjà écrit au-dessus de l'échiquier : le message ne le répète pas.
      */
-    private fun show(p: Puzzle, allSolved: Boolean = false) {
+    private fun show(p: Puzzle, allSolved: Boolean = false, viaSecondary: Boolean = false) {
         job?.cancel()
         saved[KEY_PUZZLE] = p.id
         val line = runCatching { Line.fromUci(p.fen, p.moves) }.getOrNull() ?: return
@@ -247,7 +250,12 @@ class PuzzlesViewModel(
             it.copy(
                 puzzle = p, line = line, progress = 0, cursor = 0, solved = false, anim = null, hintStage = 0, refute = null, empty = false, arrowUsed = false,
                 alreadySolved = false, themeRevealed = false, hadError = false, revealed = false, allSolvedInFilter = allSolved, tone = Tone.INFO,
-                message = if (allSolved) "Vous avez résolu tous les problèmes de cette sélection : en voici un déjà résolu. Élargissez le filtre dans le catalogue pour en découvrir d'autres.\n\n$intro" else intro,
+                secondary = viaSecondary,
+                message = when {
+                    allSolved -> "Vous avez résolu tous les problèmes de cette sélection : en voici un déjà résolu. Élargissez le filtre dans le catalogue pour en découvrir d'autres.\n\n$intro"
+                    viaSecondary -> "Vous avez résolu tous les problèmes dont « ${themeName(it.theme)} » est l'idée principale à ce niveau : en voici un où ce thème apparaît aussi, au milieu d'autres idées.\n\n$intro"
+                    else -> intro
+                },
             )
         }
         // Récents, thème connu et « déjà résolu » : à part du coup d'introduction, qui ne les attend pas ; ouvrir aussitôt
@@ -286,11 +294,20 @@ class PuzzlesViewModel(
             s.theme.isEmpty() -> null
             else -> listOf(s.theme)
         }
-        val id = runCatchingSuspend { dao.randomId(themes, r, cur, rnd, s.secondary, s.length) }.getOrNull()
+        // 1. Un problème non résolu dont le thème choisi est l'idée principale (l'entraînement le plus ciblé) ;
+        // 2. s'il n'en reste plus à ce niveau, un problème non résolu où ce thème apparaît aussi (thème secondaire) ;
+        // 3. sinon seulement, un problème déjà résolu.
+        var viaSecondary = false
+        var id = runCatchingSuspend { dao.randomId(themes, r, cur, rnd, false, s.length, onlyUnsolved = true) }.getOrNull()
+        if (id == null && themes != null) {
+            id = runCatchingSuspend { dao.randomId(themes, r, cur, rnd, true, s.length, onlyUnsolved = true) }.getOrNull()
+            viaSecondary = id != null
+        }
+        if (id == null) id = runCatchingSuspend { dao.randomId(themes, r, cur, rnd, false, s.length) }.getOrNull()
         val p = id?.let { runCatchingSuspend { dao.byId(it) }.getOrNull() }
         // Le tirage ne repropose un problème résolu que lorsqu'il n'en reste aucun autre dans le filtre.
         val allSolved = p != null && runCatchingSuspend { dao.solvedAmong(listOf(p.id)).first().isNotEmpty() }.getOrDefault(false)
-        if (p != null) show(p, allSolved)
+        if (p != null) show(p, allSolved, viaSecondary)
         else _state.update { it.copy(empty = true, tone = Tone.BAD, message = "Aucun problème ne correspond à ces filtres. Élargissez la sélection dans le catalogue.") }
     }
 
@@ -329,13 +346,6 @@ class PuzzlesViewModel(
         random()
     }
 
-    /** Thèmes secondaires inclus ou non (enregistré) : s'applique au prochain tirage et aux compteurs du catalogue. */
-    fun setSecondary(on: Boolean) {
-        filterTouched = true
-        _state.update { it.copy(secondary = on) }
-        viewModelScope.launch { prefs.setPuzzleSecondary(on) }
-    }
-
     /** Longueur de la solution (enregistrée) : s'applique au prochain tirage. */
     fun setLength(length: Int) {
         filterTouched = true
@@ -352,7 +362,7 @@ class PuzzlesViewModel(
 
     /**
      * Calcule, pour une difficulté ([band] ; « Mon niveau » : autour de l'ELO tactique), le nombre de problèmes (et de
-     * résolus) par thème : thème principal, ou tous les thèmes si l'option « thèmes secondaires » est active.
+     * résolus) par thème principal.
      */
     fun loadCounts(band: Int) {
         countsJob?.cancel()
@@ -361,30 +371,25 @@ class PuzzlesViewModel(
             val length = state.value.length
             // Filtre de longueur : les compteurs le respectent (un seul passage sur les problèmes de cette longueur).
             if (length != 0) {
-                // Calcul d'environ une seconde : gardé tant que la tranche, la longueur, l'option et le nombre de résolus ne changent pas.
-                val key = listOf(range, length, state.value.secondary, solvedCount.value)
+                // Calcul d'environ une seconde : gardé tant que la tranche, la longueur et le nombre de résolus ne changent pas.
+                val key = listOf(range, length, solvedCount.value)
                 lengthCache?.takeIf { it.first == key }?.let { _counts.value = it.second; return@launch }
                 val groups = PuzzleThemes.groups.associate { g -> PuzzleThemes.groupKey(g) to PuzzleThemes.all.filter { it.group == g }.map { it.key } }
-                val rows = runCatchingSuspend { dao.lengthCounts(range, length, state.value.secondary, groups) }.getOrNull() ?: return@launch
+                val rows = runCatchingSuspend { dao.lengthCounts(range, length, false, groups) }.getOrNull() ?: return@launch
                 val res = (PuzzleThemes.all.map { it.key } + groups.keys + "").associateWith { k -> rows[k]?.let { ThemeCount(it.total, it.solved) } ?: ThemeCount(0, 0) }
                 lengthCache = key to res
                 _counts.value = res
                 return@launch
             }
-            val rows = runCatchingSuspend { dao.themeCounts(range, state.value.secondary) }.getOrDefault(emptyList())
+            val rows = runCatchingSuspend { dao.themeCounts(range) }.getOrDefault(emptyList())
             val byTheme = rows.associateBy { it.theme }
             val map = HashMap<String, ThemeCount>()
             for (t in PuzzleThemes.all) map[t.key] = byTheme[t.key]?.let { ThemeCount(it.total, it.solved) } ?: ThemeCount(0, 0)
-            // Thèmes secondaires : un problème compte dans chacun de ses thèmes, donc additionner les thèmes compterait
-            // plusieurs fois le même problème. « Tous les thèmes » et les familles comptent les problèmes distincts.
-            val secondary = state.value.secondary
-            val all = if (secondary) runCatchingSuspend { dao.themeCounts(range, false) }.getOrDefault(emptyList()) else rows
-            map[""] = ThemeCount(all.sumOf { it.total }, all.sumOf { it.solved })
+            // Chaque problème est compté une fois, dans son thème principal : les familles et le total s'additionnent.
+            map[""] = ThemeCount(rows.sumOf { it.total }, rows.sumOf { it.solved })
             for (g in PuzzleThemes.groups) {
                 val keys = PuzzleThemes.all.filter { it.group == g }.map { it.key }
-                map[PuzzleThemes.groupKey(g)] = if (secondary) {
-                    runCatchingSuspend { dao.linkedCount(keys, range) }.getOrNull()?.let { ThemeCount(it.total, it.solved) } ?: ThemeCount(0, 0)
-                } else ThemeCount(keys.sumOf { map.getValue(it).total }, keys.sumOf { map.getValue(it).solved })
+                map[PuzzleThemes.groupKey(g)] = ThemeCount(keys.sumOf { map.getValue(it).total }, keys.sumOf { map.getValue(it).solved })
             }
             val res: Map<String, ThemeCount> = map
             _counts.value = res
@@ -572,6 +577,9 @@ class PuzzlesViewModel(
         rate(p, if (outcome == PuzzleOutcome.CLEAN) 1.0 else 0.0)
         viewModelScope.launch { withContext(NonCancellable) { runCatchingSuspend { dao.recordAttempt(p.id, outcome) } } }
     }
+
+    /** Nom lisible d'un filtre de thème : un thème, ou une famille entière. */
+    private fun themeName(key: String) = PuzzleThemes.byKey[key]?.name ?: PuzzleThemes.groupOf(key) ?: key
 
     /** Mauvais coup réfuté (position d'avant, coup) : il glisse en arrière quand la position revient. */
     private var missed: Pair<Position, Move>? = null

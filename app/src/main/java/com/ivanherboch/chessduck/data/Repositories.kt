@@ -20,7 +20,6 @@ interface SettingsRepository {
     suspend fun setGameSettings(twoPlayers: Boolean, color: Int, aiElo: Int)
     suspend fun setPuzzleFilter(band: Int, theme: String)
     suspend fun setPuzzleElo(v: Int)
-    suspend fun setPuzzleSecondary(v: Boolean)
     suspend fun setPuzzleLength(v: Int)
     /** Place un problème en tête de l'historique des problèmes joués (et le mémorise comme problème courant). */
     suspend fun pushRecentPuzzle(id: String)
@@ -76,14 +75,11 @@ interface PuzzleRepository {
      */
     suspend fun randomId(
         themes: List<String>?, range: IntRange, exclude: String, random: Random, secondary: Boolean = false, length: Int = 0,
+        /** Vrai : aucun problème déjà résolu en dernier recours (null s'il ne reste que des résolus). */
+        onlyUnsolved: Boolean = false,
     ): String?
     /** Compteurs (problèmes, résolus) par thème pour une tranche : thème principal, ou tous les thèmes ([secondary]). */
     suspend fun themeCounts(range: IntRange, secondary: Boolean = false): List<ThemeCountRow>
-    /**
-     * Thèmes secondaires inclus : nombre de problèmes distincts (et de résolus) portant au moins un des [themes] dans la
-     * tranche (une famille), chaque problème compté une seule fois même s'il a plusieurs de ces thèmes.
-     */
-    suspend fun linkedCount(themes: List<String>, range: IntRange): ThemeCountRow
     /**
      * Compteurs du catalogue quand un filtre de longueur est actif : un seul passage sur les problèmes de la tranche et
      * de la longueur [length], d'où chaque thème (principal, ou tous ses thèmes si [secondary]), chaque famille
@@ -151,13 +147,14 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
      * hasard (lecture bornée, instantanée même en mode Libre) ; si elles ne trouvent rien (thème rare, presque tout
      * résolu), repli exact sur le comptage puis la lecture à un rang tiré au hasard, résolus compris en dernier recours.
      */
-    override suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random, secondary: Boolean, length: Int): String? {
+    override suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random, secondary: Boolean, length: Int, onlyUnsolved: Boolean): String? {
+        val passes = if (onlyUnsolved) listOf(false) else listOf(false, true)
         val (la, lb) = PuzzleThemes.lengthPlies(length)
         val lo = range.first
         val hi = range.last
         // Thèmes secondaires : tirage exact sur la table de liaison (indexée par thème et classement).
         if (secondary && themes != null) {
-            for (includeSolved in listOf(false, true)) {
+            for (includeSolved in passes) {
                 val n = dao.countLinked(themes, lo, hi, exclude, includeSolved, la, lb)
                 if (n > 0) return dao.idLinkedAt(themes, lo, hi, exclude, includeSolved, random.nextInt(n), la, lb)
             }
@@ -170,7 +167,7 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
             else dao.probeInThemes(start, PROBE_WINDOW, themes, lo, hi, exclude, la, lb)
             if (ids.isNotEmpty()) return ids[random.nextInt(ids.size)]
         }
-        for (includeSolved in listOf(false, true)) {
+        for (includeSolved in passes) {
             val n = if (themes == null) dao.countAll(lo, hi, exclude, includeSolved, la, lb)
             else dao.countInThemes(themes, lo, hi, exclude, includeSolved, la, lb)
             if (n == 0) continue
@@ -184,14 +181,6 @@ class RoomPuzzleRepository(private val context: Context, private val db: DuckDat
     override suspend fun lengthCounts(range: IntRange, length: Int, secondary: Boolean, groups: Map<String, List<String>>): Map<String, ThemeCountRow> =
         countByLength(dao.metaWithLength(range.first, range.last, PuzzleThemes.lengthPlies(length).first, PuzzleThemes.lengthPlies(length).second),
             dao.solvedIds().first().toSet(), secondary, groups)
-
-    override suspend fun linkedCount(themes: List<String>, range: IntRange): ThemeCountRow {
-        val total = dao.countLinkedTotal(themes, range.first, range.last)
-        // Résolus : les problèmes résolus (peu nombreux) dont au moins un thème est dans la famille.
-        val keys = themes.toSet()
-        val solved = dao.solvedMeta(range.first, range.last).count { m -> m.themes.trim().split(' ').any { it in keys } }
-        return ThemeCountRow("", total, solved)
-    }
 
     override suspend fun themeCounts(range: IntRange, secondary: Boolean): List<ThemeCountRow> {
         if (!secondary) return dao.themeCounts(range.first, range.last)

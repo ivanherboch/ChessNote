@@ -129,7 +129,7 @@ class AppRobolectricTest {
         rule.onNodeWithText("Solution").assertExists()
         rule.onNodeWithText("Montrer le coup").assertExists()
         shot("3m_grande_police_erreur")
-        // Catalogue en grande police : bilan tactique, Mon niveau, longueur, thèmes secondaires.
+        // Catalogue en grande police : bilan tactique, Mon niveau, longueur.
         rule.onNodeWithContentDescription("Catalogue des problèmes", substring = true).performClick(); settle(1500)
         rule.onNodeWithText("Bilan tactique").assertExists()
         shot("3n_catalogue_grande_police")
@@ -177,12 +177,12 @@ class AppRobolectricTest {
         }
         val old = (System.nanoTime() - t0) / 5 / 1e6
         println("Tirage : libre %.2f ms, fourchette %.2f ms, roque %.2f ms ; ancien libre %.1f ms".format(free, fork, rare, old))
-        // Compteurs du catalogue avec un filtre de longueur (« Long » : 61 570 problèmes de 3 coups ou plus), thèmes secondaires compris.
+        // Compteurs du catalogue avec un filtre de longueur (« Long » : 61 570 problèmes de 3 coups ou plus).
         val groups = com.ivanherboch.chessduck.content.PuzzleThemes.groups.associate { g ->
             com.ivanherboch.chessduck.content.PuzzleThemes.groupKey(g) to com.ivanherboch.chessduck.content.PuzzleThemes.all.filter { it.group == g }.map { it.key }
         }
         val l0 = System.nanoTime()
-        val long = repo.lengthCounts(0..4000, 3, true, groups)
+        val long = repo.lengthCounts(0..4000, 3, false, groups)
         val lengthMs = (System.nanoTime() - l0) / 1e6
         println("Compteurs « Long » : %.0f ms".format(lengthMs))
         assertEquals(61_570, long[""]?.total)

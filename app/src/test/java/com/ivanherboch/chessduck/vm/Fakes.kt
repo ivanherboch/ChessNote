@@ -39,7 +39,6 @@ class FakeSettings(initial: Settings = Settings(lessonId = 1, academyLevel = 2))
         flow.update { it.copy(twoPlayers = twoPlayers, colorChoice = color, aiElo = aiElo) }
     override suspend fun setPuzzleFilter(band: Int, theme: String) = flow.update { it.copy(puzzleBand = band, puzzleTheme = theme) }
     override suspend fun setPuzzleElo(v: Int) = flow.update { it.copy(puzzleElo = v) }
-    override suspend fun setPuzzleSecondary(v: Boolean) = flow.update { it.copy(puzzleSecondary = v) }
     override suspend fun setPuzzleLength(v: Int) = flow.update { it.copy(puzzleLength = v) }
     override suspend fun pushRecentPuzzle(id: String) = flow.update {
         val recent = (listOf(id) + it.recentPuzzles.filter { r -> r != id }).take(com.ivanherboch.chessduck.data.RECENT_PUZZLES + 1)
@@ -105,23 +104,19 @@ class FakePuzzles(private val puzzles: List<Puzzle>) : PuzzleRepository {
     override fun solvedAmong(ids: List<String>): Flow<List<String>> = solved.map { s -> ids.filter { it in s } }
     override suspend fun syncCatalogue() = false
     private fun tags(p: Puzzle) = p.themes.trim().split(' ').toSet()
-    override suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random, secondary: Boolean, length: Int): String? {
+    override suspend fun randomId(themes: List<String>?, range: IntRange, exclude: String, random: Random, secondary: Boolean, length: Int, onlyUnsolved: Boolean): String? {
         val (la, lb) = com.ivanherboch.chessduck.content.PuzzleThemes.lengthPlies(length)
         fun lengthOk(p: Puzzle) = la == 0 || p.moves.trim().split(' ').size in la..lb
         val pool = puzzles.filter {
             (themes == null || it.primaryTheme in themes || (secondary && tags(it).any { t -> t in themes })) && it.rating in range && it.id != exclude && lengthOk(it)
         }
-        return (pool.filter { it.id !in solved.value }.ifEmpty { pool }).randomOrNull(random)?.id
+        return (pool.filter { it.id !in solved.value }.ifEmpty { if (onlyUnsolved) emptyList() else pool }).randomOrNull(random)?.id
     }
     override suspend fun lengthCounts(range: IntRange, length: Int, secondary: Boolean, groups: Map<String, List<String>>): Map<String, ThemeCountRow> {
         val (la, lb) = com.ivanherboch.chessduck.content.PuzzleThemes.lengthPlies(length)
         val metas = puzzles.filter { p -> p.rating in range && p.moves.trim().split(' ').size in la..lb }
             .map { com.ivanherboch.chessduck.data.PuzzleMeta(it.id, it.rating, it.themes, it.primaryTheme) }
         return com.ivanherboch.chessduck.data.countByLength(metas, solved.value, secondary, groups)
-    }
-    override suspend fun linkedCount(themes: List<String>, range: IntRange): ThemeCountRow {
-        val l = puzzles.filter { it.rating in range && tags(it).any { t -> t in themes } }
-        return ThemeCountRow("", l.size, l.count { it.id in solved.value })
     }
     override suspend fun themeCounts(range: IntRange, secondary: Boolean): List<ThemeCountRow> {
         val inRange = puzzles.filter { it.rating in range }

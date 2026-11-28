@@ -1,3 +1,11 @@
+## ChessDuck 4.4.6 — thèmes secondaires automatiques
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Catalogue des problèmes : l'interrupteur « Inclure les thèmes secondaires » disparaît. Le tirage s'en charge tout seul. Vous recevez d'abord les problèmes dont le thème choisi est l'idée principale. Quand vous les avez tous résolus à ce niveau, il passe aux problèmes où ce thème apparaît aussi, au milieu d'autres idées, et le dit en une phrase. Il ne repropose des problèmes déjà résolus qu'ensuite.
+- Les compteurs du catalogue rangent chaque problème dans son seul thème principal : les familles et le total « Tous les thèmes » s'additionnent toujours exactement.
+- Le message de fin d'un problème liste toujours tous ses thèmes : l'information des thèmes secondaires reste visible.
+
 ## ChessDuck 4.4.5 — longueur comptée sur les vrais coups
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

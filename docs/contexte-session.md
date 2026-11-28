@@ -12,7 +12,7 @@ Lis-le en entier avant toute modification, puis applique les conventions décrit
 - **Dépôt** : `ivanherboch/ChessNote` (le dépôt garde ce nom ; l'application, elle, s'appelle ChessDuck).
 - **Branche de travail** : `claude/chessduck-android-app-wcikw1` (c'est aussi la branche par défaut du dépôt).
   Toujours commiter et pousser sur cette branche. **Ne jamais créer de pull request** sauf demande explicite.
-- **Version actuelle** : `4.4.5` (`versionCode = 110`), publiée en release GitHub `v4.4.5`.
+- **Version actuelle** : `4.4.6` (`versionCode = 111`), publiée en release GitHub `v4.4.6`.
 - **Langue** : toute l'interface, les commentaires, la KDoc, les messages de commit et les notes de version sont **en français**.
 - Le propriétaire est l'auteur de l'application : mention « © Ivan Herboch, 2026 » (À propos, images partagées).
 
@@ -214,6 +214,7 @@ Toute évolution du schéma : nouvelle version Room + migration + mise à jour d
 - **4.4.3** : thèmes secondaires : total « Tous les thèmes » tiré des compteurs stricts (problèmes distincts), familles via `PuzzleRepository.linkedCount` (COUNT DISTINCT sur `puzzle_themes`).
 - **4.4.4** : compteurs du catalogue avec filtre de longueur : `PuzzleDao.metaWithLength` + `countByLength` (un passage, thèmes/familles/total avec résolus, ~1,6 s sur la vraie base en Robolectric), `PuzzleRepository.lengthCounts`, cache `lengthCache` dans le ViewModel ; phrase explicative sous les puces de longueur.
 - **4.4.5** : longueur par nombre réel de demi-coups (`PuzzleThemes.lengthPlies`, paramètres DAO `minPly`/`maxPly` sur `length(moves) - length(replace(moves, ' ', '')) + 1`) au lieu des étiquettes Lichess (26 incohérentes, dont #Cex55).
+- **4.4.6** : interrupteur « Inclure les thèmes secondaires » supprimé (préférence `puzzle_secondary`, `setSecondary`, `linkedCount`/`countLinkedTotal`) ; `drawRandom` tire d'abord un problème non résolu du thème principal, puis par relais un non résolu où le thème est secondaire (`randomId(..., onlyUnsolved = true)`, `PuzzleState.secondary` + message « apparaît aussi »), puis un résolu ; compteurs toujours stricts.
 - **3.3.5** : `AcademyViewModel.init` lance une recherche courte (démarrage du moteur) ; réfutation affichée : `onSquareTap` de l'échiquier = `resumeAtMiss` / `retryPractice` / `PuzzlesViewModel.retry`. Test d'écran `challengeCaptureByTaps` (leçon 9 en Défi, prise Qxd2 au toucher).
 - **3.3.4** : `EndgameTrainer` : analyse préparée (`prepare`/`prepared`, Deferred par FEN) pendant la réflexion de l'élève ; coup perdant si sous le seuil ET baisse ≥ `DROP_CP` (150) par rapport à la position d'avant ; `ENGINE_WAIT` 10 s, moteur muet = coup annulé ; pion perdu avec tour/dame contre roi seul = réussi. Outil `EndgameSfTool` (REVIEW_SF, FAMILY, TOTAL ; `--rerun`). Moteur du téléphone : Stockfish 11.
 - **3.3.3** : `open(..., guided = true)` depuis le catalogue et les suggestions ; `AcademyState.fromDrawer`/`drawerReturn` : `markFromDrawer()` (boutons de séance du tiroir) et `backToDrawer()` dans les `close*`, l'écran rouvre le tiroir.
@@ -343,14 +344,14 @@ Les détails de chaque version sont dans `docs/release-notes.md` ; les exemples 
   - `randomId(…, secondary, length)` et `themeCounts(range, secondary)` ;
   - `recordAttempt`, avec `markSolved` qui délègue en résolution nette (séries de l'Académie) ;
   - `setBookmark`, `bookmarked`, `bookmarks`, `toRedo`, `attempts`.
-- DataStore : `puzzle_elo` (0 = pas encore calculé, il part alors de l'ELO du Jeu Libre), `puzzle_secondary`, `puzzle_length` ; historique des récents porté à 50 (`RECENT_PUZZLES`).
+- DataStore : `puzzle_elo` (0 = pas encore calculé, il part alors de l'ELO du Jeu Libre), `puzzle_length` (`puzzle_secondary` supprimé en 4.4.6) ; historique des récents porté à 50 (`RECENT_PUZZLES`).
 - `PuzzleThemes` : `MY_LEVEL` (= 5, valeur de `puzzleBand`), `levelRange(elo)` (± 100), `bandLabel`, `LENGTHS`, `lengthPatterns`.
 - `PuzzlesViewModel` :
-  - `PuzzleState.puzzleElo`, `secondary`, `length`, `range` et `filterMatches` (le thème visible tient compte des secondaires) ;
+  - `PuzzleState.puzzleElo`, `secondary` (problème tiré par relais sur un thème secondaire, 4.4.6), `length`, `range` et `filterMatches` (le thème visible tient compte du relais) ;
   - ELO : `tacticElo()` (Elo, K = 32, borné 400–3000), `rate()` une fois par problème et par session, `conclude()` (essai enregistré en NonCancellable) ;
-  - `setSecondary`, `setLength`, `toggleBookmark` ;
+  - `setLength`, `toggleBookmark` ; tirage en trois temps (principal non résolu, secondaire non résolu, puis résolu) ;
   - flux `bookmarked`, `bookmarks`, `toRedo`, `stats` (`TacticStats.of`).
-- `PuzzlesScreen` : signet sur la ligne d'information, tiroir « Problèmes joués » (Récents, À refaire, Favoris : `PlayedRow`). `PuzzleCatalogSheet` : `TacticCard`, puce « Mon niveau · ELO », longueur, interrupteur des thèmes secondaires, « Tirer un problème » dès que difficulté, longueur ou thèmes secondaires changent.
+- `PuzzlesScreen` : signet sur la ligne d'information, tiroir « Problèmes joués » (Récents, À refaire, Favoris : `PlayedRow`). `PuzzleCatalogSheet` : `TacticCard`, puce « Mon niveau · ELO », longueur, « Tirer un problème » dès que difficulté ou longueur changent (interrupteur des thèmes secondaires supprimé en 4.4.6).
 - Tests :
   - `migration4To5KeepsEverything` : base v4 complète, 150 000 problèmes, progression, leçon, partie et test conservés, liens créés, index remplacés ; base livrée v5 vérifiée ;
   - `upgradeImportsNewPuzzlesAndKeepsProgress` : liens après import ;

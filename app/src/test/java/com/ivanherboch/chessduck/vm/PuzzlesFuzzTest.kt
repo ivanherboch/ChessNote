@@ -348,24 +348,31 @@ class PuzzlesFuzzTest {
         bm.cancel()
     }
 
-    /** Partition stricte par défaut ; « thèmes secondaires » : le thème choisi peut être secondaire (tirage, compteurs, affichage). */
+    /**
+     * Thème choisi : d'abord les problèmes dont c'est l'idée principale ; quand ils sont tous résolus, le tirage passe
+     * de lui-même aux problèmes où le thème apparaît aussi (et le dit), avant de reproposer des problèmes résolus.
+     */
     @Test
-    fun secondaryThemesWidenTheFilter() = runTest(main) {
+    fun secondaryThemesTakeOverWhenThePrimaryOnesAreSolved() = runTest(main) {
+        val mainFork = PUZZLE_0000D.copy(id = "MF", themes = " fork short ", primaryTheme = "fork")
         val secondaryFork = PUZZLE_0000D.copy(id = "SF", themes = " crushing fork middlegame pin short ", primaryTheme = "pin")
-        val repo = FakePuzzles(listOf(secondaryFork))
+        val repo = FakePuzzles(listOf(mainFork, secondaryFork))
         val vm = PuzzlesViewModel(FakeSettings(), repo, FakeEngine())
         advanceUntilIdle()
         vm.setFilter(0, "fork"); advanceUntilIdle()
-        assertTrue(vm.state.value.empty) // thème principal seulement : aucun problème « fourchette »
-        vm.setSecondary(true); vm.random(); advanceUntilIdle()
+        assertTrue(vm.state.value.puzzle?.id == "MF" && !vm.state.value.secondary) // l'idée principale d'abord
+        repo.markSolved("MF")
+        vm.random(); advanceUntilIdle()
         val s = vm.state.value
-        assertTrue(s.puzzle?.id == "SF" && s.filterMatches && s.themeVisible)
-        assertTrue(repo.themeCounts(0..4000, secondary = true).any { it.theme == "fork" && it.total == 1 })
-        assertTrue(repo.themeCounts(0..4000, secondary = false).none { it.theme == "fork" })
-        // « Tous les thèmes » et les familles comptent les problèmes distincts, même avec plusieurs thèmes chacun.
+        assertTrue(s.puzzle?.id == "SF" && s.secondary && s.filterMatches && s.themeVisible)
+        assertTrue(s.message, s.message.contains("apparaît aussi"))
+        // Tout résolu : un problème déjà résolu, et le message le dit.
+        repo.markSolved("SF")
+        vm.random(); advanceUntilIdle()
+        assertTrue(vm.state.value.allSolvedInFilter)
+        // Compteurs du catalogue : chaque problème dans son seul thème principal.
         vm.loadCounts(0); advanceUntilIdle()
-        assertTrue(vm.counts.value[""]?.total == 1)
-        assertTrue(vm.counts.value.filterKeys { it != "" && it !in com.ivanherboch.chessduck.content.PuzzleThemes.byKey }.values.all { it.total <= 1 })
+        assertTrue(vm.counts.value["fork"]?.total == 1 && vm.counts.value["pin"]?.total == 1 && vm.counts.value[""]?.total == 2)
     }
 
     /** Longueur : un coup, court, long ; « Mon niveau » : autour de l'ELO tactique. */

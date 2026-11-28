@@ -83,8 +83,6 @@ data class Settings(
     val puzzleTheme: String = "",
     /** ELO tactique des Problèmes (« Mon niveau ») ; 0 : pas encore calculé (on part alors de l'ELO du Jeu Libre). */
     val puzzleElo: Int = 0,
-    /** Catalogue : inclure les thèmes secondaires de chaque problème (table puzzle_themes). */
-    val puzzleSecondary: Boolean = false,
     /** Catalogue : longueur de la solution (0 toutes, 1 un coup, 2 courte, 3 longue ; PuzzleThemes.LENGTHS). */
     val puzzleLength: Int = 0,
     val puzzleId: String = "",
@@ -138,7 +136,6 @@ class Prefs(private val context: Context) : SettingsRepository {
         val aiElo = intPreferencesKey("ai_elo")
         val band = intPreferencesKey("puzzle_band")
         val puzzleElo = intPreferencesKey("puzzle_elo")
-        val puzzleSecondary = booleanPreferencesKey("puzzle_secondary")
         val puzzleLength = intPreferencesKey("puzzle_length")
         val theme = stringPreferencesKey("puzzle_theme")
         val puzzleId = stringPreferencesKey("puzzle_id")
@@ -179,7 +176,6 @@ class Prefs(private val context: Context) : SettingsRepository {
             puzzleBand = p[K.band] ?: 0,
             puzzleTheme = p[K.theme] ?: "",
             puzzleElo = p[K.puzzleElo] ?: 0,
-            puzzleSecondary = p[K.puzzleSecondary] ?: false,
             puzzleLength = p[K.puzzleLength] ?: 0,
             puzzleId = p[K.puzzleId] ?: "",
             notationLevel = p[K.level] ?: 0,
@@ -261,7 +257,6 @@ class Prefs(private val context: Context) : SettingsRepository {
     } }
     override suspend fun setPuzzleFilter(band: Int, theme: String) { context.store.edit { it[K.band] = band; it[K.theme] = theme } }
     override suspend fun setPuzzleElo(v: Int) { context.store.edit { it[K.puzzleElo] = v } }
-    override suspend fun setPuzzleSecondary(v: Boolean) { context.store.edit { it[K.puzzleSecondary] = v } }
     override suspend fun setPuzzleLength(v: Int) { context.store.edit { it[K.puzzleLength] = v } }
     override suspend fun setNotationLevel(v: Int) { context.store.edit { it[K.level] = v } }
     override suspend fun setLesson(v: Int) { context.store.edit { it[K.lesson] = v } }

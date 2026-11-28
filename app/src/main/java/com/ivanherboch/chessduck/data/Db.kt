@@ -105,7 +105,7 @@ object PuzzleOutcome {
 }
 
 /**
- * Lien problème → thème officiel (v5), pour l'option « Inclure les thèmes secondaires » : tous les thèmes officiels
+ * Lien problème → thème officiel (v5), pour le relais par thème secondaire du tirage : tous les thèmes officiels
  * d'un problème, pas seulement le principal. Clé primaire (thème, classement, id) : la table sert elle-même d'index
  * (créée WITHOUT ROWID dans la base livrée et par la migration, pour rester compacte).
  */
@@ -334,7 +334,7 @@ interface PuzzleDao {
     )
     fun attempts(): Flow<List<AttemptRow>>
 
-    // ---- v5 : « Inclure les thèmes secondaires » (table puzzle_themes) ----
+    // ---- v5 : thèmes secondaires (table puzzle_themes), relais du tirage quand les principaux sont résolus ----
 
     @Query(
         "SELECT COUNT(DISTINCT pt.puzzleId) FROM puzzle_themes pt CROSS JOIN puzzles p ON p.id = pt.puzzleId " +
@@ -362,10 +362,6 @@ interface PuzzleDao {
             "CROSS JOIN puzzles p ON p.id = pp.puzzleId WHERE pp.solvedAt > 0 AND p.rating BETWEEN :lo AND :hi",
     )
     suspend fun solvedMeta(lo: Int, hi: Int): List<PuzzleMeta>
-
-    /** Problèmes distincts portant au moins un des [themes] dans la tranche (lecture de la seule table de liaison). */
-    @Query("SELECT COUNT(DISTINCT puzzleId) FROM puzzle_themes WHERE theme IN (:themes) AND rating BETWEEN :lo AND :hi")
-    suspend fun countLinkedTotal(themes: List<String>, lo: Int, hi: Int): Int
 
     /** Problèmes d'une tranche dont la solution compte entre [minPly] et [maxPly] demi-coups (coup adverse compris). */
     @Query(
