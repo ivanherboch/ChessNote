@@ -25,9 +25,37 @@ private val Context.store by preferencesDataStore(
                 if (old.contains("light")) m[Prefs.SHARE_LIGHT] = old.getBoolean("light", false)
                 m.toPreferences()
             },
+            PlayDefaultsMigration,
         )
     },
 )
+
+/**
+ * Jeu Libre (4.5.0) : une seule fois, écrit l'enjeu et les réglages effectifs. Installation vierge : partie libre, filet
+ * actif, Ordinateur à 600. Installation existante : ce qu'elle avait jusqu'ici (partie classée sauf avec le filet, 1200
+ * et sans filet si ces réglages n'avaient jamais été touchés), pour que rien ne change sans que l'utilisateur le choisisse.
+ */
+internal object PlayDefaultsMigration : androidx.datastore.core.DataMigration<Preferences> {
+    private val rated = booleanPreferencesKey("play_rated_game")
+    private val net = booleanPreferencesKey("play_safety_net")
+    private val ai = intPreferencesKey("ai_elo")
+    override suspend fun shouldMigrate(currentData: Preferences) = currentData[rated] == null
+    override suspend fun migrate(currentData: Preferences): Preferences = migratePlayDefaults(currentData)
+    override suspend fun cleanUp() = Unit
+
+    fun migratePlayDefaults(p: Preferences): Preferences {
+        val m = p.toMutablePreferences()
+        if (p.asMap().isEmpty()) {
+            m[rated] = false; m[net] = true; m[ai] = 600
+        } else {
+            val hadNet = p[net] ?: false
+            m[net] = hadNet
+            m[rated] = !hadNet
+            if (p[ai] == null) m[ai] = 1200
+        }
+        return m.toPreferences()
+    }
+}
 
 /** Classement de départ (et après réinitialisation). */
 const val DEFAULT_ELO = 1200

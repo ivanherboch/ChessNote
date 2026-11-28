@@ -1,3 +1,9 @@
+## ChessDuck 4.5.1 — vos réglages de partie gardés
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Mise à jour depuis une version antérieure : si vous n'aviez jamais modifié les réglages de partie, la 4.5.0 vous faisait passer aux nouveaux défauts (partie libre, Ordinateur à 600, filet actif). Vous retrouvez vos réglages d'avant : partie classée à 1200 sans filet, ou partie libre si le filet était actif. Seule une nouvelle installation démarre en mode sans stress.
+
 ## ChessDuck 4.5.0 — sans stress par défaut
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

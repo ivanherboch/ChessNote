@@ -1653,6 +1653,18 @@ class ViewModelsTest {
     fun freshInstallPlaysAFreeGameWithTheSafetyNet() = test {
         val fresh = Settings()
         assertTrue(!fresh.ratedGame && fresh.safetyNet && fresh.aiElo == 600)
+        // Migration jouée une fois au démarrage : installation vierge → défauts sans stress ; installation existante →
+        // ses réglages effectifs d'avant (partie classée, 1200, sans filet, ou partie libre si le filet était actif).
+        val mig = com.ivanherboch.chessduck.data.PlayDefaultsMigration
+        val rated = androidx.datastore.preferences.core.booleanPreferencesKey("play_rated_game")
+        val net = androidx.datastore.preferences.core.booleanPreferencesKey("play_safety_net")
+        val ai = androidx.datastore.preferences.core.intPreferencesKey("ai_elo")
+        mig.migratePlayDefaults(androidx.datastore.preferences.core.emptyPreferences()).let { assertTrue(it[rated] == false && it[net] == true && it[ai] == 600) }
+        mig.migratePlayDefaults(androidx.datastore.preferences.core.preferencesOf(androidx.datastore.preferences.core.intPreferencesKey("elo") to 1300))
+            .let { assertTrue(it[rated] == true && it[net] == false && it[ai] == 1200) }
+        mig.migratePlayDefaults(androidx.datastore.preferences.core.preferencesOf(net to true, ai to 800))
+            .let { assertTrue(it[rated] == false && it[net] == true && it[ai] == 800) }
+        assertTrue(kotlinx.coroutines.runBlocking { !mig.shouldMigrate(androidx.datastore.preferences.core.preferencesOf(rated to false)) })
         val games = FakeGames()
         val engine = FakeEngine()
         val prefs = FakeSettings(fresh.copy(colorChoice = 0))
