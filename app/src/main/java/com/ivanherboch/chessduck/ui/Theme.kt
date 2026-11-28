@@ -65,6 +65,8 @@ data class DuckColors(
     val lastMoveTint: Color = Color(0x66F7EC5E),
     val checkGlow: Color = Color(0xFFEF4444),
     val kid: Boolean = false,
+    /** Palette adaptée au daltonisme (Bleu-Orange) : les couleurs codées (annotations…) passent en bleu / vermillon. */
+    val colorBlind: Boolean = false,
 ) {
     val goldText get() = goldRole.text
     val greenText get() = greenRole.text
@@ -138,10 +140,18 @@ enum class BoardTheme(val label: String, val light: Color, val dark: Color, val 
     TOURNAMENT("Vert tournoi", Color(0xFFEEEED2), Color(0xFF769656), Color(0xFF34481F)),
     AMETHYST("Améthyste et lin", Color(0xFFF1E9DC), Color(0xFF9F86C0), Color(0xFF45305F));
 
-    fun applyTo(c: DuckColors) = c.copy(squareLight = light, squareDark = dark, coordInk = coordInk, coordPill = light.copy(alpha = 0.85f))
+    fun applyTo(c: DuckColors) = c.copy(
+        squareLight = light, squareDark = dark, coordInk = coordInk, coordPill = light.copy(alpha = 0.85f),
+        // Vert tournoi : la sélection verte se confondrait avec les cases foncées olive ; bleu franc à la place
+        // (la palette daltonienne a déjà sa propre sélection bleue).
+        select = if (this == TOURNAMENT && !c.colorBlind) TOURNAMENT_SELECT else c.select,
+    )
 
     companion object {
         fun of(index: Int): BoardTheme = entries.getOrElse(index) { WOOD }
+
+        /** Sélection sur l'échiquier Vert tournoi : bleu franc, distinct des cases olive comme des cases crème. */
+        val TOURNAMENT_SELECT = Color(0xFF1E40AF)
     }
 }
 
@@ -193,14 +203,14 @@ enum class DuckPalette(val label: String, val description: String, val night: Du
             green = Color(0xFF56B4E9), greenRole = AccentRole(Color(0xFF7CC6F0), Color(0xFF56B4E9), Ink),
             blue = Color(0xFFCC79A7), blueRole = AccentRole(Color(0xFFE3A5C7), Color(0xFFCC79A7), Ink),
             red = Color(0xFFE07A3F), redRole = AccentRole(Color(0xFFF3A06E), Color(0xFFE07A3F), Ink),
-            select = Color(0xFF0072B2),
+            select = Color(0xFF0072B2), colorBlind = true,
         ),
         DayColors.copy(
             gold = Color(0xFFF0E442), goldRole = AccentRole(Color(0xFF6B5D00), Color(0xFFF0E442), Ink),
             green = Color(0xFF0072B2), greenRole = AccentRole(Color(0xFF005A8C), Color(0xFF0072B2), Color.White),
             blue = Color(0xFFA64D7E), blueRole = AccentRole(Color(0xFF8E3A68), Color(0xFFA64D7E), Color.White),
             red = Color(0xFFD55E00), redRole = AccentRole(Color(0xFFA63F00), Color(0xFFB34D00), Color.White),
-            select = Color(0xFF0072B2),
+            select = Color(0xFF0072B2), colorBlind = true,
         ),
     );
 
@@ -238,8 +248,16 @@ val LocalDuckFont = staticCompositionLocalOf<FontFamily?> { null }
  */
 val LocalIsTwoPane = staticCompositionLocalOf { false }
 
-/** Règle unique : la fenêtre est nettement plus large que haute (tablette en paysage). */
+/** Règle unique : la fenêtre est nettement plus large que haute (tablette ou téléphone en paysage). */
 fun isTwoPane(width: Dp, height: Dp): Boolean = width > height * 1.15f
+
+/**
+ * Paysage compact (téléphone tourné) : deux colonnes, mais moins de 480 dp de haut. L'en-tête global disparaît
+ * (Paramètres passe dans le rail) et les écrans resserrent leurs rangées pour garder leurs textes visibles.
+ */
+val LocalCompactHeight = staticCompositionLocalOf { false }
+
+fun isCompactHeight(height: Dp): Boolean = height < 480.dp
 
 /** Affichage des coordonnées a–h / 1–8 sur l'échiquier (réglage utilisateur). */
 val LocalShowCoords = staticCompositionLocalOf { true }

@@ -231,6 +231,40 @@ class AppRobolectricTest {
         }
     }
 
+    /**
+     * Grande police (1,6) : en Notation, « Vue Blancs » et la série ne sont jamais tronquées, et les touches de pièces
+     * gardent leur nom français ; en Jeu Libre, chaque coup du bandeau offre une cible de 48 dp de haut.
+     */
+    @Test
+    @Config(fontScale = 1.6f)
+    fun notationAndMoveStripWithLargeFont() {
+        settle(2500)
+        rule.onNodeWithText("Notation").performClick(); settle(1500)
+        shot("1d_notation_grande_police")
+        fun overflows(text: String): Boolean {
+            val node = rule.onNodeWithText(text, substring = true).fetchSemanticsNode()
+            val res = ArrayList<androidx.compose.ui.text.TextLayoutResult>()
+            node.config.getOrNull(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult)?.action?.invoke(res)
+            // Texte coupé par une ellipse (le débordement vertical des grandes polices ne compte pas).
+            return res.firstOrNull()?.let { it.isLineEllipsized(it.lineCount - 1) } == true
+        }
+        val view = if (rule.onAllNodesWithText("Vue Blancs").fetchSemanticsNodes().isNotEmpty()) "Vue Blancs" else "Vue Noirs"
+        assertTrue("$view tronqué", !overflows(view))
+        assertTrue("série tronquée", !overflows("Série"))
+        assertTrue("niveau tronqué", !overflows("Tous"))
+        assertTrue("champ de réponse tronqué", !overflows("Réponse"))
+        // Bandeau des coups du Jeu Libre : cible tactile de 48 dp.
+        rule.onNodeWithText("Jeu Libre").performClick(); settle(2000)
+        val pvm = androidx.lifecycle.ViewModelProvider(rule.activity, com.ivanherboch.chessduck.DuckViewModels.Factory)[com.ivanherboch.chessduck.feature.PlayViewModel::class.java]
+        rule.runOnIdle { pvm.playerMove(com.ivanherboch.chessduck.chess.Move.fromUci("e2e4")) }; settle(3000)
+        val move = rule.onAllNodes(androidx.compose.ui.test.SemanticsMatcher("coup du bandeau") {
+            it.config.getOrNull(androidx.compose.ui.semantics.SemanticsActions.OnClick)?.label?.startsWith("Aller au coup") == true
+        }).fetchSemanticsNodes().first()
+        val density = rule.activity.resources.displayMetrics.density
+        assertTrue("cible de ${move.size.height / density} dp", move.size.height / density >= 47.5f)
+        shot("4i_bandeau_coups_grande_police")
+    }
+
     /** Ajoute une courte partie terminée à l'historique de l'application (mat du berger). */
     /**
      * Partie perdue par le joueur (Noirs) sur une gaffe : le cavalier en f6 permet le mat en f7. L'analyse est

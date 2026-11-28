@@ -52,6 +52,25 @@ class ContrastTest {
         check("$tag coordonnées/case foncée", c.coordInk, c.coordPill.over(c.squareDark))
     }
 
+    /**
+     * Case sélectionnée (sélection à 50 % sur la case) : nettement distincte de la case nue sur les 4 échiquiers et
+     * toutes les palettes, et bleue (pas verte) sur le Vert tournoi, dont les cases foncées sont olive.
+     */
+    @Test
+    fun selectionStandsOutOnEveryBoard() {
+        fun dist(a: Color, b: Color) = kotlin.math.sqrt(((a.red - b.red) * (a.red - b.red) + (a.green - b.green) * (a.green - b.green) + (a.blue - b.blue) * (a.blue - b.blue)).toDouble()) * 255
+        for (t in com.ivanherboch.chessduck.ui.BoardTheme.entries) for (p in com.ivanherboch.chessduck.ui.DuckPalette.entries) for (dark in listOf(true, false)) {
+            val c = t.applyTo(p.colors(dark))
+            for (sq in listOf(c.squareLight, c.squareDark)) {
+                val d = dist(c.select.copy(alpha = 0.5f).over(sq), sq)
+                assertTrue("${t.label} / ${p.label} : sélection trop proche de la case (${d.toInt()})", d >= 55)
+            }
+        }
+        val tour = com.ivanherboch.chessduck.ui.BoardTheme.TOURNAMENT.applyTo(NightColors)
+        assertTrue(tour.select.blue > tour.select.green)
+        assertTrue("sélection sur case olive", contrast(tour.select.copy(alpha = 0.5f).over(tour.squareDark), tour.squareDark) >= 1.5f)
+    }
+
     @Test
     fun allPalettesMeetWcagAA() {
         palette("Nuit", NightColors)
@@ -76,6 +95,11 @@ class ContrastTest {
             check("Enfant carte ${p.name}", Color(0xFF1F3B57), p.bg)
         }
         for (n in listOf("!!", "!", "?!", "?", "??")) check("annotation $n", Color.White, annotationColor(n))
+        // Palette Bleu-Orange : mêmes contrastes, bons coups bleus et erreurs vermillon (jamais du vert contre du rouge).
+        for (n in listOf("!!", "!", "?!", "?", "??")) check("annotation daltonisme $n", Color.White, annotationColor(n, colorBlind = true))
+        for (n in listOf("!!", "!")) assertTrue(n, annotationColor(n, true).blue > annotationColor(n, true).red)
+        for (n in listOf("?", "??")) assertTrue(n, annotationColor(n, true).red > annotationColor(n, true).blue)
+        assertTrue(com.ivanherboch.chessduck.ui.DuckPalette.BLUE_ORANGE.night.colorBlind && com.ivanherboch.chessduck.ui.DuckPalette.BLUE_ORANGE.day.colorBlind)
         assertTrue(failures.joinToString("\n"), failures.isEmpty())
     }
 }

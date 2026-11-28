@@ -1,5 +1,6 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.layout.Column
 import com.ivanherboch.chessduck.ui.RetryButton
 import com.ivanherboch.chessduck.ui.NextButton
 import com.ivanherboch.chessduck.ui.DuckRadius
@@ -169,7 +170,10 @@ fun AcademyScreen(
             return sheets()
         }
     }
-    Box(Modifier.fillMaxSize()) {
+    // Séance du jour : le bandeau « Suite » se place au-dessus de l'écran (jamais par-dessus l'en-tête de la leçon).
+    Column(Modifier.fillMaxSize()) {
+        if (s.dailyPrompt) DailyBanner(vm, Modifier)
+        Box(Modifier.fillMaxWidth().weight(1f)) {
         ModuleLayout(
             // Séance (finale, série, réflexes) : une carte et une rangée de boutons, sans bande de coups ; l'échiquier prend le reste.
             bottomMin = if (eg != null || pr != null || rx != null) 150.dp else 190.dp,
@@ -299,8 +303,8 @@ fun AcademyScreen(
                         EqualRow(Modifier.padding(vertical = 6.dp)) {
                             // Toujours visible : relit ou arrête la voix, ou explique comment l'activer.
                             DuckIconButton(
-                                // Voix coupée : icône barrée, atténuée ; voix active : haut-parleur (ou arrêt pendant la lecture).
-                                if (speaking || !narration) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp,
+                                // Voix coupée : haut-parleur barré ; voix active : haut-parleur, allumé pendant la lecture.
+                                if (!narration) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp,
                                 when {
                                     voiceTip != null && voice != false && !narration -> "Activer la lecture vocale"
                                     voiceTip != null -> "Fermer l'aide sur la lecture vocale"
@@ -324,6 +328,8 @@ fun AcademyScreen(
                                         }
                                     }
                                 },
+                                // Lecture en cours : le haut-parleur est mis en évidence (le toucher l'arrête).
+                                selected = if (narration) speaking else null,
                             )
                             // Toujours les mêmes quatre commandes : voix, Début, Lecture ou Pause, Fin (icônes aux bords pour que
                             // rien ne se coupe sur 360 dp).
@@ -415,14 +421,13 @@ fun AcademyScreen(
                 }
             },
         )
-        // Séance du jour lancée : une étape vient d'être terminée, le bandeau propose la suite (sans quitter l'écran).
-        if (s.dailyPrompt) DailyBanner(vm, Modifier.align(Alignment.TopCenter))
+        }
     }
 
     sheets()
 }
 
-/** Bandeau de la séance du jour, par-dessus l'en-tête : l'étape est faite, on passe à la suivante (ou c'est fini). */
+/** Bandeau de la séance du jour, au-dessus de l'écran : l'étape est faite, on passe à la suivante (ou c'est fini). */
 @Composable
 private fun DailyBanner(vm: AcademyViewModel, modifier: Modifier) {
     val c = LocalDuck.current

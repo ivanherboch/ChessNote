@@ -115,7 +115,7 @@ internal fun ReviewLayout(vm: GameReviewViewModel, r: Review, onTrainTopic: ((Re
             val known = r.analysis.getOrNull(cur) ?: r.analysis.take(cur + 1).lastOrNull { it != null }
             BoardRow(if (r.evalOn) (known?.eval ?: 0) else null, r.flipped) { m ->
                 // Badges réservés aux annotations de revue (!!, !, ?!, ?, ??).
-                val badges = if (last != null && note != null) listOf(Badge(last.to, note, annotationColor(note))) else emptyList()
+                val badges = if (last != null && note != null) listOf(Badge(last.to, note, annotationColor(note, LocalDuck.current.colorBlind))) else emptyList()
                 ChessBoard(position = pos, modifier = m, flipped = r.flipped, lastMove = last, anim = r.anim, badges = badges)
             }
         },
@@ -215,7 +215,7 @@ private fun ReviewSummary(g: GameRecord, line: Line, analysis: List<Analysis?>, 
 @Composable
 private fun NoteCount(note: String, n: Int) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.clip(RoundedCornerShape(DuckRadius.S)).background(annotationColor(note)).padding(horizontal = 6.dp, vertical = 1.dp)) {
+        Box(Modifier.clip(RoundedCornerShape(DuckRadius.S)).background(annotationColor(note, LocalDuck.current.colorBlind)).padding(horizontal = 6.dp, vertical = 1.dp)) {
             Text(note, color = Color.White, style = MaterialTheme.typography.labelMedium)
         }
         Text(" $n", color = LocalDuck.current.text, style = MaterialTheme.typography.labelLarge)
@@ -251,7 +251,7 @@ internal fun MoveTable(line: Line, cursor: Int, notes: List<String?>, onSelect: 
                             ) {
                                 Text(line.sans[i], color = if (current) c.goldRole.onFill else c.text, style = MaterialTheme.typography.chessMove)
                                 notes.getOrNull(i)?.let { n ->
-                                    Box(Modifier.padding(start = 6.dp).clip(RoundedCornerShape(DuckRadius.S)).background(annotationColor(n)).padding(horizontal = 4.dp)) {
+                                    Box(Modifier.padding(start = 6.dp).clip(RoundedCornerShape(DuckRadius.S)).background(annotationColor(n, LocalDuck.current.colorBlind)).padding(horizontal = 4.dp)) {
                                         Text(n, color = Color.White, style = MaterialTheme.typography.labelSmall)
                                     }
                                 }

@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck
 
+import com.ivanherboch.chessduck.ui.LocalCompactHeight
+import com.ivanherboch.chessduck.ui.isCompactHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.foundation.text.TextAutoSize
@@ -156,6 +160,7 @@ class MainActivity : ComponentActivity() {
                     CompositionLocalProvider(
                         LocalFeedback provides app.feedback, LocalShowCoords provides st.coords,
                         LocalIsTwoPane provides isTwoPane(maxWidth, maxHeight),
+                        LocalCompactHeight provides (isTwoPane(maxWidth, maxHeight) && isCompactHeight(maxHeight)),
                     ) {
                         MainScreen(st, app.container.settings, app.container.narrator, app.scope)
                     }
@@ -314,25 +319,41 @@ fun MainScreen(st: AppChrome, prefs: SettingsRepository, narrator: Narrator, app
     Box(Modifier.fillMaxSize().background(c.bg)) {
         if (LocalIsTwoPane.current) {
             // Paysage (tablette) : rail de navigation à gauche, l'échiquier garde toute la hauteur.
+            // Téléphone en paysage (moins de 480 dp de haut) : pas d'en-tête de 50 dp, Paramètres en bas du rail (défilable).
+            val compact = LocalCompactHeight.current
             Row(Modifier.fillMaxSize()) {
                 NavigationRail(containerColor = c.surface, contentColor = c.text) {
-                    Spacer(Modifier.weight(1f))
-                    TABS.forEachIndexed { i, t ->
-                        NavigationRailItem(
-                            selected = tab == i, onClick = { select(i) },
-                            icon = { TabIcon(t, tab == i) },
-                            label = { TabLabel(t) },
-                            colors = NavigationRailItemDefaults.colors(
-                                selectedIconColor = c.goldRole.onFill, indicatorColor = c.goldRole.fill, selectedTextColor = c.text,
-                                unselectedIconColor = c.muted, unselectedTextColor = c.muted,
-                            ),
-                            modifier = Modifier.padding(vertical = 6.dp),
-                        )
+                    val items: @Composable () -> Unit = {
+                        TABS.forEachIndexed { i, t ->
+                            NavigationRailItem(
+                                selected = tab == i, onClick = { select(i) },
+                                icon = { TabIcon(t, tab == i) },
+                                label = { TabLabel(t) },
+                                colors = NavigationRailItemDefaults.colors(
+                                    selectedIconColor = c.goldRole.onFill, indicatorColor = c.goldRole.fill, selectedTextColor = c.text,
+                                    unselectedIconColor = c.muted, unselectedTextColor = c.muted,
+                                ),
+                                modifier = Modifier.padding(vertical = if (compact) 2.dp else 6.dp),
+                            )
+                        }
                     }
-                    Spacer(Modifier.weight(1f))
+                    if (compact) {
+                        Column(
+                            Modifier.fillMaxHeight().verticalScroll(rememberScrollState())
+                                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical)),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            items()
+                            DuckIconButton(Icons.Rounded.Settings, "Paramètres", { showSettings = true }, Modifier.padding(vertical = 4.dp))
+                        }
+                    } else {
+                        Spacer(Modifier.weight(1f))
+                        items()
+                        Spacer(Modifier.weight(1f))
+                    }
                 }
                 Column(Modifier.weight(1f).fillMaxHeight().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.End + WindowInsetsSides.Bottom))) {
-                    header(Modifier)
+                    if (!compact) header(Modifier)
                     content(Modifier.fillMaxWidth().weight(1f))
                 }
             }

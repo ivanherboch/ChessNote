@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck
 
+import org.junit.Assert.assertTrue
+import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onAllNodesWithText
@@ -107,6 +110,16 @@ class TabletRobolectricTest {
     fun phoneLandscape() {
         settle(2500)
         rule.onNodeWithText("Notation").performClick(); settle(1500); shot("o1_telephone_paysage_notation")
+        // Paysage compact : l'énoncé reste visible (au moins 56 dp de carte) au-dessus du clavier complet, et Paramètres
+        // est dans le rail (plus d'en-tête de 50 dp).
+        val density = rule.activity.resources.displayMetrics.density
+        val text = rule.onNodeWithText("notation anglaise FIDE", substring = true).assertIsDisplayed().fetchSemanticsNode()
+        assertTrue("énoncé de ${text.boundsInRoot.height / density} dp", text.boundsInRoot.height > 0f)
+        val card = rule.onAllNodes(androidx.compose.ui.test.hasAnyDescendant(androidx.compose.ui.test.hasText("notation anglaise FIDE", substring = true)))
+            .fetchSemanticsNodes().minBy { it.boundsInRoot.height }
+        assertTrue("carte de ${card.boundsInRoot.height / density} dp", card.boundsInRoot.height / density >= 56f)
+        rule.onNodeWithContentDescription("grand roque").assertIsDisplayed()
+        rule.onNodeWithContentDescription("Paramètres").assertIsDisplayed().assertHasClickAction()
         rule.onNodeWithText("Jeu Libre").performClick(); settle(2000); shot("o2_telephone_paysage_jeu")
     }
 

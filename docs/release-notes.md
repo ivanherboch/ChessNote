@@ -1,3 +1,21 @@
+## ChessDuck 4.6.0 — paysage, grande police et couleurs
+
+APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).
+
+- Téléphone en paysage :
+  - l'en-tête disparaît, et Paramètres passe en bas de la barre de navigation à gauche (qui défile si l'écran est bas) ;
+  - en Notation, l'énoncé est de nouveau visible au-dessus du clavier complet, avec des touches un peu plus basses.
+- Grande police (Notation) :
+  - les touches de pièces gardent la lettre et le nom français, sans la ligne anglaise qui se coupait ;
+  - « Vue Blancs » et la série ne sont plus tronquées ; le niveau s'écrit « Tous » et le champ « Réponse… ».
+- Grande police (Jeu Libre) : l'en-tête tient sur deux lignes (« 1200 ELO », « 0 V · 0 N · 0 D ») au lieu de quatre, et l'échiquier garde sa taille.
+- Bande des coups (Jeu Libre, Académie, revue) : chaque coup offre une cible tactile de 48 dp de haut.
+- Échiquier « Vert tournoi » : la case sélectionnée est bleue, et ne se confond plus avec les cases olive.
+- Palette Bleu-Orange (daltonisme) : les annotations de la revue passent en bleu (!!, !), ocre (?!) et vermillon ou brun (?, ??).
+- Académie :
+  - le bandeau de la séance du jour s'affiche au-dessus de l'écran, jamais par-dessus l'en-tête de la leçon ;
+  - le haut-parleur reste un haut-parleur pendant la lecture et s'allume (il n'est barré que si la voix est coupée).
+
 ## ChessDuck 4.5.1 — vos réglages de partie gardés
 
 APK Android signé, 100 % hors-ligne (Android 8.0 et plus ; arm64-v8a, armeabi-v7a, x86_64).

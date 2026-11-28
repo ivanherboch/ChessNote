@@ -1,5 +1,8 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalDensity
 import com.ivanherboch.chessduck.ui.HintText
 import com.ivanherboch.chessduck.ui.icons.Shield
 import androidx.compose.foundation.clickable
@@ -70,8 +73,17 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-/** Couleurs des badges d'annotation (texte blanc ≥ 4,5:1). */
-fun annotationColor(a: String): Color = when (a) {
+/**
+ * Couleurs des badges d'annotation (texte blanc ≥ 4,5:1). [colorBlind] (palette Bleu-Orange) : bons coups en bleus,
+ * coups douteux en ocre, erreurs en vermillon et brun, distincts avec un daltonisme rouge-vert.
+ */
+fun annotationColor(a: String, colorBlind: Boolean = false): Color = if (colorBlind) when (a) {
+    "!!" -> Color(0xFF005A8C)
+    "!" -> Color(0xFF0072B2)
+    "?!" -> Color(0xFF6B5D00)
+    "?" -> Color(0xFFB34D00)
+    else -> Color(0xFF8A2E00)
+} else when (a) {
     "!!" -> Color(0xFF0F766E)
     "!" -> Color(0xFF047857)
     "?!" -> Color(0xFFA16207)
@@ -134,17 +146,33 @@ private fun LiveGame(vm: PlayViewModel, openReview: (GameRecord) -> Unit) {
                     when { s.twoPlayers -> Icons.Rounded.People; net -> Icons.Rounded.Shield; else -> Icons.Rounded.SmartToy },
                     contentDescription = if (net) "Filet de sécurité actif" else null, tint = if (net) c.greenText else c.muted, modifier = Modifier.size(20.dp),
                 )
-                Column(Modifier.padding(start = 8.dp).weight(1f)) {
+                val w = tally.firstOrNull { it.outcome == 1 }?.n ?: 0
+                val d = tally.firstOrNull { it.outcome == 0 }?.n ?: 0
+                val l = tally.firstOrNull { it.outcome == -1 }?.n ?: 0
+                // Une ligne chacun : en grande police, libellés courts (le nom « Ordinateur » est déjà au-dessus de
+                // l'échiquier) pour que l'en-tête ne prenne jamais la place de l'échiquier. TalkBack lit la phrase complète.
+                val large = LocalDensity.current.fontScale > 1.3f
+                Column(
+                    Modifier.padding(start = 8.dp).weight(1f).semantics(mergeDescendants = true) {
+                        contentDescription = if (s.twoPlayers) "Partie à 2 joueurs, hors classement ELO"
+                        else "Ordinateur, niveau ${s.aiElo}. Bilan : $w victoire${if (w > 1) "s" else ""}, $d nulle${if (d > 1) "s" else ""}, $l défaite${if (l > 1) "s" else ""}"
+                    },
+                ) {
                     Text(
-                        if (s.twoPlayers) "Partie à 2 joueurs" else "Ordinateur · ${s.aiElo}",
-                        color = c.text, style = MaterialTheme.typography.titleSmall,
+                        when {
+                            s.twoPlayers -> if (large) "2 joueurs" else "Partie à 2 joueurs"
+                            large -> "${s.aiElo} ELO"
+                            else -> "Ordinateur · ${s.aiElo}"
+                        },
+                        color = c.text, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
-                    val w = tally.firstOrNull { it.outcome == 1 }?.n ?: 0
-                    val d = tally.firstOrNull { it.outcome == 0 }?.n ?: 0
-                    val l = tally.firstOrNull { it.outcome == -1 }?.n ?: 0
                     Text(
-                        if (s.twoPlayers) "Hors classement ELO" else "Bilan $w V · $d N · $l D",
-                        color = c.muted, style = MaterialTheme.typography.labelMedium,
+                        when {
+                            s.twoPlayers -> if (large) "Hors ELO" else "Hors classement ELO"
+                            large -> "$w V · $d N · $l D"
+                            else -> "Bilan $w V · $d N · $l D"
+                        },
+                        color = c.muted, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
                 }
                 }

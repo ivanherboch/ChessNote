@@ -1,5 +1,9 @@
 package com.ivanherboch.chessduck.feature
 
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import com.ivanherboch.chessduck.ui.LocalCompactHeight
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import com.ivanherboch.chessduck.ui.DuckChip
@@ -81,6 +85,7 @@ import com.ivanherboch.chessduck.ui.ModuleLayout
 
 private val LEVEL_SHORT = listOf("Tous", "Bases", "Prises", "Roques")
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NotationScreen(vm: NotationViewModel) {
     val s by vm.state.collectAsStateWithLifecycle()
@@ -98,7 +103,7 @@ fun NotationScreen(vm: NotationViewModel) {
         // Zone basse : carte (~34 dp), saisie 6 + 48, clavier 4 + 52 + 3 × (4 + KEY_ROW) + 4.
         bottomMin = 298.dp,
         top = {
-            Row(Modifier.fillMaxWidth().height(52.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().height(if (LocalCompactHeight.current) 48.dp else 52.dp), verticalAlignment = Alignment.CenterVertically) {
                 LevelMenu(s.level, vm::setLevel, Modifier.weight(1f), onVision = { vm.startVision() })
                 DuckIconButton(Icons.AutoMirrored.Rounded.MenuBook, "Mémo anglais : lettres et symboles FIDE", { memo = true }, accent = c.blue)
                 DuckIconButton(Icons.Rounded.SwapVert, "Retourner l'échiquier", vm::flip)
@@ -121,15 +126,17 @@ fun NotationScreen(vm: NotationViewModel) {
         },
         underBoardFullWidth = true,
         underBoard = {
-            // Orientation de l'échiquier et série en cours : toujours présents, la mise en page ne saute pas.
-            Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            // Orientation de l'échiquier et série en cours : toujours présents, jamais tronqués ; en grande police, la série
+            // passe à la ligne au lieu de couper « Vue Blancs ».
+            FlowRow(
+                Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 InfoPill(
                     if (s.flipped) "Vue Noirs" else "Vue Blancs",
                     icon = Icons.Rounded.SwapVert,
                     description = if (s.flipped) "Échiquier vu du côté des Noirs : les colonnes vont de h à a" else "Échiquier vu du côté des Blancs",
-                    modifier = Modifier.weight(1f, fill = false),
                 )
-                Spacer(Modifier.weight(0.01f))
                 InfoPill(
                     "Série ${s.streak} · record ${s.best}", icon = Icons.Rounded.LocalFireDepartment, accent = if (s.streak > 0) c.gold else null,
                     description = "Série en cours : ${s.streak} bonne${if (s.streak > 1) "s" else ""} réponse${if (s.streak > 1) "s" else ""}. Record : ${s.best}",
@@ -150,7 +157,8 @@ fun NotationScreen(vm: NotationViewModel) {
                 ) {
                     Spacer(Modifier.width(12.dp))
                     Text(
-                        s.input.ifEmpty { "Votre réponse…" },
+                        // Grande police : « Réponse… », qui tient sans être coupé.
+                        s.input.ifEmpty { if (LocalDensity.current.fontScale > 1.3f) "Réponse…" else "Votre réponse…" },
                         color = if (s.input.isEmpty()) c.muted else if (s.solved) c.greenText else c.text,
                         style = if (s.input.isEmpty()) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.headlineSmall,
                         maxLines = 1,
@@ -163,21 +171,26 @@ fun NotationScreen(vm: NotationViewModel) {
             // Clavier virtuel FIDE (aucun clavier système), désactivé une fois la réponse validée.
             val type: (String) -> Unit = { k -> if (!vm.type(k)) fb?.error() }
             val on = !s.solved
-            Column(Modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            // Paysage compact (téléphone tourné) : rangées resserrées pour que la carte de l'énoncé garde au moins 56 dp.
+            val compact = LocalCompactHeight.current
+            // Grande police ou paysage compact : la ligne anglaise (redondante avec la lettre) disparaît, le nom français reste entier.
+            val twoLines = compact || LocalDensity.current.fontScale > 1.3f
+            val row = if (compact) KEY_ROW_COMPACT else KEY_ROW
+            Column(Modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 4.dp)) {
                 // Touches de pièces : lettre FIDE, nom anglais, puis nom français.
-                Row(Modifier.fillMaxWidth().height(52.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(Modifier.fillMaxWidth().height(if (compact) 40.dp else 52.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     for ((pt, sub) in listOf(KING to "King", QUEEN to "Queen", ROOK to "Rook", BISHOP to "Bishop", KNIGHT to "Knight")) {
                         val k = pieceLetter(pt).toString()
-                        Key(k, sub, Modifier.weight(1f), on, "$k, ${sub}, ${PIECE_NAMES_FR[pt]}", sub2 = PIECE_NAMES_FR[pt]) { type(k) }
+                        Key(k, sub.takeUnless { twoLines }, Modifier.weight(1f), on, "$k, ${sub}, ${PIECE_NAMES_FR[pt]}", sub2 = PIECE_NAMES_FR[pt]) { type(k) }
                     }
                 }
-                Row(Modifier.fillMaxWidth().height(KEY_ROW), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(Modifier.fillMaxWidth().height(row), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                     for (ch in 'a'..'h') Key(ch.toString(), null, Modifier.weight(1f), on, "colonne $ch") { type(ch.toString()) }
                 }
-                Row(Modifier.fillMaxWidth().height(KEY_ROW), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(Modifier.fillMaxWidth().height(row), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                     for (ch in '1'..'8') Key(ch.toString(), null, Modifier.weight(1f), on, "rangée $ch") { type(ch.toString()) }
                 }
-                Row(Modifier.fillMaxWidth().height(KEY_ROW), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(Modifier.fillMaxWidth().height(row), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     for ((k, d) in listOf("x" to "x, prise", "+" to "plus, échec", "#" to "dièse, échec et mat", "=" to "égal, promotion")) {
                         Key(k, null, Modifier.weight(1f), on, d) { type(k) }
                     }
@@ -196,8 +209,10 @@ private fun LevelMenu(level: Int, onSelect: (Int) -> Unit, modifier: Modifier, o
     val c = LocalDuck.current
     var open by remember { mutableStateOf(false) }
     Box(modifier) {
+        // Grande police : le niveau seul (« Tous », « 2 »…), sans « Niveau : » qui se couperait ; la description dit le reste.
+        val large = LocalDensity.current.fontScale > 1.3f
         DuckButton(
-            "Niveau : ${LEVEL_SHORT[level]}", { open = true }, Modifier.widthIn(max = 180.dp), icon = Icons.Rounded.Tune,
+            if (large) LEVEL_SHORT[level] else "Niveau : ${LEVEL_SHORT[level]}", { open = true }, Modifier.widthIn(max = 180.dp), icon = Icons.Rounded.Tune,
             contentDescription = "Niveau d'exercice : ${NotationLogic.LEVELS[level]}. Toucher pour changer",
         )
         DropdownMenu(expanded = open, onDismissRequest = { open = false }, containerColor = c.surface) {
@@ -260,6 +275,9 @@ private fun Key(label: String, sub: String?, modifier: Modifier, enabled: Boolea
  * huit touches par rangée, soit environ 41 dp sur un téléphone de 360 dp, bien au-dessus du minimum WCAG 2.5.8 (24 dp).
  */
 private val KEY_ROW = 44.dp
+
+/** Paysage compact : rangées de 34 dp (au-dessus du minimum WCAG 2.5.8 de 24 dp), pour laisser la place à l'énoncé. */
+private val KEY_ROW_COMPACT = 34.dp
 
 /**
  * « Vision des cases » : exercice facultatif, sans chronomètre. Couleur d'une case (échiquier masqué), toucher une

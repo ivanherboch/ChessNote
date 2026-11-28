@@ -82,8 +82,12 @@ fun MoveStrip(
     }
     Row(modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
         if (onPrev != null) DuckIconButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Coup précédent", onPrev, enabled = prevEnabled)
+        // Bande de 48 dp de haut (cible tactile de chaque coup) ; le fond n'en dessine que 40, comme avant.
         LazyRow(
-            Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(DuckRadius.M)).background(c.surface).padding(horizontal = 4.dp),
+            Modifier.weight(1f).height(48.dp).drawBehind {
+                val inset = 4.dp.toPx()
+                drawRoundRect(c.surface, Offset(0f, inset), Size(size.width, size.height - 2 * inset), CornerRadius(DuckRadius.M.toPx()))
+            }.clip(RoundedCornerShape(DuckRadius.M)).padding(horizontal = 4.dp),
             state = listState, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             if (line.size == 0) item { Text(emptyText, color = c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 6.dp)) }
@@ -91,7 +95,7 @@ fun MoveStrip(
                 // Capsule du tour, dessinée derrière : les coups gardent toute la hauteur de la bande comme cible tactile.
                 Row(
                     Modifier.fillMaxHeight().drawBehind {
-                        val inset = 4.dp.toPx()
+                        val inset = 8.dp.toPx()
                         drawRoundRect(c.surfaceHi, Offset(0f, inset), Size(size.width, size.height - 2 * inset), CornerRadius(9.dp.toPx()))
                     }.padding(start = 8.dp, end = 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
